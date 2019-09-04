@@ -43,16 +43,31 @@ class Thread(object):
     """
 
     def __init__(self):
-        self.coordinates = ''    # filename containing coordinates
-        self.topology = ''       # filename containing topology file
-        self.jobids = []         # list of jobids associated with the present step of this thread
-        self.traj_files = []     # list of trajectory files associated with the present step of this thread
+        self.coordinates = ''       # filename containing coordinates
+        self.topology = ''          # filename containing topology file
+        self.jobids = []            # list of jobids associated with the present step of this thread
+        self.traj_files = []        # list of trajectory files associated with the present step of this thread
+        self.terminated = False     # boolean indicating whether the thread has reached a termination criterion
+        self.current_type = []      # list of job types for the present step of this thread
 
     def process(self, running, settings):
-        process.process(self, running, settings)
+        return process.process(self, running, settings)
 
     def interpret(self):
         pass    # todo: implement interpret.py
+
+    def gatekeeper(self, settings):
+        jobtype = factory.jobtype_factory(settings.job_type)
+        return jobtype.gatekeeper(self, settings)
+
+    def get_next_step(self, settings):
+        jobtype = factory.jobtype_factory(settings.job_type)
+        self.current_type = jobtype.get_next_step(self, settings)
+        return self.current_type
+
+    def get_batch_template(self, type, settings):
+        jobtype = factory.jobtype_factory(settings.job_type)
+        return jobtype.get_batch_template(self, type, settings)
 
     def get_last_frame(self, job_index, settings):
         mdengine = factory.mdengine_factory(settings.md_engine)
@@ -184,36 +199,37 @@ def main(allthreads, settings):
 
     """
 
-    def gate_keeper(thread):
-        # Stands between calls to thread.process() and thread.interpret() to prevent the latter from being called until
-        # all the jobs submitted by the former have completed. In the case of aimless shooting and committor analysis,
-        # it also cancels those jobs once they've committed to a user-defined energetic basin. Returns True if the
-        # thread is ready for interpretation and false otherwise.
-        # todo: consider abstracting this (thread.gate_keeper) with implementations for each type of job. The reason not
-        # todo: to is because this is already short and complete, but maybe I'll want some kind of extensibility later?
-
-        if settings.job_type in ['aimless_shooting', 'committor_analysis']:
-            for job_index in range(thread.jobids):
-                if thread.get_status(job_index, settings) == 'R':                   # if the job in question is running
-                    if check_commit(thread.get_last_frame(job_index, settings), settings):  # if it has committed to a basin
-                        thread.cancel_job(job_index, settings)                                  # cancel it
-
-        # if every job in this thread has status 'C'ompleted/'C'anceled...
-        if all(item == C for item in [thread.get_status(job_index, settings) for job_index in range(thread.jobids)]):
-            return True
-        else:
-            return False
+    # def gate_keeper(thread):
+    #     # Stands between calls to thread.process() and thread.interpret() to prevent the latter from being called until
+    #     # all the jobs submitted by the former have completed. In the case of aimless shooting and committor analysis,
+    #     # it also cancels those jobs once they've committed to a user-defined energetic basin. Returns True if the
+    #     # thread is ready for interpretation and false otherwise.
+    #     # todo: consider abstracting this (thread.gate_keeper) with implementations for each type of job. The reason not
+    #     # todo: to is because this is already short and complete, but maybe I'll want some kind of extensibility later?
+    #     # todo: note: I have since abstracted it; this is kept for now in case I decide to go back.
+    #
+    #     if settings.job_type in ['aimless_shooting', 'committor_analysis']:
+    #         for job_index in range(thread.jobids):
+    #             if thread.get_status(job_index, settings) == 'R':                   # if the job in question is running
+    #                 if check_commit(thread.get_last_frame(job_index, settings), settings):  # if it has committed to a basin
+    #                     thread.cancel_job(job_index, settings)                                  # cancel it
+    #
+    #     # if every job in this thread has status 'C'ompleted/'C'anceled...
+    #     if all(item == C for item in [thread.get_status(job_index, settings) for job_index in range(thread.jobids)]):
+    #         return True
+    #     else:
+    #         return False
 
     termination_criterion = False   # initialize
     running = allthreads            # to be pruned later by thread.process()
 
     for thread in allthreads:
-        thread.process(running, settings)
+        running = thread.process(running, settings)
     while (not termination_criterion) and running:
         for thread in running:
-            if gate_keeper(thread):
+            if thread.gatekeeper(settings):
                 thread.interpret()
-                thread.process(running, settings)
+                running = thread.process(running, settings)
 
     if termination_criterion:
         print('ATESA run exiting normally (global termination criterion met)')
@@ -225,6 +241,6 @@ if __name__ == "__main__":
     # Obtain settings namespace, initialize threads, and move promptly into main.
     settings = configure.configure(sys.argv[1])
     allthreads = init_threads(settings)
-    allthreads[0].process()
-    sys.exit()
+    # allthreads[0].process()
+    # sys.exit()
     main(allthreads, settings)

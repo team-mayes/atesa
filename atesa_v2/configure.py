@@ -6,10 +6,9 @@ Takes user input file and returns settings namespace object
 import argparse
 import pytraj       # to support pytraj calls in input file
 import numpy        # to support numpy  calls in input file
-import os
 
 def configure(input_file):
-    os.getcwd()
+    DEBUG = False   # set default DEBUG value, overwritten in tests as needed
     try:
         lines = open(input_file, 'r').readlines()
     except FileNotFoundError:

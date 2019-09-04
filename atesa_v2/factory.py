@@ -11,6 +11,10 @@ try:
     import batchsystem
 except ModuleNotFoundError:
     import atesa_v2.batchsystem as batchsystem
+try:
+    import jobtype
+except ModuleNotFoundError:
+    import atesa_v2.jobtype as jobtype
 
 def mdengine_factory(mdengine_toolkit):
     """
@@ -57,3 +61,26 @@ def batchsystem_factory(batchsystem_toolkit):
         raise ValueError('unsupported BatchSystem name: ' + batchsystem_toolkit)
 
     return batchsystem_toolkits[batchsystem_toolkit]
+
+
+def jobtype_factory(jobtype_toolkit):
+    """
+    Factory function for JobTypes.
+
+    Parameters
+    ----------
+    jobtype_toolkit : str
+        Name of the JobType to invoke.
+
+    Returns
+    -------
+    None
+
+    """
+
+    jobtype_toolkits = {'aimless_shooting': jobtype.AimlessShooting, 'committor_analysis': jobtype.CommittorAnalysis, 'equilibrium_path_sampling': jobtype.EquilibriumPathSampling}
+
+    if jobtype_toolkit not in jobtype_toolkits.keys():
+        raise ValueError('unsupported JobType name: ' + jobtype_toolkit)
+
+    return jobtype_toolkits[jobtype_toolkit]

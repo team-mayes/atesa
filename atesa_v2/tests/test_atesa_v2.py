@@ -61,10 +61,115 @@ def test_check_commit():
     with pytest.raises(ValueError):
         atesa_v2.check_commit('atesa_v2/tests/test_data/test.rst7', settings)
 
-def test_get_status_slurm():
-    """Tests thread.get_status method with batch_system = 'slurm'"""
-    pass # todo: implement
+def test_gatekeep_aimless_shooting():
+    """Tests thread.gatekeep method with job_type = 'aimless_shooting'"""
+    settings = configure('atesa_v2/data/atesa.config')
+    settings.job_type = 'aimless_shooting'
+    settings.DEBUG = True
+    allthreads = atesa_v2.init_threads(settings)
+    assert allthreads[0].gatekeeper(settings) == True
 
-def test_cancel_job_slurm():
-    """Tests thread.cancel_job method with batch_system = 'slurm'"""
-    pass # todo: implement
+def test_gatekeep_committor_analysis():
+    """Tests thread.gatekeep method with job_type = 'committor_analysis'"""
+    settings = configure('atesa_v2/data/atesa.config')
+    settings.job_type = 'committor_analysis'
+    settings.DEBUG = True
+    allthreads = atesa_v2.init_threads(settings)
+    assert allthreads[0].gatekeeper(settings) == True
+
+def test_gatekeep_equilibrium_path_sampling():
+    """Tests thread.gatekeep method with job_type = 'equilibrium_path_sampling'"""
+    settings = configure('atesa_v2/data/atesa.config')
+    settings.job_type = 'equilibrium_path_sampling'
+    settings.DEBUG = True
+    allthreads = atesa_v2.init_threads(settings)
+    assert allthreads[0].gatekeeper(settings) == True
+
+def test_get_batch_file_aimless_shooting_amber():
+    """Tests thread.get_batch_template with job_type = 'aimless_shooting' and md_engine = 'amber'"""
+    settings = configure('atesa_v2/data/atesa.config')
+    settings.job_type = 'aimless_shooting'
+    settings.md_engine = 'amber'
+    allthreads = atesa_v2.init_threads(settings)
+    assert allthreads[0].get_batch_template('init', settings) == sys.path[0] + '/atesa_v2/data/templates/amber_' + settings.batch_system + '.tpl'
+
+def test_get_batch_file_aimless_shooting_broken():
+    """Tests thread.get_batch_template with job_type = 'aimless_shooting' and invalid type = 'fwdd'"""
+    settings = configure('atesa_v2/data/atesa.config')
+    settings.job_type = 'aimless_shooting'
+    allthreads = atesa_v2.init_threads(settings)
+    with pytest.raises(ValueError):
+        allthreads[0].get_batch_template('fwdd', settings)
+
+def test_get_batch_file_committor_analysis_amber():
+    """Tests thread.get_batch_template with job_type = 'committor_analysis' and md_engine = 'amber'"""
+    settings = configure('atesa_v2/data/atesa.config')
+    settings.job_type = 'committor_analysis'
+    settings.md_engine = 'amber'
+    allthreads = atesa_v2.init_threads(settings)
+    assert allthreads[0].get_batch_template(1, settings) == sys.path[0] + '/atesa_v2/data/templates/amber_' + settings.batch_system + '.tpl'
+
+def test_get_batch_file_committor_analysis_broken():
+    """Tests thread.get_batch_template with job_type = 'committor_analysis' and invalid type = 'init'"""
+    settings = configure('atesa_v2/data/atesa.config')
+    settings.job_type = 'committor_analysis'
+    allthreads = atesa_v2.init_threads(settings)
+    with pytest.raises(ValueError):
+        allthreads[0].get_batch_template('init', settings)
+
+def test_get_batch_file_equilibrium_path_sampling_amber():
+    """Tests thread.get_batch_template with job_type = 'equilibrium_path_sampling' and md_engine = 'amber'"""
+    settings = configure('atesa_v2/data/atesa.config')
+    settings.job_type = 'equilibrium_path_sampling'
+    settings.md_engine = 'amber'
+    allthreads = atesa_v2.init_threads(settings)
+    assert allthreads[0].get_batch_template('init', settings) == sys.path[0] + '/atesa_v2/data/templates/amber_' + settings.batch_system + '.tpl'
+
+def test_get_batch_file_equilibrium_path_sampling_broken():
+    """Tests thread.get_batch_template with job_type = 'equilibrium_path_sampling' and invalid type = 'fwdd'"""
+    settings = configure('atesa_v2/data/atesa.config')
+    settings.job_type = 'equilibrium_path_sampling'
+    allthreads = atesa_v2.init_threads(settings)
+    with pytest.raises(ValueError):
+        allthreads[0].get_batch_template('fwdd', settings)
+
+def test_get_next_step_aimless_shooting_init():
+    """Tests thread.get_next_step with job_type = 'aimless_shooting' and type = ['init']"""
+    settings = configure('atesa_v2/data/atesa.config')
+    settings.job_type = 'aimless_shooting'
+    allthreads = atesa_v2.init_threads(settings)
+    allthreads[0].current_type = ['init']
+    assert allthreads[0].get_next_step(settings) == ['fwd','bwd']
+
+def test_get_next_step_aimless_shooting_prod():
+    """Tests thread.get_next_step with job_type = 'aimless_shooting' and type = ['fwd','bwd']"""
+    settings = configure('atesa_v2/data/atesa.config')
+    settings.job_type = 'aimless_shooting'
+    allthreads = atesa_v2.init_threads(settings)
+    allthreads[0].current_type = ['fwd','bwd']
+    assert allthreads[0].get_next_step(settings) == ['init']
+
+def test_get_next_step_committor_analysis():
+    """Tests thread.get_next_step with job_type = 'committor_analysis'"""
+    settings = configure('atesa_v2/data/atesa.config')
+    settings.job_type = 'committor_analysis'
+    settings.committor_analysis_n = 10
+    allthreads = atesa_v2.init_threads(settings)
+    allthreads[0].current_type = []
+    assert allthreads[0].get_next_step(settings) == [str(i) for i in range(settings.committor_analysis_n)]
+
+def test_get_next_step_equilibrium_path_sampling_init():
+    """Tests thread.get_next_step with job_type = 'equilibrium_path_sampling' and type = ['init']"""
+    settings = configure('atesa_v2/data/atesa.config')
+    settings.job_type = 'equilibrium_path_sampling'
+    allthreads = atesa_v2.init_threads(settings)
+    allthreads[0].current_type = ['init']
+    assert allthreads[0].get_next_step(settings) == ['fwd','bwd']
+
+def test_get_next_step_equilibrium_path_sampling_prod():
+    """Tests thread.get_next_step with job_type = 'equilibrium_path_sampling' and type = ['fwd','bwd']"""
+    settings = configure('atesa_v2/data/atesa.config')
+    settings.job_type = 'equilibrium_path_sampling'
+    allthreads = atesa_v2.init_threads(settings)
+    allthreads[0].current_type = ['fwd','bwd']
+    assert allthreads[0].get_next_step(settings) == ['init']

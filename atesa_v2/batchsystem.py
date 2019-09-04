@@ -63,6 +63,9 @@ class AdaptSlurm(BatchSystem):
     """
 
     def get_status(self, jobid, settings):
+        if settings.DEBUG:
+            return 'C'
+
         command = 'squeue -o %t --job ' + str(jobid)
         process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                                    close_fds=True, shell=True)
@@ -97,6 +100,9 @@ class AdaptPBS(BatchSystem):
     """
 
     def get_status(self, jobid, settings):
+        if settings.DEBUG:
+            return 'C'
+
         command = 'qstat ' + str(jobid)
         process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                                    close_fds=True, shell=True)
