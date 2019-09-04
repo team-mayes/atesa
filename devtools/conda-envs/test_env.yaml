@@ -4,6 +4,7 @@ dependencies:
     # Base depends
   - python
   - pip
+  - jinja2
 
     # Testing
   - pytest
@@ -11,6 +12,6 @@ dependencies:
   - codecov
 
     # Pip-only installs
-  #- pip:
-  #  - codecov
+  - pip:
+    - pytraj
 
