@@ -42,7 +42,7 @@ install:
 
 
 script:
-  - pytest -v --cov=atesa_v2 atesa_v2/tests/
+  - pytest -v --cov=atesa_v2
 
 notifications:
     email: false
