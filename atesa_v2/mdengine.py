@@ -16,7 +16,23 @@ class MDEngine(abc.ABC):
     """
 
     @abc.abstractmethod
-    def get_last_frame(self, filename, settings):
+    def get_last_frame(self, trajectory, settings):
+        """
+        Return a new file containing just the last frame of a trajectory in Amber .rst7 format
+
+        Parameters
+        ----------
+        trajectory : str
+            Name of trajectory file to obtain last frame from
+        settings : argparse.Namespace
+            Settings namespace object
+
+        Returns
+        -------
+        last_frame : str
+            Name of .rst7 format coordinate file corresponding to last frame of trajectory
+
+        """
         pass
 
 
@@ -26,9 +42,9 @@ class AdaptAmber(MDEngine):
 
     """
 
-    def get_last_frame(self, filename, settings):
-        new_restart_name = filename + '_last_frame.rst7'
-        traj = pytraj.iterload(filename, settings.topology)
+    def get_last_frame(self, trajectory, settings):
+        new_restart_name = trajectory + '_last_frame.rst7'
+        traj = pytraj.iterload(trajectory, settings.topology)
         pytraj.write_traj(new_restart_name, traj, format='rst7', frame_indices=[-1], options='multi', overwrite=True)
         try:
             os.rename(new_restart_name + '.1', new_restart_name)

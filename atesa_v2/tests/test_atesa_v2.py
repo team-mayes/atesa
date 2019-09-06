@@ -18,6 +18,11 @@ def test_init_threads_restart():
     """Tests successful unpickle and return of a restart.pkl file"""
     pass # todo: implement
 
+def test_configure_broken():
+    """Tests configure.py with a non-existent file"""
+    with pytest.raises(FileNotFoundError):
+        settings = configure('atesa_v2/data/ates.config')
+
 def test_init_threads_new():
     """Tests successful initialization of new threads"""
     settings = configure('atesa_v2/data/atesa.config')
@@ -107,7 +112,7 @@ def test_get_batch_file_committor_analysis_amber():
     settings.job_type = 'committor_analysis'
     settings.md_engine = 'amber'
     allthreads = atesa_v2.init_threads(settings)
-    assert allthreads[0].get_batch_template(1, settings) == sys.path[0] + '/atesa_v2/data/templates/amber_' + settings.batch_system + '.tpl'
+    assert allthreads[0].get_batch_template('prod', settings) == sys.path[0] + '/atesa_v2/data/templates/amber_' + settings.batch_system + '.tpl'
 
 def test_get_batch_file_committor_analysis_broken():
     """Tests thread.get_batch_template with job_type = 'committor_analysis' and invalid type = 'init'"""
@@ -156,7 +161,7 @@ def test_get_next_step_committor_analysis():
     settings.committor_analysis_n = 10
     allthreads = atesa_v2.init_threads(settings)
     allthreads[0].current_type = []
-    assert allthreads[0].get_next_step(settings) == [str(i) for i in range(settings.committor_analysis_n)]
+    assert allthreads[0].get_next_step(settings) == ['prod' for null in range(settings.committor_analysis_n)]
 
 def test_get_next_step_equilibrium_path_sampling_init():
     """Tests thread.get_next_step with job_type = 'equilibrium_path_sampling' and type = ['init']"""

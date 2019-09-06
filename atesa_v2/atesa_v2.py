@@ -43,12 +43,13 @@ class Thread(object):
     """
 
     def __init__(self):
-        self.coordinates = ''       # filename containing coordinates
+        self.coordinates = ''       # filename containing current coordinates
         self.topology = ''          # filename containing topology file
         self.jobids = []            # list of jobids associated with the present step of this thread
         self.traj_files = []        # list of trajectory files associated with the present step of this thread
         self.terminated = False     # boolean indicating whether the thread has reached a termination criterion
         self.current_type = []      # list of job types for the present step of this thread
+        self.name = ''              # name of current step
 
     def process(self, running, settings):
         return process.process(self, running, settings)
@@ -112,6 +113,7 @@ def init_threads(settings):
         thread = Thread()
         thread.coordinates = file
         thread.topology = settings.topology
+        thread.name = file + '_0'   # name of just first step
         allthreads.append(thread)
     return allthreads
 
@@ -241,6 +243,4 @@ if __name__ == "__main__":
     # Obtain settings namespace, initialize threads, and move promptly into main.
     settings = configure.configure(sys.argv[1])
     allthreads = init_threads(settings)
-    # allthreads[0].process()
-    # sys.exit()
     main(allthreads, settings)

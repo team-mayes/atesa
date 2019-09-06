@@ -14,7 +14,7 @@ class BatchSystem(abc.ABC):
     """
 
     @abc.abstractmethod
-    def get_status(self, jobid, settings):
+    def get_status(self, jobid, settings):  # todo: this should MAYBE be moved to a method of TaskManager
         """
         Query batch system for a status string for the given job.
 
@@ -35,7 +35,7 @@ class BatchSystem(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def cancel_job(self, jobid, settings):
+    def cancel_job(self, jobid, settings):  # todo: this should DEFINITELY be moved to a method of TaskManager
         """
         Cancel the job given by jobid
 
@@ -53,6 +53,25 @@ class BatchSystem(abc.ABC):
 
         """
 
+        pass
+    
+    @abc.abstractmethod
+    def get_submit_command(self):
+        """
+        Return the appropriate terminal command for submitting a batch job, with '{file}' where the file to submit 
+        should be indicated.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        output : str
+            Appropriate command including '{file}' substring
+
+        """
+        
         pass
 
 
@@ -73,7 +92,7 @@ class AdaptSlurm(BatchSystem):
         try:
             output = output.split('\\n')[1]
         except IndexError:
-            output = 'C'        # Job isn't in the queue; so it's 'C'omplete
+            output = 'C'        # job isn't in the queue; so it's 'C'omplete
         if output == 'PD':
             output = 'Q'
         elif output == 'CG':
@@ -91,6 +110,9 @@ class AdaptSlurm(BatchSystem):
                                    close_fds=True, shell=True)
         output = process.stdout.read()
         return str(output)
+    
+    def get_submit_command(self):
+        return 'sbatch {file}'
 
 
 class AdaptPBS(BatchSystem):
@@ -131,3 +153,6 @@ class AdaptPBS(BatchSystem):
                                        close_fds=True, shell=True)
             output = process.stdout.read()
         return str(output)
+
+    def get_submit_command(self):
+        return 'qsub {file}'

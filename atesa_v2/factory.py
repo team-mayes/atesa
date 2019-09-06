@@ -2,7 +2,6 @@
 Factory script for obtaining the desired interfaces from the various interface scripts.
 """
 
-# from .mdengine import *
 try:
     import mdengine
 except ModuleNotFoundError:
@@ -15,6 +14,11 @@ try:
     import jobtype
 except ModuleNotFoundError:
     import atesa_v2.jobtype as jobtype
+try:
+    import taskmanager
+except ModuleNotFoundError:
+    import atesa_v2.taskmanager as taskmanager
+
 
 def mdengine_factory(mdengine_toolkit):
     """
@@ -23,14 +27,14 @@ def mdengine_factory(mdengine_toolkit):
     Parameters
     ----------
     mdengine_toolkit : str
-        Name of the MDEngine to invoke.
+        Name of the MDEngine to invoke
 
     Returns
     -------
-    None
+    mdengine : MDEngine
+        Instance of an MDEngine adapter
 
     """
-    # todo: Returns? How to document?
 
     mdengine_toolkits = {'amber': mdengine.AdaptAmber}
 
@@ -47,11 +51,12 @@ def batchsystem_factory(batchsystem_toolkit):
     Parameters
     ----------
     batchsystem_toolkit : str
-        Name of the BatchSystem to invoke.
+        Name of the BatchSystem to invoke
 
     Returns
     -------
-    None
+    batchsystem : BatchSystem
+        Instance of a BatchSystem adapter
 
     """
 
@@ -70,11 +75,12 @@ def jobtype_factory(jobtype_toolkit):
     Parameters
     ----------
     jobtype_toolkit : str
-        Name of the JobType to invoke.
+        Name of the JobType to invoke
 
     Returns
     -------
-    None
+    jobtype : JobType
+        Instance of a JobType adapter
 
     """
 
@@ -84,3 +90,27 @@ def jobtype_factory(jobtype_toolkit):
         raise ValueError('unsupported JobType name: ' + jobtype_toolkit)
 
     return jobtype_toolkits[jobtype_toolkit]
+
+
+def taskmanager_factory(taskmanager_toolkit):
+    """
+    Factory function for TaskManagers.
+
+    Parameters
+    ----------
+    taskmanager_toolkit : str
+        Name of the TaskManager to invoke
+
+    Returns
+    -------
+    taskmanager : TaskManager
+        Instance of a TaskManager adapter
+
+    """
+
+    taskmanager_toolkits = {'simple': taskmanager.AdaptSimple}
+
+    if taskmanager_toolkit not in taskmanager_toolkits.keys():
+        raise ValueError('unsupported TaskManager name: ' + taskmanager_toolkit)
+
+    return taskmanager_toolkits[taskmanager_toolkit]

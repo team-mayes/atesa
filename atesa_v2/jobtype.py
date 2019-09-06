@@ -110,8 +110,8 @@ class AimlessShooting(JobType):
 
     def get_batch_template(self, type, settings):
         if type in ['init', 'fwd', 'bwd']:
-            templ = sys.path[0] + '/atesa_v2/data/templates/' + settings.md_engine + '_' + settings.batch_system + '.tpl'
-            if os.path.exists(templ):
+            templ = settings.md_engine + '_' + settings.batch_system + '.tpl'
+            if os.path.exists(settings.path_to_templates + '/' + templ):
                 return templ
             else:
                 raise FileNotFoundError('cannot find required template file: ' + templ)
@@ -139,15 +139,15 @@ class CommittorAnalysis(JobType):
 
     def get_next_step(self, settings):
         if self.current_type == []:
-            self.current_type = [str(i) for i in range(settings.committor_analysis_n)]
+            self.current_type = ['prod' for null in range(settings.committor_analysis_n)]
         else:
             self.current_type = 'terminate'
         return self.current_type
 
     def get_batch_template(self, type, settings):
-        if isinstance(type, int):
-            templ = sys.path[0] + '/atesa_v2/data/templates/' + settings.md_engine + '_' + settings.batch_system + '.tpl'
-            if os.path.exists(templ):
+        if type == 'prod':
+            templ = settings.md_engine + '_' + settings.batch_system + '.tpl'
+            if os.path.exists(settings.path_to_templates + '/' + templ):
                 return templ
             else:
                 raise FileNotFoundError('cannot find required template file: ' + templ)
@@ -178,8 +178,8 @@ class EquilibriumPathSampling(JobType):
 
     def get_batch_template(self, type, settings):
         if type in ['init', 'fwd', 'bwd']:
-            templ = sys.path[0] + '/atesa_v2/data/templates/' + settings.md_engine + '_' + settings.batch_system + '.tpl'
-            if os.path.exists(templ):
+            templ = settings.md_engine + '_' + settings.batch_system + '.tpl'
+            if os.path.exists(settings.path_to_templates + '/' + templ):
                 return templ
             else:
                 raise FileNotFoundError('cannot find required template file: ' + templ)
