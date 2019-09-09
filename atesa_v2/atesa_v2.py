@@ -49,6 +49,7 @@ class Thread(object):
         self.traj_files = []        # list of trajectory files associated with the present step of this thread
         self.terminated = False     # boolean indicating whether the thread has reached a termination criterion
         self.current_type = []      # list of job types for the present step of this thread
+        self.current_name = []      # list of job names corresponding to the job types
         self.name = ''              # name of current step
 
     def process(self, running, settings):
@@ -63,8 +64,8 @@ class Thread(object):
 
     def get_next_step(self, settings):
         jobtype = factory.jobtype_factory(settings.job_type)
-        self.current_type = jobtype.get_next_step(self, settings)
-        return self.current_type
+        self.current_type, self.current_name = jobtype.get_next_step(self, settings)
+        return self.current_type, self.current_name
 
     def get_batch_template(self, type, settings):
         jobtype = factory.jobtype_factory(settings.job_type)

@@ -5,10 +5,6 @@ TaskManager and implements its abstract methods.
 
 import abc
 import subprocess
-try:
-    import factory
-except ModuleNotFoundError:
-    import atesa_v2.factory as factory
 
 class TaskManager(abc.ABC):
     """
@@ -49,6 +45,11 @@ class AdaptSimple(TaskManager):
     """
 
     def submit_batch(self, filename, settings):
+        try:    # import here to avoid circular import
+            import factory
+        except ModuleNotFoundError:
+            import atesa_v2.factory as factory
+
         batchsystem = factory.batchsystem_factory(settings.batch_system)
         command = batchsystem.get_submit_command(None).replace('{file}', filename)
 

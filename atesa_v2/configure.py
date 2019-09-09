@@ -26,8 +26,8 @@ def configure(input_file):
 
     # Set some default values
     DEBUG = False
-    path_to_input_files = sys.path[0] + '/atesa_v2/data/input_files'
-    path_to_templates = sys.path[0] + '/atesa_v2/data/templates'
+    # path_to_input_files = sys.path[0] + '/atesa_v2/data/input_files'
+    # path_to_templates = sys.path[0] + '/atesa_v2/data/templates'
 
     try:
         lines = open(input_file, 'r').readlines()

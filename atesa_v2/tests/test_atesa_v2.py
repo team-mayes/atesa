@@ -146,15 +146,15 @@ class Tests(object):
         settings.job_type = 'aimless_shooting'
         allthreads = atesa_v2.init_threads(settings)
         allthreads[0].current_type = ['init']
-        assert allthreads[0].get_next_step(settings) == ['fwd','bwd']
+        assert allthreads[0].get_next_step(settings) == (['prod', 'prod'], ['fwd', 'bwd'])
 
     def test_get_next_step_aimless_shooting_prod(self):
         """Tests thread.get_next_step with job_type = 'aimless_shooting' and type = ['fwd','bwd']"""
         settings = configure('atesa_v2/data/atesa.config')
         settings.job_type = 'aimless_shooting'
         allthreads = atesa_v2.init_threads(settings)
-        allthreads[0].current_type = ['fwd','bwd']
-        assert allthreads[0].get_next_step(settings) == ['init']
+        allthreads[0].current_type = ['prod','prod']
+        assert allthreads[0].get_next_step(settings) == (['init'], ['init'])
 
     def test_get_next_step_committor_analysis(self):
         """Tests thread.get_next_step with job_type = 'committor_analysis'"""
@@ -163,7 +163,7 @@ class Tests(object):
         settings.committor_analysis_n = 10
         allthreads = atesa_v2.init_threads(settings)
         allthreads[0].current_type = []
-        assert allthreads[0].get_next_step(settings) == ['prod' for null in range(settings.committor_analysis_n)]
+        assert allthreads[0].get_next_step(settings) == (['prod' for null in range(settings.committor_analysis_n)], [str(int(i)) for i in range(settings.committor_analysis_n)])
 
     def test_get_next_step_equilibrium_path_sampling_init(self):
         """Tests thread.get_next_step with job_type = 'equilibrium_path_sampling' and type = ['init']"""
@@ -171,15 +171,15 @@ class Tests(object):
         settings.job_type = 'equilibrium_path_sampling'
         allthreads = atesa_v2.init_threads(settings)
         allthreads[0].current_type = ['init']
-        assert allthreads[0].get_next_step(settings) == ['fwd','bwd']
+        assert allthreads[0].get_next_step(settings) == (['prod', 'prod'], ['fwd', 'bwd'])
 
     def test_get_next_step_equilibrium_path_sampling_prod(self):
         """Tests thread.get_next_step with job_type = 'equilibrium_path_sampling' and type = ['fwd','bwd']"""
         settings = configure('atesa_v2/data/atesa.config')
         settings.job_type = 'equilibrium_path_sampling'
         allthreads = atesa_v2.init_threads(settings)
-        allthreads[0].current_type = ['fwd','bwd']
-        assert allthreads[0].get_next_step(settings) == ['init']
+        allthreads[0].current_type = ['prod','prod']
+        assert allthreads[0].get_next_step(settings) == (['init'], ['init'])
 
     @classmethod
     def teardown_class(cls):

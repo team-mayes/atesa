@@ -4,6 +4,7 @@ BatchSystem and implements its abstract methods.
 """
 
 import abc
+import subprocess
 
 class BatchSystem(abc.ABC):
     """

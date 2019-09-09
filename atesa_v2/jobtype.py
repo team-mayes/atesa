@@ -6,6 +6,7 @@ and implements its abstract methods.
 import abc
 import os
 import sys
+import subprocess
 
 class JobType(abc.ABC):
     """
@@ -102,11 +103,14 @@ class AimlessShooting(JobType):
     def get_next_step(self, settings):
         if self.current_type == []:
             self.current_type = ['init']
+            self.current_name = ['init']
         elif self.current_type == ['init']:
-            self.current_type = ['fwd','bwd']
-        elif self.current_type == ['fwd','bwd']:
+            self.current_type = ['prod', 'prod']
+            self.current_name = ['fwd', 'bwd']
+        elif self.current_type == ['prod', 'prod']:
             self.current_type = ['init']
-        return self.current_type
+            self.current_name = ['init']
+        return self.current_type, self.current_name
 
     def get_batch_template(self, type, settings):
         if type in ['init', 'fwd', 'bwd']:
@@ -116,7 +120,7 @@ class AimlessShooting(JobType):
             else:
                 raise FileNotFoundError('cannot find required template file: ' + templ)
         else:
-            raise ValueError('unexpected batch template type for aimless_shooting: ' + type)
+            raise ValueError('unexpected batch template type for aimless_shooting: ' + str(type))
 
 
 class CommittorAnalysis(JobType):
@@ -140,9 +144,11 @@ class CommittorAnalysis(JobType):
     def get_next_step(self, settings):
         if self.current_type == []:
             self.current_type = ['prod' for null in range(settings.committor_analysis_n)]
+            self.current_name = [str(int(i)) for i in range(settings.committor_analysis_n)]
         else:
             self.current_type = 'terminate'
-        return self.current_type
+            self.current_name = []
+        return self.current_type, self.current_name
 
     def get_batch_template(self, type, settings):
         if type == 'prod':
@@ -152,7 +158,7 @@ class CommittorAnalysis(JobType):
             else:
                 raise FileNotFoundError('cannot find required template file: ' + templ)
         else:
-            raise ValueError('unexpected batch template type for committor_analysis: ' + type)
+            raise ValueError('unexpected batch template type for committor_analysis: ' + str(type))
 
 
 class EquilibriumPathSampling(JobType):
@@ -170,11 +176,14 @@ class EquilibriumPathSampling(JobType):
     def get_next_step(self, settings):
         if self.current_type == []:
             self.current_type = ['init']
+            self.current_name = ['init']
         elif self.current_type == ['init']:
-            self.current_type = ['fwd','bwd']
-        elif self.current_type == ['fwd','bwd']:
+            self.current_type = ['prod', 'prod']
+            self.current_name = ['fwd', 'bwd']
+        elif self.current_type == ['prod', 'prod']:
             self.current_type = ['init']
-        return self.current_type
+            self.current_name = ['init']
+        return self.current_type, self.current_name
 
     def get_batch_template(self, type, settings):
         if type in ['init', 'fwd', 'bwd']:
@@ -184,4 +193,4 @@ class EquilibriumPathSampling(JobType):
             else:
                 raise FileNotFoundError('cannot find required template file: ' + templ)
         else:
-            raise ValueError('unexpected batch template type for equilbrium path sampling: ' + type)
+            raise ValueError('unexpected batch template type for equilbrium path sampling: ' + str(type))

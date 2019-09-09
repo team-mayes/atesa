@@ -4,7 +4,7 @@ Version 2 of Aimless Transition Ensemble Sampling and Analysis refactors the cod
 """
 
 # Add imports here
-#from atesa_v2.atesa_v2 import *
+from atesa_v2.atesa_v2 import *
 from .atesa_v2 import *
 from .configure import *
 from .factory import *
