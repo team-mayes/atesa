@@ -4,6 +4,7 @@ TaskManager and implements its abstract methods.
 """
 
 import abc
+import subprocess
 try:
     import factory
 except ModuleNotFoundError:
@@ -49,7 +50,7 @@ class AdaptSimple(TaskManager):
 
     def submit_batch(self, filename, settings):
         batchsystem = factory.batchsystem_factory(settings.batch_system)
-        command = batchsystem.get_submit_command().replace('{file}', filename)
+        command = batchsystem.get_submit_command(None).replace('{file}', filename)
 
         if settings.DEBUG:
             return '123456'

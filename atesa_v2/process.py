@@ -82,9 +82,8 @@ def process(thread, running, settings):
     taskmanager = factory.taskmanager_factory(settings.task_manager)
     thread.jobids = []      # to clear out previous jobids if any exist
     for file in batchfiles:
-        thread.jobids.append(taskmanager.submit_batch(file, settings, settings))
+        thread.jobids.append(taskmanager.submit_batch(None, file, settings))
 
     if thread not in running:
-        return running.append(thread)
-    else:
-        return running
+        running.append(thread)
+    return running
