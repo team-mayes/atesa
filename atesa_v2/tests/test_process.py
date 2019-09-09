@@ -39,9 +39,15 @@ class Tests(object):
         allthreads[0].terminated = False
         allthreads[0].current_type = []
         running = []
-        os.chdir('atesa_v2/tests/test_temp')
+        try:
+            os.chdir('atesa_v2/tests/test_temp')
+        except FileNotFoundError:
+            os.mkdir('atesa_v2/tests/test_temp')
+            os.chdir('atesa_v2/tests/test_temp')
         assert process(allthreads[0], running, settings) == [allthreads[0]]
         assert allthreads[0].jobids == ['123456']
+        assert allthreads[0].current_type == ['init']
+        assert allthreads[0].current_name == ['init']
 
     @classmethod
     def teardown_class(cls):

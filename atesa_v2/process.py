@@ -34,10 +34,10 @@ def process(thread, running, settings):
     """
 
     ### Determine next step and, if appropriate, build corresponding list of batch files ###
-    thread.current_type, thread.current_name = thread.get_next_step(settings)  # todo: test to make sure this line updates the thread
+    thread.current_type, thread.current_name = thread.get_next_step(settings)
+
     if thread.current_type == 'terminate':
         thread.terminated = True
-
     if thread.terminated:
         if thread in running:
             running.remove(thread)
