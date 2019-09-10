@@ -43,9 +43,7 @@ def process(thread, running, settings):
             running.remove(thread)
             if running is None:
                 running = []       # to keep running as a list, even if empty
-            return running
-        else:
-            return running
+        return running
 
     # Set Jinja2 environment
     if os.path.exists(settings.path_to_templates):

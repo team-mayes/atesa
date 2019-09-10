@@ -44,19 +44,25 @@ class Thread(object):
 
     def __init__(self):
         self.coordinates = ''       # filename containing current coordinates
+        self.initial_coord = ''     # filename containing first coordinate file for this thread
         self.topology = ''          # filename containing topology file
         self.jobids = []            # list of jobids associated with the present step of this thread
         self.traj_files = []        # list of trajectory files associated with the present step of this thread
         self.terminated = False     # boolean indicating whether the thread has reached a termination criterion
         self.current_type = []      # list of job types for the present step of this thread
         self.current_name = []      # list of job names corresponding to the job types
+        self.current_results = []   # results of each job, if applicable
         self.name = ''              # name of current step
+        self.suffix = 0             # index of current step
+        self.total_moves = 0        # running total of "moves" attributable to this thread
+        self.accept_moves = 0       # running total of "accepted" "moves", as defined by JobType.update_results
+        self.status = ''            # tag for current status of a thread
 
     def process(self, running, settings):
         return process.process(self, running, settings)
 
-    def interpret(self):
-        pass    # todo: implement interpret.py
+    def interpret(self, allthreads, settings):
+        return interpret.interpret(self, allthreads, settings)
 
     def gatekeeper(self, settings):
         jobtype = factory.jobtype_factory(settings.job_type)
@@ -106,6 +112,9 @@ def init_threads(settings):
 
     if settings.restart == True:
         allthreads = pickle.load('restart.pkl')
+        if settings.restart_terminated_threads:
+            for thread in allthreads:
+                thread.terminated = False
         return allthreads
 
     # If not restart:
@@ -113,73 +122,12 @@ def init_threads(settings):
     for file in settings.initial_coordinates:
         thread = Thread()
         thread.coordinates = file
+        thread.initial_coord = file     # same as coordinates for first step
         thread.topology = settings.topology
-        thread.name = file + '_0'   # name of just first step
+        thread.status = 'running step ' + str(thread.suffix)     # always true when generating a new thread
+        thread.name = thread.initial_coord + '_' + str(thread.suffix)
         allthreads.append(thread)
     return allthreads
-
-
-def check_commit(filename, settings):
-    """
-    Check commitment of coordinate file to either basin.
-
-    Parameters
-    ----------
-    filename : str
-        Name of .rst7-formatted coordinate file to be checked
-    settings : argparse.Namespace
-        Settings namespace object
-
-    Returns
-    -------
-    commit_flag : str
-        Either 'fwd' or 'bwd' if the coordinates are in the corresponding basin, or '' if in neither
-
-    """
-
-    traj = pytraj.iterload(filename, settings.topology)
-    commit_flag = ''    # initialize
-
-    for i in range(len(settings.commit_fwd[2])):
-        if settings.commit_fwd[3][i] == 'lt':
-            if pytraj.distance(traj, '@' + str(settings.commit_fwd[0][i]) + ' @' + str(settings.commit_fwd[1][i]),
-                               n_frames=1)[0] <= settings.commit_fwd[2][i]:
-                commit_flag = 'fwd'     # if a committor test is passed, testing moves on to the next one.
-            else:
-                commit_flag = ''
-                break                   # if a committor test is not passed, all testing in this direction fails
-        elif settings.commit_fwd[3][i] == 'gt':
-            if pytraj.distance(traj, '@' + str(settings.commit_fwd[0][i]) + ' @' + str(settings.commit_fwd[1][i]),
-                               n_frames=1)[0] >= settings.commit_fwd[2][i]:
-                commit_flag = 'fwd'
-            else:
-                commit_flag = ''
-                break
-        else:
-            raise ValueError('An incorrect committor definition \"' + settings.commit_fwd[3][i] + '\" was given for '
-                             'index ' + str(i) + ' in the \'fwd\' direction.')
-
-    if commit_flag == '':               # only bother checking for bwd commitment if not fwd committed
-        for i in range(len(settings.commit_bwd[2])):
-            if settings.commit_bwd[3][i] == 'lt':
-                if pytraj.distance(traj, '@' + str(settings.commit_bwd[0][i]) + ' @' + str(settings.commit_bwd[1][i]),
-                                   n_frames=1)[0] <= settings.commit_bwd[2][i]:
-                    commit_flag = 'bwd' # if a committor test is passed, testing moves on to the next one.
-                else:
-                    commit_flag = ''
-                    break               # if a committor test is not passed, all testing in this direction fails
-            elif settings.commit_bwd[3][i] == 'gt':
-                if pytraj.distance(traj, '@' + str(settings.commit_bwd[0][i]) + ' @' + str(settings.commit_bwd[1][i]),
-                                   n_frames=1)[0] >= settings.commit_bwd[2][i]:
-                    commit_flag = 'bwd'
-                else:
-                    commit_flag = ''
-                    break
-            else:
-                raise ValueError('An incorrect committor definition \"' + settings.commit_bwd[3][i] + '\" was given for'
-                                 ' index ' + str(i) + ' in the \'bwd\' direction.')
-
-    return commit_flag
 
 
 def main(allthreads, settings):
@@ -202,27 +150,6 @@ def main(allthreads, settings):
 
     """
 
-    # def gate_keeper(thread):
-    #     # Stands between calls to thread.process() and thread.interpret() to prevent the latter from being called until
-    #     # all the jobs submitted by the former have completed. In the case of aimless shooting and committor analysis,
-    #     # it also cancels those jobs once they've committed to a user-defined energetic basin. Returns True if the
-    #     # thread is ready for interpretation and false otherwise.
-    #     # todo: consider abstracting this (thread.gate_keeper) with implementations for each type of job. The reason not
-    #     # todo: to is because this is already short and complete, but maybe I'll want some kind of extensibility later?
-    #     # todo: note: I have since abstracted it; this is kept for now in case I decide to go back.
-    #
-    #     if settings.job_type in ['aimless_shooting', 'committor_analysis']:
-    #         for job_index in range(thread.jobids):
-    #             if thread.get_status(job_index, settings) == 'R':                   # if the job in question is running
-    #                 if check_commit(thread.get_last_frame(job_index, settings), settings):  # if it has committed to a basin
-    #                     thread.cancel_job(job_index, settings)                                  # cancel it
-    #
-    #     # if every job in this thread has status 'C'ompleted/'C'anceled...
-    #     if all(item == C for item in [thread.get_status(job_index, settings) for job_index in range(thread.jobids)]):
-    #         return True
-    #     else:
-    #         return False
-
     termination_criterion = False   # initialize
     running = allthreads            # to be pruned later by thread.process()
 
@@ -231,7 +158,13 @@ def main(allthreads, settings):
     while (not termination_criterion) and running:
         for thread in running:
             if thread.gatekeeper(settings):
-                thread.interpret()
+                termination_criterion = thread.interpret(allthreads, settings)
+                if termination_criterion:
+                    for thread in running:    # todo: should I replace this with something to finish up running jobs and just block submission of new ones?
+                        for job_index in range(len(thread.current_type)):
+                            thread.cancel_job(job_index, settings)
+                        running = []
+                    break
                 running = thread.process(running, settings)
 
     if termination_criterion:
@@ -243,5 +176,6 @@ def main(allthreads, settings):
 if __name__ == "__main__":
     # Obtain settings namespace, initialize threads, and move promptly into main.
     settings = configure.configure(sys.argv[1])
+    os.chdir(settings.working_directory)
     allthreads = init_threads(settings)
     main(allthreads, settings)

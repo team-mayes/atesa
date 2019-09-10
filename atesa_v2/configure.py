@@ -26,8 +26,8 @@ def configure(input_file):
 
     # Set some default values
     DEBUG = False
-    # path_to_input_files = sys.path[0] + '/atesa_v2/data/input_files'
-    # path_to_templates = sys.path[0] + '/atesa_v2/data/templates'
+    path_to_input_files = sys.path[0] + '/atesa_v2/data/input_files'
+    path_to_templates = sys.path[0] + '/atesa_v2/data/templates'
 
     try:
         lines = open(input_file, 'r').readlines()
@@ -48,5 +48,13 @@ def configure(input_file):
     # Define settings namespace to store all these variables
     settings = argparse.Namespace()
     settings.__dict__.update(locals())
+
+    if settings.working_directory[-1] == '/':
+        settings.working_directory = settings.working_directory[:-1]
+    if settings.path_to_input_files[-1] == '/':
+        settings.path_to_input_files = settings.path_to_input_files[:-1]
+    if settings.path_to_templates[-1] == '/':
+        settings.path_to_templates = settings.path_to_templates[:-1]
+
 
     return settings

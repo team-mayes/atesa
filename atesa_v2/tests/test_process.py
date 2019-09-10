@@ -48,6 +48,7 @@ class Tests(object):
         assert allthreads[0].jobids == ['123456']
         assert allthreads[0].current_type == ['init']
         assert allthreads[0].current_name == ['init']
+        os.chdir('../../..')    # to go back to the original testing directory
 
     @classmethod
     def teardown_class(cls):

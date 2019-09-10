@@ -10,6 +10,7 @@ from ..configure import configure
 import pytraj
 import os
 import glob
+import shutil
 
 class Tests(object):
     def test_atesa_v2_imported(self):
@@ -24,6 +25,17 @@ class Tests(object):
         """Tests configure.py with a non-existent file"""
         with pytest.raises(FileNotFoundError):
             settings = configure('atesa_v2/data/ates.config')
+
+    def test_configure_directory(self):
+        """Tests configure.py with a non-existent file"""
+        shutil.copy('atesa_v2/data/atesa.config', 'atesa_v2/tests/test_temp/atesa.config')
+        config_lines = open('atesa_v2/tests/test_temp/atesa.config', 'r').readlines()
+        for line in config_lines:
+            if 'working_directory' in line:
+                line = 'working_directory = \'/foo/bar/\''
+            open('atesa_v2/tests/test_temp/atesa_temp.config', 'a').write(line)
+        settings = configure('atesa_v2/tests/test_temp/atesa_temp.config')
+        assert settings.working_directory == '/foo/bar'
 
     def test_init_threads_new(self):
         """Tests successful initialization of new threads"""
@@ -46,27 +58,6 @@ class Tests(object):
         assert query_traj.n_frames == compare_traj.n_frames
         assert pytraj.center_of_mass(query_traj) == pytest.approx(pytraj.center_of_mass(compare_traj), 1e-3)
         os.remove('atesa_v2/tests/test_data/test.nc_last_frame.rst7')
-
-    def test_check_commit(self):
-        """Tests check_commit using a dummy coordinate file"""
-        settings = configure('atesa_v2/data/atesa.config')
-        settings.topology = 'atesa_v2/tests/test_data/test.prmtop'
-        settings.commit_fwd = [[1, 2], [3, 4], [1.0, 1.7], ['gt', 'lt']]
-        settings.commit_bwd = [[1, 2], [3, 4], [0.5, 2.0], ['lt', 'gt']]
-        assert atesa_v2.check_commit('atesa_v2/tests/test_data/test.rst7', settings) == 'fwd'
-        settings.commit_bwd = [[1, 2], [3, 4], [1.0, 1.7], ['gt', 'lt']]
-        settings.commit_fwd = [[1, 2], [3, 4], [0.5, 2.0], ['lt', 'gt']]
-        assert atesa_v2.check_commit('atesa_v2/tests/test_data/test.rst7', settings) == 'bwd'
-        settings.commit_fwd = [[1, 2], [3, 4], [1.0, 1.5], ['gt', 'lt']]
-        settings.commit_bwd = [[1, 2], [3, 4], [0.5, 2.0], ['lt', 'gt']]
-        assert atesa_v2.check_commit('atesa_v2/tests/test_data/test.rst7', settings) == ''
-        settings.commit_fwd = [[1, 2], [3, 4], [1.0, 1.5], ['t', 'lt']]
-        with pytest.raises(ValueError):
-            atesa_v2.check_commit('atesa_v2/tests/test_data/test.rst7', settings)
-        settings.commit_fwd = [[1, 2], [3, 4], [1.0, 1.5], ['gt', 'lt']]
-        settings.commit_bwd = [[1, 2], [3, 4], [1.0, 1.5], ['t', 'lt']]
-        with pytest.raises(ValueError):
-            atesa_v2.check_commit('atesa_v2/tests/test_data/test.rst7', settings)
 
     def test_gatekeep_aimless_shooting(self):
         """Tests thread.gatekeep method with job_type = 'aimless_shooting'"""
