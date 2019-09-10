@@ -27,7 +27,9 @@ class Tests(object):
             settings = configure('atesa_v2/data/ates.config')
 
     def test_configure_directory(self):
-        """Tests configure.py with a non-existent file"""
+        """Tests configure.py behavior in correcting an improperly formatted directory"""
+        if not os.path.exists('atesa_v2/tests/test_temp'):
+            os.mkdir('atesa_v2/tests/test_temp')
         shutil.copy('atesa_v2/data/atesa.config', 'atesa_v2/tests/test_temp/atesa.config')
         config_lines = open('atesa_v2/tests/test_temp/atesa.config', 'r').readlines()
         for line in config_lines:
