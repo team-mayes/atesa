@@ -56,10 +56,11 @@ class Tests(object):
         allthreads[0].jobids.append('01234')
         allthreads[0].traj_files.append('atesa_v2/tests/test_data/test.nc')
         compare_traj = pytraj.iterload('atesa_v2/tests/test_data/test.rst7', allthreads[0].topology)
-        query_traj = pytraj.iterload(allthreads[0].get_frame(0, -1, settings), allthreads[0].topology)
+        test_frame = allthreads[0].get_frame(allthreads[0].traj_files[0], -1, settings)
+        query_traj = pytraj.iterload(test_frame, allthreads[0].topology)
         assert query_traj.n_frames == compare_traj.n_frames
         assert pytraj.center_of_mass(query_traj) == pytest.approx(pytraj.center_of_mass(compare_traj), 1e-3)
-        os.remove('atesa_v2/tests/test_data/test.nc_last_frame.rst7')
+        os.remove(test_frame)
 
     def test_gatekeep_aimless_shooting(self):
         """Tests thread.gatekeep method with job_type = 'aimless_shooting'"""

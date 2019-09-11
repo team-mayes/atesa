@@ -7,6 +7,8 @@ import argparse
 import pytraj       # to support pytraj calls in input file
 import numpy        # to support numpy  calls in input file
 import sys
+import os
+from jinja2 import Environment, FileSystemLoader
 
 def configure(input_file):
     """

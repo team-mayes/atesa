@@ -6,7 +6,6 @@ Thread, passing them to a task manager to submit them, and updating the list of 
 import jinja2
 import os
 import sys
-from jinja2 import Environment, FileSystemLoader
 try:
     import factory
 except ModuleNotFoundError:
