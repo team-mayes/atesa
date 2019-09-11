@@ -45,18 +45,12 @@ def process(thread, running, settings):
                 running = []       # to keep running as a list, even if empty
         return running
 
-    # Set Jinja2 environment
-    if os.path.exists(settings.path_to_templates):
-        env = Environment(loader=FileSystemLoader(settings.path_to_templates))
-    else:
-        sys.exit('Error: could not locate templates folder: ' + settings.path_to_templates)
-
-    batchfiles = []     # initialize list of batch files to fill out
+    batchfiles = []         # initialize list of batch files to fill out
     thread.traj_files = []  # to clear out previous traj_files if any exist
     for job_index in range(len(thread.current_type)):
         type = thread.current_type[job_index]
         name = thread.current_name[job_index]
-        template = env.get_template(thread.get_batch_template(type, settings))
+        template = settings.env.get_template(thread.get_batch_template(type, settings))
         filled = template.render(name=thread.name + '_' + name,
                                  nodes=eval('settings.' + type + '_nodes'),
                                  taskspernode=eval('settings.' + type + '_ppn'),
@@ -66,8 +60,8 @@ def process(thread, running, settings):
                                  inp=settings.path_to_input_files + '/' + settings.job_type + '_' + type + '_' + settings.md_engine + '.in',
                                  out=thread.name + '_' + name + '.out',
                                  prmtop=thread.topology,
-                                 inpcrd=thread.coordinates,
-                                 rst=thread.name + '_' + name + '.rst',
+                                 inpcrd=thread.coordinates[job_index],
+                                 rst=thread.name + '_' + name + '.rst7',
                                  nc=thread.name + '_' + name + '.nc',
                                  working_directory=settings.working_directory)
         newfilename = thread.name + '_' + name + '.' + settings.batch_system

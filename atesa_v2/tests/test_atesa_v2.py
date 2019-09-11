@@ -44,11 +44,11 @@ class Tests(object):
         settings = configure('atesa_v2/data/atesa.config')
         allthreads = atesa_v2.init_threads(settings)
         assert len(allthreads) == 1
-        assert allthreads[0].coordinates == 'init.rst7'
+        assert allthreads[0].coordinates == ['init.rst7']
         assert allthreads[0].topology == 'topology.prmtop'
 
-    def test_thread_get_last_frame_amber(self):
-        """Tests thread.get_last_frame method with md_engine = 'amber'"""
+    def test_thread_get_frame_amber(self):
+        """Tests thread.get_frame method with md_engine = 'amber' and frame = -1"""
         settings = configure('atesa_v2/data/atesa.config')
         settings.topology = 'atesa_v2/tests/test_data/test.prmtop'
         settings.md_engine = 'amber'
@@ -56,7 +56,7 @@ class Tests(object):
         allthreads[0].jobids.append('01234')
         allthreads[0].traj_files.append('atesa_v2/tests/test_data/test.nc')
         compare_traj = pytraj.iterload('atesa_v2/tests/test_data/test.rst7', allthreads[0].topology)
-        query_traj = pytraj.iterload(allthreads[0].get_last_frame(0, settings), allthreads[0].topology)
+        query_traj = pytraj.iterload(allthreads[0].get_frame(0, -1, settings), allthreads[0].topology)
         assert query_traj.n_frames == compare_traj.n_frames
         assert pytraj.center_of_mass(query_traj) == pytest.approx(pytraj.center_of_mass(compare_traj), 1e-3)
         os.remove('atesa_v2/tests/test_data/test.nc_last_frame.rst7')

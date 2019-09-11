@@ -156,3 +156,72 @@ def get_cvs(filename, settings):
         os.remove(incremented_filename)     # clean up temporary file
 
     return output
+
+
+def rev_vels(restart_file, settings):
+    """
+    Reverse all the velocity terms in a restart file and return the name of the new, 'reversed' file.
+
+    Parameters
+    ----------
+    restart_file : str
+        Filename of the 'fwd' restart file, in .rst7 format
+    settings : argparse.Namespace
+        Settings namespace object
+
+    Returns
+    -------
+    reversed_file : str
+        Filename of the newly written 'bwd' restart file, in .rst7 format
+
+    """
+
+    byline = open(restart_file).readlines()
+    open(restart_file).close()
+    pattern = re.compile('[-0-9.]+')            # regex to match numbers including decimals and negatives
+    pattern2 = re.compile('\s[-0-9.]+')         # regex to match numbers including decimals and negatives, with one space in front
+    n_atoms = pattern.findall(byline[1])[0]     # number of atoms indicated on second line of .rst7 file
+    offset = 2                  # appropriate for n_atoms is odd; offset helps avoid modifying the box line
+    if int(n_atoms) % 2 == 0:   # if n_atoms is even...
+        offset = 1              # appropriate for n_atoms is even
+
+    try:
+        name = restart_file[:restart_file.rindex('.')]  # everything before last '.', to remove file extension
+    except ValueError:
+        name = restart_file     # if no '.' in the filename
+
+    shutil.copyfile(restart_file, name + '_bwd.rst7')
+    for i, line in enumerate(fileinput.input(name + '_bwd.rst7', inplace=1)):
+        if int(n_atoms) / 2 + 2 <= i <= int(n_atoms) + offset:  # if this line is a velocity line
+            newline = line
+            for vel in pattern2.findall(newline):
+                if '-' in vel:
+                    newline = newline.replace(vel, '  ' + vel[2:], 1)   # replace ' -magnitude' with '  magnitude'
+                else:
+                    newline = newline.replace(vel, '-' + vel[1:], 1)    # replace ' magnitude' with '-magnitude'
+            sys.stdout.write(newline)
+        else:  # if not a velocity line
+            sys.stdout.write(line)
+
+    return name + '_bwd.rst7'
+
+
+def resample(allthreads, settings):
+    """
+    Resample each shooting point in each thread with different CV definitions to produce a new as.out file with extant
+    aimless shooting data.
+
+    Parameters
+    ----------
+    allthreads : list
+        List of every thread to resample
+    settings : argparse.Namespace
+        Settings namespace object
+
+    Returns
+    -------
+    None
+
+    """
+
+    pass    # todo: implement

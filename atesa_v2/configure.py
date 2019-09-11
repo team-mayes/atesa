@@ -49,12 +49,23 @@ def configure(input_file):
     settings = argparse.Namespace()
     settings.__dict__.update(locals())
 
+    # Format directories properly (no trailing '/')
     if settings.working_directory[-1] == '/':
         settings.working_directory = settings.working_directory[:-1]
     if settings.path_to_input_files[-1] == '/':
         settings.path_to_input_files = settings.path_to_input_files[:-1]
     if settings.path_to_templates[-1] == '/':
         settings.path_to_templates = settings.path_to_templates[:-1]
+
+    # Set Jinja2 environment
+    if os.path.exists(settings.path_to_templates):
+        settings.env = Environment(loader=FileSystemLoader(settings.path_to_templates))
+    else:
+        sys.exit('Error: could not locate templates folder: ' + settings.path_to_templates)
+
+    # Check that each given value is valid # todo: implement this for every option
+    if not settings.job_type in ['aimless_shooting', 'committor_analysis', 'equilibrium_path_sampling', 'isee']:
+        raise ValueError('unsupported job_type: ' + str(settings.job_type))
 
 
     return settings

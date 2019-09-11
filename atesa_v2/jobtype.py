@@ -7,6 +7,7 @@ import abc
 import os
 import sys
 import subprocess
+import random
 try:
     import utilities
 except ModuleNotFoundError:
@@ -86,12 +87,12 @@ class JobType(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def check_termination_criteria(self, allthreads, settings):
+    def check_termination(self, allthreads, settings):
         """
         Check termination criteria for the particular thread at hand as well as for the entire process.
 
         These methods should update self.status and self.terminated in order to communicate the results of the check for
-        the inidivdual thread, and should return a boolean to communicate the results of the check for the entire run.
+        the inidividual thread, and should return a boolean to communicate the results of the check for the entire run.
 
         Parameters
         ----------
@@ -136,6 +137,31 @@ class JobType(abc.ABC):
 
         pass
 
+    @abc.abstractmethod
+    def algorithm(self, allthreads, settings):
+        """
+        Update thread attributes to prepare for next move.
+
+        This is where the core logical algorithm of a method is implemented. For example, in aimless shooting, it
+        encodes the logic of when and how to select a new shooting move.
+
+        Parameters
+        ----------
+        self : Thread
+            Methods in the JobType abstract base class are intended to be invoked by Thread objects
+        allthreads : list
+            The list of all extant Thread objects
+        settings : argparse.Namespace
+                Settings namespace object
+
+        Returns
+        -------
+        None
+
+        """
+
+        pass
+
 
 class AimlessShooting(JobType):
     """
@@ -146,8 +172,10 @@ class AimlessShooting(JobType):
         # Implement flexible length shooting...
         for job_index in range(len(self.jobids)):
             if self.get_status(job_index, settings) == 'R':     # if the job in question is running
-                if utilities.check_commit(self.get_last_frame(self.traj_files[job_index], settings), settings):  # if it has committed to a basin
+                frame_to_check = self.get_frame(self.traj_files[job_index], -1, settings)
+                if utilities.check_commit(frame_to_check, settings):  # if it has committed to a basin
                     self.cancel_job(job_index, settings)        # cancel it
+                    os.remove(frame_to_check)
 
         # if every job in this thread has status 'C'ompleted/'C'anceled...
         if all(item == C for item in [self.get_status(job_index, settings) for job_index in range(len(self.jobids))]):
@@ -177,18 +205,19 @@ class AimlessShooting(JobType):
         else:
             raise ValueError('unexpected batch template type for aimless_shooting: ' + str(type))
 
-    def check_termination_criteria(self, allthreads, settings):
-        thread_terminate = ''       # todo: are there termination criteria to implement for aimless shooting threads?
-        global_terminate = False    # todo: implement information error checking
+    def check_termination(self, allthreads, settings):
+        if self.current_type == ['prod', 'prod']:  # aimless shooting only checks termination after prod steps
+            thread_terminate = ''       # todo: are there termination criteria to implement for aimless shooting threads?
+            global_terminate = False    # todo: implement information error checking
 
-        if thread_terminate:
-            self.status = 'terminated after step ' + str(thread.suffix) + ' due to: ' + thread_terminate
-            self.terminated = True
-        else:
-            self.status = 'running step ' + str(thread.suffix + 1)  # suffix isn't updated until call to algorithm()
-            self.terminated = False
+            if thread_terminate:
+                self.status = 'terminated after step ' + str(thread.suffix) + ' due to: ' + thread_terminate
+                self.terminated = True
+            else:
+                self.status = 'running step ' + str(thread.suffix + 1)  # suffix isn't updated until call to algorithm()
+                self.terminated = False
 
-        return global_terminate
+            return global_terminate
 
     def update_results(self, allthreads, settings):
         if self.current_type == ['prod', 'prod']:   # aimless shooting only writes after prod steps
@@ -202,9 +231,12 @@ class AimlessShooting(JobType):
             # Update current_results, total and accepted move counts, and status.txt
             self.current_results = []   # clear previous results if any
             for job_index in range(len(self.current_type)):
-                self.current_results.append(utilities.check_commit(self.get_last_frame(self.traj_files[job_index], settings), settings))
+                frame_to_check = self.get_frame(self.traj_files[job_index], -1, settings)
+                self.current_results.append(utilities.check_commit(frame_to_check, settings))
+                os.remove(frame_to_check)
             self.total_moves += 1
             if self.current_results in [['fwd', 'bwd'], ['bwd', 'fwd']]:
+                self.last_accepted = self.traj_files
                 self.accept_moves += 1
 
             with open('status.txt', 'w') as file:
@@ -218,6 +250,40 @@ class AimlessShooting(JobType):
                     file.write('  Status: ' + thread.status)
                 file.close()
 
+        # Write updated restart.pkl
+        pickle.dump(allthreads, open('restart.pkl', 'wb'), protocol=2)  # todo: implement using this file
+
+    def algorithm(self, allthreads, settings):
+        # In aimless shooting, algorithm should decide whether or not a new shooting point is needed, obtain it if so,
+        # and update self.coordinates to reflect it. Also updates suffix and name attributes.
+        if self.current_type == ['prod', 'prod']:
+            self.suffix += 1
+            self.name = self.initial_coord + '_' + str(self.suffix)
+            if self.current_results in [['fwd', 'bwd'], ['bwd', 'fwd']]:    # accepted move
+                if random.random() < 0.5:       # randomly select a trajectory (there are only ever two in aimless shooting)
+                    job_index = 0
+                else:
+                    job_index = 1
+                frame = random.randint(settings.min_dt, settings.max_dt)
+                new_point = self.get_frame(self, self.traj_files[job_index], frame, settings)
+                self.coordinates = [new_point]
+            else:   # not an accepted move
+                if settings.always_new and self.last_accepted:  # choose a new shooting move from last accepted trajectory
+                    if random.random() < 0.5:  # randomly select a trajectory (there are only ever two in aimless shooting)
+                        job_index = 0
+                    else:
+                        job_index = 1
+                    frame = random.randint(settings.min_dt, settings.max_dt)
+                    new_point = self.get_frame(self, self.last_accepted[job_index], frame, settings)
+                    self.coordinates = [new_point]
+                else:   # always_new = False or there have been no accepted moves in this thread yet
+                    pass    # next move will begin from the same point as the last one
+        elif self.current_type == ['init']:
+            if not os.path.exists(thread.name + '_init.rst7'):  # init step failed, so retry it
+                self.current_type = []  # reset current_type so it will be pushed back to ['init'] by thread.process
+            else:   # init step produced the desired file, so update coordinates
+                self.coordinates = [thread.name + '_init.rst7', utilities.rev_vels(thread.name + '_init.rst7')]
+
 
 class CommittorAnalysis(JobType):
     """
@@ -228,8 +294,10 @@ class CommittorAnalysis(JobType):
         # Implement flexible length shooting...
         for job_index in range(len(self.jobids)):
             if self.get_status(job_index, settings) == 'R':     # if the job in question is running
-                if utilities.check_commit(self.get_last_frame(self.traj_files[job_index], settings), settings):  # if it has committed to a basin
+                frame_to_check = self.get_frame(self.traj_files[job_index], -1, settings)
+                if utilities.check_commit(frame_to_check, settings):  # if it has committed to a basin
                     self.cancel_job(job_index, settings)        # cancel it
+                    os.remove(frame_to_check)
 
         # if every job in this thread has status 'C'ompleted/'C'anceled...
         if all(item == C for item in [self.get_status(job_index, settings) for job_index in range(len(self.jobids))]):
@@ -256,10 +324,13 @@ class CommittorAnalysis(JobType):
         else:
             raise ValueError('unexpected batch template type for committor_analysis: ' + str(type))
 
-    def check_termination_criteria(self, allthreads, settings): # todo: implement
+    def check_termination(self, allthreads, settings):  # todo: implement
         pass
 
-    def update_results(self, allthreads, settings): # todo: implement
+    def update_results(self, allthreads, settings):     # todo: implement
+        pass
+
+    def algorithm(self, allthreads, settings):          # todo: implement
         pass
 
 
@@ -295,10 +366,13 @@ class EquilibriumPathSampling(JobType):
             else:
                 raise FileNotFoundError('cannot find required template file: ' + templ)
         else:
-            raise ValueError('unexpected batch template type for equilbrium path sampling: ' + str(type))
+            raise ValueError('unexpected batch template type for equilibrium path sampling: ' + str(type))
 
-    def check_termination_criteria(self, allthreads, settings): # todo: implement
+    def check_termination(self, allthreads, settings):  # todo: implement
         pass
 
-    def update_results(self, allthreads, settings): # todo: implement
+    def update_results(self, allthreads, settings):     # todo: implement
+        pass
+
+    def algorithm(self, allthreads, settings):          # todo: implement
         pass

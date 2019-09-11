@@ -31,9 +31,9 @@ def interpret(thread, allthreads, settings):
 
     jobtype = factory.jobtype_factory(settings.job_type)
 
-    termination = jobtype.check_termination_criteria(thread, settings)      # check global termination criteria, if any
+    termination = jobtype.check_termination(thread, allthreads, settings)   # check global termination criteria, if any
     jobtype.update_results(thread, allthreads, settings)                    # update results as needed
-    jobtype.algorithm(thread, settings)                                     # set thread parameters for next step
+    jobtype.algorithm(thread, allthreads, settings)                         # set thread parameters for next step
 
     # Update thread parameters for next step    # todo: move this stuff into jobtype.algorithm
     # thread.suffix += 1

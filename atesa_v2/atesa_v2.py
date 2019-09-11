@@ -43,7 +43,7 @@ class Thread(object):
     """
 
     def __init__(self):
-        self.coordinates = ''       # filename containing current coordinates
+        self.coordinates = []       # filenames containing current coordinates
         self.initial_coord = ''     # filename containing first coordinate file for this thread
         self.topology = ''          # filename containing topology file
         self.jobids = []            # list of jobids associated with the present step of this thread
@@ -53,9 +53,10 @@ class Thread(object):
         self.current_name = []      # list of job names corresponding to the job types
         self.current_results = []   # results of each job, if applicable
         self.name = ''              # name of current step
-        self.suffix = 0             # index of current step
+        self.suffix = 1             # index of current step
         self.total_moves = 0        # running total of "moves" attributable to this thread
         self.accept_moves = 0       # running total of "accepted" "moves", as defined by JobType.update_results
+        self.last_accepted = []     # list of last accepted trajectories (traj_files of last accepted move)
         self.status = ''            # tag for current status of a thread
 
     def process(self, running, settings):
@@ -77,9 +78,9 @@ class Thread(object):
         jobtype = factory.jobtype_factory(settings.job_type)
         return jobtype.get_batch_template(self, type, settings)
 
-    def get_last_frame(self, job_index, settings):
+    def get_frame(self, traj, frame, settings):
         mdengine = factory.mdengine_factory(settings.md_engine)
-        return mdengine.get_last_frame(self, self.traj_files[job_index], settings)
+        return mdengine.get_frame(self, traj, frame, settings)
 
     def get_status(self, job_index, settings):
         batchsystem = factory.batchsystem_factory(settings.batch_system)
@@ -121,10 +122,10 @@ def init_threads(settings):
     allthreads = []
     for file in settings.initial_coordinates:
         thread = Thread()
-        thread.coordinates = file
+        thread.coordinates = [file]
         thread.initial_coord = file     # same as coordinates for first step
         thread.topology = settings.topology
-        thread.status = 'running step ' + str(thread.suffix)     # always true when generating a new thread
+        thread.status = 'fresh thread'
         thread.name = thread.initial_coord + '_' + str(thread.suffix)
         allthreads.append(thread)
     return allthreads
