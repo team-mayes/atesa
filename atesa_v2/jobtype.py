@@ -8,6 +8,8 @@ import os
 import sys
 import subprocess
 import random
+import pickle
+import argparse
 try:
     import utilities
 except ModuleNotFoundError:
@@ -20,6 +22,53 @@ class JobType(abc.ABC):
     Implements methods for all of the job type-specific tasks that ATESA might need.
 
     """
+
+    @abc.abstractmethod
+    def update_history(self, **kwargs):
+        """
+        Update or initialize the history namespace for this job type.
+
+        This namespace is used to store the full history of a threads coordinate and trajectory files, as well as their
+        results if necessary.
+
+        If update_history is called with a kwargs containing {'initialize': True}, it simply prepares a blank
+        history namespace and returns it. Otherwise, it adds the values of the desired keywords (which are desired
+        depends on the implementation) to the corresponding history attributes in the index given by thread.suffix.
+
+        Parameters
+        ----------
+        self : Thread
+            Methods in the JobType abstract base class are intended to be invoked by Thread objects
+        kwargs : dict
+            Dictionary of arguments that might be used to update the history object
+
+        Returns
+        -------
+        None
+
+        """
+
+        pass
+
+    @abc.abstractmethod
+    def get_inpcrd(self):
+        """
+        Return a list (possibly of length one) containing the names of the appropriate inpcrd files for the next step
+        in the thread given by self.
+
+        Parameters
+        ----------
+        self : Thread
+            Methods in the JobType abstract base class are intended to be invoked by Thread objects
+
+        Returns
+        -------
+        inpcrd : list
+            List of strings containing desired file names
+
+        """
+
+        pass
 
     @abc.abstractmethod
     def gatekeeper(self, settings):
@@ -168,11 +217,57 @@ class AimlessShooting(JobType):
     Adapter class for aimless shooting
     """
 
+    def update_history(self, **kwargs):
+        if 'initialize' in kwargs.keys():
+            if kwargs['initialize'] == True:
+                self.history = argparse.Namespace()
+                self.history.init_inpcrd = []    # list of strings, inpcrd for init steps; updated by algorithm
+                self.history.init_coords = []    # list of 2-length lists of strings, init [_fwd.rst7, _bwd.rst7]; updated by update_history and then in algorithm
+                self.history.prod_trajs = []     # list of 2-length lists of strings, [_fwd.nc, _bwd.nc]; updated by update_history
+                self.history.prod_results = []   # list of 2-length lists of strings ['fwd'/'bwd'/'', 'fwd'/'bwd'/'']; updated by update_results
+                self.history.last_accepted = 0   # int, index of last accepted prod_trajs entry; updated by update_results
+        else:   # self.history should already exist
+            try:
+                null = self.history
+            except AttributeError:
+                raise AttributeError('AimlessShooting.update_history was called without initialize = True, but the '
+                                     'thread object ' + thread.history.init_inpcrd[0] + ' has no attribute \'history\'')
+            if self.current_type == ['init']:     # update init attributes
+                if 'rst' in kwargs.keys():
+                    if len(self.history.init_coords) < self.suffix + 1:
+                        self.history.init_coords.append([])
+                        if len(self.history.init_coords) < self.suffix + 1:
+                            pickle.dump(allthreads, open('debug.pkl', 'wb'), protocol=2)
+                            raise IndexError('history.init_coords is the wrong length for thread: ' + self.history.init_inpcrd[0] +
+                                             '\nexpected length ' + str(self.suffix) + ''
+                                             '\ndumped all threads to debug.pkl')
+                    self.history.init_coords[self.suffix].append(kwargs['rst'])
+            elif self.current_type == ['prod', 'prod']:
+                if 'nc' in kwargs.keys():
+                    if len(self.history.prod_trajs) < self.suffix + 1:
+                        self.history.prod_trajs.append([])
+                        if len(self.history.prod_trajs) < self.suffix + 1:
+                            pickle.dump(allthreads, open('debug.pkl', 'wb'), protocol=2)
+                            raise IndexError('history.prod_trajs is the wrong length for thread: ' + self.history.init_inpcrd[0] +
+                                             '\nexpected length ' + str(self.suffix) + ''
+                                             '\ndumped all threads to debug.pkl')
+                    self.history.prod_trajs[self.suffix].append(kwargs['rst'])
+
+    def get_inpcrd(self):
+        if self.current_type == ['init']:
+            return [self.history.init_inpcrd]
+        elif self.current_type == ['prod', 'prod']:
+            return self.history.init_coords
+        else:
+            pickle.dump(allthreads, open('debug.pkl', 'wb'), protocol=2)
+            raise ValueError('invalid thread.current_type value: ' + str(self.current_type) + ' for thread: ' + self.history.init_inpcrd[0] +
+                                             '\ndumped all threads to debug.pkl')
+
     def gatekeeper(self, settings):
         # Implement flexible length shooting...
         for job_index in range(len(self.jobids)):
             if self.get_status(job_index, settings) == 'R':     # if the job in question is running
-                frame_to_check = self.get_frame(self.traj_files[job_index], -1, settings)
+                frame_to_check = self.get_frame(self.history.prod_trajs[job_index], -1, settings)
                 if utilities.check_commit(frame_to_check, settings):  # if it has committed to a basin
                     self.cancel_job(job_index, settings)        # cancel it
                     os.remove(frame_to_check)
@@ -206,18 +301,19 @@ class AimlessShooting(JobType):
             raise ValueError('unexpected batch template type for aimless_shooting: ' + str(type))
 
     def check_termination(self, allthreads, settings):
+        global_terminate = False    # initialize
         if self.current_type == ['prod', 'prod']:  # aimless shooting only checks termination after prod steps
             thread_terminate = ''       # todo: are there termination criteria to implement for aimless shooting threads?
             global_terminate = False    # todo: implement information error checking
 
             if thread_terminate:
-                self.status = 'terminated after step ' + str(thread.suffix) + ' due to: ' + thread_terminate
+                self.status = 'terminated after step ' + str(self.suffix) + ' due to: ' + thread_terminate
                 self.terminated = True
             else:
-                self.status = 'running step ' + str(thread.suffix + 1)  # suffix isn't updated until call to algorithm()
+                self.status = 'running step ' + str(self.suffix + 1)  # suffix isn't updated until call to algorithm()
                 self.terminated = False
 
-            return global_terminate
+        return global_terminate
 
     def update_results(self, allthreads, settings):
         if self.current_type == ['prod', 'prod']:   # aimless shooting only writes after prod steps
@@ -226,17 +322,17 @@ class AimlessShooting(JobType):
                 open(settings.working_directory + '/as.out', 'w').close()
 
             # Write CVs to as.out
-            open(settings.working_directory + '/as.out', 'a').write(utilities.get_cvs(self.coordinates[0], settings) + '\n')
+            open(settings.working_directory + '/as.out', 'a').write(utilities.get_cvs(self.history.init_coords[-1][0], settings) + '\n')
 
             # Update current_results, total and accepted move counts, and status.txt
-            self.current_results = []   # clear previous results if any
+            self.history.prod_results.append([])
             for job_index in range(len(self.current_type)):
-                frame_to_check = self.get_frame(self.traj_files[job_index], -1, settings)
-                self.current_results.append(utilities.check_commit(frame_to_check, settings))
+                frame_to_check = self.get_frame(self.history.prod_trajs[-1][job_index], -1, settings)
+                self.history.prod_results[-1].append(utilities.check_commit(frame_to_check, settings))
                 os.remove(frame_to_check)
             self.total_moves += 1
-            if self.current_results in [['fwd', 'bwd'], ['bwd', 'fwd']]:
-                self.last_accepted = self.traj_files
+            if self.history.prod_results[-1] in [['fwd', 'bwd'], ['bwd', 'fwd']]:
+                self.history.last_accepted = int(len(self.history.prod_trajs) - 1)   # new index of last accepted move
                 self.accept_moves += 1
 
             with open('status.txt', 'w') as file:
@@ -245,50 +341,56 @@ class AimlessShooting(JobType):
                         acceptance_percentage = str(100 * thread.accept_moves / thread.total_moves)[0:5] + '%'
                     except ZeroDivisionError:   # 0/0
                         acceptance_percentage = '0%'
-                    file.write(thread.initial_coord + ' acceptance ratio: ' + str(thread.accept_moves) + '/' + str(
-                            thread.total_moves) + ', or ' + acceptance_percentage + '\n')
+                    file.write(thread.history.init_inpcrd[0] + ' acceptance ratio: ' + str(thread.accept_moves) +
+                               '/' + str(thread.total_moves) + ', or ' + acceptance_percentage + '\n')
                     file.write('  Status: ' + thread.status)
                 file.close()
 
         # Write updated restart.pkl
-        pickle.dump(allthreads, open('restart.pkl', 'wb'), protocol=2)  # todo: implement using this file
+        pickle.dump(allthreads, open('restart.pkl', 'wb'), protocol=2)  # todo: implement restarting from this file
 
     def algorithm(self, allthreads, settings):
         # In aimless shooting, algorithm should decide whether or not a new shooting point is needed, obtain it if so,
         # and update self.coordinates to reflect it. Also updates suffix and name attributes.
         if self.current_type == ['prod', 'prod']:
             self.suffix += 1
-            self.name = self.initial_coord + '_' + str(self.suffix)
-            if self.current_results in [['fwd', 'bwd'], ['bwd', 'fwd']]:    # accepted move
+            self.name = self.history.init_inpcrd[0] + '_' + str(self.suffix)
+            if self.history.prod_results[-1] in [['fwd', 'bwd'], ['bwd', 'fwd']]:    # accepted move
                 if random.random() < 0.5:       # randomly select a trajectory (there are only ever two in aimless shooting)
                     job_index = 0
                 else:
                     job_index = 1
                 frame = random.randint(settings.min_dt, settings.max_dt)
-                new_point = self.get_frame(self, self.traj_files[job_index], frame, settings)
-                self.coordinates = [new_point]
+                new_point = self.get_frame(self, self.history.prod_trajs[-1][job_index], frame, settings)
+                self.history.init_inpcrd.append(new_point)
             else:   # not an accepted move
-                if settings.always_new and self.last_accepted:  # choose a new shooting move from last accepted trajectory
+                if settings.always_new and self.history.last_accepted:  # choose a new shooting move from last accepted trajectory
                     if random.random() < 0.5:  # randomly select a trajectory (there are only ever two in aimless shooting)
                         job_index = 0
                     else:
                         job_index = 1
                     frame = random.randint(settings.min_dt, settings.max_dt)
-                    new_point = self.get_frame(self, self.last_accepted[job_index], frame, settings)
-                    self.coordinates = [new_point]
+                    new_point = self.get_frame(self, self.history.prod_trajs[self.history.last_accepted][job_index], frame, settings)
+                    self.history.init_inpcrd.append(new_point)
                 else:   # always_new = False or there have been no accepted moves in this thread yet
-                    pass    # next move will begin from the same point as the last one
+                    self.history.init_inpcrd.append(self.history.init_inpcrd[-1])   # begin next move from same point as last move
         elif self.current_type == ['init']:
-            if not os.path.exists(thread.name + '_init.rst7'):  # init step failed, so retry it
+            if not os.path.exists(self.history.init_coords[-1][0]):  # init step failed, so retry it
                 self.current_type = []  # reset current_type so it will be pushed back to ['init'] by thread.process
             else:   # init step produced the desired file, so update coordinates
-                self.coordinates = [thread.name + '_init.rst7', utilities.rev_vels(thread.name + '_init.rst7')]
+                self.history.init_coords[-1].append(utilities.rev_vels(self.history.init_coords[-1][0]))
 
 
 class CommittorAnalysis(JobType):
     """
     Adapter class for committor analysis
     """
+
+    def update_history(self, **kwargs):
+        pass    # todo: implement
+
+    def get_inpcrd(self):   # todo: implement
+        pass
 
     def gatekeeper(self, settings):
         # Implement flexible length shooting...
@@ -338,6 +440,12 @@ class EquilibriumPathSampling(JobType):
     """
     Adapter class for equilibrium path sampling
     """
+
+    def update_history(self, **kwargs):
+        pass    # todo: implement
+
+    def get_inpcrd(self):   # todo: implement
+        pass
 
     def gatekeeper(self, settings):
         # if every job in this thread has status 'C'ompleted/'C'anceled...

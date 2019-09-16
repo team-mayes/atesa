@@ -68,6 +68,11 @@ def configure(input_file):
     # Check that each given value is valid # todo: implement this for every option
     if not settings.job_type in ['aimless_shooting', 'committor_analysis', 'equilibrium_path_sampling', 'isee']:
         raise ValueError('unsupported job_type: ' + str(settings.job_type))
+    if not type(settings.initial_coordinates) == list:
+        raise ValueError('initial_coordinates must be provided as a list (even if it is of length 1)')
+    for item in settings.initial_coordinates:
+        if '/' in item:
+            raise ValueError('file names in initial_coordinates should not contain \'/\' characters (they should exist in the same directory from which ATESA is called)')
 
 
     return settings

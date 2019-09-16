@@ -158,7 +158,7 @@ def get_cvs(filename, settings):
     return output
 
 
-def rev_vels(restart_file, settings):
+def rev_vels(restart_file):
     """
     Reverse all the velocity terms in a restart file and return the name of the new, 'reversed' file.
 
@@ -166,8 +166,6 @@ def rev_vels(restart_file, settings):
     ----------
     restart_file : str
         Filename of the 'fwd' restart file, in .rst7 format
-    settings : argparse.Namespace
-        Settings namespace object
 
     Returns
     -------
@@ -178,8 +176,8 @@ def rev_vels(restart_file, settings):
 
     byline = open(restart_file).readlines()
     open(restart_file).close()
-    pattern = re.compile('[-0-9.]+')            # regex to match numbers including decimals and negatives
-    pattern2 = re.compile('\s[-0-9.]+')         # regex to match numbers including decimals and negatives, with one space in front
+    pattern = re.compile(r'[-0-9.]+')            # regex to match numbers including decimals and negatives
+    pattern2 = re.compile(r'\s[-0-9.]+')         # regex to match numbers including decimals and negatives, with one space in front
     n_atoms = pattern.findall(byline[1])[0]     # number of atoms indicated on second line of .rst7 file
     offset = 2                  # appropriate for n_atoms is odd; offset helps avoid modifying the box line
     if int(n_atoms) % 2 == 0:   # if n_atoms is even...

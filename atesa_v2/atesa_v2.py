@@ -43,20 +43,16 @@ class Thread(object):
     """
 
     def __init__(self):
-        self.coordinates = []       # filenames containing current coordinates
-        self.initial_coord = ''     # filename containing first coordinate file for this thread
         self.topology = ''          # filename containing topology file
         self.jobids = []            # list of jobids associated with the present step of this thread
-        self.traj_files = []        # list of trajectory files associated with the present step of this thread
         self.terminated = False     # boolean indicating whether the thread has reached a termination criterion
         self.current_type = []      # list of job types for the present step of this thread
         self.current_name = []      # list of job names corresponding to the job types
         self.current_results = []   # results of each job, if applicable
         self.name = ''              # name of current step
-        self.suffix = 1             # index of current step
+        self.suffix = 0             # index of current step
         self.total_moves = 0        # running total of "moves" attributable to this thread
         self.accept_moves = 0       # running total of "accepted" "moves", as defined by JobType.update_results
-        self.last_accepted = []     # list of last accepted trajectories (traj_files of last accepted move)
         self.status = ''            # tag for current status of a thread
 
     def process(self, running, settings):
@@ -120,14 +116,16 @@ def init_threads(settings):
 
     # If not restart:
     allthreads = []
+    jobtype = factory.jobtype_factory(settings.job_type)
     for file in settings.initial_coordinates:
         thread = Thread()
-        thread.coordinates = [file]
-        thread.initial_coord = file     # same as coordinates for first step
+        jobtype.update_history(thread, **{'initialize': True})
+        thread.history.init_inpcrd.append(file)
         thread.topology = settings.topology
         thread.status = 'fresh thread'
-        thread.name = thread.initial_coord + '_' + str(thread.suffix)
+        thread.name = thread.history.init_inpcrd[0] + '_' + str(thread.suffix)
         allthreads.append(thread)
+
     return allthreads
 
 
