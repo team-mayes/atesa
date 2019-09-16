@@ -31,10 +31,9 @@ def interpret(thread, allthreads, settings):
 
     jobtype = factory.jobtype_factory(settings.job_type)
 
-    # todo: need to insert a check that the job step produced the required file(s) BEFORE proceeding into check_termination and update_results
-    if jobtype.check_for_successful_step(thread, settings):
-        termination = jobtype.check_termination(thread, allthreads, settings)   # check global termination criteria, if any
+    if jobtype.check_for_successful_step(thread, settings):                     # ensure this step did not crash/fail
+        termination = jobtype.check_termination(thread, allthreads, settings)   # check global termination criteria
         jobtype.update_results(thread, allthreads, settings)                    # update results as needed
-    jobtype.algorithm(thread, allthreads, settings)                         # set thread parameters for next step
+    jobtype.algorithm(thread, allthreads, settings)                             # set thread parameters for next step
 
     return termination

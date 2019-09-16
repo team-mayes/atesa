@@ -10,6 +10,7 @@ import subprocess
 import random
 import pickle
 import argparse
+import numpy
 try:
     import utilities
 except ModuleNotFoundError:
@@ -22,6 +23,31 @@ class JobType(abc.ABC):
     Implements methods for all of the job type-specific tasks that ATESA might need.
 
     """
+
+    @abc.abstractmethod
+    def check_for_successful_step(self):
+        """
+        Check whether a just-completed step was successful, as defined by whether the update_results and
+        check_termination methods should be run.
+
+        This method returns True if the previous step appeared successful (distinct from 'accepted' as the term refers
+        to for example aimless shooting) and False otherwise. The implementation of what to DO with an unsuccessful
+        step should appear in the corresponding algorithm method, which should be run regardless of the output from this
+        method.
+
+        Parameters
+        ----------
+        self : Thread
+            Methods in the JobType abstract base class are intended to be invoked by Thread objects
+
+        Returns
+        -------
+        result : bool
+            True if successful; False otherwise
+
+        """
+
+        pass
 
     @abc.abstractmethod
     def update_history(self, **kwargs):
@@ -217,6 +243,15 @@ class AimlessShooting(JobType):
     Adapter class for aimless shooting
     """
 
+    def check_for_successful_step(self):
+        if self.current_type == ['init']:   # requires that self.history.init_coords[-1] exists
+            if os.path.exists(self.history.init_coords[-1]):
+                return True
+        if self.current_type == ['prod', 'prod']:   # requires that both files in self.history.prod_trajs[-1] exist
+            if all([os.path.exists(self.history.prod_trajs[-1][i]) for i in range(2)]):
+                return True
+        return False
+
     def update_history(self, **kwargs):
         if 'initialize' in kwargs.keys():
             if kwargs['initialize'] == True:
@@ -225,13 +260,8 @@ class AimlessShooting(JobType):
                 self.history.init_coords = []    # list of 2-length lists of strings, init [_fwd.rst7, _bwd.rst7]; updated by update_history and then in algorithm
                 self.history.prod_trajs = []     # list of 2-length lists of strings, [_fwd.nc, _bwd.nc]; updated by update_history
                 self.history.prod_results = []   # list of 2-length lists of strings ['fwd'/'bwd'/'', 'fwd'/'bwd'/'']; updated by update_results
-                self.history.last_accepted = 0   # int, index of last accepted prod_trajs entry; updated by update_results
+                self.history.last_accepted = -1  # int, index of last accepted prod_trajs entry; updated by update_results (-1 means none yet accepted)
         else:   # self.history should already exist
-            try:
-                null = self.history
-            except AttributeError:
-                raise AttributeError('AimlessShooting.update_history was called without initialize = True, but the '
-                                     'thread object ' + thread.history.init_inpcrd[0] + ' has no attribute \'history\'')
             if self.current_type == ['init']:     # update init attributes
                 if 'rst' in kwargs.keys():
                     if len(self.history.init_coords) < self.suffix + 1:
@@ -251,13 +281,13 @@ class AimlessShooting(JobType):
                             raise IndexError('history.prod_trajs is the wrong length for thread: ' + self.history.init_inpcrd[0] +
                                              '\nexpected length ' + str(self.suffix) + ''
                                              '\ndumped all threads to debug.pkl')
-                    self.history.prod_trajs[self.suffix].append(kwargs['rst'])
+                    self.history.prod_trajs[self.suffix].append(kwargs['nc'])
 
     def get_inpcrd(self):
         if self.current_type == ['init']:
-            return [self.history.init_inpcrd]
+            return self.history.init_inpcrd
         elif self.current_type == ['prod', 'prod']:
-            return self.history.init_coords
+            return self.history.init_coords[-1]
         else:
             pickle.dump(allthreads, open('debug.pkl', 'wb'), protocol=2)
             raise ValueError('invalid thread.current_type value: ' + str(self.current_type) + ' for thread: ' + self.history.init_inpcrd[0] +
@@ -273,7 +303,7 @@ class AimlessShooting(JobType):
                     os.remove(frame_to_check)
 
         # if every job in this thread has status 'C'ompleted/'C'anceled...
-        if all(item == C for item in [self.get_status(job_index, settings) for job_index in range(len(self.jobids))]):
+        if all(item == 'C' for item in [self.get_status(job_index, settings) for job_index in range(len(self.jobids))]):
             return True
         else:
             return False
@@ -356,21 +386,15 @@ class AimlessShooting(JobType):
             self.suffix += 1
             self.name = self.history.init_inpcrd[0] + '_' + str(self.suffix)
             if self.history.prod_results[-1] in [['fwd', 'bwd'], ['bwd', 'fwd']]:    # accepted move
-                if random.random() < 0.5:       # randomly select a trajectory (there are only ever two in aimless shooting)
-                    job_index = 0
-                else:
-                    job_index = 1
+                job_index = int(numpy.round(random.random()))    # randomly select a trajectory (there are only ever two in aimless shooting)
                 frame = random.randint(settings.min_dt, settings.max_dt)
-                new_point = self.get_frame(self, self.history.prod_trajs[-1][job_index], frame, settings)
+                new_point = self.get_frame(self.history.prod_trajs[-1][job_index], frame, settings)
                 self.history.init_inpcrd.append(new_point)
             else:   # not an accepted move
-                if settings.always_new and self.history.last_accepted:  # choose a new shooting move from last accepted trajectory
-                    if random.random() < 0.5:  # randomly select a trajectory (there are only ever two in aimless shooting)
-                        job_index = 0
-                    else:
-                        job_index = 1
+                if settings.always_new and self.history.last_accepted >= 0:  # choose a new shooting move from last accepted trajectory
+                    job_index = int(numpy.round(random.random()))  # randomly select a trajectory (there are only ever two in aimless shooting)
                     frame = random.randint(settings.min_dt, settings.max_dt)
-                    new_point = self.get_frame(self, self.history.prod_trajs[self.history.last_accepted][job_index], frame, settings)
+                    new_point = self.get_frame(self.history.prod_trajs[self.history.last_accepted][job_index], frame, settings)
                     self.history.init_inpcrd.append(new_point)
                 else:   # always_new = False or there have been no accepted moves in this thread yet
                     self.history.init_inpcrd.append(self.history.init_inpcrd[-1])   # begin next move from same point as last move
@@ -385,6 +409,9 @@ class CommittorAnalysis(JobType):
     """
     Adapter class for committor analysis
     """
+
+    def check_for_successful_step(self):    # todo: implement
+        pass
 
     def update_history(self, **kwargs):
         pass    # todo: implement
@@ -402,7 +429,7 @@ class CommittorAnalysis(JobType):
                     os.remove(frame_to_check)
 
         # if every job in this thread has status 'C'ompleted/'C'anceled...
-        if all(item == C for item in [self.get_status(job_index, settings) for job_index in range(len(self.jobids))]):
+        if all(item == 'C' for item in [self.get_status(job_index, settings) for job_index in range(len(self.jobids))]):
             return True
         else:
             return False
@@ -441,6 +468,9 @@ class EquilibriumPathSampling(JobType):
     Adapter class for equilibrium path sampling
     """
 
+    def check_for_successful_step(self):    # todo: implement
+        pass
+
     def update_history(self, **kwargs):
         pass    # todo: implement
 
@@ -449,7 +479,7 @@ class EquilibriumPathSampling(JobType):
 
     def gatekeeper(self, settings):
         # if every job in this thread has status 'C'ompleted/'C'anceled...
-        if all(item == C for item in [self.get_status(job_index, settings) for job_index in range(len(self.jobids))]):
+        if all(item == 'C' for item in [self.get_status(job_index, settings) for job_index in range(len(self.jobids))]):
             return True
         else:
             return False
