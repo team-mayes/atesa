@@ -88,8 +88,23 @@ class Tests(object):
         assert allthreads[0].current_type == ['init']   # results for .rst7 was found
         assert allthreads[0].history.init_coords == [['test_velocities.rst7_0_init.rst7', 'test_velocities.rst7_0_init_bwd.rst7']]
 
-    # def test_algorithm_aimless_shooting_prod(self):
-    #     """Tests algorithm with job_type = 'aimless_shooting' and thread.current_type = ['prod', 'prod']"""
+    def test_algorithm_aimless_shooting_prod_not_always_new_not_accepted(self):
+        """Tests algorithm with job_type = 'aimless_shooting', always_new = False and thread.current_type =
+        ['prod', 'prod'] for a move that isn't accepted"""
+        settings = configure('../../data/atesa.config')
+        settings.job_type = 'aimless_shooting'
+        settings.always_new = False
+        settings.initial_coordinates = ['test_velocities.rst7']
+        allthreads = atesa_v2.init_threads(settings)
+        allthreads[0].current_type = ['prod', 'prod']
+        allthreads[0].history.prod_results.append(['fwd', 'fwd'])      # not an accepted move
+        jobtype = factory.jobtype_factory(settings.job_type)
+        jobtype.algorithm(allthreads[0], allthreads, settings)
+        assert allthreads[0].history.init_inpcrd[-1] == allthreads[0].history.init_inpcrd[-2]
+
+    # def test_algorithm_aimless_shooting_prod_always_new_not_accepted(self):
+    #     """Tests algorithm with job_type = 'aimless_shooting', always_new = True and thread.current_type =
+    #     ['prod', 'prod'] for a move that isn't accepted"""
     #     settings = configure('../../data/atesa.config')
     #     settings.job_type = 'aimless_shooting'
     #     settings.always_new = False
@@ -99,7 +114,7 @@ class Tests(object):
     #     allthreads[0].history.prod_results.append(['fwd', 'fwd'])      # not an accepted move
     #     jobtype = factory.jobtype_factory(settings.job_type)
     #     jobtype.algorithm(allthreads[0], allthreads, settings)
-    #     assert allthreads[0].history.init_inpcrd == []
+    #     assert allthreads[0].history.init_inpcrd[-1] == allthreads[0].history.init_inpcrd[-2]
 
     @classmethod
     def teardown_method(self, method):
