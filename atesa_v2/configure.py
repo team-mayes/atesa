@@ -59,10 +59,6 @@ def configure(input_file):
     if settings.path_to_templates[-1] == '/':
         settings.path_to_templates = settings.path_to_templates[:-1]
 
-    # Make working directory if it does not exist
-    if not os.path.exists(settings.working_directory):
-        os.mkdir(settings.working_directory)
-
     # Set Jinja2 environment
     if os.path.exists(settings.path_to_templates):
         settings.env = Environment(loader=FileSystemLoader(settings.path_to_templates))

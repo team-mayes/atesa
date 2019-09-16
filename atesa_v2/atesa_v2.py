@@ -175,6 +175,9 @@ def main(allthreads, settings):
 if __name__ == "__main__":
     # Obtain settings namespace, initialize threads, and move promptly into main.
     settings = configure.configure(sys.argv[1])
+    # Make working directory if it does not exist
+    if not os.path.exists(settings.working_directory):
+        os.mkdir(settings.working_directory)
     os.chdir(settings.working_directory)
     allthreads = init_threads(settings)
     main(allthreads, settings)

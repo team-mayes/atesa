@@ -20,6 +20,8 @@ import filecmp
 class Tests(object):
     def setup_method(self, test_method):
         try:
+            if not os.path.exists('atesa_v2/tests/test_temp'):
+                os.mkdir('atesa_v2/tests/test_temp')
             os.chdir('atesa_v2/tests/test_temp')
         except FileNotFoundError:
             pass

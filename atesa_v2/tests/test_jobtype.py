@@ -19,6 +19,8 @@ import shutil
 class Tests(object):
     def setup_method(self, test_method):
         try:
+            if not os.path.exists('atesa_v2/tests/test_temp'):
+                os.mkdir('atesa_v2/tests/test_temp')
             os.chdir('atesa_v2/tests/test_temp')
         except FileNotFoundError:
             pass
@@ -109,12 +111,15 @@ class Tests(object):
     #     settings.job_type = 'aimless_shooting'
     #     settings.always_new = False
     #     settings.initial_coordinates = ['test_velocities.rst7']
+    #     settings.min_dt = -1
+    #     settings.max_dt = -1     # set these to the same value to guarantee which frame is chosen
     #     allthreads = atesa_v2.init_threads(settings)
     #     allthreads[0].current_type = ['prod', 'prod']
-    #     allthreads[0].history.prod_results.append(['fwd', 'fwd'])      # not an accepted move
+    #     allthreads[0].history.prod_results = [['bwd', 'fwd'], ['fwd', 'fwd']]      # accepted then not accepted
+    #     allthreads[0].history.prod_trajs = [['test.nc', 'test.nc'], ['not_a_real_file.nc', 'not_a_real_file.nc']]
     #     jobtype = factory.jobtype_factory(settings.job_type)
     #     jobtype.algorithm(allthreads[0], allthreads, settings)
-    #     assert allthreads[0].history.init_inpcrd[-1] == allthreads[0].history.init_inpcrd[-2]
+    #     assert filecmp.cmp(allthreads[0].history.init_inpcrd[-1], '../test_data/test.rst7') # test.rst7 is last frame of test.nc
 
     @classmethod
     def teardown_method(self, method):
