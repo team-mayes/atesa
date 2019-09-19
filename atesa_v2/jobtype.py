@@ -11,10 +11,7 @@ import random
 import pickle
 import argparse
 import numpy
-try:
-    import utilities
-except ModuleNotFoundError:
-    import atesa_v2.utilities as utilities
+from atesa_v2 import utilities
 
 class JobType(abc.ABC):
     """

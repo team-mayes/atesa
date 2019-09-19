@@ -1,5 +1,5 @@
 """
-atesa_v2.py
+main.py
 Version 2 of Aimless Transition Ensemble Sampling and Analysis refactors the code to make it portable, extensible, and 
 flexible.
 
@@ -10,19 +10,11 @@ to execute various interfaced/abstracted commands.
 import sys
 import pickle
 import pytraj
-try:
-    import factory
-except ModuleNotFoundError:
-    import atesa_v2.factory as factory
-try:
-    import process
-except ModuleNotFoundError:
-    import atesa_v2.process as process
-try:
-    import configure
-except ModuleNotFoundError:
-    import atesa_v2.configure as configure
-
+from atesa_v2 import configure
+from atesa_v2 import factory
+from atesa_v2 import process
+from atesa_v2 import interpret
+from atesa_v2 import utilities
 
 class Thread(object):
     """
@@ -171,13 +163,14 @@ def main(allthreads, settings):
     else:
         print('ATESA run exiting normally (all threads ended individually)')
 
-
 if __name__ == "__main__":
     # Obtain settings namespace, initialize threads, and move promptly into main.
     settings = configure.configure(sys.argv[1])
+
     # Make working directory if it does not exist
     if not os.path.exists(settings.working_directory):
         os.mkdir(settings.working_directory)
     os.chdir(settings.working_directory)
+
     allthreads = init_threads(settings)
     main(allthreads, settings)

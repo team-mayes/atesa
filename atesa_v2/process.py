@@ -6,10 +6,7 @@ Thread, passing them to a task manager to submit them, and updating the list of 
 import jinja2
 import os
 import sys
-try:
-    import factory
-except ModuleNotFoundError:
-    import atesa_v2.factory as factory
+from atesa_v2 import factory
 
 def process(thread, running, settings):
     """

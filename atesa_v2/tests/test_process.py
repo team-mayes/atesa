@@ -6,11 +6,11 @@ Unit and regression test for process.py.
 import atesa_v2
 import pytest
 import sys
-from atesa_v2.configure import configure
-from atesa_v2.process import process
 import pytraj
 import os
 import glob
+from atesa_v2.configure import configure
+from atesa_v2.process import process
 
 class Tests(object):
     def setup_method(self, test_method):

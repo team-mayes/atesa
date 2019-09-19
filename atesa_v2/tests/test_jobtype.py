@@ -5,16 +5,13 @@ Unit and regression test for jobtype.py.
 # Import package, test suite, and other packages as needed
 import atesa_v2
 import pytest
-from atesa_v2.configure import configure
-try:
-    import factory
-except ModuleNotFoundError:
-    import atesa_v2.factory as factory
 import sys
 import glob
 import os
 import filecmp
 import shutil
+from atesa_v2.configure import configure
+from atesa_v2 import factory
 
 class Tests(object):
     def setup_method(self, test_method):

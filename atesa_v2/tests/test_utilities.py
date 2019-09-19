@@ -4,18 +4,15 @@ Unit and regression test for utilities.py.
 
 # Import package, test suite, and other packages as needed
 import atesa_v2
-import pytest
-try:
-    import utilities
-except ModuleNotFoundError:
-    import atesa_v2.utilities as utilities
 import sys
-from atesa_v2.configure import configure
-from atesa_v2.process import process
+import pytest
 import pytraj
 import os
 import glob
 import filecmp
+from atesa_v2 import utilities
+from atesa_v2.configure import configure
+from atesa_v2 import process
 
 class Tests(object):
     def setup_method(self, test_method):

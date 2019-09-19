@@ -6,11 +6,11 @@ Unit and regression test for the atesa_v2 package.
 import atesa_v2
 import pytest
 import sys
-from atesa_v2.configure import configure
 import pytraj
 import os
 import glob
 import shutil
+from atesa_v2.configure import configure
 
 class Tests(object):
     def setup_method(self, test_method):
