@@ -3,4 +3,4 @@ include MANIFEST.in
 include versioneer.py
 
 graft atesa_v2
-global-exclude *.py[cod] __pycache__ *.so
+global-exclude *.py[cod] __pycache__ *.soinclude atesa_v2/_version.py

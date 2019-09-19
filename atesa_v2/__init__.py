@@ -22,6 +22,6 @@ from . import taskmanager
 # Handle versioneer
 from ._version import get_versions
 versions = get_versions()
-__version__ = versions['version']
+__version__ = get_versions()['version']
 __git_revision__ = versions['full-revisionid']
 del get_versions, versions
