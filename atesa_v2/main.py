@@ -8,6 +8,7 @@ to execute various interfaced/abstracted commands.
 """
 
 import sys
+import os
 import pickle
 import pytraj
 from atesa_v2 import configure

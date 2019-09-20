@@ -26,11 +26,6 @@ def configure(input_file):
 
     """
 
-    # Set some default values
-    DEBUG = False
-    path_to_input_files = sys.path[0] + '/atesa_v2/data/input_files'
-    path_to_templates = sys.path[0] + '/atesa_v2/data/templates'
-
     try:
         lines = open(input_file, 'r').readlines()
     except FileNotFoundError:
@@ -50,6 +45,14 @@ def configure(input_file):
     # Define settings namespace to store all these variables
     settings = argparse.Namespace()
     settings.__dict__.update(locals())
+
+    # Set some default values
+    if not settings.__contains__('DEBUG'):
+        settings.DEBUG = False
+    if not settings.__contains__('path_to_input_files'):
+        settings.path_to_input_files = sys.path[0] + '/data/input_files'
+    if not settings.__contains__('path_to_templates'):
+        settings.path_to_templates = sys.path[0] + '/data/templates/blahblah'
 
     # Format directories properly (no trailing '/')
     if settings.working_directory[-1] == '/':
