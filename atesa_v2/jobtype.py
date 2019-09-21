@@ -242,7 +242,7 @@ class AimlessShooting(JobType):
 
     def check_for_successful_step(self):
         if self.current_type == ['init']:   # requires that self.history.init_coords[-1] exists
-            if os.path.exists(self.history.init_coords[-1]):
+            if os.path.exists(self.history.init_coords[-1][0]):
                 return True
         if self.current_type == ['prod', 'prod']:   # requires that both files in self.history.prod_trajs[-1] exist
             if all([os.path.exists(self.history.prod_trajs[-1][i]) for i in range(2)]):
@@ -319,7 +319,7 @@ class AimlessShooting(JobType):
         return self.current_type, self.current_name
 
     def get_batch_template(self, type, settings):
-        if type in ['init', 'fwd', 'bwd']:
+        if type in ['init', 'prod']:
             templ = settings.md_engine + '_' + settings.batch_system + '.tpl'
             if os.path.exists(settings.path_to_templates + '/' + templ):
                 return templ
