@@ -169,7 +169,7 @@ if __name__ == "__main__":
     # Obtain settings namespace, initialize threads, and move promptly into main.
     settings = configure.configure(sys.argv[1]) #'data/atesa.config')
 
-    # Make working directory if it does not exist
+    # Make working directory if it does not exist   # todo: implement restart and overwriting of old working directory
     if not os.path.exists(settings.working_directory):
         os.mkdir(settings.working_directory)
 
