@@ -91,7 +91,7 @@ class AdaptSlurm(BatchSystem):
                                    close_fds=True, shell=True)
         output = process.stdout.read().decode()     # decode converts from bytes-like to string
         try:
-            output = output.split('\\n')[1]
+            output = output.split('\n')[1]
         except IndexError:
             output = 'C'        # job isn't in the queue; so it's 'C'omplete
         if output == 'PD':

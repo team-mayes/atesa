@@ -292,12 +292,13 @@ class AimlessShooting(JobType):
 
     def gatekeeper(self, settings):
         # Implement flexible length shooting...
-        for job_index in range(len(self.jobids)):
-            if self.get_status(job_index, settings) == 'R':     # if the job in question is running
-                frame_to_check = self.get_frame(self.history.prod_trajs[job_index], -1, settings)
-                if utilities.check_commit(frame_to_check, settings):  # if it has committed to a basin
-                    self.cancel_job(job_index, settings)        # cancel it
-                    os.remove(frame_to_check)
+        if self.current_type == ['prod', 'prod']:
+            for job_index in range(len(self.jobids)):
+                if self.get_status(job_index, settings) == 'R':     # if the job in question is running
+                    frame_to_check = self.get_frame(self.history.prod_trajs[job_index], -1, settings)
+                    if utilities.check_commit(frame_to_check, settings):  # if it has committed to a basin
+                        self.cancel_job(job_index, settings)        # cancel it
+                        os.remove(frame_to_check)
 
         # if every job in this thread has status 'C'ompleted/'C'anceled...
         if all(item == 'C' for item in [self.get_status(job_index, settings) for job_index in range(len(self.jobids))]):
