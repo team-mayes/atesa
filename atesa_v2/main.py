@@ -9,6 +9,7 @@ to execute various interfaced/abstracted commands.
 
 import sys
 import os
+import shutil
 import pickle
 import pytraj
 from atesa_v2 import configure
@@ -166,12 +167,19 @@ def main(allthreads, settings):
 
 if __name__ == "__main__":
     # Obtain settings namespace, initialize threads, and move promptly into main.
-    settings = configure.configure(sys.argv[1])
+    settings = configure.configure(sys.argv[1]) #'data/atesa.config')
 
     # Make working directory if it does not exist
     if not os.path.exists(settings.working_directory):
         os.mkdir(settings.working_directory)
+
+    # Build threads and move necessary files to working directory
+    allthreads = init_threads(settings)
+    for thread in allthreads:
+        shutil.copy(thread.history.init_inpcrd[0], settings.working_directory)
+    shutil.copy(settings.topology, settings.working_directory)
+
+    # Move to working directory
     os.chdir(settings.working_directory)
 
-    allthreads = init_threads(settings)
     main(allthreads, settings)

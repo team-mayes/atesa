@@ -89,7 +89,7 @@ class AdaptSlurm(BatchSystem):
         command = 'squeue -o %t --job ' + str(jobid)
         process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                                    close_fds=True, shell=True)
-        output = process.stdout.read()
+        output = process.stdout.read().decode()     # decode converts from bytes-like to string
         try:
             output = output.split('\\n')[1]
         except IndexError:
@@ -109,8 +109,8 @@ class AdaptSlurm(BatchSystem):
         command = 'scancel ' + str(jobid)
         process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                                    close_fds=True, shell=True)
-        output = process.stdout.read()
-        return str(output)
+        output = process.stdout.read().decode()     # decode converts from bytes-like to string
+        return output
     
     def get_submit_command(self):
         return 'sbatch {file}'
@@ -129,7 +129,7 @@ class AdaptPBS(BatchSystem):
         command = 'qstat ' + str(jobid)
         process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                                    close_fds=True, shell=True)
-        output = process.stdout.read()
+        output = process.stdout.read().decode()     # decode converts from bytes-like to string
         # Some PBS-specific error handling to help handle common issues by simply resubmitting as necessary.
         while 'Pbs Server is currently too busy to service this request. Please retry this request.' in str(output):
             process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
@@ -148,12 +148,12 @@ class AdaptPBS(BatchSystem):
         command = 'qdel ' + str(jobid)
         process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                                    close_fds=True, shell=True)
-        output = process.stdout.read()
+        output = process.stdout.read().decode()     # decode converts from bytes-like to string
         while 'Pbs Server is currently too busy to service this request. Please retry this request.' in str(output):
             process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                                        close_fds=True, shell=True)
             output = process.stdout.read()
-        return str(output)
+        return output
 
     def get_submit_command(self):
         return 'qsub {file}'
