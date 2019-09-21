@@ -32,7 +32,8 @@ class MDEngine(abc.ABC):
         Returns
         -------
         last_frame : str
-            Name of .rst7 format coordinate file corresponding to desired frame of trajectory
+            Name of .rst7 format coordinate file corresponding to desired frame of trajectory, if it exists; an empty
+            string otherwise
 
         """
         pass
@@ -46,6 +47,8 @@ class AdaptAmber(MDEngine):
 
     def get_frame(self, trajectory, frame, settings):
         new_restart_name = trajectory + '_frame_' + str(frame) + '.rst7'
+        if not os.path.exists(trajectory):
+            return ''   # since it's possible to call this before the trajectory file has been initialized
         traj = pytraj.iterload(trajectory, settings.topology)
         try:
             pytraj.write_traj(new_restart_name, traj, format='rst7', frame_indices=[frame], options='multi', overwrite=True)
