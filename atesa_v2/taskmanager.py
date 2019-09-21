@@ -5,6 +5,7 @@ TaskManager and implements its abstract methods.
 
 import abc
 import subprocess
+import re
 
 class TaskManager(abc.ABC):
     """
@@ -58,4 +59,10 @@ class AdaptSimple(TaskManager):
 
         process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                                    close_fds=True, shell=True)
-        return process.stdout.read()
+        output = process.stdout.read().decode()
+
+        # Use a regular expression to extract the jobid from this string
+        pattern = re.compile('[0-9]+')
+        return re.findall(pattern, output)[0]
+
+
