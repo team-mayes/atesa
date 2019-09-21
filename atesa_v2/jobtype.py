@@ -295,7 +295,7 @@ class AimlessShooting(JobType):
         if self.current_type == ['prod', 'prod']:
             for job_index in range(len(self.jobids)):
                 if self.get_status(job_index, settings) == 'R':     # if the job in question is running
-                    frame_to_check = self.get_frame(self.history.prod_trajs[job_index], -1, settings)
+                    frame_to_check = self.get_frame(self.history.prod_trajs[-1][job_index], -1, settings)
                     if utilities.check_commit(frame_to_check, settings):  # if it has committed to a basin
                         self.cancel_job(job_index, settings)        # cancel it
                         os.remove(frame_to_check)
