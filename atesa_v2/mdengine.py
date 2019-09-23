@@ -47,7 +47,7 @@ class AdaptAmber(MDEngine):
 
     def get_frame(self, trajectory, frame, settings):
         new_restart_name = trajectory + '_frame_' + str(frame) + '.rst7'
-        if not os.path.exists(trajectory):
+        if not os.path.exists(trajectory):  # todo: figure out how to catch if the file exists but is empty
             return ''   # since it's possible to call this before the trajectory file has been initialized
         traj = pytraj.iterload(trajectory, settings.topology)
         try:
