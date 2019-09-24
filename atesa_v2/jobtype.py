@@ -282,9 +282,9 @@ class AimlessShooting(JobType):
 
     def get_inpcrd(self):
         if self.current_type == ['init']:
-            return self.history.init_inpcrd
+            return [self.history.init_inpcrd[-1]]   # should return a list, but history.init_inpcrd contains strings
         elif self.current_type == ['prod', 'prod']:
-            return self.history.init_coords[-1]
+            return self.history.init_coords[-1]     # should return a list, and history.init_coords contains lists
         else:
             pickle.dump(allthreads, open('debug.pkl', 'wb'), protocol=2)
             raise ValueError('invalid thread.current_type value: ' + str(self.current_type) + ' for thread: ' + self.history.init_inpcrd[0] +
@@ -349,19 +349,27 @@ class AimlessShooting(JobType):
             if not os.path.exists(settings.working_directory + '/as.out'):
                 open(settings.working_directory + '/as.out', 'w').close()
 
-            # Write CVs to as.out
-            open(settings.working_directory + '/as.out', 'a').write(utilities.get_cvs(self.history.init_coords[-1][0], settings) + '\n')
-
             # Update current_results, total and accepted move counts, and status.txt
             self.history.prod_results.append([])
             for job_index in range(len(self.current_type)):
                 frame_to_check = self.get_frame(self.history.prod_trajs[-1][job_index], -1, settings)
                 self.history.prod_results[-1].append(utilities.check_commit(frame_to_check, settings))
-                os.remove(frame_to_check)
+                # os.remove(frame_to_check)
+                print(self.history.prod_results)
             self.total_moves += 1
             if self.history.prod_results[-1] in [['fwd', 'bwd'], ['bwd', 'fwd']]:
                 self.history.last_accepted = int(len(self.history.prod_trajs) - 1)   # new index of last accepted move
                 self.accept_moves += 1
+
+            # Write CVs to as.out
+            if self.history.prod_results[-1][0] in ['fwd', 'bwd']:
+                if self.history.prod_results[-1][0] == 'fwd':
+                    this_basin = 'B'
+                else:   # 'bwd'
+                    this_basin = 'A'
+                open(settings.working_directory + '/as.out', 'a').write(this_basin + ' <- ')
+                open(settings.working_directory + '/as.out', 'a').write(utilities.get_cvs(self.history.init_coords[-1][0], settings) + '\n')
+                open(settings.working_directory + '/as.out', 'a').close()
 
             with open('status.txt', 'w') as file:
                 for thread in allthreads:
@@ -371,7 +379,7 @@ class AimlessShooting(JobType):
                         acceptance_percentage = '0%'
                     file.write(thread.history.init_inpcrd[0] + ' acceptance ratio: ' + str(thread.accept_moves) +
                                '/' + str(thread.total_moves) + ', or ' + acceptance_percentage + '\n')
-                    file.write('  Status: ' + thread.status)
+                    file.write('  Status: ' + thread.status + '\n')
                 file.close()
 
         # Write updated restart.pkl
@@ -383,7 +391,7 @@ class AimlessShooting(JobType):
         if self.current_type == ['prod', 'prod']:
             self.suffix += 1
             self.name = self.history.init_inpcrd[0] + '_' + str(self.suffix)
-            if self.history.prod_results[-1] in [['fwd', 'bwd'], ['bwd', 'fwd']]:    # accepted move
+            if self.history.prod_results[-1] in [['fwd', 'bwd'], ['bwd', 'fwd']]:    # accepted move    # todo: apparently not working? Accepted move started from same point as previous move in testing.
                 job_index = int(numpy.round(random.random()))    # randomly select a trajectory (there are only ever two in aimless shooting)
                 frame = random.randint(settings.min_dt, settings.max_dt)
                 new_point = self.get_frame(self.history.prod_trajs[-1][job_index], frame, settings)

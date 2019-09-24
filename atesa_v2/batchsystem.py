@@ -96,7 +96,7 @@ class AdaptSlurm(BatchSystem):
             output = 'C'        # job isn't in the queue; so it's 'C'omplete
         if output == 'PD':
             output = 'Q'
-        elif output == 'CG' or 'Invalid job id' in output:  # 'Invalid job id' returned when job is finished in Slurm
+        elif output == 'CG' or 'Invalid job id' in output or not output:  # 'Invalid job id' or empty output returned when job is finished in Slurm
             output = 'C'
         elif output == 'R':
             output = 'R'        # just to be really explicit

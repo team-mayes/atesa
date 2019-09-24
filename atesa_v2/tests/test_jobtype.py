@@ -203,7 +203,7 @@ class Tests(object):
         settings.job_type = 'aimless_shooting'
         allthreads = atesa_v2.init_threads(settings)
         allthreads[0].current_type = ['init']
-        allthreads[0].history.init_coords = ['some_init_coords.rst7']
+        allthreads[0].history.init_coords = [['some_init_coords.rst7']]
         jobtype = factory.jobtype_factory(settings.job_type)
         assert jobtype.check_for_successful_step(allthreads[0]) == False    # necessary file does not yet exist
         shutil.copy('../test_data/test.rst7', 'some_init_coords.rst7')      # make the necessary file

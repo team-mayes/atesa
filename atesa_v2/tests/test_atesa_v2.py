@@ -40,7 +40,7 @@ class Tests(object):
         config_lines = open('atesa.config', 'r').readlines()
         for line in config_lines:
             if 'working_directory' in line:
-                line = 'working_directory = \'/foo/bar/\''
+                line = 'working_directory = \'/foo/bar/\'\n'
             open('atesa_temp.config', 'a').write(line)
         settings = configure('atesa_temp.config')
         assert settings.working_directory == '/foo/bar'
