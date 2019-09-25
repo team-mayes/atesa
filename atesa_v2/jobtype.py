@@ -22,6 +22,29 @@ class JobType(abc.ABC):
     """
 
     @abc.abstractmethod
+    def get_initial_coordinates(self, settings):
+        """
+        Obtain list of initial coordinate files.
+
+        At its most simple, implementations of this method can simply return settings.initial_coordinates.
+
+        Parameters
+        ----------
+        self : Thread
+            Methods in the JobType abstract base class are intended to be invoked by Thread objects
+        settings : argparse.Namespace
+            Settings namespace object
+
+        Returns
+        -------
+        initial_coordinates : list
+            List of strings naming the applicable initial coordinate files
+
+        """
+
+        pass
+
+    @abc.abstractmethod
     def check_for_successful_step(self):
         """
         Check whether a just-completed step was successful, as defined by whether the update_results and
@@ -240,6 +263,9 @@ class AimlessShooting(JobType):
     Adapter class for aimless shooting
     """
 
+    def get_initial_coordinates(self, settings):
+        return settings.initial_coordinates
+
     def check_for_successful_step(self):
         if self.current_type == ['init']:   # requires that self.history.init_coords[-1] exists
             if os.path.exists(self.history.init_coords[-1][0]):
@@ -253,31 +279,29 @@ class AimlessShooting(JobType):
         if 'initialize' in kwargs.keys():
             if kwargs['initialize'] == True:
                 self.history = argparse.Namespace()
-                self.history.init_inpcrd = []    # list of strings, inpcrd for init steps; updated by algorithm
+                self.history.init_inpcrd = []    # list of strings, inpcrd for init steps; initialized by main.init_threads and updated by algorithm
                 self.history.init_coords = []    # list of 2-length lists of strings, init [_fwd.rst7, _bwd.rst7]; updated by update_history and then in algorithm
                 self.history.prod_trajs = []     # list of 2-length lists of strings, [_fwd.nc, _bwd.nc]; updated by update_history
                 self.history.prod_results = []   # list of 2-length lists of strings ['fwd'/'bwd'/'', 'fwd'/'bwd'/'']; updated by update_results
                 self.history.last_accepted = -1  # int, index of last accepted prod_trajs entry; updated by update_results (-1 means none yet accepted)
+            if 'inpcrd' in kwargs.keys():
+                self.history.init_inpcrd.append(kwargs['inpcrd'])
         else:   # self.history should already exist
             if self.current_type == ['init']:     # update init attributes
                 if 'rst' in kwargs.keys():
                     if len(self.history.init_coords) < self.suffix + 1:
                         self.history.init_coords.append([])
                         if len(self.history.init_coords) < self.suffix + 1:
-                            pickle.dump(allthreads, open('debug.pkl', 'wb'), protocol=2)
                             raise IndexError('history.init_coords is the wrong length for thread: ' + self.history.init_inpcrd[0] +
-                                             '\nexpected length ' + str(self.suffix) + ''
-                                             '\ndumped all threads to debug.pkl')
+                                             '\nexpected length ' + str(self.suffix))
                     self.history.init_coords[self.suffix].append(kwargs['rst'])
             elif self.current_type == ['prod', 'prod']:
                 if 'nc' in kwargs.keys():
                     if len(self.history.prod_trajs) < self.suffix + 1:
                         self.history.prod_trajs.append([])
                         if len(self.history.prod_trajs) < self.suffix + 1:
-                            pickle.dump(allthreads, open('debug.pkl', 'wb'), protocol=2)
                             raise IndexError('history.prod_trajs is the wrong length for thread: ' + self.history.init_inpcrd[0] +
-                                             '\nexpected length ' + str(self.suffix) + ''
-                                             '\ndumped all threads to debug.pkl')
+                                             '\nexpected length ' + str(self.suffix))
                     self.history.prod_trajs[self.suffix].append(kwargs['nc'])
 
     def get_inpcrd(self):
@@ -286,9 +310,7 @@ class AimlessShooting(JobType):
         elif self.current_type == ['prod', 'prod']:
             return self.history.init_coords[-1]     # should return a list, and history.init_coords contains lists
         else:
-            pickle.dump(allthreads, open('debug.pkl', 'wb'), protocol=2)
-            raise ValueError('invalid thread.current_type value: ' + str(self.current_type) + ' for thread: ' + self.history.init_inpcrd[0] +
-                                             '\ndumped all threads to debug.pkl')
+            raise ValueError('invalid thread.current_type value: ' + str(self.current_type) + ' for thread: ' + self.history.init_inpcrd[0])
 
     def gatekeeper(self, settings):
         # Implement flexible length shooting...
@@ -354,8 +376,7 @@ class AimlessShooting(JobType):
             for job_index in range(len(self.current_type)):
                 frame_to_check = self.get_frame(self.history.prod_trajs[-1][job_index], -1, settings)
                 self.history.prod_results[-1].append(utilities.check_commit(frame_to_check, settings))
-                # os.remove(frame_to_check)
-                print(self.history.prod_results)
+                os.remove(frame_to_check)
             self.total_moves += 1
             if self.history.prod_results[-1] in [['fwd', 'bwd'], ['bwd', 'fwd']]:
                 self.history.last_accepted = int(len(self.history.prod_trajs) - 1)   # new index of last accepted move
@@ -383,7 +404,7 @@ class AimlessShooting(JobType):
                 file.close()
 
         # Write updated restart.pkl
-        pickle.dump(allthreads, open('restart.pkl', 'wb'), protocol=2)  # todo: implement restarting from this file
+        pickle.dump(allthreads, open('restart.pkl', 'wb'), protocol=2)
 
     def algorithm(self, allthreads, settings):
         # In aimless shooting, algorithm should decide whether or not a new shooting point is needed, obtain it if so,
@@ -391,7 +412,7 @@ class AimlessShooting(JobType):
         if self.current_type == ['prod', 'prod']:
             self.suffix += 1
             self.name = self.history.init_inpcrd[0] + '_' + str(self.suffix)
-            if self.history.prod_results[-1] in [['fwd', 'bwd'], ['bwd', 'fwd']]:    # accepted move    # todo: apparently not working? Accepted move started from same point as previous move in testing.
+            if self.history.prod_results[-1] in [['fwd', 'bwd'], ['bwd', 'fwd']]:    # accepted move
                 job_index = int(numpy.round(random.random()))    # randomly select a trajectory (there are only ever two in aimless shooting)
                 frame = random.randint(settings.min_dt, settings.max_dt)
                 new_point = self.get_frame(self.history.prod_trajs[-1][job_index], frame, settings)
@@ -416,21 +437,55 @@ class CommittorAnalysis(JobType):
     Adapter class for committor analysis
     """
 
-    def check_for_successful_step(self):    # todo: implement
-        pass
+    def get_initial_coordinates(self, settings):
+        if settings.committor_analysis_use_rc_out:
+            if not os.path.exists(settings.path_to_rc_out):
+                raise FileNotFoundError('committor_analysis_use_rc_out = True, but cannot find RC output file at '
+                                        'specified path: ' + settings.path_to_rc_out)
+            eligible = []       # initialize list of eligible shooting points for committor analysis
+            eligible_rcs = []   # another list holding corresponding rc values
+            lines = open(settings.path_to_rc_out, 'r').readlines()
+            open(settings.path_to_rc_out, 'r').close()
+            for line in lines:
+                splitline = line.split(': ')             # split line into list [shooting point filename, rc value]
+                if abs(float(splitline[1])) <= settings.rc_threshold:
+                    eligible.append(splitline[0])
+                    eligible_rcs.append(splitline[1])
+            if len(eligible) == 0:
+                raise RuntimeError('attempted committor analysis, but couldn\'t find any shooting points with reaction '
+                                   'coordinate values within ' + str(settings.rc_threshold) + ' of 0 in the RC output '
+                                   'file: ' + settings.path_to_rc_out)
+            return eligible
+        else:
+            try:
+                return settings.initial_coordinates
+            except AttributeError:
+                raise RuntimeError('committor_analysis_use_rc_out = False, but initial_coordinates was not provided.')
+
+    def check_for_successful_step(self):
+        return True     # nothing to check for in committor analysis
 
     def update_history(self, **kwargs):
-        pass    # todo: implement
+        if 'initialize' in kwargs.keys():
+            if kwargs['initialize'] == True:
+                self.history = argparse.Namespace()
+                self.history.prod_inpcrd = []    # one-length list of strings; set by main.init_threads
+                self.history.prod_trajs = []     # list of strings; updated by update_history
+                self.history.prod_results = []   # list of strings, 'fwd'/'bwd'/''; updated by update_results
+            if 'inpcrd' in kwargs.keys():
+                self.history.prod_inpcrd.append(kwargs['inpcrd'])
+        else:   # self.history should already exist
+            if 'nc' in kwargs.keys():
+                self.history.prod_trajs.append(kwargs['nc'])
 
-    def get_inpcrd(self):   # todo: implement
-        pass
+    def get_inpcrd(self):
+        return [self.history.prod_inpcrd[0] for null in range(len(self.current_type))]
 
     def gatekeeper(self, settings):
-        # Implement flexible length shooting...
         for job_index in range(len(self.jobids)):
             if self.get_status(job_index, settings) == 'R':     # if the job in question is running
-                frame_to_check = self.get_frame(self.traj_files[job_index], -1, settings)
-                if utilities.check_commit(frame_to_check, settings):  # if it has committed to a basin
+                frame_to_check = self.get_frame(self.history.prod_trajs[-1][job_index], -1, settings)
+                if frame_to_check and utilities.check_commit(frame_to_check, settings):  # if it has committed to a basin
                     self.cancel_job(job_index, settings)        # cancel it
                     os.remove(frame_to_check)
 
@@ -441,12 +496,8 @@ class CommittorAnalysis(JobType):
             return False
 
     def get_next_step(self, settings):
-        if self.current_type == []:
-            self.current_type = ['prod' for null in range(settings.committor_analysis_n)]
-            self.current_name = [str(int(i)) for i in range(settings.committor_analysis_n)]
-        else:
-            self.current_type = 'terminate'
-            self.current_name = []
+        self.current_type = ['prod' for null in range(settings.committor_analysis_n)]
+        self.current_name = [str(int(i)) for i in range(settings.committor_analysis_n)]
         return self.current_type, self.current_name
 
     def get_batch_template(self, type, settings):
@@ -459,20 +510,43 @@ class CommittorAnalysis(JobType):
         else:
             raise ValueError('unexpected batch template type for committor_analysis: ' + str(type))
 
-    def check_termination(self, allthreads, settings):  # todo: implement
-        pass
+    def check_termination(self, allthreads, settings):
+        self.terminated = True  # committor analysis threads always terminate after one step
+        return False            # no global termination criterion exists for committor analysis
 
-    def update_results(self, allthreads, settings):     # todo: implement
-        pass
+    def update_results(self, allthreads, settings):
+        # Initialize committor_analysis.out if not already extant
+        if not os.path.exists('committor_analysis.out'):
+            open('committor_analysis.out', 'w').write('Committed to Forward Basin / Total Committed to Either Basin')
+            open('committor_analysis.out', 'w').close()
 
-    def algorithm(self, allthreads, settings):          # todo: implement
-        pass
+        # Update current_results
+        for job_index in range(len(self.current_type)):
+            frame_to_check = self.get_frame(self.history.prod_trajs[job_index], -1, settings)
+            self.history.prod_results.append(utilities.check_commit(frame_to_check, settings))
+            os.remove(frame_to_check)
+
+        # Write results to committor_analysis.out
+        fwds = 0
+        bwds = 0
+        for result in self.history.prod_results:
+            if result == 'fwd':
+                fwds += 1
+            elif result == 'bwd':
+                bwds += 1
+        open('committor_analysis.out', 'a').write(str(int(fwds)) + '/' + str(int(fwds + bwds)) + '\n')
+
+    def algorithm(self, allthreads, settings):
+        pass    # nothing to set because there is no next step
 
 
 class EquilibriumPathSampling(JobType):
     """
     Adapter class for equilibrium path sampling
     """
+
+    def get_initial_coordinates(self, settings):
+        return settings.initial_coordinates
 
     def check_for_successful_step(self):    # todo: implement
         pass

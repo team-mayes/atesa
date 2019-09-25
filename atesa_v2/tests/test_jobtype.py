@@ -223,6 +223,139 @@ class Tests(object):
         shutil.copy('../test_data/test.nc', 'some_prod_traj_2.nc')          # make other necessary file
         assert jobtype.check_for_successful_step(allthreads[0]) == True     # both files exist
 
+    def test_check_termination_committor_analysis(self):
+        """Tests check_termination with job_type = 'committor_analysis'"""
+        settings = configure('../../data/atesa.config')
+        settings.job_type = 'committor_analysis'
+        settings.committor_analysis_use_rc_out = False
+        allthreads = atesa_v2.init_threads(settings)
+        allthreads[0].current_type = ['prod', 'prod', 'prod']
+        jobtype = factory.jobtype_factory(settings.job_type)
+        assert jobtype.check_termination(allthreads[0], allthreads, settings) == False
+        assert allthreads[0].terminated == True
+
+    def test_update_results_committor_analysis(self):
+        """Tests update_results with job_type = 'committor_analysis'"""
+        settings = configure('../../data/atesa.config')
+        settings.job_type = 'committor_analysis'
+        settings.initial_coordinates = ['../test_data/test_velocities.rst7', '../test_data/test_velocities.rst7']
+        settings.committor_analysis_use_rc_out = False
+        settings.topology = '../test_data/test.prmtop'
+        settings.commit_fwd = [[1, 2], [3, 4], [1.5, 2.0], ['lt', 'gt']]
+        settings.commit_bwd = [[1, 2], [3, 4], [2.0, 1.5], ['gt', 'lt']]
+        allthreads = atesa_v2.init_threads(settings)
+        allthreads[0].current_type = ['prod', 'prod', 'prod']
+        allthreads[0].history.prod_trajs = ['../test_data/test.nc', '../test_data/test.nc', '../test_data/test.nc']
+        jobtype = factory.jobtype_factory(settings.job_type)
+        jobtype.update_results(allthreads[0], allthreads, settings)
+        assert os.path.exists('committor_analysis.out')
+        assert allthreads[0].history.prod_results == ['', '', '']
+
+    def test_update_history_committor_analysis(self):
+        """Tests update_history with job_type = 'committor_analysis'"""
+        settings = configure('../../data/atesa.config')
+        settings.job_type = 'committor_analysis'
+        settings.initial_coordinates = ['test_velocities.rst7']
+        settings.committor_analysis_use_rc_out = False
+        allthreads = atesa_v2.init_threads(settings)
+        allthreads[0].current_type = ['prod', 'prod', 'prod']
+        these_kwargs = {'nc': 'fakey_mcfakename.nc'}
+        jobtype = factory.jobtype_factory(settings.job_type)
+        jobtype.update_history(allthreads[0], **these_kwargs)
+        assert allthreads[0].history.prod_trajs == ['fakey_mcfakename.nc']
+        jobtype.update_history(allthreads[0], **these_kwargs)
+        assert allthreads[0].history.prod_trajs == ['fakey_mcfakename.nc', 'fakey_mcfakename.nc']
+
+    def test_get_inpcrd_committor_analysis(self):
+        """Tests get_inpcrd with job_type = 'committor_analysis'"""
+        settings = configure('../../data/atesa.config')
+        settings.job_type = 'committor_analysis'
+        settings.initial_coordinates = ['test_velocities.rst7']
+        settings.committor_analysis_use_rc_out = False
+        allthreads = atesa_v2.init_threads(settings)
+        allthreads[0].current_type = ['prod', 'prod', 'prod']
+        allthreads[0].history.prod_inpcrd = ['not_a_real_file_at_all_init.rst7']
+        jobtype = factory.jobtype_factory(settings.job_type)
+        assert jobtype.get_inpcrd(allthreads[0]) == ['not_a_real_file_at_all_init.rst7', 'not_a_real_file_at_all_init.rst7', 'not_a_real_file_at_all_init.rst7']
+
+    def test_get_initial_coordinates_committor_analysis_rc_out(self):
+        """Tests get_initial_coordinates with job_type = 'committor_analysis' using an RC out file"""
+        settings = configure('../../data/atesa.config')
+        settings.job_type = 'committor_analysis'
+        settings.committor_analysis_use_rc_out = True
+        settings.path_to_rc_out = '../test_data/rc_eval.out'
+        settings.rc_threshold = 0.002
+        allthreads = atesa_v2.init_threads(settings)
+        jobtype = factory.jobtype_factory(settings.job_type)
+        assert jobtype.get_initial_coordinates(allthreads[0], settings) == ['1.1_1.2_2.2_2.6.rst7_2_10_init_fwd.rst_2_1_2.rst7_5_init_fwd.rst', '1.1_1.2_2.2_2.6.rst7_2_10_init_fwd.rst_4_58_3.rst7_4_init_fwd.rst']
+
+    def test_get_initial_coordinates_committor_analysis_rc_out_does_not_exist(self):
+        """Tests get_initial_coordinates with job_type = 'committor_analysis' using an RC out file that does not exist"""
+        settings = configure('../../data/atesa.config')
+        settings.job_type = 'committor_analysis'
+        settings.committor_analysis_use_rc_out = True
+        settings.path_to_rc_out = '../test_data/rc_eval_FAKE.out'
+        settings.rc_threshold = 0.002
+        jobtype = factory.jobtype_factory(settings.job_type)
+        with pytest.raises(FileNotFoundError):
+            allthreads = atesa_v2.init_threads(settings)
+
+    def test_get_initial_coordinates_committor_analysis_rc_out_no_shooting_points(self):
+        """Tests get_initial_coordinates with job_type = 'committor_analysis' using an RC out file containing no
+        shooting points within the threshold"""
+        settings = configure('../../data/atesa.config')
+        settings.job_type = 'committor_analysis'
+        settings.committor_analysis_use_rc_out = True
+        settings.path_to_rc_out = '../test_data/rc_eval.out'
+        settings.rc_threshold = 0.0002
+        jobtype = factory.jobtype_factory(settings.job_type)
+        with pytest.raises(RuntimeError):
+            allthreads = atesa_v2.init_threads(settings)
+
+    def test_gatekeep_committor_analysis(self):
+        """Tests gatekeep with job_type = 'committor_analysis'"""
+        settings = configure('../../data/atesa.config')
+        settings.job_type = 'committor_analysis'
+        settings.DEBUG = True
+        settings.committor_analysis_use_rc_out = False
+        allthreads = atesa_v2.init_threads(settings)
+        allthreads[0].jobids = ['123456']
+        jobtype = factory.jobtype_factory(settings.job_type)
+        assert jobtype.gatekeeper(allthreads[0], settings) == True
+
+    def test_check_for_successful_step_committor_analysis(self):
+        """Tests check_for_successful_step with job_type = 'committor_analysis'"""
+        settings = configure('../../data/atesa.config')
+        settings.job_type = 'committor_analysis'
+        settings.committor_analysis_use_rc_out = False
+        allthreads = atesa_v2.init_threads(settings)
+        jobtype = factory.jobtype_factory(settings.job_type)
+        assert jobtype.check_for_successful_step(allthreads[0]) == True
+
+    def test_get_next_step_committor_analysis(self):
+        """Tests get_next_step with job_type = 'committor_analysis'"""
+        settings = configure('../../data/atesa.config')
+        settings.job_type = 'committor_analysis'
+        settings.committor_analysis_use_rc_out = False
+        settings.committor_analysis_n = 3
+        allthreads = atesa_v2.init_threads(settings)
+        jobtype = factory.jobtype_factory(settings.job_type)
+        this_types, this_names = jobtype.get_next_step(allthreads[0], settings)
+        assert this_types == ['prod', 'prod', 'prod']
+        assert this_names == ['0', '1', '2']
+
+    def test_get_batch_template_committor_analysis(self):
+        """Tests get_next_step with job_type = 'committor_analysis'"""
+        settings = configure('../../data/atesa.config')
+        settings.job_type = 'committor_analysis'
+        settings.md_engine = 'amber'
+        settings.batch_system = 'slurm'
+        settings.committor_analysis_use_rc_out = False
+        settings.path_to_templates = sys.path[0] + '/atesa_v2/data/templates'
+        allthreads = atesa_v2.init_threads(settings)
+        jobtype = factory.jobtype_factory(settings.job_type)
+        assert jobtype.get_batch_template(allthreads[0], 'prod', settings) == 'amber_slurm.tpl'
+
     @classmethod
     def teardown_method(self, method):
         "Runs at end of class"

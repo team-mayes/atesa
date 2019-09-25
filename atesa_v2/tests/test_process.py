@@ -20,23 +20,15 @@ class Tests(object):
             os.chdir('atesa_v2/tests/test_temp')
         except FileNotFoundError:
             pass
-    
-    def test_process_already_terminated(self):
+
+    def test_process_to_be_terminated(self):
         """Tests process.py for a thread with terminated = True"""
         settings = configure('../../data/atesa.config')
         allthreads = atesa_v2.init_threads(settings)
         allthreads[0].terminated = True
         running = [allthreads[0]]
-        assert process(allthreads[0], running, settings) == []
-
-    def test_process_to_be_terminated(self):
-        """Tests process.py for a thread with terminated = False and current_type = 'terminate'"""
-        settings = configure('../../data/atesa.config')
-        allthreads = atesa_v2.init_threads(settings)
-        allthreads[0].terminated = False
-        allthreads[0].current_type = 'terminate'
-        running = [allthreads[0]]
-        assert process(allthreads[0], running, settings) == []
+        process(allthreads[0], running, settings)
+        assert running == []
 
     def test_process_to_submit(self):
         """Tests process.py for a thread that should be submitted"""

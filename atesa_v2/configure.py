@@ -26,6 +26,7 @@ def configure(input_file):
 
     """
 
+    # Import config file line-by-line using exec()
     try:
         lines = open(input_file, 'r').readlines()
     except FileNotFoundError:
@@ -52,7 +53,7 @@ def configure(input_file):
     if not settings.__contains__('path_to_input_files'):
         settings.path_to_input_files = sys.path[0] + '/data/input_files'
     if not settings.__contains__('path_to_templates'):
-        settings.path_to_templates = sys.path[0] + '/data/templates/blahblah'
+        settings.path_to_templates = sys.path[0] + '/data/templates'
 
     # Format directories properly (no trailing '/')
     if settings.working_directory[-1] == '/':
@@ -61,6 +62,11 @@ def configure(input_file):
         settings.path_to_input_files = settings.path_to_input_files[:-1]
     if settings.path_to_templates[-1] == '/':
         settings.path_to_templates = settings.path_to_templates[:-1]
+    try:    # this setting is optional
+        if settings.path_to_rc_out[-1] == '/':
+            settings.path_to_rc_out = settings.path_to_rc_out[:-1]
+    except AttributeError:
+        pass
 
     # Set Jinja2 environment
     if os.path.exists(settings.path_to_templates):

@@ -101,8 +101,8 @@ def init_threads(settings):
 
     """
 
-    if settings.restart == True:
-        allthreads = pickle.load('restart.pkl')
+    if settings.restart:
+        allthreads = pickle.load(settings.working_directory + '/restart.pkl')
         if settings.restart_terminated_threads:
             for thread in allthreads:
                 thread.terminated = False
@@ -111,13 +111,12 @@ def init_threads(settings):
     # If not restart:
     allthreads = []
     jobtype = factory.jobtype_factory(settings.job_type)
-    for file in settings.initial_coordinates:
+    for file in jobtype.get_initial_coordinates(None, settings):
         thread = Thread()
-        jobtype.update_history(thread, **{'initialize': True})
-        thread.history.init_inpcrd.append(file)
+        jobtype.update_history(thread, **{'initialize': True, 'inpcrd': file})
         thread.topology = settings.topology
         thread.status = 'fresh thread'
-        thread.name = thread.history.init_inpcrd[0] + '_' + str(thread.suffix)
+        thread.name = file + '_' + str(thread.suffix)
         allthreads.append(thread)
 
     return allthreads
@@ -169,9 +168,21 @@ if __name__ == "__main__":
     # Obtain settings namespace, initialize threads, and move promptly into main.
     settings = configure.configure(sys.argv[1]) #'data/atesa.config')
 
-    # Make working directory if it does not exist   # todo: implement restart and overwriting of old working directory
-    if not os.path.exists(settings.working_directory):
-        os.mkdir(settings.working_directory)
+    # Make working directory if it does not exist, handling overwrite and restart as needed
+    if os.path.exists(settings.working_directory):
+        if settings.overwrite:
+            sys.path.remove(settings.working_directory)
+            os.mkdir(settings.working_directory)
+        elif not settings.restart:
+            raise RuntimeError('Working directory ' + settings.working_directory + ' already exists, but overwrite = '
+                               'False and restart = False. Either change one of these two settings or choose a '
+                               'different working directory.')
+    else:
+        if not settings.restart:
+            os.mkdir(settings.working_directory)
+        else:
+            raise RuntimeError('Working directory ' + settings.working_directory + ' does not yet exist, but restart = '
+                               'True.')
 
     # Build threads and move necessary files to working directory
     allthreads = init_threads(settings)
@@ -179,7 +190,7 @@ if __name__ == "__main__":
         shutil.copy(thread.history.init_inpcrd[0], settings.working_directory)
     shutil.copy(settings.topology, settings.working_directory)
 
-    # Move to working directory
+    # Move runtime to working directory
     os.chdir(settings.working_directory)
 
     main(allthreads, settings)

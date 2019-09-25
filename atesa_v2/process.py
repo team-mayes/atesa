@@ -32,8 +32,6 @@ def process(thread, running, settings):
     ### Determine next step and, if appropriate, build corresponding list of batch files ###
     thread.current_type, thread.current_name = thread.get_next_step(settings)
 
-    if thread.current_type == 'terminate':
-        thread.terminated = True
     if thread.terminated:
         if thread in running:
             running.remove(thread)
@@ -61,7 +59,7 @@ def process(thread, running, settings):
                          'inpcrd': this_inpcrd[job_index],
                          'rst': thread.name + '_' + name + '.rst7',
                          'nc': thread.name + '_' + name + '.nc',
-                         'working_directory': settings.working_directory}
+                         'working_directory': settings.working_directory }
 
         filled = template.render(these_kwargs)
         newfilename = thread.name + '_' + name + '.' + settings.batch_system
