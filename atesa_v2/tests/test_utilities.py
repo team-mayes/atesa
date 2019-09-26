@@ -99,6 +99,12 @@ class Tests(object):
         assert filecmp.cmp('../test_data/test_velocities_reversed.rst7', rev_file)
         os.remove(rev_file)
 
+    def test_evaluate_rc(self):
+        """Tests evaluate_rc"""
+        cv_list = [1, 0.3, -3, 1.5002]  # various data types and precisions
+        rc_defn = '2*CV0 + 0.3*CV1 + CV2/0.4 - numpy.sin(CV3)'
+        assert utilities.evaluate_rc(rc_defn, cv_list) == pytest.approx(-6.408, 1E-2)
+
     @classmethod
     def teardown_method(self, method):
         "Runs at end of class"

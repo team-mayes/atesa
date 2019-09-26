@@ -10,6 +10,7 @@ import re
 import os
 import sys
 import math
+import numpy
 
 def check_commit(filename, settings):
     """
@@ -202,6 +203,33 @@ def rev_vels(restart_file):
             sys.stdout.write(line)
 
     return name + '_bwd.rst7'
+
+
+def evaluate_rc(rc_definition, cv_list):
+    """
+    Evaluate the RC value given by RC definition for the given list of CV values given by cv_list.
+
+    Parameters
+    ----------
+    rc_definition : str
+        A reaction coordinate definition formatted as a string of python-readable code with "CV[X]" standing in for the
+        Xth CV value (zero-indexed); e.g., "CV2" has value "4" in the cv_list [1, -2, 4, 6]
+    cv_list : list
+        A list of CV values whose indices correspond to the desired values in rc_definition
+
+    Returns
+    -------
+    rc_value : float
+        The value of the reaction coordinate given the values in cv_list
+
+    """
+
+    # Fill in CV[X] slots with corresponding values from cv_list
+    for i in reversed(range(len(cv_list))):     # reversed so that e.g. CV10 doesn't get interpreted as '[CV1]0'
+        rc_definition = rc_definition.replace('CV' + str(i), str(cv_list[i]))
+
+    # Evaluate the filled-in rc_definition and return the result
+    return eval(rc_definition)
 
 
 def resample(allthreads, settings):
