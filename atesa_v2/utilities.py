@@ -75,9 +75,13 @@ def check_commit(filename, settings):
     return commit_flag
 
 
-def get_cvs(filename, settings):
+def get_cvs(filename, settings, reduce=False):
     """
-    Get CV values for a coordinate file given by filename, as well as rates of change if settings.include_qdot = True
+    Get CV values for a coordinate file given by filename, as well as rates of change if settings.include_qdot = True.
+
+    If reduce = True, the returned CVs will be reduced to between 0 and 1 based on the minimum and maximum values of
+    that CV in as.out, which is assumed to exist in the present directory. If it does not, get_cvs will raise a
+    FileNotFoundError.
 
     Parameters
     ----------
@@ -85,6 +89,8 @@ def get_cvs(filename, settings):
         Name of .rst7-formatted coordinate file to be checked
     settings : argparse.Namespace
         Settings namespace object
+    reduce : bool
+        Boolean determining whether to reduce the CV values for use in evaluating an RC value that uses reduced values
 
     Returns
     -------
@@ -129,7 +135,21 @@ def get_cvs(filename, settings):
 
         return filename + '_temp.rst7'
 
+    def reduce_cv(unreduced_value, local_index, rc_minmax):
+        # Returns a reduced value for a CV given an unreduced value and the index within as.out corresponding to that CV
+        this_min = rc_minmax[0][local_index]
+        this_max = rc_minmax[1][local_index]
+        return (float(unreduced_value) - this_min) / (this_max - this_min)
+
     traj = pytraj.iterload(filename, settings.topology)
+
+    rc_minmax = [[],[]]
+    if reduce:
+        # Prepare cv_minmax list
+        asout_lines = [[float(item) for item in line.replace('A <- ', '').replace('B <- ', '').replace(' \n', '').replace('\n', '').split(' ')] for line in open('as.out', 'r').readlines()]
+        open('as.out', 'r').close()
+        mapped = list(map(list, zip(*asout_lines)))
+        rc_minmax = [[numpy.min(item) for item in mapped], [numpy.max(item) for item in mapped]]
 
     output = ''
     values = []
@@ -139,8 +159,8 @@ def get_cvs(filename, settings):
         evaluation = eval(cv)
         if settings.include_qdot:  # want to save values for later
             values.append(float(evaluation))
-        # if reduce:    # legacy from original atesa, for reducing values to between 0 and 1
-        #     evaluation = reduce_cv(evaluation, local_index)
+        if reduce:    # legacy from original atesa, for reducing values to between 0 and 1
+            evaluation = reduce_cv(evaluation, local_index, rc_minmax)
         output += str(evaluation) + ' '
     if settings.include_qdot:  # if True, then we want to include rate of change for every CV, too
         # Strategy here is to write a new temporary .rst7 file by incrementing all the coordinate values by their
@@ -151,10 +171,13 @@ def get_cvs(filename, settings):
         for cv in settings.cvs:
             local_index += 1
             evaluation = eval(cv) - values[local_index]  # Subtract value 1/20.455 ps earlier from value of cv
-            # if reduce:
-            #     evaluation = reduce_cv(evaluation, local_index + len(settings.candidateops))
+            if reduce:
+                evaluation = reduce_cv(evaluation, local_index + len(settings.cvs), rc_minmax)
             output += str(evaluation) + ' '
         os.remove(incremented_filename)     # clean up temporary file
+
+    if output[-1] == ' ':
+        output = output[:-1]    # remove trailing space
 
     return output
 

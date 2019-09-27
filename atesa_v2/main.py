@@ -102,7 +102,7 @@ def init_threads(settings):
     """
 
     if settings.restart:
-        allthreads = pickle.load(settings.working_directory + '/restart.pkl')
+        allthreads = pickle.load(open(settings.working_directory + '/restart.pkl', 'rb'))
         if settings.restart_terminated_threads:
             for thread in allthreads:
                 thread.terminated = False
@@ -192,5 +192,10 @@ if __name__ == "__main__":
 
     # Move runtime to working directory
     os.chdir(settings.working_directory)
+
+    # Store settings object in the working directory for posterity and for compatibility with analysis/utility scripts
+    temp_settings = settings            # initialize temporary copy of settings to modify
+    temp_settings.__dict__.pop('env')   # env attribute is not picklable
+    pickle.dump(temp_settings, open('settings.pkl', 'wb'), protocol=2)
 
     main(allthreads, settings)

@@ -10,6 +10,7 @@ import pytraj
 import os
 import glob
 import filecmp
+import shutil
 from atesa_v2 import utilities
 from atesa_v2.configure import configure
 from atesa_v2 import process
@@ -61,18 +62,18 @@ class Tests(object):
             utilities.check_commit('../test_data/test.rst7', settings)
 
     def test_get_cvs_no_qdot(self):
-        """Tests get_cvs with a dummy coordinate file include_qdot = False"""
+        """Tests get_cvs with a dummy coordinate file and include_qdot = False"""
         settings = configure('../../data/atesa.config')
         settings.include_qdot = False
         settings.topology = '../test_data/test.prmtop'
         settings.cvs = ['pytraj.distance(traj, \'@1 @3\')[0]', 'pytraj.distance(traj, \'@2 @4\')[0]']
         result = utilities.get_cvs('../test_data/test.rst7', settings)
-        assert len(result.split(' ')) == 3   # includes empty '' at end
+        assert len(result.split(' ')) == 2
         assert float(result.split(' ')[0]) == pytest.approx(1.09, 1e-3)
         assert float(result.split(' ')[1]) == pytest.approx(1.69, 1e-3)
 
     def test_get_cvs_with_qdot_broken(self):
-        """Tests get_cvs with a dummy coordinate file include_qdot = True and a coordinate file without velocities"""
+        """Tests get_cvs with a dummy coordinate file, include_qdot = True, and a coordinate file without velocities"""
         settings = configure('../../data/atesa.config')
         settings.include_qdot = True
         settings.topology = '../test_data/test.prmtop'
@@ -81,17 +82,31 @@ class Tests(object):
             result = utilities.get_cvs('../test_data/test.rst7', settings)
 
     def test_get_cvs_with_qdot(self):
-        """Tests get_cvs with a dummy coordinate file include_qdot = True and a coordinate file with velocities"""
+        """Tests get_cvs with a dummy coordinate file, include_qdot = True, and a coordinate file with velocities"""
         settings = configure('../../data/atesa.config')
         settings.include_qdot = True
         settings.topology = '../test_data/test.prmtop'
         settings.cvs = ['pytraj.distance(traj, \'@1 @3\')[0]', 'pytraj.distance(traj, \'@2 @4\')[0]']
         result = utilities.get_cvs('../test_data/test_velocities.rst7', settings)
-        assert len(result.split(' ')) == 5   # includes empty '' at end
+        assert len(result.split(' ')) == 4
         assert float(result.split(' ')[0]) == pytest.approx(1.089, 1e-3)
         assert float(result.split(' ')[1]) == pytest.approx(1.728, 1e-3)
         assert float(result.split(' ')[2]) == pytest.approx(-0.252, 1e-2)
         assert float(result.split(' ')[3]) == pytest.approx(0.282, 1e-2)
+
+    def test_get_cvs_no_qdot_reduce(self):
+        """Tests get_cvs with a dummy coordinate file, include_qdot = False, and reduce = True"""
+        settings = configure('../../data/atesa.config')
+        settings.include_qdot = False
+        settings.topology = '../test_data/test.prmtop'
+        settings.cvs = ['pytraj.distance(traj, \'@1 @3\')[0]', 'pytraj.distance(traj, \'@2 @4\')[0]']
+        with pytest.raises(FileNotFoundError):  # no as.out present yet
+            result = utilities.get_cvs('../test_data/test.rst7', settings, reduce=True)
+        shutil.copy('../test_data/as.out', 'as.out')    # copy in the necessary file
+        result = utilities.get_cvs('../test_data/test.rst7', settings, reduce=True)
+        assert len(result.split(' ')) == 2
+        assert float(result.split(' ')[0]) == pytest.approx(0.571, 1e-2)
+        assert float(result.split(' ')[1]) == pytest.approx(0.326, 1e-2)
 
     def test_rev_vels(self):
         """Tests rev_vels by comparing to a known-correct file"""

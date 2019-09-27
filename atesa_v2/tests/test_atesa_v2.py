@@ -36,7 +36,7 @@ class Tests(object):
 
     def test_configure_directory(self):
         """Tests configure.py behavior in correcting an improperly formatted directory"""
-        shutil.copy('../../data/atesa.config', 'atesa.config')
+        shutil.copy('../../data/atesa.config', 'atesa.config')  # todo: before publication, make a dedicated 'test' copy of atesa.config for tests to use.
         config_lines = open('atesa.config', 'r').readlines()
         for line in config_lines:
             if 'working_directory' in line:
