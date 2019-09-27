@@ -37,7 +37,6 @@ class Tests(object):
         process = subprocess.Popen('coverage run ../../rc_eval.py ../test_temp/ \'3*CV0 - 0.3*CV1\'', stdin=subprocess.PIPE,
                                    stdout=subprocess.PIPE, stderr=subprocess.STDOUT, close_fds=True, shell=True)
         output = process.stdout.read().decode()
-        subprocess.Popen('coverage combine', stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, close_fds=True, shell=True)
         assert 'FileNotFoundError' in output
 
         settings.__dict__.pop('env')    # env attribute is not picklable
@@ -46,8 +45,6 @@ class Tests(object):
         process = subprocess.Popen('coverage run ../../rc_eval.py ../test_temp/ \'3*CV0 - 0.3*CV1\'', stdin=subprocess.PIPE,
                                    stdout=subprocess.PIPE, stderr=subprocess.STDOUT, close_fds=True, shell=True)
         output = process.stdout.read().decode()
-        subprocess.Popen('coverage combine', stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                         close_fds=True, shell=True)
         assert os.path.exists('../test_temp/rc.out')
         lines = open('../test_temp/rc.out', 'r').readlines()
         for i in range(len(lines)):
