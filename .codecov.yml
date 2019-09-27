@@ -12,3 +12,5 @@ comment:
   behavior: default
   flags: null
   paths: null
+ignore:
+  - "atesa_v2/tests"  # ignore folders and all its contents
