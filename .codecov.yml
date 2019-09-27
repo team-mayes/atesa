@@ -13,4 +13,5 @@ comment:
   flags: null
   paths: null
 ignore:
-  - "atesa_v2/tests"  # ignore folders and all its contents
+  - "atesa_v2/tests"  # ignore folder and all its contents
+  - "atesa_v2/_version.py"
