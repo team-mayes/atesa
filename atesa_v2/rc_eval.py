@@ -52,7 +52,7 @@ def main(working_directory, rc_definition):
     # Iterate through the list, calling evaluate_rc for each one and storing the result
     results = []
     for file in file_list:
-        cv_list = utilities.get_cvs(file, settings, reduce=True).split(' ')
+        cv_list = utilities.get_cvs(file, settings, reduce=settings.rc_reduced_cvs).split(' ')
         results.append([file + ': ', utilities.evaluate_rc(rc_definition, cv_list)])
     results = sorted(results, key=lambda x: abs(float(x[1])))  # sort results by absolute value of RC
 

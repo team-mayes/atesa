@@ -15,3 +15,10 @@ comment:
 ignore:
   - "atesa_v2/tests"  # ignore folder and all its contents
   - "atesa_v2/_version.py"
+  - "devtools"
+  - "atesa_v2.egg-info"
+  - "docs"
+  - "setup.py"
+  - "versioneer.py"
+  - "atesa_v2/input_files"
+  - "atesa_v2/templates"

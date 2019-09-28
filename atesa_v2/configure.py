@@ -6,6 +6,7 @@ Takes user input file and returns settings namespace object
 import argparse
 import pytraj       # to support pytraj calls in input file
 import numpy        # to support numpy  calls in input file
+import numpy as np  # to support numpy  calls even if called as np
 import sys
 import os
 from jinja2 import Environment, FileSystemLoader
@@ -67,6 +68,12 @@ def configure(input_file):
             settings.path_to_rc_out = settings.path_to_rc_out[:-1]
     except AttributeError:
         pass
+
+    if settings.job_type == 'equilibrium_path_sampling':
+        eps_lower_boundaries = numpy.arange(settings.eps_rc_min, settings.eps_rc_max, settings.eps_rc_step)
+        settings.eps_bounds = []
+        for lower_bound in eps_lower_boundaries:
+            settings.eps_bounds.append([lower_bound - settings.eps_overlap, lower_bound + settings.eps_rc_step + settings.eps_overlap])
 
     # Set Jinja2 environment
     if os.path.exists(settings.path_to_templates):

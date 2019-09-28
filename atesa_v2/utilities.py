@@ -80,9 +80,7 @@ def get_cvs(filename, settings, reduce=False):
     Get CV values for a coordinate file given by filename, as well as rates of change if settings.include_qdot = True.
 
     If reduce = True, the returned CVs will be reduced to between 0 and 1 based on the minimum and maximum values of
-    that CV in as.out, which is assumed to exist in the present directory. If it does not, get_cvs will raise a
-    FileNotFoundError.
-
+    that CV in as.out, which is assumed to exist at settings.as_out_file.
     Parameters
     ----------
     filename : str
@@ -146,7 +144,7 @@ def get_cvs(filename, settings, reduce=False):
     rc_minmax = [[],[]]
     if reduce:
         # Prepare cv_minmax list
-        asout_lines = [[float(item) for item in line.replace('A <- ', '').replace('B <- ', '').replace(' \n', '').replace('\n', '').split(' ')] for line in open('as.out', 'r').readlines()]
+        asout_lines = [[float(item) for item in line.replace('A <- ', '').replace('B <- ', '').replace(' \n', '').replace('\n', '').split(' ')] for line in open(settings.as_out_file, 'r').readlines()]
         open('as.out', 'r').close()
         mapped = list(map(list, zip(*asout_lines)))
         rc_minmax = [[numpy.min(item) for item in mapped], [numpy.max(item) for item in mapped]]

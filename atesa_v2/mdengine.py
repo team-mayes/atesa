@@ -25,7 +25,7 @@ class MDEngine(abc.ABC):
         trajectory : str
             Name of trajectory file to obtain last frame from
         frame : int
-            Index of frame to return; -1 gives last frame
+            Index of frame to return; -1 gives last frame, 0 is invalid
         settings : argparse.Namespace
             Settings namespace object
 
@@ -51,7 +51,7 @@ class AdaptAmber(MDEngine):
             return ''   # since it's possible to call this before the trajectory file has been initialized
         traj = pytraj.iterload(trajectory, settings.topology)
         try:
-            pytraj.write_traj(new_restart_name, traj, format='rst7', frame_indices=[frame], options='multi', overwrite=True)
+            pytraj.write_traj(new_restart_name, traj, format='rst7', frame_indices=[frame - 1], options='multi', overwrite=True)  # frame - 1 because write_traj is 0-indexed but get_frame is 1-indexed
         except ValueError:  # pytraj raises a ValueError if frame index is out of range
             raise IndexError('frame index ' + str(frame) + ' is out of range for trajectory: ' + trajectory)
         try:

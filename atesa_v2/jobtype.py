@@ -11,6 +11,7 @@ import random
 import pickle
 import argparse
 import numpy
+import pytraj
 from atesa_v2 import utilities
 
 class JobType(abc.ABC):
@@ -277,7 +278,7 @@ class AimlessShooting(JobType):
 
     def update_history(self, **kwargs):
         if 'initialize' in kwargs.keys():
-            if kwargs['initialize'] == True:
+            if kwargs['initialize']:
                 self.history = argparse.Namespace()
                 self.history.init_inpcrd = []    # list of strings, inpcrd for init steps; initialized by main.init_threads and updated by algorithm
                 self.history.init_coords = []    # list of 2-length lists of strings, init [_fwd.rst7, _bwd.rst7]; updated by update_history and then in algorithm
@@ -408,7 +409,7 @@ class AimlessShooting(JobType):
 
     def algorithm(self, allthreads, settings):
         # In aimless shooting, algorithm should decide whether or not a new shooting point is needed, obtain it if so,
-        # and update self.coordinates to reflect it. Also updates suffix and name attributes.
+        # and update self.history to reflect it.
         if self.current_type == ['prod', 'prod']:
             self.suffix += 1
             self.name = self.history.init_inpcrd[0] + '_' + str(self.suffix)
@@ -432,6 +433,7 @@ class AimlessShooting(JobType):
                 self.history.init_coords[-1].append(utilities.rev_vels(self.history.init_coords[-1][0]))
 
 
+# noinspection PyAttributeOutsideInit
 class CommittorAnalysis(JobType):
     """
     Adapter class for committor analysis
@@ -467,7 +469,7 @@ class CommittorAnalysis(JobType):
 
     def update_history(self, **kwargs):
         if 'initialize' in kwargs.keys():
-            if kwargs['initialize'] == True:
+            if kwargs['initialize']:
                 self.history = argparse.Namespace()
                 self.history.prod_inpcrd = []    # one-length list of strings; set by main.init_threads
                 self.history.prod_trajs = []     # list of strings; updated by update_history
@@ -548,14 +550,62 @@ class EquilibriumPathSampling(JobType):
     def get_initial_coordinates(self, settings):
         return settings.initial_coordinates
 
-    def check_for_successful_step(self):    # todo: implement
-        pass
+    def check_for_successful_step(self):
+        if self.current_type == ['init']:   # requires that self.history.init_coords[-1] exists
+            if os.path.exists(self.history.init_coords[-1][0]):
+                return True
+        if self.current_type == ['prod', 'prod']:   # requires that both files in self.history.prod_trajs[-1] exist
+            if all([os.path.exists(self.history.prod_trajs[-1][i]) for i in range(2)]):
+                return True
+        return False
 
     def update_history(self, **kwargs):
-        pass    # todo: implement
+        if 'initialize' in kwargs.keys():
+            if kwargs['initialize']:
+                self.history = argparse.Namespace()
+                self.history.init_inpcrd = []    # list of strings, inpcrd for init steps; initialized by main.init_threads and updated by algorithm
+                self.history.init_coords = []    # list of 2-length lists of strings, init [_fwd.rst7, _bwd.rst7]; updated by update_history and then in algorithm
+                self.history.prod_trajs = []     # list of 2-length lists of strings, [_fwd.nc, _bwd.nc]; updated by update_history
+                self.history.prod_results = []   # list of 2-length lists of strings ['fwd'/'bwd'/'', 'fwd'/'bwd'/'']; updated by update_results
+                self.history.last_accepted = -1  # int, index of last accepted prod_trajs entry; updated by update_results (-1 means none yet accepted)
+            if 'inpcrd' in kwargs.keys():
+                self.history.init_inpcrd.append(kwargs['inpcrd'])
+                cvs = utilities.get_cvs(kwargs['inpcrd'], settings, reduce=settings.rc_reduced_cvs).split(' ')
+                init_rc = utilities.evaluate_rc(settings.rc_definition, cvs)
+                for bounds in settings.eps_bounds:
+                    if bounds[0] <= init_rc <= bounds[1]:
+                        self.history.bounds = bounds
+                        break
+                try:
+                    temp = self.history.bounds  # just to make sure this got set
+                except NameError:
+                    raise RuntimeError('new equilibrium path sampling thread initial coordinates ' + kwargs['inpcrd'] +
+                                       'has out-of-bounds reaction coordinate value: ' + str(init_rc))
+        else:   # self.history should already exist
+            if self.current_type == ['init']:     # update init attributes
+                if 'rst' in kwargs.keys():
+                    if len(self.history.init_coords) < self.suffix + 1:
+                        self.history.init_coords.append([])
+                        if len(self.history.init_coords) < self.suffix + 1:
+                            raise IndexError('history.init_coords is the wrong length for thread: ' + self.history.init_inpcrd[0] +
+                                             '\nexpected length ' + str(self.suffix))
+                    self.history.init_coords[self.suffix].append(kwargs['rst'])
+            elif self.current_type == ['prod', 'prod']:
+                if 'nc' in kwargs.keys():
+                    if len(self.history.prod_trajs) < self.suffix + 1:
+                        self.history.prod_trajs.append([])
+                        if len(self.history.prod_trajs) < self.suffix + 1:
+                            raise IndexError('history.prod_trajs is the wrong length for thread: ' + self.history.init_inpcrd[0] +
+                                             '\nexpected length ' + str(self.suffix))
+                    self.history.prod_trajs[self.suffix].append(kwargs['nc'])
 
-    def get_inpcrd(self):   # todo: implement
-        pass
+    def get_inpcrd(self):
+        if self.current_type == ['init']:
+            return [self.history.init_inpcrd[-1]]   # should return a list, but history.init_inpcrd contains strings
+        elif self.current_type == ['prod', 'prod']:
+            return self.history.init_coords[-1]     # should return a list, and history.init_coords contains lists
+        else:
+            raise ValueError('invalid thread.current_type value: ' + str(self.current_type) + ' for thread: ' + self.history.init_inpcrd[0])
 
     def gatekeeper(self, settings):
         # if every job in this thread has status 'C'ompleted/'C'anceled...
@@ -586,11 +636,101 @@ class EquilibriumPathSampling(JobType):
         else:
             raise ValueError('unexpected batch template type for equilibrium path sampling: ' + str(type))
 
-    def check_termination(self, allthreads, settings):  # todo: implement
-        pass
+    def check_termination(self, allthreads, settings):
+        global_terminate = False    # initialize
+        if self.current_type == ['prod', 'prod']:  # aimless shooting only checks termination after prod steps
+            thread_terminate = ''       # todo: are there termination criteria to implement for equilibrium path sampling threads?
+            global_terminate = False    # no global termination criteria for this jobtype
 
-    def update_results(self, allthreads, settings):     # todo: implement
-        pass
+            if thread_terminate:
+                self.status = 'terminated after step ' + str(self.suffix) + ' due to: ' + thread_terminate
+                self.terminated = True
+            else:
+                self.status = 'running step ' + str(self.suffix + 1)  # suffix isn't updated until call to algorithm()
+                self.terminated = False
 
-    def algorithm(self, allthreads, settings):          # todo: implement
-        pass
+        return global_terminate
+
+    def update_results(self, allthreads, settings):
+        if self.current_type == ['prod', 'prod']:   # equilibrium path sampling only writes after prod steps
+            # Initialize eps.out if not already extant
+            if not os.path.exists(settings.working_directory + '/eps.out'):
+                open(settings.working_directory + '/eps.out', 'w').write('Lower RC bound; Upper RC bound; RC value')
+                open(settings.working_directory + '/eps.out', 'w').close()
+
+            # Update current_results, total and accepted move counts, and status.txt
+            self.history.prod_results.append([])
+            for job_index in range(len(self.current_type)):
+                frame_to_check = self.get_frame(self.history.prod_trajs[-1][job_index], -1, settings)
+                cvs = utilities.get_cvs(frame_to_check, settings, reduce=settings.rc_reduced_cvs).split(' ')
+                self.history.prod_results[-1].append(utilities.evaluate_rc(settings.rc_definition, cvs))
+                os.remove(frame_to_check)
+            self.total_moves += 1
+            if True in [self.history.bounds[0] <= rc_value <= self.history.bounds[1] for rc_value in self.history.prod_results[-1]]:
+                self.history.last_accepted = int(len(self.history.prod_trajs) - 1)   # new index of last accepted move
+                self.accept_moves += 1
+
+            # Write RC values of accepted frames to eps.out
+            for rc_value in self.history.prod_results[-1]:
+                if self.history.bounds[0] <= rc_value <= self.history.bounds[1]:
+                    open(settings.working_directory + '/eps.out', 'a').write(str(self.history.bounds[0]) + ' ' + str(self.history.bounds[1]) + ' ' + str(rc_value) + '\n')
+                    open(settings.working_directory + '/eps.out', 'a').close()
+
+            with open('status.txt', 'w') as file:
+                for thread in allthreads:
+                    try:
+                        acceptance_percentage = str(100 * thread.accept_moves / thread.total_moves)[0:5] + '%'
+                    except ZeroDivisionError:   # 0/0
+                        acceptance_percentage = '0%'
+                    file.write(thread.history.init_inpcrd[0] + ' acceptance ratio: ' + str(thread.accept_moves) +
+                               '/' + str(thread.total_moves) + ', or ' + acceptance_percentage + '\n')
+                    file.write('  Status: ' + thread.status + '\n')
+                file.close()
+
+        # Write updated restart.pkl
+        pickle.dump(allthreads, open('restart.pkl', 'wb'), protocol=2)
+
+    def algorithm(self, allthreads, settings):
+        # In equilibrium path sampling, algorithm should decide whether or not a new shooting point is needed, obtain it
+        # if so, and update self.history to reflect it.
+        if self.current_type == ['prod', 'prod']:
+            self.suffix += 1
+            self.name = self.history.init_inpcrd[0] + '_' + str(self.suffix)
+            if True in [self.history.bounds[0] <= rc_value <= self.history.bounds[1] for rc_value in self.history.prod_results[-1]]:    # accepted move
+                traj = pytraj.iterload(self.history.prod_trajs[-1][0], settings.topology)
+                n_fwd = traj.n_frames
+                traj = pytraj.iterload(self.history.prod_trajs[-1][1], settings.topology)
+                n_bwd = traj.n_frames
+                random_bead = int(random.randint(0, int(n_fwd) + int(n_bwd)))    # randomly select a "bead" from the paired trajectories
+                if 0 < random_bead <= n_bwd:
+                    frame = random_bead
+                    new_point = self.get_frame(self.history.prod_trajs[-1][1], frame, settings)
+                elif n_bwd < random_bead <= n_fwd + n_bwd:
+                    frame = random_bead - n_bwd
+                    new_point = self.get_frame(self.history.prod_trajs[-1][0], frame, settings)
+                else:   # random_bead = 0, chooses the "init" bead
+                    new_point = self.history.init_inpcrd[-1]
+                self.history.init_inpcrd.append(new_point)
+            else:   # not an accepted move
+                if self.history.last_accepted >= 0:  # choose a new shooting move from last accepted trajectory
+                    traj = pytraj.iterload(self.history.prod_trajs[self.history.last_accepted][0], settings.topology)
+                    n_fwd = traj.n_frames
+                    traj = pytraj.iterload(self.history.prod_trajs[self.history.last_accepted][1], settings.topology)
+                    n_bwd = traj.n_frames
+                    random_bead = int(random.randint(0, int(n_fwd) + int(n_bwd)))  # randomly select a "bead" from the paired trajectories
+                    if 0 < random_bead <= n_bwd:
+                        frame = random_bead
+                        new_point = self.get_frame(self.history.prod_trajs[self.history.last_accepted][1], frame, settings)
+                    elif n_bwd < random_bead <= n_fwd + n_bwd:
+                        frame = random_bead - n_bwd
+                        new_point = self.get_frame(self.history.prod_trajs[self.history.last_accepted][0], frame, settings)
+                    else:  # random_bead = 0, chooses the "init" bead
+                        new_point = self.history.init_inpcrd[self.history.last_accepted]
+                    self.history.init_inpcrd.append(new_point)
+                else:   # there have been no accepted moves in this thread yet
+                    self.history.init_inpcrd.append(self.history.init_inpcrd[-1])   # begin next move from same point as last move
+        elif self.current_type == ['init']:
+            if not os.path.exists(self.history.init_coords[-1][0]):  # init step failed, so retry it
+                self.current_type = []  # reset current_type so it will be pushed back to ['init'] by thread.process
+            else:   # init step produced the desired file, so update coordinates
+                self.history.init_coords[-1].append(utilities.rev_vels(self.history.init_coords[-1][0]))
