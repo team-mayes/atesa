@@ -55,7 +55,7 @@ class AdaptSimple(TaskManager):
         command = batchsystem.get_submit_command(None).replace('{file}', filename)
 
         if settings.DEBUG:
-            return '123456'
+            command = 'echo "this is a nonsense string for testing purposes: 123456, now here are some garbage symbols: ?!@#$/\';:[]+=_-.<,>"'
 
         process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                                    close_fds=True, shell=True)
