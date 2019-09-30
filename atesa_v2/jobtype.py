@@ -615,7 +615,7 @@ class EquilibriumPathSampling(JobType):
                         break
                 try:
                     temp = self.history.bounds  # just to make sure this got set
-                except NameError:
+                except AttributeError:
                     raise RuntimeError('new equilibrium path sampling thread initial coordinates ' + kwargs['inpcrd'] +
                                        ' has out-of-bounds reaction coordinate value: ' + str(init_rc))
         else:   # self.history should already exist

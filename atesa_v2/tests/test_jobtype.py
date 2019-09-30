@@ -417,8 +417,8 @@ class Tests(object):
         assert os.path.exists('eps.out')
         assert allthreads[0].history.prod_results[-1] == pytest.approx([-35.17,-35.17],1E-3)
 
-    def test_update_history_equilibrium_path_sampling(self):
-        """Tests update_history with job_type = 'equilibrium_path_sampling'"""
+    def test_update_history_equilibrium_path_sampling_prod(self):
+        """Tests update_history with job_type = 'equilibrium_path_sampling' with current_type = ['prod', 'prod']"""
         settings = config_equilibrium_path_sampling()
         allthreads = atesa_v2.init_threads(settings)
         allthreads[0].current_type = ['prod', 'prod']
@@ -428,6 +428,38 @@ class Tests(object):
         assert allthreads[0].history.prod_trajs == [['fakey_mcfakename.nc']]
         jobtype.update_history(allthreads[0], settings, **these_kwargs)
         assert allthreads[0].history.prod_trajs == [['fakey_mcfakename.nc', 'fakey_mcfakename.nc']]
+
+    def test_update_history_equilibrium_path_sampling_init(self):
+        """Tests update_history with job_type = 'equilibrium_path_sampling' with current_type = ['init']"""
+        settings = config_equilibrium_path_sampling()
+        allthreads = atesa_v2.init_threads(settings)
+        allthreads[0].current_type = ['init']
+        these_kwargs = {'rst': 'fakey_mcfakename.rst7'}
+        jobtype = factory.jobtype_factory(settings.job_type)
+        jobtype.update_history(allthreads[0], settings, **these_kwargs)
+        assert allthreads[0].history.init_coords == [['fakey_mcfakename.rst7']]
+
+    def test_update_history_equilibrium_path_sampling_out_of_bounds(self):
+        """Tests update_history with job_type = 'equilibrium_path_sampling' with an initially out-of-bounds RC value"""
+        shutil.copy('../../data/atesa.config', 'eps.config')
+        with open('eps.config', 'a') as f:  # need to set these things before calling configure()
+            f.write('\njob_type = \'equilibrium_path_sampling\'')
+            f.write('\neps_rc_min = -0.1')  # crazy wide range so everything gets included
+            f.write('\neps_rc_max = 0.1')
+            f.write('\neps_rc_step = 0.1')
+            f.write('\neps_overlap = 0.01')
+            f.close()
+        settings = configure('eps.config')
+        settings.DEBUG = True
+        settings.job_type = 'equilibrium_path_sampling'
+        settings.topology = '../test_data/test.prmtop'
+        settings.rc_reduced_cvs = False
+        settings.include_qdot = False
+        settings.cvs = ['pytraj.distance(traj, \'@1 @2\')[0]', 'pytraj.angle(traj, \'@2 @3 @4\')[0]']
+        settings.rc_definition = '1.00 + 2.34*CV0 - 0.67*CV1'
+        settings.initial_coordinates = ['../test_data/test.rst7']
+        with pytest.raises(RuntimeError):
+            allthreads = atesa_v2.init_threads(settings)
 
     def test_get_inpcrd_equilibrium_path_sampling(self):
         """Tests get_inpcrd with job_type = 'equilibrium_path_sampling'"""
