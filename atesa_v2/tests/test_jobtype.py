@@ -570,6 +570,27 @@ class Tests(object):
         jobtype.algorithm(allthreads[0], allthreads, settings)
         assert filecmp.cmp(allthreads[0].history.init_inpcrd[1], '../test_data/test.rst7') # test.rst7 is last frame of test.nc
 
+    def test_get_input_file_aimless_shooting(self):
+        """Tests get_input_file with job_type = 'aimless_shooting'"""
+        settings = configure('../../data/atesa.config')
+        settings.job_type = 'aimless_shooting'
+        settings.initial_coordinates = ['test_velocities.rst7']
+        allthreads = atesa_v2.init_threads(settings)
+        allthreads[0].current_type = ['init']
+        jobtype = factory.jobtype_factory(settings.job_type)
+        assert jobtype.get_input_file(allthreads[0], 0, settings) == settings.path_to_input_files + '/' + settings.job_type + '_' + allthreads[0].current_type[0] + '_' + settings.md_engine + '.in'
+
+    def test_get_input_file_committor_analysis(self):
+        """Tests get_input_file with job_type = 'committor_analysis'"""
+        settings = configure('../../data/atesa.config')
+        settings.job_type = 'committor_analysis'
+        settings.committor_analysis_use_rc_out = False
+        settings.initial_coordinates = ['test_velocities.rst7']
+        allthreads = atesa_v2.init_threads(settings)
+        allthreads[0].current_type = ['init']
+        jobtype = factory.jobtype_factory(settings.job_type)
+        assert jobtype.get_input_file(allthreads[0], 0, settings) == settings.path_to_input_files + '/' + settings.job_type + '_' + allthreads[0].current_type[0] + '_' + settings.md_engine + '.in'
+
     @classmethod
     def teardown_method(self, method):
         "Runs at end of each method"
@@ -588,6 +609,7 @@ def config_equilibrium_path_sampling():
         f.close()
 
     settings = configure('eps.config')
+    settings.DEBUG = True
     settings.job_type = 'equilibrium_path_sampling'
     settings.topology = '../test_data/test.prmtop'
     settings.rc_reduced_cvs = False

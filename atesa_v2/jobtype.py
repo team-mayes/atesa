@@ -23,6 +23,32 @@ class JobType(abc.ABC):
     """
 
     @abc.abstractmethod
+    def get_input_file(self, job_index, settings):
+        """
+        Obtain appropriate input file for next job.
+
+        At its most simple, implementations of this method can simply return settings.path_to_input_files + '/' +
+        settings.job_type + '_' + self.current_type[job_index] + '_' + settings.md_engine + '.in'
+
+        Parameters
+        ----------
+        self : Thread
+            Methods in the JobType abstract base class are intended to be invoked by Thread objects
+        job_index : int
+            0-indexed integer identifying which job within self.current_type to return the input file for
+        settings : argparse.Namespace
+            Settings namespace object
+
+        Returns
+        -------
+        input_file : str
+            Name of the applicable input file
+
+        """
+
+        pass
+
+    @abc.abstractmethod
     def get_initial_coordinates(self, settings):
         """
         Obtain list of initial coordinate files.
@@ -266,6 +292,9 @@ class AimlessShooting(JobType):
     Adapter class for aimless shooting
     """
 
+    def get_input_file(self, job_index, settings):
+        return settings.path_to_input_files + '/' + settings.job_type + '_' + self.current_type[job_index] + '_' + settings.md_engine + '.in'
+
     def get_initial_coordinates(self, settings):
         return settings.initial_coordinates
 
@@ -441,6 +470,9 @@ class CommittorAnalysis(JobType):
     Adapter class for committor analysis
     """
 
+    def get_input_file(self, job_index, settings):
+        return settings.path_to_input_files + '/' + settings.job_type + '_' + self.current_type[job_index] + '_' + settings.md_engine + '.in'
+
     def get_initial_coordinates(self, settings):
         if settings.committor_analysis_use_rc_out:
             if not os.path.exists(settings.path_to_rc_out):
@@ -548,6 +580,9 @@ class EquilibriumPathSampling(JobType):
     """
     Adapter class for equilibrium path sampling
     """
+
+    def get_input_file(self, job_index, settings):  # todo: implement to build (if necessary) and return appropriate mdin files for EPS
+        pass
 
     def get_initial_coordinates(self, settings):
         return settings.initial_coordinates
@@ -703,7 +738,10 @@ class EquilibriumPathSampling(JobType):
                 n_fwd = traj.n_frames
                 traj = pytraj.iterload(self.history.prod_trajs[-1][1], settings.topology)
                 n_bwd = traj.n_frames
-                random_bead = int(random.randint(0, int(n_fwd) + int(n_bwd)))    # randomly select a "bead" from the paired trajectories
+                if settings.DEBUG:
+                    random_bead = n_fwd + n_bwd
+                else:
+                    random_bead = int(random.randint(0, int(n_fwd) + int(n_bwd)))    # randomly select a "bead" from the paired trajectories
                 if 0 < random_bead <= n_bwd:
                     frame = random_bead
                     new_point = self.get_frame(self.history.prod_trajs[-1][1], frame, settings)
@@ -719,7 +757,10 @@ class EquilibriumPathSampling(JobType):
                     n_fwd = traj.n_frames
                     traj = pytraj.iterload(self.history.prod_trajs[self.history.last_accepted][1], settings.topology)
                     n_bwd = traj.n_frames
-                    random_bead = int(random.randint(0, int(n_fwd) + int(n_bwd)))  # randomly select a "bead" from the paired trajectories
+                    if settings.DEBUG:
+                        random_bead = n_fwd + n_bwd
+                    else:
+                        random_bead = int(random.randint(0, int(n_fwd) + int(n_bwd)))  # randomly select a "bead" from the paired trajectories
                     if 0 < random_bead <= n_bwd:
                         frame = random_bead
                         new_point = self.get_frame(self.history.prod_trajs[self.history.last_accepted][1], frame, settings)
