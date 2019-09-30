@@ -39,7 +39,15 @@ class Tests(object):
         allthreads[0].current_type = ['prod', 'prod']
         jobtype = factory.jobtype_factory(settings.job_type)
         assert jobtype.check_termination(allthreads[0], allthreads, settings) == False  # todo: update after implementation
-        assert allthreads[0].terminated == False                                        # todo: update after implementation
+        assert allthreads[0].terminated == False              # todo: update after implementation
+
+    def test_gatekeep_aimless_shooting(self):
+        """Tests thread.gatekeep method with job_type = 'aimless_shooting'"""
+        settings = configure('../../data/atesa.config')
+        settings.job_type = 'aimless_shooting'
+        settings.DEBUG = True
+        allthreads = atesa_v2.init_threads(settings)
+        assert allthreads[0].gatekeeper(settings) == True
 
     def test_update_results_aimless_shooting_init(self):
         """Tests update_results with job_type = 'aimless_shooting' and thread.current_type = ['init']"""
@@ -148,7 +156,7 @@ class Tests(object):
         allthreads[0].current_type = ['init']
         these_kwargs = {'rst': 'fakey_mcfakename.rst'}
         jobtype = factory.jobtype_factory(settings.job_type)
-        jobtype.update_history(allthreads[0], **these_kwargs)
+        jobtype.update_history(allthreads[0], settings, **these_kwargs)
         assert allthreads[0].history.init_coords[-1] == ['fakey_mcfakename.rst']
 
     def test_update_history_aimless_shooting_prod(self):
@@ -160,9 +168,9 @@ class Tests(object):
         allthreads[0].current_type = ['prod', 'prod']
         these_kwargs = {'nc': 'fakey_mcfakename.nc'}
         jobtype = factory.jobtype_factory(settings.job_type)
-        jobtype.update_history(allthreads[0], **these_kwargs)
+        jobtype.update_history(allthreads[0], settings, **these_kwargs)
         assert allthreads[0].history.prod_trajs[-1] == ['fakey_mcfakename.nc']
-        jobtype.update_history(allthreads[0], **these_kwargs)
+        jobtype.update_history(allthreads[0], settings, **these_kwargs)
         assert allthreads[0].history.prod_trajs[-1] == ['fakey_mcfakename.nc', 'fakey_mcfakename.nc']
 
     def test_get_inpcrd_aimless_shooting_init(self):
@@ -209,6 +217,22 @@ class Tests(object):
         shutil.copy('../test_data/test.rst7', 'some_init_coords.rst7')      # make the necessary file
         assert jobtype.check_for_successful_step(allthreads[0]) == True     # necessary file exists
 
+    def test_get_next_step_aimless_shooting_init(self):
+        """Tests thread.get_next_step with job_type = 'aimless_shooting' and type = ['init']"""
+        settings = configure('../../data/atesa.config')
+        settings.job_type = 'aimless_shooting'
+        allthreads = atesa_v2.init_threads(settings)
+        allthreads[0].current_type = ['init']
+        assert allthreads[0].get_next_step(settings) == (['prod', 'prod'], ['fwd', 'bwd'])
+
+    def test_get_next_step_aimless_shooting_prod(self):
+        """Tests thread.get_next_step with job_type = 'aimless_shooting' and type = ['fwd','bwd']"""
+        settings = configure('../../data/atesa.config')
+        settings.job_type = 'aimless_shooting'
+        allthreads = atesa_v2.init_threads(settings)
+        allthreads[0].current_type = ['prod','prod']
+        assert allthreads[0].get_next_step(settings) == (['init'], ['init'])
+
     def test_check_for_successful_step_aimless_shooting_prod(self):
         """Tests check_for_successful_step with job_type = 'aimless_shooting' and thread.current_type = ['prod', 'prod']"""
         settings = configure('../../data/atesa.config')
@@ -222,6 +246,22 @@ class Tests(object):
         assert jobtype.check_for_successful_step(allthreads[0]) == False    # still missing one
         shutil.copy('../test_data/test.nc', 'some_prod_traj_2.nc')          # make other necessary file
         assert jobtype.check_for_successful_step(allthreads[0]) == True     # both files exist
+
+    def test_get_batch_file_aimless_shooting_amber(self):
+        """Tests thread.get_batch_template with job_type = 'aimless_shooting' and md_engine = 'amber'"""
+        settings = configure('../../data/atesa.config')
+        settings.job_type = 'aimless_shooting'
+        settings.md_engine = 'amber'
+        allthreads = atesa_v2.init_threads(settings)
+        assert allthreads[0].get_batch_template('init', settings) == 'amber_' + settings.batch_system + '.tpl'
+
+    def test_get_batch_file_aimless_shooting_broken(self):
+        """Tests thread.get_batch_template with job_type = 'aimless_shooting' and invalid type = 'fwdd'"""
+        settings = configure('../../data/atesa.config')
+        settings.job_type = 'aimless_shooting'
+        allthreads = atesa_v2.init_threads(settings)
+        with pytest.raises(ValueError):
+            allthreads[0].get_batch_template('fwdd', settings)
 
     def test_check_termination_committor_analysis(self):
         """Tests check_termination with job_type = 'committor_analysis'"""
@@ -261,9 +301,9 @@ class Tests(object):
         allthreads[0].current_type = ['prod', 'prod', 'prod']
         these_kwargs = {'nc': 'fakey_mcfakename.nc'}
         jobtype = factory.jobtype_factory(settings.job_type)
-        jobtype.update_history(allthreads[0], **these_kwargs)
+        jobtype.update_history(allthreads[0], settings, **these_kwargs)
         assert allthreads[0].history.prod_trajs == ['fakey_mcfakename.nc']
-        jobtype.update_history(allthreads[0], **these_kwargs)
+        jobtype.update_history(allthreads[0], settings, **these_kwargs)
         assert allthreads[0].history.prod_trajs == ['fakey_mcfakename.nc', 'fakey_mcfakename.nc']
 
     def test_get_inpcrd_committor_analysis(self):
@@ -345,7 +385,7 @@ class Tests(object):
         assert this_names == ['0', '1', '2']
 
     def test_get_batch_template_committor_analysis(self):
-        """Tests get_next_step with job_type = 'committor_analysis'"""
+        """Tests get_batch_template with job_type = 'committor_analysis'"""
         settings = configure('../../data/atesa.config')
         settings.job_type = 'committor_analysis'
         settings.md_engine = 'amber'
@@ -356,8 +396,204 @@ class Tests(object):
         jobtype = factory.jobtype_factory(settings.job_type)
         assert jobtype.get_batch_template(allthreads[0], 'prod', settings) == 'amber_slurm.tpl'
 
+    def test_check_termination_equilibrium_path_sampling(self):
+        """Tests check_termination with job_type = 'equilibrium_path_sampling'"""
+        settings = config_equilibrium_path_sampling()
+        allthreads = atesa_v2.init_threads(settings)
+        allthreads[0].current_type = ['prod', 'prod']
+        jobtype = factory.jobtype_factory(settings.job_type)
+        assert jobtype.check_termination(allthreads[0], allthreads, settings) == False
+        assert allthreads[0].terminated == False
+
+    def test_update_results_equilibrium_path_sampling(self):
+        """Tests update_results with job_type = 'equilibrium_path_sampling'"""
+        settings = config_equilibrium_path_sampling()
+        settings.initial_coordinates = ['../test_data/test_velocities.rst7', '../test_data/test_velocities.rst7']
+        allthreads = atesa_v2.init_threads(settings)
+        allthreads[0].current_type = ['prod', 'prod']
+        allthreads[0].history.prod_trajs = [['../test_data/test.nc', '../test_data/test.nc']]
+        jobtype = factory.jobtype_factory(settings.job_type)
+        jobtype.update_results(allthreads[0], allthreads, settings)
+        assert os.path.exists('eps.out')
+        assert allthreads[0].history.prod_results[-1] == pytest.approx([-35.17,-35.17],1E-3)
+
+    def test_update_history_equilibrium_path_sampling(self):
+        """Tests update_history with job_type = 'equilibrium_path_sampling'"""
+        settings = config_equilibrium_path_sampling()
+        allthreads = atesa_v2.init_threads(settings)
+        allthreads[0].current_type = ['prod', 'prod']
+        these_kwargs = {'nc': 'fakey_mcfakename.nc'}
+        jobtype = factory.jobtype_factory(settings.job_type)
+        jobtype.update_history(allthreads[0], settings, **these_kwargs)
+        assert allthreads[0].history.prod_trajs == [['fakey_mcfakename.nc']]
+        jobtype.update_history(allthreads[0], settings, **these_kwargs)
+        assert allthreads[0].history.prod_trajs == [['fakey_mcfakename.nc', 'fakey_mcfakename.nc']]
+
+    def test_get_inpcrd_equilibrium_path_sampling(self):
+        """Tests get_inpcrd with job_type = 'equilibrium_path_sampling'"""
+        settings = config_equilibrium_path_sampling()
+        allthreads = atesa_v2.init_threads(settings)
+        allthreads[0].current_type = ['prod', 'prod']
+        allthreads[0].history.init_coords = [['not_a_real_file_at_all_init.rst7']]
+        jobtype = factory.jobtype_factory(settings.job_type)
+        assert jobtype.get_inpcrd(allthreads[0]) == ['not_a_real_file_at_all_init.rst7']
+
+    def test_get_initial_coordinates_equilibrium_path_sampling(self):
+        """Tests get_initial_coordinates with job_type = 'equilibrium_path_sampling'"""
+        settings = config_equilibrium_path_sampling()
+        allthreads = atesa_v2.init_threads(settings)
+        jobtype = factory.jobtype_factory(settings.job_type)
+        assert jobtype.get_initial_coordinates(allthreads[0], settings) == ['../test_data/test.rst7']
+
+    def test_gatekeep_equilibrium_path_sampling(self):
+        """Tests gatekeep with job_type = 'committor_analysis'"""
+        settings = config_equilibrium_path_sampling()
+        settings.DEBUG = True
+        allthreads = atesa_v2.init_threads(settings)
+        allthreads[0].jobids = ['123456']
+        jobtype = factory.jobtype_factory(settings.job_type)
+        assert jobtype.gatekeeper(allthreads[0], settings) == True
+
+    def test_check_for_successful_step_equilibrium_path_sampling(self):
+        """Tests check_for_successful_step with job_type = 'equilibrium_path_sampling'"""
+        settings = config_equilibrium_path_sampling()
+        allthreads = atesa_v2.init_threads(settings)
+        allthreads[0].current_type = ['init']
+        allthreads[0].history.init_coords = [['test_velocities.rst7']]
+        jobtype = factory.jobtype_factory(settings.job_type)
+        assert jobtype.check_for_successful_step(allthreads[0]) == False
+        shutil.copy('../test_data/test_velocities.rst7', 'test_velocities.rst7')
+        assert jobtype.check_for_successful_step(allthreads[0]) == True
+        allthreads[0].current_type = ['prod', 'prod']
+        allthreads[0].history.prod_trajs = [['test.nc', 'test.nc']]
+        assert jobtype.check_for_successful_step(allthreads[0]) == False
+        shutil.copy('../test_data/test.nc', 'test.nc')
+        assert jobtype.check_for_successful_step(allthreads[0]) == True
+
+    def test_get_next_step_equilibrium_path_sampling_first(self):
+        """Tests get_next_step with job_type = 'equilibrium_path_sampling' and an empty current_type"""
+        settings = config_equilibrium_path_sampling()
+        allthreads = atesa_v2.init_threads(settings)
+        allthreads[0].current_type = []
+        assert allthreads[0].get_next_step(settings) == (['init'], ['init'])
+
+    def test_get_next_step_equilibrium_path_sampling_init(self):
+        """Tests get_next_step with job_type = 'equilibrium_path_sampling' and current_type = ['init']"""
+        settings = config_equilibrium_path_sampling()
+        allthreads = atesa_v2.init_threads(settings)
+        allthreads[0].current_type = ['init']
+        assert allthreads[0].get_next_step(settings) == (['prod', 'prod'], ['fwd', 'bwd'])
+
+    def test_get_next_step_equilibrium_path_sampling_prod(self):
+        """Tests get_next_step with job_type = 'equilibrium_path_sampling' and current_type = ['prod', 'prod']"""
+        settings = config_equilibrium_path_sampling()
+        allthreads = atesa_v2.init_threads(settings)
+        allthreads[0].current_type = ['prod', 'prod']
+        assert allthreads[0].get_next_step(settings) == (['init'], ['init'])
+
+    def test_get_batch_file_equilibrium_path_sampling_amber(self):
+        """Tests thread.get_batch_template with job_type = 'equilibrium_path_sampling' and md_engine = 'amber'"""
+        settings = config_equilibrium_path_sampling()
+        settings.job_type = 'equilibrium_path_sampling'
+        settings.md_engine = 'amber'
+        allthreads = atesa_v2.init_threads(settings)
+        assert allthreads[0].get_batch_template('init', settings) == 'amber_' + settings.batch_system + '.tpl'
+
+    def test_get_batch_file_equilibrium_path_sampling_broken(self):
+        """Tests thread.get_batch_template with job_type = 'equilibrium_path_sampling' and invalid type = 'fwdd'"""
+        settings = config_equilibrium_path_sampling()
+        settings.job_type = 'equilibrium_path_sampling'
+        allthreads = atesa_v2.init_threads(settings)
+        with pytest.raises(ValueError):
+            allthreads[0].get_batch_template('fwdd', settings)
+
+    def test_algorithm_equilibrium_path_sampling_init(self):
+        """Tests algorithm with job_type = 'equilibrium_path_sampling' and thread.current_type = ['init']"""
+        settings = config_equilibrium_path_sampling()
+        allthreads = atesa_v2.init_threads(settings)
+        allthreads[0].current_type = ['init']
+        allthreads[0].history.init_coords = [['test_velocities.rst7_0_init.rst7']]
+        jobtype = factory.jobtype_factory(settings.job_type)
+        jobtype.algorithm(allthreads[0], allthreads, settings)
+        assert allthreads[0].current_type == []     # result for missing .rst7 file (haven't copied it yet)
+        allthreads[0].current_type = ['init']       # reset last result
+        shutil.copy('../test_data/test_velocities.rst7', 'test_velocities.rst7_0_init.rst7')    # create the needed file
+        jobtype.algorithm(allthreads[0], allthreads, settings)
+        assert allthreads[0].current_type == ['init']   # results for .rst7 was found
+        assert allthreads[0].history.init_coords == [['test_velocities.rst7_0_init.rst7', 'test_velocities.rst7_0_init_bwd.rst7']]
+
+    def test_algorithm_equilibrium_path_sampling_prod_not_accepted(self):
+        """Tests algorithm with job_type = 'equilibrium_path_sampling' and thread.current_type = ['prod', 'prod'] for a
+        move that isn't accepted"""
+        settings = config_equilibrium_path_sampling()
+        settings.min_dt = -1
+        settings.max_dt = -1     # set these to the same value to guarantee which frame is chosen
+        allthreads = atesa_v2.init_threads(settings)
+        allthreads[0].current_type = ['prod', 'prod']
+        allthreads[0].history.prod_results = [[-34.12, -35.1, -36], [12, 13, 11]]      # accepted then not accepted
+        allthreads[0].history.prod_trajs = [['test.nc', 'test.nc'], ['not_a_real_file.nc', 'not_a_real_file.nc']]
+        allthreads[0].suffix = 1
+        allthreads[0].history.last_accepted = 0
+        shutil.copy('../test_data/test.nc', 'test.nc')
+        jobtype = factory.jobtype_factory(settings.job_type)
+        jobtype.algorithm(allthreads[0], allthreads, settings)
+        assert filecmp.cmp(allthreads[0].history.init_inpcrd[1], '../test_data/test.rst7') # test.rst7 is last frame of test.nc
+
+    def test_algorithm_equilibrium_path_sampling_prod_not_accepted_no_accepted_yet(self):
+        """Tests algorithm with job_type = 'equilibrium_path_sampling' and thread.current_type = ['prod', 'prod'] for a
+        move that isn't accepted and with no accepted moves in the thread's history"""
+        settings = config_equilibrium_path_sampling()
+        settings.min_dt = -1
+        settings.max_dt = -1     # set these to the same value to guarantee which frame is chosen
+        allthreads = atesa_v2.init_threads(settings)
+        allthreads[0].current_type = ['prod', 'prod']
+        allthreads[0].history.prod_results = [[16, 13, 15], [12, 13, 11]]      # accepted then not accepted
+        allthreads[0].history.prod_trajs = [['test.nc', 'test.nc'], ['not_a_real_file.nc', 'not_a_real_file.nc']]
+        allthreads[0].suffix = 1
+        shutil.copy('../test_data/test.nc', 'test.nc')
+        jobtype = factory.jobtype_factory(settings.job_type)
+        jobtype.algorithm(allthreads[0], allthreads, settings)
+        assert filecmp.cmp(allthreads[0].history.init_inpcrd[1], '../test_data/test.rst7') # test.rst7 is last frame of test.nc
+
+    def test_algorithm_equilibrium_path_sampling_prod_accepted(self):
+        """Tests algorithm with job_type = 'equilibrium_path_sampling' and thread.current_type = ['prod', 'prod'] for
+        an accepted move"""
+        settings = config_equilibrium_path_sampling()
+        settings.min_dt = -1
+        settings.max_dt = -1     # set these to the same value to guarantee which frame is chosen
+        allthreads = atesa_v2.init_threads(settings)
+        allthreads[0].current_type = ['prod', 'prod']
+        allthreads[0].history.prod_results = [[12, 13, 11], [-34.12, -35.1, -36]]  # not accepted then accepted
+        allthreads[0].history.prod_trajs = [['not_a_real_file.nc', 'not_a_real_file.nc'], ['test.nc', 'test.nc']]
+        shutil.copy('../test_data/test.nc', 'test.nc')
+        jobtype = factory.jobtype_factory(settings.job_type)
+        jobtype.algorithm(allthreads[0], allthreads, settings)
+        assert filecmp.cmp(allthreads[0].history.init_inpcrd[1], '../test_data/test.rst7') # test.rst7 is last frame of test.nc
+
     @classmethod
     def teardown_method(self, method):
-        "Runs at end of class"
+        "Runs at end of each method"
         for filename in glob.glob(sys.path[0] + '/atesa_v2/tests/test_temp/*'):
             os.remove(filename)
+
+def config_equilibrium_path_sampling():
+    """Sets up configuration settings for equilibrium path sampling tests, to be overwritten as needed"""
+    shutil.copy('../../data/atesa.config', 'eps.config')
+    with open('eps.config', 'a') as f:  # need to set these things before calling configure()
+        f.write('\njob_type = \'equilibrium_path_sampling\'')
+        f.write('\neps_rc_min = -50')   # crazy wide range so everything gets included
+        f.write('\neps_rc_max = 50')
+        f.write('\neps_rc_step = 1')
+        f.write('\neps_overlap = 0.1')
+        f.close()
+
+    settings = configure('eps.config')
+    settings.job_type = 'equilibrium_path_sampling'
+    settings.topology = '../test_data/test.prmtop'
+    settings.rc_reduced_cvs = False
+    settings.include_qdot = False
+    settings.cvs = ['pytraj.distance(traj, \'@1 @2\')[0]', 'pytraj.angle(traj, \'@2 @3 @4\')[0]']
+    settings.rc_definition = '1.00 + 2.34*CV0 - 0.67*CV1'
+    settings.initial_coordinates = ['../test_data/test.rst7']
+
+    return settings

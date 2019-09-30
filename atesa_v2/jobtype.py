@@ -71,7 +71,7 @@ class JobType(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def update_history(self, **kwargs):
+    def update_history(self, settings, **kwargs):
         """
         Update or initialize the history namespace for this job type.
 
@@ -86,6 +86,8 @@ class JobType(abc.ABC):
         ----------
         self : Thread
             Methods in the JobType abstract base class are intended to be invoked by Thread objects
+        settings : argparse.Namespace
+            Settings namespace object
         kwargs : dict
             Dictionary of arguments that might be used to update the history object
 
@@ -276,7 +278,7 @@ class AimlessShooting(JobType):
                 return True
         return False
 
-    def update_history(self, **kwargs):
+    def update_history(self, settings, **kwargs):
         if 'initialize' in kwargs.keys():
             if kwargs['initialize']:
                 self.history = argparse.Namespace()
@@ -467,7 +469,7 @@ class CommittorAnalysis(JobType):
     def check_for_successful_step(self):
         return True     # nothing to check for in committor analysis
 
-    def update_history(self, **kwargs):
+    def update_history(self, settings, **kwargs):
         if 'initialize' in kwargs.keys():
             if kwargs['initialize']:
                 self.history = argparse.Namespace()
@@ -559,7 +561,7 @@ class EquilibriumPathSampling(JobType):
                 return True
         return False
 
-    def update_history(self, **kwargs):
+    def update_history(self, settings, **kwargs):
         if 'initialize' in kwargs.keys():
             if kwargs['initialize']:
                 self.history = argparse.Namespace()
@@ -580,7 +582,7 @@ class EquilibriumPathSampling(JobType):
                     temp = self.history.bounds  # just to make sure this got set
                 except NameError:
                     raise RuntimeError('new equilibrium path sampling thread initial coordinates ' + kwargs['inpcrd'] +
-                                       'has out-of-bounds reaction coordinate value: ' + str(init_rc))
+                                       ' has out-of-bounds reaction coordinate value: ' + str(init_rc))
         else:   # self.history should already exist
             if self.current_type == ['init']:     # update init attributes
                 if 'rst' in kwargs.keys():
@@ -638,7 +640,7 @@ class EquilibriumPathSampling(JobType):
 
     def check_termination(self, allthreads, settings):
         global_terminate = False    # initialize
-        if self.current_type == ['prod', 'prod']:  # aimless shooting only checks termination after prod steps
+        if self.current_type == ['prod', 'prod']:  # equilibrium path sampling only checks termination after prod steps
             thread_terminate = ''       # todo: are there termination criteria to implement for equilibrium path sampling threads?
             global_terminate = False    # no global termination criteria for this jobtype
 

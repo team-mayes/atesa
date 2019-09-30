@@ -68,7 +68,7 @@ def process(thread, running, settings):
             newfile.close()
 
         batchfiles.append(newfilename)
-        jobtype.update_history(thread, **these_kwargs)
+        jobtype.update_history(thread, settings, **these_kwargs)
 
     ### Submit batch files to task manager ###
     taskmanager = factory.taskmanager_factory(settings.task_manager)

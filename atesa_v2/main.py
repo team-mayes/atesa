@@ -113,7 +113,7 @@ def init_threads(settings):
     jobtype = factory.jobtype_factory(settings.job_type)
     for file in jobtype.get_initial_coordinates(None, settings):
         thread = Thread()
-        jobtype.update_history(thread, **{'initialize': True, 'inpcrd': file})
+        jobtype.update_history(thread, settings, **{'initialize': True, 'inpcrd': file})
         thread.topology = settings.topology
         thread.status = 'fresh thread'
         thread.name = file + '_' + str(thread.suffix)
