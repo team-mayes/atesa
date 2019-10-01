@@ -45,6 +45,7 @@ def process(thread, running, settings):
     for job_index in range(len(thread.current_type)):
         type = thread.current_type[job_index]
         name = thread.current_name[job_index]
+        inp = jobtype.get_input_file(thread, job_index, settings)
         template = settings.env.get_template(thread.get_batch_template(type, settings))
 
         these_kwargs = { 'name': thread.name + '_' + name,
@@ -53,7 +54,7 @@ def process(thread, running, settings):
                          'walltime': eval('settings.' + type + '_walltime'),
                          'mem': eval('settings.' + type + '_mem'),
                          'solver': eval('settings.' + type + '_solver'),
-                         'inp': settings.path_to_input_files + '/' + settings.job_type + '_' + type + '_' + settings.md_engine + '.in',
+                         'inp': inp,
                          'out': thread.name + '_' + name + '.out',
                          'prmtop': thread.topology,
                          'inpcrd': this_inpcrd[job_index],

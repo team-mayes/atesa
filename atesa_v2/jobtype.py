@@ -581,8 +581,24 @@ class EquilibriumPathSampling(JobType):
     Adapter class for equilibrium path sampling
     """
 
-    def get_input_file(self, job_index, settings):  # todo: implement to build (if necessary) and return appropriate mdin files for EPS
-        pass
+    def get_input_file(self, job_index, settings):
+        if self.current_type == ['init']:
+            return settings.path_to_input_files + '/' + settings.job_type + '_' + self.current_type[job_index] + '_' + settings.md_engine + '.in'
+        else:
+            if job_index == 0:  # have to roll to determine the number of fwd and bwd steps
+                roll = random.randint(0, settings.eps_n_steps)
+                self.history.prod_lens.append([roll, settings.eps_n_steps - roll])
+
+            input_file_name = 'eps_' + str(self.history.prod_lens[-1][job_index]) + '.in'
+
+            if not os.path.exists(input_file_name):
+                template = settings.env.get_template(settings.md_engine + '_eps_in.tpl')
+                filled = template.render(nstlim=str(self.history.prod_lens[-1][job_index]), ntwx=str(settings.eps_out_freq))
+                with open(input_file_name, 'w') as newfile:
+                    newfile.write(filled)
+                    newfile.close()
+
+            return input_file_name
 
     def get_initial_coordinates(self, settings):
         return settings.initial_coordinates
@@ -600,11 +616,12 @@ class EquilibriumPathSampling(JobType):
         if 'initialize' in kwargs.keys():
             if kwargs['initialize']:
                 self.history = argparse.Namespace()
-                self.history.init_inpcrd = []    # list of strings, inpcrd for init steps; initialized by main.init_threads and updated by algorithm
-                self.history.init_coords = []    # list of 2-length lists of strings, init [_fwd.rst7, _bwd.rst7]; updated by update_history and then in algorithm
-                self.history.prod_trajs = []     # list of 2-length lists of strings, [_fwd.nc, _bwd.nc]; updated by update_history
-                self.history.prod_results = []   # list of 2-length lists of strings ['fwd'/'bwd'/'', 'fwd'/'bwd'/'']; updated by update_results
-                self.history.last_accepted = -1  # int, index of last accepted prod_trajs entry; updated by update_results (-1 means none yet accepted)
+                self.history.init_inpcrd = []       # list of strings, inpcrd for init steps; initialized by main.init_threads and updated by algorithm
+                self.history.init_coords = []       # list of 2-length lists of strings, init [_fwd.rst7, _bwd.rst7]; updated by update_history and then in algorithm
+                self.history.prod_trajs = []        # list of 2-length lists of strings, [_fwd.nc, _bwd.nc]; updated by update_history
+                self.history.prod_results = []      # list of 2-length lists of strings ['fwd'/'bwd'/'', 'fwd'/'bwd'/'']; updated by update_results
+                self.history.prod_lens = []         # list of 2-length lists of ints indicating the lengths of fwd and bwd trajectories at each step; updated by get_input_file
+                self.history.last_accepted = -1     # int, index of last accepted prod_trajs entry; updated by update_results (-1 means none yet accepted)
             if 'inpcrd' in kwargs.keys():
                 self.history.init_inpcrd.append(kwargs['inpcrd'])
                 cvs = utilities.get_cvs(kwargs['inpcrd'], settings, reduce=settings.rc_reduced_cvs).split(' ')

@@ -623,6 +623,20 @@ class Tests(object):
         jobtype = factory.jobtype_factory(settings.job_type)
         assert jobtype.get_input_file(allthreads[0], 0, settings) == settings.path_to_input_files + '/' + settings.job_type + '_' + allthreads[0].current_type[0] + '_' + settings.md_engine + '.in'
 
+    def test_get_input_file_equilibrium_path_sampling(self):
+        """Tests get_input_file with job_type = 'equilibrium_path_sampling'"""
+        settings = config_equilibrium_path_sampling()
+        allthreads = atesa_v2.init_threads(settings)
+        allthreads[0].current_type = ['init']
+        jobtype = factory.jobtype_factory(settings.job_type)
+        assert jobtype.get_input_file(allthreads[0], 0, settings) == settings.path_to_input_files + '/' + settings.job_type + '_' + allthreads[0].current_type[0] + '_' + settings.md_engine + '.in'
+        allthreads[0].current_type = ['prod', 'prod']
+        new_file = jobtype.get_input_file(allthreads[0], 0, settings)
+        assert os.path.exists(new_file)
+        assert allthreads[0].history.prod_lens[-1][0] + allthreads[0].history.prod_lens[-1][1] == settings.eps_n_steps
+        new_file = jobtype.get_input_file(allthreads[0], 1, settings)
+        assert os.path.exists(new_file)
+
     @classmethod
     def teardown_method(self, method):
         "Runs at end of each method"
@@ -638,6 +652,9 @@ def config_equilibrium_path_sampling():
         f.write('\neps_rc_max = 50')
         f.write('\neps_rc_step = 1')
         f.write('\neps_overlap = 0.1')
+        f.write('\neps_overlap = 0.1')
+        f.write('\neps_n_steps = 6')
+        f.write('\neps_out_freq = 1')
         f.close()
 
     settings = configure('eps.config')

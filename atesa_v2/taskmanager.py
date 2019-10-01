@@ -62,7 +62,7 @@ class AdaptSimple(TaskManager):
         output = process.stdout.read().decode()
 
         # Use a regular expression to extract the jobid from this string
-        pattern = re.compile('[0-9]+')
+        pattern = re.compile('[0-9]+')  # todo: it's not inconceivable that this should fail in some cases. Consider moving building this pattern to a method of BatchSystem.
         return re.findall(pattern, output)[0]
 
 
