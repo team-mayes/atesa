@@ -48,10 +48,13 @@ class Tests(object):
     def test_init_threads_new(self):
         """Tests successful initialization of new threads"""
         settings = configure('../../data/atesa.config')
+        settings.initial_coordinates = ['init_1.rst7', 'init_2.rst7']
         allthreads = atesa_v2.init_threads(settings)
-        assert len(allthreads) == 1
-        assert allthreads[0].history.init_inpcrd == ['init.rst7']
+        assert len(allthreads) == 2
+        assert allthreads[0].history.init_inpcrd == ['init_1.rst7']
+        assert allthreads[1].history.init_inpcrd == ['init_2.rst7']
         assert allthreads[0].topology == 'topology.prmtop'
+        assert allthreads[1].topology == 'topology.prmtop'
 
     def test_thread_get_frame_amber(self):
         """Tests thread.get_frame method with md_engine = 'amber' and frame = -1"""

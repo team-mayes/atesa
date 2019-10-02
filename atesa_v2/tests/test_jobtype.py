@@ -87,11 +87,11 @@ class Tests(object):
         allthreads[0].current_type = ['init']
         allthreads[0].history.init_coords = [['test_velocities.rst7_0_init.rst7']]
         jobtype = factory.jobtype_factory(settings.job_type)
-        jobtype.algorithm(allthreads[0], allthreads, settings)
+        jobtype.algorithm(allthreads[0], allthreads, allthreads, settings)
         assert allthreads[0].current_type == []     # result for missing .rst7 file (haven't copied it yet)
         allthreads[0].current_type = ['init']       # reset last result
         shutil.copy('../test_data/test_velocities.rst7', 'test_velocities.rst7_0_init.rst7')    # create the needed file
-        jobtype.algorithm(allthreads[0], allthreads, settings)
+        jobtype.algorithm(allthreads[0], allthreads, allthreads, settings)
         assert allthreads[0].current_type == ['init']   # results for .rst7 was found
         assert allthreads[0].history.init_coords == [['test_velocities.rst7_0_init.rst7', 'test_velocities.rst7_0_init_bwd.rst7']]
 
@@ -106,7 +106,7 @@ class Tests(object):
         allthreads[0].current_type = ['prod', 'prod']
         allthreads[0].history.prod_results.append(['fwd', 'fwd'])      # not an accepted move
         jobtype = factory.jobtype_factory(settings.job_type)
-        jobtype.algorithm(allthreads[0], allthreads, settings)
+        jobtype.algorithm(allthreads[0], allthreads, allthreads, settings)
         assert allthreads[0].history.init_inpcrd[-1] == allthreads[0].history.init_inpcrd[-2]
 
     def test_algorithm_aimless_shooting_prod_always_new_not_accepted(self):
@@ -126,7 +126,7 @@ class Tests(object):
         allthreads[0].suffix = 1
         allthreads[0].history.last_accepted = 0
         jobtype = factory.jobtype_factory(settings.job_type)
-        jobtype.algorithm(allthreads[0], allthreads, settings)
+        jobtype.algorithm(allthreads[0], allthreads, allthreads, settings)
         assert filecmp.cmp(allthreads[0].history.init_inpcrd[1], '../test_data/test.rst7') # test.rst7 is last frame of test.nc
         os.remove('../test_data/test.nc_frame_-1.rst7') # have to do this manually because aimless shooting's mdengine getframe method keeps the '../test_data/' in front of the file name
 
@@ -143,7 +143,7 @@ class Tests(object):
         allthreads[0].history.prod_results = [['bwd', 'bwd'], ['fwd', 'bwd']]  # not accepted then accepted
         allthreads[0].history.prod_trajs = [['not_a_real_file.nc', 'not_a_real_file.nc'], ['../test_data/test.nc', '../test_data/test.nc']]
         jobtype = factory.jobtype_factory(settings.job_type)
-        jobtype.algorithm(allthreads[0], allthreads, settings)
+        jobtype.algorithm(allthreads[0], allthreads, allthreads, settings)
         assert filecmp.cmp(allthreads[0].history.init_inpcrd[1], '../test_data/test.rst7') # test.rst7 is last frame of test.nc
         os.remove('../test_data/test.nc_frame_-1.rst7') # have to do this manually because aimless shooting's mdengine getframe method keeps the '../test_data/' in front of the file name
 
@@ -412,10 +412,11 @@ class Tests(object):
         allthreads = atesa_v2.init_threads(settings)
         allthreads[0].current_type = ['prod', 'prod']
         allthreads[0].history.prod_trajs = [['../test_data/test.nc', '../test_data/test.nc']]
+        allthreads[0].history.init_coords = [['../test_data/test_velocities.rst7', '../test_data/test_velocities.rst7']]
         jobtype = factory.jobtype_factory(settings.job_type)
         jobtype.update_results(allthreads[0], allthreads, settings)
         assert os.path.exists('eps.out')
-        assert allthreads[0].history.prod_results[-1] == pytest.approx([-35.17,-35.17],1E-3)
+        assert allthreads[0].history.prod_results[-1] == pytest.approx([-34.29, -35.89, -35.17, -35.89, -35.17], 1E-3)
 
     def test_update_history_equilibrium_path_sampling_prod(self):
         """Tests update_history with job_type = 'equilibrium_path_sampling' with current_type = ['prod', 'prod']"""
@@ -448,6 +449,7 @@ class Tests(object):
             f.write('\neps_rc_max = 0.1')
             f.write('\neps_rc_step = 0.1')
             f.write('\neps_overlap = 0.01')
+            f.write('\neps_dynamic_seed = 3')
             f.close()
         settings = configure('eps.config')
         settings.DEBUG = True
@@ -546,11 +548,11 @@ class Tests(object):
         allthreads[0].current_type = ['init']
         allthreads[0].history.init_coords = [['test_velocities.rst7_0_init.rst7']]
         jobtype = factory.jobtype_factory(settings.job_type)
-        jobtype.algorithm(allthreads[0], allthreads, settings)
+        jobtype.algorithm(allthreads[0], allthreads, allthreads, settings)
         assert allthreads[0].current_type == []     # result for missing .rst7 file (haven't copied it yet)
         allthreads[0].current_type = ['init']       # reset last result
         shutil.copy('../test_data/test_velocities.rst7', 'test_velocities.rst7_0_init.rst7')    # create the needed file
-        jobtype.algorithm(allthreads[0], allthreads, settings)
+        jobtype.algorithm(allthreads[0], allthreads, allthreads, settings)
         assert allthreads[0].current_type == ['init']   # results for .rst7 was found
         assert allthreads[0].history.init_coords == [['test_velocities.rst7_0_init.rst7', 'test_velocities.rst7_0_init_bwd.rst7']]
 
@@ -564,11 +566,12 @@ class Tests(object):
         allthreads[0].current_type = ['prod', 'prod']
         allthreads[0].history.prod_results = [[-34.12, -35.1, -36], [12, 13, 11]]      # accepted then not accepted
         allthreads[0].history.prod_trajs = [['test.nc', 'test.nc'], ['not_a_real_file.nc', 'not_a_real_file.nc']]
+        allthreads[0].history.init_coords = [['../test_data/test_velocities.rst7', '../test_data/test_velocities.rst7']]
         allthreads[0].suffix = 1
         allthreads[0].history.last_accepted = 0
         shutil.copy('../test_data/test.nc', 'test.nc')
         jobtype = factory.jobtype_factory(settings.job_type)
-        jobtype.algorithm(allthreads[0], allthreads, settings)
+        jobtype.algorithm(allthreads[0], allthreads, allthreads, settings)
         assert filecmp.cmp(allthreads[0].history.init_inpcrd[1], '../test_data/test.rst7') # test.rst7 is last frame of test.nc
 
     def test_algorithm_equilibrium_path_sampling_prod_not_accepted_no_accepted_yet(self):
@@ -580,11 +583,12 @@ class Tests(object):
         allthreads = atesa_v2.init_threads(settings)
         allthreads[0].current_type = ['prod', 'prod']
         allthreads[0].history.prod_results = [[16, 13, 15], [12, 13, 11]]      # accepted then not accepted
-        allthreads[0].history.prod_trajs = [['test.nc', 'test.nc'], ['not_a_real_file.nc', 'not_a_real_file.nc']]
+        allthreads[0].history.prod_trajs = [['test.nc', 'test.nc'], ['test.nc', 'test.nc']]
+        allthreads[0].history.init_coords = [['../test_data/test_velocities.rst7', '../test_data/test_velocities.rst7']]
         allthreads[0].suffix = 1
         shutil.copy('../test_data/test.nc', 'test.nc')
         jobtype = factory.jobtype_factory(settings.job_type)
-        jobtype.algorithm(allthreads[0], allthreads, settings)
+        jobtype.algorithm(allthreads[0], allthreads, allthreads, settings)
         assert filecmp.cmp(allthreads[0].history.init_inpcrd[1], '../test_data/test.rst7') # test.rst7 is last frame of test.nc
 
     def test_algorithm_equilibrium_path_sampling_prod_accepted(self):
@@ -597,9 +601,10 @@ class Tests(object):
         allthreads[0].current_type = ['prod', 'prod']
         allthreads[0].history.prod_results = [[12, 13, 11], [-34.12, -35.1, -36]]  # not accepted then accepted
         allthreads[0].history.prod_trajs = [['not_a_real_file.nc', 'not_a_real_file.nc'], ['test.nc', 'test.nc']]
+        allthreads[0].history.init_coords = [['../test_data/test_velocities.rst7', '../test_data/test_velocities.rst7']]
         shutil.copy('../test_data/test.nc', 'test.nc')
         jobtype = factory.jobtype_factory(settings.job_type)
-        jobtype.algorithm(allthreads[0], allthreads, settings)
+        jobtype.algorithm(allthreads[0], allthreads, allthreads, settings)
         assert filecmp.cmp(allthreads[0].history.init_inpcrd[1], '../test_data/test.rst7') # test.rst7 is last frame of test.nc
 
     def test_get_input_file_aimless_shooting(self):
@@ -652,9 +657,9 @@ def config_equilibrium_path_sampling():
         f.write('\neps_rc_max = 50')
         f.write('\neps_rc_step = 1')
         f.write('\neps_overlap = 0.1')
-        f.write('\neps_overlap = 0.1')
         f.write('\neps_n_steps = 6')
         f.write('\neps_out_freq = 1')
+        f.write('\neps_dynamic_seed = 3')
         f.close()
 
     settings = configure('eps.config')

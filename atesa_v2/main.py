@@ -37,23 +37,23 @@ class Thread(object):
     """
 
     def __init__(self):
-        self.topology = ''          # filename containing topology file
-        self.jobids = []            # list of jobids associated with the present step of this thread
-        self.terminated = False     # boolean indicating whether the thread has reached a termination criterion
-        self.current_type = []      # list of job types for the present step of this thread
-        self.current_name = []      # list of job names corresponding to the job types
-        self.current_results = []   # results of each job, if applicable
-        self.name = ''              # name of current step
-        self.suffix = 0             # index of current step
-        self.total_moves = 0        # running total of "moves" attributable to this thread
-        self.accept_moves = 0       # running total of "accepted" "moves", as defined by JobType.update_results
-        self.status = ''            # tag for current status of a thread
+        self.topology = ''              # filename containing topology file
+        self.jobids = []                # list of jobids associated with the present step of this thread
+        self.terminated = False         # boolean indicating whether the thread has reached a termination criterion
+        self.current_type = []          # list of job types for the present step of this thread
+        self.current_name = []          # list of job names corresponding to the job types
+        self.current_results = []       # results of each job, if applicable
+        self.name = ''                  # name of current step
+        self.suffix = 0                 # index of current step
+        self.total_moves = 0            # running total of "moves" attributable to this thread
+        self.accept_moves = 0           # running total of "accepted" "moves", as defined by JobType.update_results
+        self.status = 'fresh thread'    # tag for current status of a thread
 
     def process(self, running, settings):
         return process.process(self, running, settings)
 
-    def interpret(self, allthreads, settings):
-        return interpret.interpret(self, allthreads, settings)
+    def interpret(self, allthreads, running, settings):
+        return interpret.interpret(self, allthreads, running, settings)
 
     def gatekeeper(self, settings):
         jobtype = factory.jobtype_factory(settings.job_type)
@@ -115,7 +115,6 @@ def init_threads(settings):
         thread = Thread()
         jobtype.update_history(thread, settings, **{'initialize': True, 'inpcrd': file})
         thread.topology = settings.topology
-        thread.status = 'fresh thread'
         thread.name = file + '_' + str(thread.suffix)
         allthreads.append(thread)
 
@@ -150,7 +149,7 @@ def main(allthreads, settings):
     while (not termination_criterion) and running:
         for thread in running:
             if thread.gatekeeper(settings):
-                termination_criterion = thread.interpret(allthreads, settings)
+                termination_criterion, running = thread.interpret(allthreads, running, settings)
                 if termination_criterion:
                     for thread in running:    # todo: should I replace this with something to finish up running jobs and just block submission of new ones?
                         for job_index in range(len(thread.current_type)):

@@ -69,12 +69,6 @@ def configure(input_file):
     except AttributeError:
         pass
 
-    if settings.job_type == 'equilibrium_path_sampling':
-        eps_lower_boundaries = numpy.arange(settings.eps_rc_min, settings.eps_rc_max, settings.eps_rc_step)
-        settings.eps_bounds = []
-        for lower_bound in eps_lower_boundaries:
-            settings.eps_bounds.append([lower_bound - settings.eps_overlap, lower_bound + settings.eps_rc_step + settings.eps_overlap])
-
     # Set Jinja2 environment
     if os.path.exists(settings.path_to_templates):
         settings.env = Environment(loader=FileSystemLoader(settings.path_to_templates))
@@ -90,5 +84,15 @@ def configure(input_file):
         if '/' in item:
             raise ValueError('file names in initial_coordinates should not contain \'/\' characters (they should exist in the same directory from which ATESA is called)')
 
+    if settings.job_type == 'equilibrium_path_sampling':
+        eps_lower_boundaries = numpy.arange(settings.eps_rc_min, settings.eps_rc_max, settings.eps_rc_step)
+        settings.eps_bounds = []
+        for lower_bound in eps_lower_boundaries:
+            settings.eps_bounds.append([lower_bound - settings.eps_overlap, lower_bound + settings.eps_rc_step + settings.eps_overlap])
+
+        if settings.eps_dynamic_seed:
+            if isinstance(settings.eps_dynamic_seed, int):
+                settings.eps_dynamic_seed = [settings.eps_dynamic_seed for null in settings.eps_bounds]
+            settings.eps_empty_windows = settings.eps_dynamic_seed
 
     return settings

@@ -5,7 +5,7 @@ implementing the calls to JobType methods to control the value of the thread.coo
 
 from atesa_v2 import factory
 
-def interpret(thread, allthreads, settings):
+def interpret(thread, allthreads, running, settings):
     """
     The main function of interpret.py. Makes calls to JobType methods to update results, check termination criteria, and
     update thread.coordinates
@@ -16,6 +16,8 @@ def interpret(thread, allthreads, settings):
         The Thread object on which to act
     allthreads : list
         The list of all extant Thread objects
+    running : list
+        The list of all currently running Thread objects
     settings : argparse.Namespace
         Settings namespace object
 
@@ -32,6 +34,6 @@ def interpret(thread, allthreads, settings):
     if jobtype.check_for_successful_step(thread):                               # ensure this step did not crash/fail
         termination = jobtype.check_termination(thread, allthreads, settings)   # check global termination criteria
         jobtype.update_results(thread, allthreads, settings)                    # update results as needed
-    jobtype.algorithm(thread, allthreads, settings)                             # set thread parameters for next step
+    running = jobtype.algorithm(thread, allthreads, settings)                   # set thread parameters for next step
 
-    return termination
+    return termination, running

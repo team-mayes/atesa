@@ -13,6 +13,7 @@ import argparse
 import numpy
 import pytraj
 from atesa_v2 import utilities
+from atesa_v2 import main
 
 class JobType(abc.ABC):
     """
@@ -262,7 +263,7 @@ class JobType(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def algorithm(self, allthreads, settings):
+    def algorithm(self, allthreads, running, settings):
         """
         Update thread attributes to prepare for next move.
 
@@ -275,12 +276,15 @@ class JobType(abc.ABC):
             Methods in the JobType abstract base class are intended to be invoked by Thread objects
         allthreads : list
             The list of all extant Thread objects
+        running : list
+            The list of all currently running Thread objects
         settings : argparse.Namespace
                 Settings namespace object
 
         Returns
         -------
-        None
+        running : list
+            The list of all currently running Thread objects
 
         """
 
@@ -438,7 +442,7 @@ class AimlessShooting(JobType):
         # Write updated restart.pkl
         pickle.dump(allthreads, open('restart.pkl', 'wb'), protocol=2)
 
-    def algorithm(self, allthreads, settings):
+    def algorithm(self, allthreads, running, settings):
         # In aimless shooting, algorithm should decide whether or not a new shooting point is needed, obtain it if so,
         # and update self.history to reflect it.
         if self.current_type == ['prod', 'prod']:
@@ -462,6 +466,8 @@ class AimlessShooting(JobType):
                 self.current_type = []  # reset current_type so it will be pushed back to ['init'] by thread.process
             else:   # init step produced the desired file, so update coordinates
                 self.history.init_coords[-1].append(utilities.rev_vels(self.history.init_coords[-1][0]))
+
+        return running
 
 
 # noinspection PyAttributeOutsideInit
@@ -572,8 +578,8 @@ class CommittorAnalysis(JobType):
                 bwds += 1
         open('committor_analysis.out', 'a').write(str(int(fwds)) + '/' + str(int(fwds + bwds)) + '\n')
 
-    def algorithm(self, allthreads, settings):
-        pass    # nothing to set because there is no next step
+    def algorithm(self, allthreads, running, settings):
+        return running    # nothing to set because there is no next step
 
 
 class EquilibriumPathSampling(JobType):
@@ -626,10 +632,16 @@ class EquilibriumPathSampling(JobType):
                 self.history.init_inpcrd.append(kwargs['inpcrd'])
                 cvs = utilities.get_cvs(kwargs['inpcrd'], settings, reduce=settings.rc_reduced_cvs).split(' ')
                 init_rc = utilities.evaluate_rc(settings.rc_definition, cvs)
+                window_index = 0
                 for bounds in settings.eps_bounds:
                     if bounds[0] <= init_rc <= bounds[1]:
                         self.history.bounds = bounds
+                        if settings.eps_dynamic_seed:
+                            settings.eps_empty_windows[window_index] -= 1  # decrement empty window count in this window
+                            if settings.eps_empty_windows[window_index] < 0:  # minimum value 0
+                                settings.eps_empty_windows[window_index] = 0
                         break
+                    window_index += 1
                 try:
                     temp = self.history.bounds  # just to make sure this got set
                 except AttributeError:
@@ -714,11 +726,17 @@ class EquilibriumPathSampling(JobType):
 
             # Update current_results, total and accepted move counts, and status.txt
             self.history.prod_results.append([])
+            # First, add results from init frame
+            cvs = utilities.get_cvs(self.history.init_coords[-1][0], settings, reduce=settings.rc_reduced_cvs).split(' ')
+            self.history.prod_results[-1].append(utilities.evaluate_rc(settings.rc_definition, cvs))
+            # Then, add results from fwd and then bwd trajectories, frame-by-frame
             for job_index in range(len(self.current_type)):
-                frame_to_check = self.get_frame(self.history.prod_trajs[-1][job_index], -1, settings)
-                cvs = utilities.get_cvs(frame_to_check, settings, reduce=settings.rc_reduced_cvs).split(' ')
-                self.history.prod_results[-1].append(utilities.evaluate_rc(settings.rc_definition, cvs))
-                os.remove(frame_to_check)
+                n_frames = pytraj.iterload(self.history.prod_trajs[-1][job_index], settings.topology).n_frames
+                for frame in range(n_frames):
+                    frame_to_check = self.get_frame(self.history.prod_trajs[-1][job_index], frame + 1, settings)
+                    cvs = utilities.get_cvs(frame_to_check, settings, reduce=settings.rc_reduced_cvs).split(' ')
+                    self.history.prod_results[-1].append(utilities.evaluate_rc(settings.rc_definition, cvs))
+                    os.remove(frame_to_check)
             self.total_moves += 1
             if True in [self.history.bounds[0] <= rc_value <= self.history.bounds[1] for rc_value in self.history.prod_results[-1]]:
                 self.history.last_accepted = int(len(self.history.prod_trajs) - 1)   # new index of last accepted move
@@ -744,21 +762,30 @@ class EquilibriumPathSampling(JobType):
         # Write updated restart.pkl
         pickle.dump(allthreads, open('restart.pkl', 'wb'), protocol=2)
 
-    def algorithm(self, allthreads, settings):
+    def algorithm(self, allthreads, running, settings):
         # In equilibrium path sampling, algorithm should decide whether or not a new shooting point is needed, obtain it
         # if so, and update self.history to reflect it.
         if self.current_type == ['prod', 'prod']:
             self.suffix += 1
             self.name = self.history.init_inpcrd[0] + '_' + str(self.suffix)
+
+            # Need these values for non-accepted move behavior and also for dynamic seeding
+            traj = pytraj.iterload(self.history.prod_trajs[self.history.last_accepted][0], settings.topology)
+            n_fwd = traj.n_frames
+            traj = pytraj.iterload(self.history.prod_trajs[self.history.last_accepted][1], settings.topology)
+            n_bwd = traj.n_frames
+
             if True in [self.history.bounds[0] <= rc_value <= self.history.bounds[1] for rc_value in self.history.prod_results[-1]]:    # accepted move
                 traj = pytraj.iterload(self.history.prod_trajs[-1][0], settings.topology)
                 n_fwd = traj.n_frames
                 traj = pytraj.iterload(self.history.prod_trajs[-1][1], settings.topology)
                 n_bwd = traj.n_frames
+
                 if settings.DEBUG:
-                    random_bead = n_fwd + n_bwd
+                    random_bead = n_fwd + n_bwd     # not actually random, for consistency in testing
                 else:
                     random_bead = int(random.randint(0, int(n_fwd) + int(n_bwd)))    # randomly select a "bead" from the paired trajectories
+
                 if 0 < random_bead <= n_bwd:
                     frame = random_bead
                     new_point = self.get_frame(self.history.prod_trajs[-1][1], frame, settings)
@@ -768,16 +795,14 @@ class EquilibriumPathSampling(JobType):
                 else:   # random_bead = 0, chooses the "init" bead
                     new_point = self.history.init_inpcrd[-1]
                 self.history.init_inpcrd.append(new_point)
+
             else:   # not an accepted move
                 if self.history.last_accepted >= 0:  # choose a new shooting move from last accepted trajectory
-                    traj = pytraj.iterload(self.history.prod_trajs[self.history.last_accepted][0], settings.topology)
-                    n_fwd = traj.n_frames
-                    traj = pytraj.iterload(self.history.prod_trajs[self.history.last_accepted][1], settings.topology)
-                    n_bwd = traj.n_frames
                     if settings.DEBUG:
                         random_bead = n_fwd + n_bwd
                     else:
                         random_bead = int(random.randint(0, int(n_fwd) + int(n_bwd)))  # randomly select a "bead" from the paired trajectories
+
                     if 0 < random_bead <= n_bwd:
                         frame = random_bead
                         new_point = self.get_frame(self.history.prod_trajs[self.history.last_accepted][1], frame, settings)
@@ -787,10 +812,46 @@ class EquilibriumPathSampling(JobType):
                     else:  # random_bead = 0, chooses the "init" bead
                         new_point = self.history.init_inpcrd[self.history.last_accepted]
                     self.history.init_inpcrd.append(new_point)
+
                 else:   # there have been no accepted moves in this thread yet
                     self.history.init_inpcrd.append(self.history.init_inpcrd[-1])   # begin next move from same point as last move
+
+            # Implement dynamic seeding of EPS windows
+            if settings.eps_dynamic_seed:
+                for rc_value in self.history.prod_results[-1]:  # results are ordered as: [init, fwd, bwd]
+                    if not self.history.bounds[0] <= rc_value <= self.history.bounds[1]:
+                        try:
+                            window_index = [bounds[0] <= rc_value <= bounds[1] for bounds in settings.eps_bounds].index(True)
+                            if settings.eps_empty_windows[window_index] > 0:    # time to make a new Thread here
+                                # First have to get or make the file for the initial coordinates
+                                frame_index = self.history.prod_results[-1].index(rc_value)
+                                if frame_index == 0:        # init coordinates
+                                    coord_file = self.history.init_coords[-1][0]
+                                elif frame_index <= n_fwd:  # in fwd trajectory
+                                    coord_file = self.get_frame(self.history.prod_trajs[-1][0], frame_index, settings)
+                                else:                       # in bwd trajectory
+                                    coord_file = self.get_frame(self.history.prod_trajs[-1][1], frame_index - n_fwd, settings)
+
+                                # Now make the thread and set its parameters
+                                new_thread = main.Thread()
+                                EquilibriumPathSampling.update_history(new_thread, settings, **{'initialize': True, 'inpcrd': coord_file})
+                                new_thread.topology = settings.topology
+                                new_thread.name = coord_file + '_' + str(new_thread.suffix)
+
+                                # Append the new thread to allthreads and running
+                                allthreads.append(new_thread)
+                                running.append(new_thread)
+
+                                if not settings.DEBUG:  # if DEBUG, keep going to maximize coverage
+                                    return running  # return after initializing one thread to encourage sampling diversity
+
+                        except ValueError:  # rc_value not in range of eps_bounds, so nothing to do here
+                            pass
+
         elif self.current_type == ['init']:
             if not os.path.exists(self.history.init_coords[-1][0]):  # init step failed, so retry it
                 self.current_type = []  # reset current_type so it will be pushed back to ['init'] by thread.process
             else:   # init step produced the desired file, so update coordinates
                 self.history.init_coords[-1].append(utilities.rev_vels(self.history.init_coords[-1][0]))
+
+        return running
