@@ -49,6 +49,7 @@ class Tests(object):
         """Tests successful initialization of new threads"""
         settings = configure('../../data/atesa.config')
         settings.initial_coordinates = ['init_1.rst7', 'init_2.rst7']
+        settings.degeneracy = 1
         allthreads = atesa_v2.init_threads(settings)
         assert len(allthreads) == 2
         assert allthreads[0].history.init_inpcrd == ['init_1.rst7']

@@ -41,13 +41,6 @@ class Tests(object):
         assert jobtype.check_termination(allthreads[0], allthreads, settings) == False  # todo: update after implementation
         assert allthreads[0].terminated == False              # todo: update after implementation
 
-    def test_gatekeep_aimless_shooting(self):
-        """Tests thread.gatekeep method with job_type = 'aimless_shooting'"""
-        settings = configure('../../data/atesa.config')
-        settings.job_type = 'aimless_shooting'
-        settings.DEBUG = True
-        allthreads = atesa_v2.init_threads(settings)
-        assert allthreads[0].gatekeeper(settings) == True
 
     def test_update_results_aimless_shooting_init(self):
         """Tests update_results with job_type = 'aimless_shooting' and thread.current_type = ['init']"""
@@ -194,6 +187,16 @@ class Tests(object):
         allthreads[0].history.init_coords = [['not_a_real_file_at_all_init.rst7', 'not_a_real_file_at_all_init_bwd.rst7']]
         jobtype = factory.jobtype_factory(settings.job_type)
         assert jobtype.get_inpcrd(allthreads[0]) == ['not_a_real_file_at_all_init.rst7', 'not_a_real_file_at_all_init_bwd.rst7']
+
+    def test_get_initial_coordinates_aimless_shooting(self):
+        """Tests get_initial_coordinates with job_type = 'aimless_shooting'"""
+        settings = configure('../../data/atesa.config')
+        settings.job_type = 'aimless_shooting'
+        settings.initial_coordinates = ['fakefile1', 'fakefile2']
+        settings.degeneracy = 2
+        allthreads = atesa_v2.init_threads(settings)
+        jobtype = factory.jobtype_factory(settings.job_type)
+        assert jobtype.get_initial_coordinates(allthreads[0], settings) == ['fakefile1', 'fakefile1', 'fakefile2', 'fakefile2']
 
     def test_gatekeep_aimless_shooting(self):
         """Tests gatekeep with job_type = 'aimless_shooting'"""
