@@ -320,7 +320,10 @@ class AimlessShooting(JobType):
         return settings.path_to_input_files + '/' + settings.job_type + '_' + self.current_type[job_index] + '_' + settings.md_engine + '.in'
 
     def get_initial_coordinates(self, settings):
-        return settings.initial_coordinates
+        list_to_return = []
+        for item in settings.initial_coordinates:
+            list_to_return += [item for null in range(settings.degeneracy)]     # implements degeneracy option
+        return list_to_return
 
     def check_for_successful_step(self):
         if self.current_type == ['init']:   # requires that self.history.init_coords[-1] exists

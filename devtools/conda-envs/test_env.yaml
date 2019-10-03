@@ -6,6 +6,7 @@ dependencies:
   - pip
   - jinja2
   - numpy
+  - statsmodels
 
     # Testing
   - pytest
