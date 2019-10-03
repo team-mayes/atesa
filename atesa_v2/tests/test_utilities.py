@@ -11,6 +11,7 @@ import os
 import glob
 import filecmp
 import shutil
+import pickle
 from atesa_v2 import utilities
 from atesa_v2.configure import configure
 from atesa_v2 import process
@@ -119,6 +120,32 @@ class Tests(object):
         cv_list = [1, 0.3, -3, 1.5002]  # various data types and precisions
         rc_defn = '2*CV0 + 0.3*CV1 + CV2/0.4 - numpy.sin(CV3)'
         assert utilities.evaluate_rc(rc_defn, cv_list) == pytest.approx(-6.408, 1E-2)
+
+    def test_resample(self):
+        """Tests resample"""
+        settings = configure('../../data/atesa.config')
+        with pytest.raises(FileNotFoundError):      # run without making restart.pkl
+            utilities.resample(settings)
+        settings.initial_coordinates = ['init_1.rst7', 'init_2.rst7']
+        settings.rc_definition = '1.00 + 2.34*CV0 - 5.67*CV1'
+        settings.rc_reduced_cvs = False
+        settings.cvs = ['pytraj.distance(traj, \'@1 @2\')[0]', 'pytraj.angle(traj, \'@2 @3 @4\')[0]']
+        settings.include_qdot = False
+        settings.topology = '../test_data/test.prmtop'
+        allthreads = atesa_v2.init_threads(settings)
+        allthreads[0].history.init_coords = [['../test_data/test_velocities_init.rst7', '../test_data/test_velocities_init_bwd.rst7'],
+                                             ['../test_data/test_two_init.rst7', '../test_data/test_two_init_bwd.rst7']]
+        allthreads[0].history.prod_results = [['fwd', 'bwd'], ['bwd', 'bwd']]
+        allthreads[1].history.init_coords = [['../test_data/test_velocities_init.rst7', '../test_data/test_velocities_init_bwd.rst7'],
+                                             ['../test_data/test_two_init.rst7', '../test_data/test_two_init_bwd.rst7']]
+        allthreads[1].history.prod_results = [['bwd', 'bwd'], ['fwd', 'bwd']]
+        pickle.dump(allthreads, open('restart.pkl', 'wb'), protocol=2)  # file now exists
+        utilities.resample(settings)
+        assert os.path.exists('as_raw.out')
+        # assert os.path.exists('as_decorr.out')    # todo: reinstitute this test once I have a good restart.pkl file to test with
+        raw_lines = open('as_raw.out', 'r').readlines()
+        assert len(raw_lines) == 4
+        assert not False in [raw_lines[0][0] == 'B', raw_lines[1][0] == 'A', raw_lines[2][0] == 'A', raw_lines[3][0] == 'B']
 
     @classmethod
     def teardown_method(self, method):

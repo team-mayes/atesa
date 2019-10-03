@@ -121,7 +121,7 @@ def init_threads(settings):
     return allthreads
 
 
-def main(allthreads, settings):
+def main(settings):
     """
     Perform the primary loop of building, submitting, monitoring, and analyzing jobs.
 
@@ -130,8 +130,6 @@ def main(allthreads, settings):
 
     Parameters
     ----------
-    allthreads : list
-        List of all Thread objects, including those for which no further tasks are scheduled.
     settings : argparse.Namespace
         Settings namespace object
 
@@ -141,31 +139,9 @@ def main(allthreads, settings):
 
     """
 
-    termination_criterion = False   # initialize
-    running = allthreads            # to be pruned later by thread.process()
-
-    for thread in allthreads:
-        running = thread.process(running, settings)
-    while (not termination_criterion) and running:
-        for thread in running:
-            if thread.gatekeeper(settings):
-                termination_criterion, running = thread.interpret(allthreads, running, settings)
-                if termination_criterion:
-                    for thread in running:    # todo: should I replace this with something to finish up running jobs and just block submission of new ones?
-                        for job_index in range(len(thread.current_type)):
-                            thread.cancel_job(job_index, settings)
-                        running = []
-                    break
-                running = thread.process(running, settings)
-
-    if termination_criterion:
-        print('ATESA run exiting normally (global termination criterion met)')
-    else:
-        print('ATESA run exiting normally (all threads ended individually)')
-
-if __name__ == "__main__":
-    # Obtain settings namespace, initialize threads, and move promptly into main.
-    settings = configure.configure(sys.argv[1]) #'data/atesa.config')
+    if settings.resample:
+        utilities.resample(settings)
+        sys.exit()
 
     # Make working directory if it does not exist, handling overwrite and restart as needed
     if os.path.exists(settings.working_directory):
@@ -197,4 +173,33 @@ if __name__ == "__main__":
     temp_settings.__dict__.pop('env')   # env attribute is not picklable
     pickle.dump(temp_settings, open('settings.pkl', 'wb'), protocol=2)
 
-    main(allthreads, settings)
+    termination_criterion = False   # initialize global termination criterion boolean
+    running = allthreads            # to be pruned later by thread.process()
+
+    # Begin main loop
+    for thread in allthreads:
+        running = thread.process(running, settings)
+    while (not termination_criterion) and running:
+        for thread in running:
+            if thread.gatekeeper(settings):
+                termination_criterion, running = thread.interpret(allthreads, running, settings)
+                if termination_criterion:
+                    for thread in running:    # todo: should I replace this with something to finish up running jobs and just block submission of new ones?
+                        for job_index in range(len(thread.current_type)):
+                            thread.cancel_job(job_index, settings)
+                        running = []
+                    break
+                running = thread.process(running, settings)
+
+    jobtype = factory.jobtype_factory(settings.job_type)
+    jobtype.cleanup(None, settings)
+
+    if termination_criterion:
+        print('ATESA run exiting normally (global termination criterion met)')
+    else:
+        print('ATESA run exiting normally (all threads ended individually)')
+
+if __name__ == "__main__":
+    # Obtain settings namespace, initialize threads, and move promptly into main.
+    settings = configure.configure(sys.argv[1]) #'data/atesa.config')
+    main(settings)

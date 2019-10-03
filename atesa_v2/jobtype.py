@@ -290,6 +290,26 @@ class JobType(abc.ABC):
 
         pass
 
+    @abc.abstractmethod
+    def cleanup(self, settings):
+        """
+        Perform any last tasks between the end of the main loop and the program exiting.
+
+        Parameters
+        ----------
+        self : None
+            self is not used in cleanup methods
+        settings : argparse.Namespace
+                Settings namespace object
+
+        Returns
+        -------
+        None
+
+        """
+
+        pass
+
 
 class AimlessShooting(JobType):
     """
@@ -404,8 +424,8 @@ class AimlessShooting(JobType):
     def update_results(self, allthreads, settings):
         if self.current_type == ['prod', 'prod']:   # aimless shooting only writes after prod steps
             # Initialize as.out if not already extant
-            if not os.path.exists(settings.working_directory + '/as.out'):
-                open(settings.working_directory + '/as.out', 'w').close()
+            if not os.path.exists(settings.working_directory + '/as_raw.out'):
+                open(settings.working_directory + '/as_raw.out', 'w').close()
 
             # Update current_results, total and accepted move counts, and status.txt
             self.history.prod_results.append([])
@@ -418,15 +438,15 @@ class AimlessShooting(JobType):
                 self.history.last_accepted = int(len(self.history.prod_trajs) - 1)   # new index of last accepted move
                 self.accept_moves += 1
 
-            # Write CVs to as.out
+            # Write CVs to as_raw.out
             if self.history.prod_results[-1][0] in ['fwd', 'bwd']:
                 if self.history.prod_results[-1][0] == 'fwd':
                     this_basin = 'B'
                 else:   # 'bwd'
                     this_basin = 'A'
-                open(settings.working_directory + '/as.out', 'a').write(this_basin + ' <- ')
-                open(settings.working_directory + '/as.out', 'a').write(utilities.get_cvs(self.history.init_coords[-1][0], settings) + '\n')
-                open(settings.working_directory + '/as.out', 'a').close()
+                open(settings.working_directory + '/as_raw.out', 'a').write(this_basin + ' <- ')
+                open(settings.working_directory + '/as_raw.out', 'a').write(utilities.get_cvs(self.history.init_coords[-1][0], settings) + '\n')
+                open(settings.working_directory + '/as_raw.out', 'a').close()
 
             with open('status.txt', 'w') as file:
                 for thread in allthreads:
@@ -468,6 +488,9 @@ class AimlessShooting(JobType):
                 self.history.init_coords[-1].append(utilities.rev_vels(self.history.init_coords[-1][0]))
 
         return running
+
+    def cleanup(self, settings):
+        utilities.resample(settings)
 
 
 # noinspection PyAttributeOutsideInit
@@ -580,6 +603,9 @@ class CommittorAnalysis(JobType):
 
     def algorithm(self, allthreads, running, settings):
         return running    # nothing to set because there is no next step
+
+    def cleanup(self, settings):
+        pass
 
 
 class EquilibriumPathSampling(JobType):
@@ -855,3 +881,6 @@ class EquilibriumPathSampling(JobType):
                 self.history.init_coords[-1].append(utilities.rev_vels(self.history.init_coords[-1][0]))
 
         return running
+
+    def cleanup(self, settings):
+        pass

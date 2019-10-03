@@ -11,6 +11,8 @@ import os
 import sys
 import math
 import numpy
+import pickle
+from statsmodels.tsa import stattools
 
 def check_commit(filename, settings):
     """
@@ -253,15 +255,16 @@ def evaluate_rc(rc_definition, cv_list):
     return eval(rc_definition)
 
 
-def resample(allthreads, settings):
+def resample(settings):
     """
-    Resample each shooting point in each thread with different CV definitions to produce a new as.out file with extant
+    Resample each shooting point in each thread with different CV definitions to produce new as.out files with extant
     aimless shooting data.
+
+    Produces two files: as_raw.out, containing CVs from every shooting point, and as_decorr.out, containing only those
+    shooting points where every CV in each thread has decorrelated from its initial coordinates.
 
     Parameters
     ----------
-    allthreads : list
-        List of every thread to resample
     settings : argparse.Namespace
         Settings namespace object
 
@@ -271,4 +274,87 @@ def resample(allthreads, settings):
 
     """
 
-    pass    # todo: implement
+    # todo: test this thoroughly using a dummy thread and a manual decorrelation time calculation using different software
+
+    # This function is sometimes called from outside the working directory, so make sure we're there
+    os.chdir(settings.working_directory)
+
+    # Load in allthreads from restart.pkl
+    try:
+        allthreads = pickle.load(open('restart.pkl', 'rb'))
+    except FileNotFoundError:
+        raise FileNotFoundError('resample = True requires restart.pkl, but could not find one in working directory: '
+                                + settings.working_directory)
+
+    # iterate through each thread's history.init_coords list
+    for thread in allthreads:
+        this_decorr_time = 0    # initialize decorrelation time of this thread
+        this_cvs_list = []      # initialize full nested list of CV values for this thread
+        for step_index in range(len(thread.history.init_coords)):
+            if thread.history.prod_results[step_index][0] in ['fwd', 'bwd']:
+                if thread.history.prod_results[step_index][0] == 'fwd':
+                    this_basin = 'B'
+                else:  # 'bwd'
+                    this_basin = 'A'
+
+                # Get CVs for this shooting point
+                this_cvs = get_cvs(thread.history.init_coords[step_index][0], settings)
+
+                # Write CVs to as_raw.out
+                open(settings.working_directory + '/as_raw.out', 'a').write(this_basin + ' <- ')
+                open(settings.working_directory + '/as_raw.out', 'a').write(this_cvs + '\n')
+                open(settings.working_directory + '/as_raw.out', 'a').close()
+
+                # Append this_cvs to running list for evaluating decorrelation time
+                this_cvs_list.append([float(item) for item in this_cvs.split(' ')])
+
+        if this_cvs_list:       # if there were any 'fwd' or 'bwd' results in this thread
+            mapped = list(map(list, zip(*this_cvs_list)))   # list of lists of values of each CV
+
+            slowest_lag = -1    # initialize running tally of slowest autocorrelation time among CVs in this thread
+            if settings.include_qdot:
+                ndims = len(this_cvs_list[0]) / 2   # number of non-rate-of-change CVs
+            else:
+                ndims = len(this_cvs_list[0])
+
+            for dim_index in range(ndims):
+                this_cv = mapped[dim_index]
+                this_autocorr = [stattools.acf(this_cv[lag:], nlags=1, fft=True)[-1] for lag in range(len(this_cv) - 1)]
+                in_bounds = [this_autocorr[lag] < 1.96 / numpy.sqrt(len(this_cv[lag:])) for lag in range(len(this_autocorr))]
+                running = 0             # running count of successive steps "in bounds"
+                begin = len(in_bounds)  # initialize begin with maximum possible value
+                this_index = -1         # running count of each step regardless of whether "in bounds" or not
+                for item in in_bounds:
+                    this_index += 1
+                    if (not item and running > 0) or this_index == len(in_bounds) - 1:  # leaves threshold (in -> out) or ends
+                        if running >= begin:    # only get slowest_lag if been in bounds for at least as long as it took to get in bounds
+                            if begin > slowest_lag:     # only update slowest_lag if it's slower than the previous one
+                                slowest_lag = begin
+                            break       # once we've found the lag for this CV move on to the next one
+                        begin = 0
+                        running = 0
+                    elif item and running == 0:  # entered threshold after being outside (out -> in)
+                        running += 1
+                        begin = this_index  # index where we begin being "in bounds"
+                    elif item:  # inside threshold already and still in (in -> in)
+                        running += 1
+                    else:  # was not in threshold and continues not to be (out -> out)
+                        begin = 0
+                        running = 0
+
+            if slowest_lag > 0:     # only proceed to writing to as_decorr.out if a valid slowest_lag was found
+                # Write to as_decorr.out the same way as to as_raw.out above, but starting the range at slowest_lag
+                for step_index in range(slowest_lag, len(thread.history.init_coords)):
+                    if thread.history.prod_results[step_index][0] in ['fwd', 'bwd']:
+                        if thread.history.prod_results[step_index][0] == 'fwd':
+                            this_basin = 'B'
+                        else:  # 'bwd'
+                            this_basin = 'A'
+
+                        # Get CVs for this shooting point
+                        this_cvs = this_cvs_list[step_index]    # retrieve CVs from last evaluation
+
+                        # Write CVs to as_raw.out
+                        open(settings.working_directory + '/as_decorr.out', 'a').write(this_basin + ' <- ')
+                        open(settings.working_directory + '/as_decorr.out', 'a').write(this_cvs + '\n')
+                        open(settings.working_directory + '/as_decorr.out', 'a').close()
