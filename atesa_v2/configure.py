@@ -82,7 +82,14 @@ def configure(input_file):
         raise ValueError('initial_coordinates must be provided as a list (even if it is of length 1)')
     for item in settings.initial_coordinates:
         if '/' in item:
-            raise ValueError('file names in initial_coordinates should not contain \'/\' characters (they should exist in the same directory from which ATESA is called)')
+            raise ValueError('file names in initial_coordinates should not contain \'/\' characters (they should exist '
+                             'in the same directory from which ATESA is called)')
+    if settings.information_error_checking and not settings.information_error_override and len(settings.cvs) < 5:
+        raise RuntimeError('information_error_checking = True requires that the cvs option has at least five entries to'
+                           ' be able to dynamically identify suitable reaction coordinates for evaluation of the model '
+                           'information error, and many more than five is strongly recommended for higher confidence in'
+                           ' the results. To override this behavior (only to be used if you are extremely confident '
+                           'that your set of CVs is complete), set information_error_override = True')
 
     if settings.job_type == 'equilibrium_path_sampling':
         eps_lower_boundaries = numpy.arange(settings.eps_rc_min, settings.eps_rc_max, settings.eps_rc_step)

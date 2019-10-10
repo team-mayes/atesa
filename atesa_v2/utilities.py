@@ -255,7 +255,7 @@ def evaluate_rc(rc_definition, cv_list):
     return eval(rc_definition)
 
 
-def resample(settings):
+def resample(settings, write_raw=True):
     """
     Resample each shooting point in each thread with different CV definitions to produce new as.out files with extant
     aimless shooting data.
@@ -267,6 +267,8 @@ def resample(settings):
     ----------
     settings : argparse.Namespace
         Settings namespace object
+    write_raw : bool
+        If True, writes a new copy of as_raw.out; if false, only writes as_decorr.out (if applicable)
 
     Returns
     -------
@@ -278,6 +280,11 @@ def resample(settings):
 
     # This function is sometimes called from outside the working directory, so make sure we're there
     os.chdir(settings.working_directory)
+
+    # Remove pre-existing as_raw.out if any, initialize new one
+    if write_raw:
+        open(settings.working_directory + '/as_raw.out', 'w').close()
+    open(settings.working_directory + '/as_decorr.out', 'w').close()
 
     # Load in allthreads from restart.pkl
     try:
@@ -301,9 +308,10 @@ def resample(settings):
                 this_cvs = get_cvs(thread.history.init_coords[step_index][0], settings)
 
                 # Write CVs to as_raw.out
-                open(settings.working_directory + '/as_raw.out', 'a').write(this_basin + ' <- ')
-                open(settings.working_directory + '/as_raw.out', 'a').write(this_cvs + '\n')
-                open(settings.working_directory + '/as_raw.out', 'a').close()
+                if write_raw:
+                    open(settings.working_directory + '/as_raw.out', 'a').write(this_basin + ' <- ')
+                    open(settings.working_directory + '/as_raw.out', 'a').write(this_cvs + '\n')
+                    open(settings.working_directory + '/as_raw.out', 'a').close()
 
                 # Append this_cvs to running list for evaluating decorrelation time
                 this_cvs_list.append([float(item) for item in this_cvs.split(' ')])
