@@ -242,7 +242,6 @@ def main(**kwargs):
 
     if qdot:
         if not num_cvs % 2 == 0:
-            print(input_file_lines)
             raise RuntimeError('likelihood maximization was attempted with input file: ' + input_file + ' and '
                                'include_qdot (q) = True, but this input file has an odd number of entries per line. Are'
                                ' you sure it includes rate-of-change data?')
