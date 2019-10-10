@@ -36,7 +36,7 @@ def configure(input_file):
         except:
             lines = open(input_file, 'r').readlines()   # to reproduce original error
     line_index = 0
-    for line in lines:  # each line in the input file is just python code setting a variable;
+    for line in lines:      # each line in the input file is just python code setting a variable;
         line_index += 1
         try:
             exec(line)      # this means that comments are supported using '#' and whitespace is ignored.

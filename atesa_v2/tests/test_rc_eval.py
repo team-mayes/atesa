@@ -34,17 +34,17 @@ class Tests(object):
         shutil.copy('../test_data/as.out', '../test_temp')
 
         # First test without extant settings.pkl file
+        with pytest.raises(FileNotFoundError):
+            rc_eval.main('../test_temp/', '3*CV0 - 0.3*CV1')
         process = subprocess.Popen(sys.executable + ' ../../rc_eval.py ../test_temp/ \'3*CV0 - 0.3*CV1\'', stdin=subprocess.PIPE,
                                    stdout=subprocess.PIPE, stderr=subprocess.STDOUT, close_fds=True, shell=True)
         output = process.stdout.read().decode()
-        assert 'FileNotFoundError' in output
+        assert 'FileNotFoundError' in output    # this section just to ensure it works when called both ways
 
         settings.__dict__.pop('env')    # env attribute is not picklable
         pickle.dump(settings, open('settings.pkl', 'wb'), protocol=2)   # main will look for this file to load in settings
         # shutil.move('settings.pkl', '../test_data/settings.pkl')
-        process = subprocess.Popen(sys.executable + ' ../../rc_eval.py ../test_temp/ \'3*CV0 - 0.3*CV1\'', stdin=subprocess.PIPE,
-                                   stdout=subprocess.PIPE, stderr=subprocess.STDOUT, close_fds=True, shell=True)
-        output = process.stdout.read().decode()
+        rc_eval.main('../test_temp/', '3*CV0 - 0.3*CV1')
         assert os.path.exists('../test_temp/rc.out')
         lines = open('../test_temp/rc.out', 'r').readlines()
         for i in range(len(lines)):

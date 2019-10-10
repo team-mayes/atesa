@@ -2,23 +2,10 @@
 Factory script for obtaining the desired interfaces from the various interface scripts.
 """
 
-try:
-    import mdengine
-except ModuleNotFoundError:
-    import atesa_v2.mdengine as mdengine
-try:
-    import batchsystem
-except ModuleNotFoundError:
-    import atesa_v2.batchsystem as batchsystem
-try:
-    import jobtype
-except ModuleNotFoundError:
-    import atesa_v2.jobtype as jobtype
-try:
-    import taskmanager
-except ModuleNotFoundError:
-    import atesa_v2.taskmanager as taskmanager
-
+from atesa_v2 import mdengine
+from atesa_v2 import batchsystem
+from atesa_v2 import jobtype
+from atesa_v2 import taskmanager
 
 def mdengine_factory(mdengine_toolkit):
     """
