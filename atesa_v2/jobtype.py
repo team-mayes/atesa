@@ -414,17 +414,30 @@ class AimlessShooting(JobType):
         global_terminate = False    # initialize
         if self.current_type == ['prod', 'prod']:  # aimless shooting only checks termination after prod steps
             thread_terminate = ''       # todo: are there termination criteria to implement for aimless shooting threads?
-            global_terminate = False    # todo: implement information error checking
+            global_terminate = False
 
             # Implement information error termination criterion
             if settings.information_error_checking:
-                # todo: check info_err.out to determine whether to terminate
                 len_data = len(open('as_raw.out', 'r').readlines())     # number of shooting points to date
                 if len_data % settings.inf_err_freq == 0 and len_data > 0:
                     # Start separate process calling information_error.py to evaluate information error
                     shutil.copy('as_raw.out', 'as_raw_' + str(len_data) + '.out')    # to avoid processes stepping on each other's toes
                     command = sys.executable + ' information_error.py as_raw_' + str(len_data) + '.out'
-                    process = subprocess.Popen(command.split(' '), stdout=subprocess.PIPE, preexec_fn=os.setsid)
+                    process = subprocess.Popen(command.split(' '), stdout=subprocess.PIPE, preexec_fn=os.setsid)    # todo: check that this gets started as a separate process and that it terminates properly
+
+                # Perform KPSS test on series of data in info_err.out, and evaluate termination criterion
+                if os.path.exists('info_err.out'):
+                    fishers = [line.split(' ')[1] for line in open('info_err.out', 'r').readlines()]
+                    kpssresults = []
+                    for cut in range(len(fishers) - 1):
+                        try:
+                            kpssresult = (kpss(fishers[0:cut + 1], lags='auto')[1] - 0.01) / (0.1 - 0.01)
+                        except (ValueError, OverflowError):
+                            kpssresult = 1      # 100% certainty of non-convergence!
+                        kpssresults.append(kpssresult)
+
+                    if kpssresults[-1] <= 0.05:
+                        global_terminate = True     # todo: test information error termination criterion
 
             if thread_terminate:
                 self.status = 'terminated after step ' + str(self.suffix) + ' due to: ' + thread_terminate

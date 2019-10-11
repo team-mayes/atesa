@@ -174,7 +174,7 @@ def two_line_test(results):
     if slope_fract > 0.25:  # best point does not meet threshold for relative difference in slopes
         return -1
     else:                   # DOES meet threshold; return the index of the passing result
-        return best_closest[0][0] - 1   # - 1 because of different indexing standards
+        return best_closest[0][0] - 1   # - 2 because of different indexing standards
 
 
 def main(**kwargs):
@@ -217,10 +217,10 @@ def main(**kwargs):
     # Ignore arguments as described in documentation
     if running:
         fixed = []
-        dims = 0
+        dims = running
     if automagic:
         fixed = []
-        dims = 0
+        dims = -1
         running = 0
 
     # Get data from input file, and determine minimum and maximum values for each CV, reduce data
@@ -234,13 +234,13 @@ def main(**kwargs):
     mapped = list(map(list, zip(*input_data)))      # [[obs1cv1, obs2cv1], [obs1cv2, obs2cv2]]
     minmax = [[numpy.min(item) for item in mapped], [numpy.max(item) for item in mapped]]    # [[mincv1, mincv2], [maxcv1, maxcv2]]
     N = len(input_file_lines)   # number of observations
-    NA = len(A_data)
-    NB = len(B_data)
+    NA = len(A_data)            # number of observations that committed to A...
+    NB = len(B_data)            # ... and to B
     num_cvs = len(minmax[0])    # number of CVs recorded in each observation
     reduced_A = [[(A_data[jj][ii] - minmax[0][ii]) / (minmax[1][ii] - minmax[0][ii]) for ii in range(num_cvs)] for jj in range(NA)]
     reduced_B = [[(B_data[jj][ii] - minmax[0][ii]) / (minmax[1][ii] - minmax[0][ii]) for ii in range(num_cvs)] for jj in range(NB)]
 
-    if qdot:
+    if qdot == 'present' or qdot == 'ignore':
         if not num_cvs % 2 == 0:
             raise RuntimeError('likelihood maximization was attempted with input file: ' + input_file + ' and '
                                'include_qdot (q) = True, but this input file has an odd number of entries per line. Are'
@@ -249,21 +249,23 @@ def main(**kwargs):
 
     # Prepare for and then enter optimization loop
     termination = False     # initialize primary termination criterion flag
-    termination_2 = False   # additional termination flag for use with qdot, to perform one last optimization
+    termination_2 = False   # additional termination flag for use with qdot = 'present', to perform final optimization
     two_line_result = -1    # initialize current model dimensionality for automagic
     cv_combs = [[]]         # initialize list of CV combinations to iterate through
     results = []  # initialize for automagic
     while not termination and len(cv_combs[0]) <= N:
         # Initialize current best result
-        current_best = [argparse.Namespace()]
+        current_best = [argparse.Namespace(), [0]]
         current_best[0].fun = math.inf
 
         # Assemble list of RCs to optimize
-        if running or automagic:
+        if len(fixed) == dims:
+            cv_combs = [fixed]
+        elif running or automagic:
             cv_combs = [fixed + [new] for new in range(1, num_cvs + 1) if not new in fixed]
         else:
             cv_combs = [comb for comb in itertools.combinations(range(1, num_cvs + 1), dims) if (not fixed or set(fixed).issubset(comb))]
-        if qdot and not termination_2:
+        if qdot == 'present' and not termination_2:
             cv_combs_temp = cv_combs
             cv_combs = []
             for comb in cv_combs_temp:
@@ -302,7 +304,7 @@ def main(**kwargs):
             results.append(current_best)
         if running or automagic:
             fixed = current_best[1]
-            if qdot:
+            if qdot == 'present':
                 for item in fixed:
                     if item > num_cvs:
                         fixed.remove(item)
@@ -311,15 +313,17 @@ def main(**kwargs):
         if not running and not automagic:
             termination = True
         elif running and not automagic:
-            if len(current_best[0][1] == running):
+            if int(len(current_best[1])) == running:
                 termination = True
-        else:   # automagic == True
+        elif automagic and not termination_2:
             if len(results) >= 5:   # can only confidently check for convergence with at least 5 points
                 two_line_result = two_line_test([result[0] for result in results])
                 if two_line_result >= 0:
                     termination = True
                     current_best = results[two_line_result]
-        if qdot and termination and not termination_2:
+        if termination_2:
+            termination = True
+        if qdot == 'present' and termination and not termination_2:
             termination = False
             termination_2 = True
             fixed = current_best[1]
@@ -340,7 +344,7 @@ def main(**kwargs):
                         str(current_best[1][i]) for i in range(len(current_best[1]))])
     output_string = 'Likelihood maximization complete!\n' \
                     'The optimized reaction coordinate (with CVs indexed from 1) is: ' + rc_string + '\n' \
-                    'The negative log likelihood of this model is: ' + str(current_best[0].fun) + '\n' \
+                    'The negative log likelihood of this model is: ' + '%.3f' % current_best[0].fun + '\n' \
                     'The mean information error for this model is: ' + '%.3f' % numpy.mean([float(numpy.sqrt(item)) for item in numpy.diag(current_best[0].hess_inv)])
 
     if output_file:
@@ -379,7 +383,9 @@ if __name__ == "__main__":
 
     arguments = vars(parser.parse_args())  # Retrieves arguments as a dictionary object
 
-    # Suppress numpy.log warning that occurs frequently during normal operation
+    # Suppress numpy.log warnings that occur frequently during normal operation
     warnings.filterwarnings('ignore', category=RuntimeWarning, message='divide by zero encountered in log')
+    warnings.filterwarnings('ignore', category=RuntimeWarning, message='invalid value encountered in double_scalars')
+    warnings.filterwarnings('ignore', category=RuntimeWarning, message='divide by zero encountered in double_scalars')
 
     main(**arguments)

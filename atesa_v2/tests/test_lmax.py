@@ -66,7 +66,17 @@ class Tests(object):
 
     def test_main_automagic(self):
         """Tests main using automagic"""
-        kwargs = {'automagic': True, 'i': ['../test_data/as.out'], 'k': [0], 'f': [], 'q': [False], 'r': [0], 'o': ['lmax.out'], 'quiet': True}
+        kwargs = {'automagic': True, 'i': ['../test_data/as.out'], 'k': [0], 'f': [], 'q': ['absent'], 'r': [0], 'o': ['lmax.out'], 'quiet': True}
+        lmax.main(**kwargs)
+        results = open('lmax.out', 'r').readlines()[1].split(' + ')
+        assert float(results[0].replace('The optimized reaction coordinate (with CVs indexed from 1) is: ', '')) == pytest.approx(5.47, 1E-2)
+        assert float(results[1].replace('*CV1', '')) == pytest.approx(-22.116, 1E-2)
+        assert float(results[2].replace('*CV4', '')) == pytest.approx(5.483, 1E-2)
+        assert len(results) == 3
+
+    def test_main_running(self):
+        """Tests main using running"""
+        kwargs = {'automagic': False, 'i': ['../test_data/as.out'], 'k': [0], 'f': [], 'q': ['absent'], 'r': [2], 'o': ['lmax.out'], 'quiet': True}
         lmax.main(**kwargs)
         results = open('lmax.out', 'r').readlines()[1].split(' + ')
         assert float(results[0].replace('The optimized reaction coordinate (with CVs indexed from 1) is: ', '')) == pytest.approx(5.47, 1E-2)
@@ -76,7 +86,7 @@ class Tests(object):
 
     def test_main_k(self):
         """Tests main using k and not f"""
-        kwargs = {'automagic': False, 'i': ['../test_data/as.out'], 'k': [2], 'f': [], 'q': [False], 'r': [0], 'o': ['lmax.out'], 'quiet': True}
+        kwargs = {'automagic': False, 'i': ['../test_data/as.out'], 'k': [2], 'f': [], 'q': ['absent'], 'r': [0], 'o': ['lmax.out'], 'quiet': True}
         lmax.main(**kwargs)
         results = open('lmax.out', 'r').readlines()[1].split(' + ')
         assert float(results[0].replace('The optimized reaction coordinate (with CVs indexed from 1) is: ', '')) == pytest.approx(-6.494, 1E-2)
@@ -86,7 +96,7 @@ class Tests(object):
 
     def test_main_k_and_f(self):
         """Tests main using k and f"""
-        kwargs = {'automagic': False, 'i': ['../test_data/as.out'], 'k': [2], 'f': [1, 4], 'q': [False], 'r': [0], 'o': ['lmax.out'], 'quiet': False}
+        kwargs = {'automagic': False, 'i': ['../test_data/as.out'], 'k': [2], 'f': [1, 4], 'q': ['absent'], 'r': [0], 'o': ['lmax.out'], 'quiet': False}
         lmax.main(**kwargs)
         results = open('lmax.out', 'r').readlines()[1].split(' + ')
         assert float(results[0].replace('The optimized reaction coordinate (with CVs indexed from 1) is: ', '')) == pytest.approx(5.47, 1E-2)
@@ -96,7 +106,7 @@ class Tests(object):
 
     def test_main_k_f_and_q(self):
         """Tests main using k, f, and q"""
-        kwargs = {'automagic': False, 'i': ['../test_data/as.out'], 'k': [2], 'f': [1, 4], 'q': [True], 'r': [0], 'o': ['lmax.out'], 'quiet': False}
+        kwargs = {'automagic': False, 'i': ['../test_data/as.out'], 'k': [2], 'f': [1, 4], 'q': ['present'], 'r': [0], 'o': ['lmax.out'], 'quiet': False}
         with pytest.raises(RuntimeError):   # this as.out file has an uneven number of CVs
             lmax.main(**kwargs)
         kwargs = {'automagic': False, 'i': ['as.out'], 'k': [2], 'f': [1], 'q': [True], 'r': [0], 'o': ['lmax.out'], 'quiet': True}
@@ -107,9 +117,9 @@ class Tests(object):
             open('as.out', 'a').write(line)
         lmax.main(**kwargs)
         results = open('lmax.out', 'r').readlines()[1].split(' + ')
-        assert float(results[0].replace('The optimized reaction coordinate (with CVs indexed from 1) is: ', '')) == pytest.approx(-0.654, 1E-2)
-        assert float(results[1].replace('*CV1', '')) == pytest.approx(-6.279, 1E-2)
-        assert float(results[2].replace('*CV2', '')) == pytest.approx(11.096, 1E-2)
+        assert float(results[0].replace('The optimized reaction coordinate (with CVs indexed from 1) is: ', '')) == pytest.approx(5.47, 1E-2)
+        assert float(results[1].replace('*CV1', '')) == pytest.approx(-22.116, 1E-2)
+        assert float(results[2].replace('*CV4', '')) == pytest.approx(5.483, 1E-2)
         assert len(results) == 3
 
     @classmethod
