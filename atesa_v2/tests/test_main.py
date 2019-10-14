@@ -62,6 +62,7 @@ class Tests(object):
         settings = configure('../../data/atesa.config')
         settings.topology = '../test_data/test.prmtop'
         settings.md_engine = 'amber'
+        settings.degeneracy = 1
         allthreads = atesa_v2.init_threads(settings)
         allthreads[0].jobids.append('01234')
         allthreads[0].history.prod_trajs.append(['../test_data/test.nc'])

@@ -26,6 +26,7 @@ class Tests(object):
         """Tests check_termination with job_type = 'aimless_shooting' and thread.current_type = ['init']"""
         settings = configure('../../data/atesa.config')
         settings.job_type = 'aimless_shooting'
+        settings.degeneracy = 1
         allthreads = atesa_v2.init_threads(settings)
         allthreads[0].current_type = ['init']
         jobtype = factory.jobtype_factory(settings.job_type)
@@ -35,6 +36,7 @@ class Tests(object):
         """Tests check_termination with job_type = 'aimless_shooting' and thread.current_type = ['prod', 'prod']"""
         settings = configure('../../data/atesa.config')
         settings.job_type = 'aimless_shooting'
+        settings.degeneracy = 1
         allthreads = atesa_v2.init_threads(settings)
         allthreads[0].current_type = ['prod', 'prod']
         jobtype = factory.jobtype_factory(settings.job_type)
@@ -46,6 +48,7 @@ class Tests(object):
         """Tests update_results with job_type = 'aimless_shooting' and thread.current_type = ['init']"""
         settings = configure('../../data/atesa.config')
         settings.job_type = 'aimless_shooting'
+        settings.degeneracy = 1
         allthreads = atesa_v2.init_threads(settings)
         allthreads[0].current_type = ['init']
         jobtype = factory.jobtype_factory(settings.job_type)
@@ -75,6 +78,7 @@ class Tests(object):
         """Tests algorithm with job_type = 'aimless_shooting' and thread.current_type = ['init']"""
         settings = configure('../../data/atesa.config')
         settings.job_type = 'aimless_shooting'
+        settings.degeneracy = 1
         settings.initial_coordinates = ['test_velocities.rst7']
         allthreads = atesa_v2.init_threads(settings)
         allthreads[0].current_type = ['init']
@@ -93,6 +97,7 @@ class Tests(object):
         ['prod', 'prod'] for a move that isn't accepted"""
         settings = configure('../../data/atesa.config')
         settings.job_type = 'aimless_shooting'
+        settings.degeneracy = 1
         settings.always_new = False
         settings.initial_coordinates = ['test_velocities.rst7']
         allthreads = atesa_v2.init_threads(settings)
@@ -130,6 +135,7 @@ class Tests(object):
         settings.job_type = 'aimless_shooting'
         settings.topology = '../test_data/test.prmtop'
         settings.initial_coordinates = ['test_velocities.rst7']
+        settings.degeneracy = 1
         settings.min_dt = -1
         settings.max_dt = -1     # set these to the same value to guarantee which frame is chosen
         allthreads = atesa_v2.init_threads(settings)
@@ -145,6 +151,7 @@ class Tests(object):
         """Tests update_history with job_type = 'aimless_shooting' and thread.current_type = ['init']"""
         settings = configure('../../data/atesa.config')
         settings.job_type = 'aimless_shooting'
+        settings.degeneracy = 1
         settings.initial_coordinates = ['test_velocities.rst7']
         allthreads = atesa_v2.init_threads(settings)
         allthreads[0].current_type = ['init']
@@ -157,6 +164,7 @@ class Tests(object):
         """Tests update_history with job_type = 'aimless_shooting' and thread.current_type = ['prod', 'prod']"""
         settings = configure('../../data/atesa.config')
         settings.job_type = 'aimless_shooting'
+        settings.degeneracy = 1
         settings.initial_coordinates = ['test_velocities.rst7']
         allthreads = atesa_v2.init_threads(settings)
         allthreads[0].current_type = ['prod', 'prod']
@@ -171,6 +179,7 @@ class Tests(object):
         """Tests get_inpcrd with job_type = 'aimless_shooting' and thread.current_type = ['init']"""
         settings = configure('../../data/atesa.config')
         settings.job_type = 'aimless_shooting'
+        settings.degeneracy = 1
         settings.initial_coordinates = ['test_velocities.rst7']
         allthreads = atesa_v2.init_threads(settings)
         allthreads[0].current_type = ['init']
@@ -182,6 +191,7 @@ class Tests(object):
         """Tests get_inpcrd with job_type = 'aimless_shooting' and thread.current_type = ['prod', 'prod']"""
         settings = configure('../../data/atesa.config')
         settings.job_type = 'aimless_shooting'
+        settings.degeneracy = 1
         settings.initial_coordinates = ['test_velocities.rst7']
         allthreads = atesa_v2.init_threads(settings)
         allthreads[0].current_type = ['prod', 'prod']
@@ -193,16 +203,19 @@ class Tests(object):
         """Tests get_initial_coordinates with job_type = 'aimless_shooting'"""
         settings = configure('../../data/atesa.config')
         settings.job_type = 'aimless_shooting'
-        settings.initial_coordinates = ['fakefile1', 'fakefile2']
+        settings.initial_coordinates = ['test.rst7', 'test_two_init.rst7']
+        shutil.copy('../test_data/test.rst7', './')
+        shutil.copy('../test_data/test_two_init.rst7', './')
         settings.degeneracy = 2
         allthreads = atesa_v2.init_threads(settings)
         jobtype = factory.jobtype_factory(settings.job_type)
-        assert jobtype.get_initial_coordinates(allthreads[0], settings) == ['fakefile1', 'fakefile1', 'fakefile2', 'fakefile2']
+        assert jobtype.get_initial_coordinates(allthreads[0], settings) == ['test.rst7_0', 'test.rst7_1', 'test_two_init.rst7_0', 'test_two_init.rst7_1']
 
     def test_gatekeep_aimless_shooting(self):
         """Tests gatekeep with job_type = 'aimless_shooting'"""
         settings = configure('../../data/atesa.config')
         settings.job_type = 'aimless_shooting'
+        settings.degeneracy = 1
         settings.DEBUG = True
         allthreads = atesa_v2.init_threads(settings)
         allthreads[0].jobids = ['123456']
@@ -213,6 +226,7 @@ class Tests(object):
         """Tests check_for_successful_step with job_type = 'aimless_shooting' and thread.current_type = ['init']"""
         settings = configure('../../data/atesa.config')
         settings.job_type = 'aimless_shooting'
+        settings.degeneracy = 1
         allthreads = atesa_v2.init_threads(settings)
         allthreads[0].current_type = ['init']
         allthreads[0].history.init_coords = [['some_init_coords.rst7']]
@@ -225,6 +239,7 @@ class Tests(object):
         """Tests thread.get_next_step with job_type = 'aimless_shooting' and type = ['init']"""
         settings = configure('../../data/atesa.config')
         settings.job_type = 'aimless_shooting'
+        settings.degeneracy = 1
         allthreads = atesa_v2.init_threads(settings)
         allthreads[0].current_type = ['init']
         assert allthreads[0].get_next_step(settings) == (['prod', 'prod'], ['fwd', 'bwd'])
@@ -232,6 +247,7 @@ class Tests(object):
     def test_get_next_step_aimless_shooting_prod(self):
         """Tests thread.get_next_step with job_type = 'aimless_shooting' and type = ['fwd','bwd']"""
         settings = configure('../../data/atesa.config')
+        settings.degeneracy = 1
         settings.job_type = 'aimless_shooting'
         allthreads = atesa_v2.init_threads(settings)
         allthreads[0].current_type = ['prod','prod']
@@ -241,6 +257,7 @@ class Tests(object):
         """Tests check_for_successful_step with job_type = 'aimless_shooting' and thread.current_type = ['prod', 'prod']"""
         settings = configure('../../data/atesa.config')
         settings.job_type = 'aimless_shooting'
+        settings.degeneracy = 1
         allthreads = atesa_v2.init_threads(settings)
         allthreads[0].current_type = ['prod', 'prod']
         allthreads[0].history.prod_trajs = [['some_prod_traj_1.nc', 'some_prod_traj_2.nc']]
@@ -255,6 +272,7 @@ class Tests(object):
         """Tests thread.get_batch_template with job_type = 'aimless_shooting' and md_engine = 'amber'"""
         settings = configure('../../data/atesa.config')
         settings.job_type = 'aimless_shooting'
+        settings.degeneracy = 1
         settings.md_engine = 'amber'
         allthreads = atesa_v2.init_threads(settings)
         assert allthreads[0].get_batch_template('init', settings) == 'amber_' + settings.batch_system + '.tpl'
@@ -263,6 +281,7 @@ class Tests(object):
         """Tests thread.get_batch_template with job_type = 'aimless_shooting' and invalid type = 'fwdd'"""
         settings = configure('../../data/atesa.config')
         settings.job_type = 'aimless_shooting'
+        settings.degeneracy = 1
         allthreads = atesa_v2.init_threads(settings)
         with pytest.raises(ValueError):
             allthreads[0].get_batch_template('fwdd', settings)
@@ -615,6 +634,7 @@ class Tests(object):
         """Tests get_input_file with job_type = 'aimless_shooting'"""
         settings = configure('../../data/atesa.config')
         settings.job_type = 'aimless_shooting'
+        settings.degeneracy = 1
         settings.initial_coordinates = ['test_velocities.rst7']
         allthreads = atesa_v2.init_threads(settings)
         allthreads[0].current_type = ['init']

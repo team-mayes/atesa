@@ -323,7 +323,12 @@ class AimlessShooting(JobType):
     def get_initial_coordinates(self, settings):
         list_to_return = []
         for item in settings.initial_coordinates:
-            list_to_return += [item for null in range(settings.degeneracy)]     # implements degeneracy option
+            if settings.degeneracy > 1:
+                list_to_return += [item + '_' + str(this_index) for this_index in range(settings.degeneracy)]     # implements degeneracy option
+                for file_to_make in list_to_return:
+                    shutil.copy(item, file_to_make)
+            else:
+                list_to_return += [item]
         return list_to_return
 
     def check_for_successful_step(self):

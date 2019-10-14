@@ -126,6 +126,7 @@ class Tests(object):
         settings = configure('../../data/atesa.config')
         with pytest.raises(FileNotFoundError):      # run without making restart.pkl
             utilities.resample(settings)
+        settings.degeneracy = 1
         settings.initial_coordinates = ['init_1.rst7', 'init_2.rst7']
         settings.rc_definition = '1.00 + 2.34*CV0 - 5.67*CV1'
         settings.rc_reduced_cvs = False

@@ -24,6 +24,7 @@ class Tests(object):
     def test_process_to_be_terminated(self):
         """Tests process.py for a thread with terminated = True"""
         settings = configure('../../data/atesa.config')
+        settings.degeneracy = 1
         allthreads = atesa_v2.init_threads(settings)
         allthreads[0].terminated = True
         running = [allthreads[0]]
@@ -34,6 +35,7 @@ class Tests(object):
         """Tests process.py for a thread that should be submitted"""
         settings = configure('../../data/atesa.config')
         settings.job_type = 'aimless_shooting'
+        settings.degeneracy = 1
         settings.DEBUG = True
         allthreads = atesa_v2.init_threads(settings)
         allthreads[0].terminated = False
