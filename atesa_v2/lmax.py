@@ -345,7 +345,7 @@ def main(**kwargs):
     output_string = 'Likelihood maximization complete!\n' \
                     'The optimized reaction coordinate (with CVs indexed from 1) is: ' + rc_string + '\n' \
                     'The negative log likelihood of this model is: ' + '%.3f' % current_best[0].fun + '\n' \
-                    'The mean information error for this model is: ' + str(numpy.mean([float(numpy.sqrt(item)) for item in numpy.diag(current_best[0].hess_inv)]))
+                    'The mean information error for this model is: ' + '%.3f' % numpy.mean([float(numpy.sqrt(item)) for item in numpy.diag(current_best[0].hess_inv)])
 
     if output_file:
         open(output_file, 'w').write(output_string)
