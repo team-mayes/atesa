@@ -97,7 +97,8 @@ class Tests(object):
         settings.initial_coordinates = ['test_velocities.rst7']
         allthreads = atesa_v2.init_threads(settings)
         allthreads[0].current_type = ['prod', 'prod']
-        allthreads[0].history.prod_results.append(['fwd', 'fwd'])      # not an accepted move
+        allthreads[0].history.prod_results.append(['fwd', 'fwd'])  # not an accepted move
+        allthreads[0].history.prod_trajs.append(['../test_data/test.nc', '../test_data/test.nc'])
         jobtype = factory.jobtype_factory(settings.job_type)
         jobtype.algorithm(allthreads[0], allthreads, allthreads, settings)
         assert allthreads[0].history.init_inpcrd[-1] == allthreads[0].history.init_inpcrd[-2]
@@ -115,7 +116,7 @@ class Tests(object):
         allthreads = atesa_v2.init_threads(settings)
         allthreads[0].current_type = ['prod', 'prod']
         allthreads[0].history.prod_results = [['bwd', 'fwd'], ['fwd', 'fwd']]      # accepted then not accepted
-        allthreads[0].history.prod_trajs = [['../test_data/test.nc', '../test_data/test.nc'], ['not_a_real_file.nc', 'not_a_real_file.nc']]
+        allthreads[0].history.prod_trajs = [['../test_data/test.nc', '../test_data/test.nc'], ['../test_data/test.nc', '../test_data/test.nc']]
         allthreads[0].suffix = 1
         allthreads[0].history.last_accepted = 0
         jobtype = factory.jobtype_factory(settings.job_type)
