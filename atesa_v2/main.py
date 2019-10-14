@@ -147,7 +147,7 @@ def main(settings):
     # Make working directory if it does not exist, handling overwrite and restart as needed
     if os.path.exists(settings.working_directory):
         if settings.overwrite:
-            sys.path.remove(settings.working_directory)
+            shutil.rmtree(settings.working_directory)
             os.mkdir(settings.working_directory)
         elif not settings.restart:
             raise RuntimeError('Working directory ' + settings.working_directory + ' already exists, but overwrite = '
