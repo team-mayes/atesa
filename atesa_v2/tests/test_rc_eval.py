@@ -36,7 +36,7 @@ class Tests(object):
         # First test without extant settings.pkl file
         with pytest.raises(FileNotFoundError):
             rc_eval.main('../test_temp/', '3*CV0 - 0.3*CV1')
-        process = subprocess.Popen(sys.executable + ' ../../rc_eval.py ../test_temp/ \'3*CV0 - 0.3*CV1\'', stdin=subprocess.PIPE,
+        process = subprocess.Popen('rc_eval.py ../test_temp/ \'3*CV0 - 0.3*CV1\'', stdin=subprocess.PIPE,
                                    stdout=subprocess.PIPE, stderr=subprocess.STDOUT, close_fds=True, shell=True)
         output = process.stdout.read().decode()
         assert 'FileNotFoundError' in output    # this section just to ensure it works when called both ways
@@ -45,8 +45,8 @@ class Tests(object):
         pickle.dump(settings, open('settings.pkl', 'wb'), protocol=2)   # main will look for this file to load in settings
         # shutil.move('settings.pkl', '../test_data/settings.pkl')
         rc_eval.main('../test_temp/', '3*CV0 - 0.3*CV1')
-        assert os.path.exists('../test_temp/rc.out')
-        lines = open('../test_temp/rc.out', 'r').readlines()
+        assert os.path.exists('rc.out')
+        lines = open('rc.out', 'r').readlines()
         for i in range(len(lines)):
             try:
                 assert abs(float(lines[i].split(': ')[1])) < abs(float(lines[i+1].split(': ')[1]))

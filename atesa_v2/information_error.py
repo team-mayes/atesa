@@ -7,6 +7,9 @@ import sys
 import os
 import time
 import re
+import pickle
+import subprocess
+from atesa_v2 import utilities
 from statsmodels.tsa.stattools import kpss
 
 def main(as_raw):
@@ -39,7 +42,8 @@ def main(as_raw):
                                 + os.getcwd())
 
     # Run resampling to get as_decorr.out
-    utilities.resample(settings, write_raw=False)
+    if not settings.DEBUG:
+        utilities.resample(settings, write_raw=False)
 
     # Exit if as_decorr.out has no content
     if len(open('as_decorr.out', 'r').readlines()) == 0:
@@ -50,22 +54,18 @@ def main(as_raw):
         q_str = 'present'
     else:
         q_str = 'absent'
-    command = sys.executable + ' lmax.py -i as_decorr.out -q ' + q_str + ' --automagic -o ' + as_raw + '_lmax.out'
-    process = subprocess.Popen(command.split(' '), stdout=subprocess.PIPE, preexec_fn=os.setsid)
-
-    # Wait for the output file to get written
-    while not os.path.exists(as_raw + '_lmax.out'):
-        time.sleep(10)
-    time.sleep(10)  # just to give the file time to be written to if needed
+    command = 'lmax.py -i as_decorr.out -q ' + q_str + ' --automagic -o ' + as_raw + '_lmax.out'
+    subprocess.check_call(command.split(' '), stdout=subprocess.PIPE, preexec_fn=os.setsid)     # check_call waits for completion
 
     # Now that the output file exists, obtain the information error from the last line
-    pattern = re.compile('[0-9.]+')  # pattern to match information error number, and also amount of data in as_raw
+    pattern = re.compile('[0-9.]+')     # pattern to match information error number
+    pattern2 = re.compile('[0-9]+')     # pattern to match amount of data in as_raw
     inf_err = float(pattern.findall(open(as_raw + '_lmax.out', 'r').readlines()[-1])[0])
 
     # Write to info_err.out (and make it, if it doesn't yet exist)
     if not os.path.exists('info_err.out'):
         open('info_err.out', 'w').close()
-    open('info_err.out', 'a').write(pattern.findall(as_raw)[0] + ' ' + str(inf_err))
+    open('info_err.out', 'a').write(pattern2.findall(as_raw)[0] + ' ' + str(inf_err))
 
 
 if __name__ == "__main__":
