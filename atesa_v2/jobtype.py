@@ -326,7 +326,7 @@ class AimlessShooting(JobType):
             if settings.degeneracy > 1:
                 list_to_return += [item + '_' + str(this_index) for this_index in range(settings.degeneracy)]     # implements degeneracy option
                 for file_to_make in list_to_return:
-                    shutil.copy(item, file_to_make)
+                    shutil.copy(item, settings.working_directory + '/' + file_to_make)
             else:
                 list_to_return += [item]
         return list_to_return
@@ -424,7 +424,7 @@ class AimlessShooting(JobType):
             # Implement information error termination criterion
             if settings.information_error_checking:
                 len_data = len(open('as_raw.out', 'r').readlines())     # number of shooting points to date
-                if len_data % settings.inf_err_freq == 0 and len_data > 0:
+                if len_data % settings.information_error_freq == 0 and len_data > 0:
                     # Start separate process calling information_error.py to evaluate information error
                     shutil.copy('as_raw.out', 'as_raw_' + str(len_data) + '.out')    # to avoid processes stepping on each other's toes
                     command = 'information_error.py as_raw_' + str(len_data) + '.out'
