@@ -30,7 +30,10 @@ def process(thread, running, settings):
     """
 
     ### Determine next step and, if appropriate, build corresponding list of batch files ###
-    thread.current_type, thread.current_name = thread.get_next_step(settings)
+    if not thread.skip_update:
+        thread.current_type, thread.current_name = thread.get_next_step(settings)
+    else:
+        thread.skip_update = False
 
     if thread.terminated:
         if thread in running:

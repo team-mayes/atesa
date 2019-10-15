@@ -126,10 +126,11 @@ class AdaptPBS(BatchSystem):
         if settings.DEBUG:
             return 'C'
 
-        command = 'qstat ' + str(jobid)
+        command = 'qselect -u $USER ' + str(jobid)
         process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                                    close_fds=True, shell=True)
         output = process.stdout.read().decode()     # decode converts from bytes-like to string
+
         # Some PBS-specific error handling to help handle common issues by simply resubmitting as necessary.
         while 'Pbs Server is currently too busy to service this request. Please retry this request.' in str(output):
             process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,

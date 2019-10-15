@@ -49,6 +49,7 @@ class Thread(object):
         self.total_moves = 0            # running total of "moves" attributable to this thread
         self.accept_moves = 0           # running total of "accepted" "moves", as defined by JobType.update_results
         self.status = 'fresh thread'    # tag for current status of a thread
+        self.skip_update = False        # used by restart to resubmit jobs as they were rather than doing the next step
 
     def process(self, running, settings):
         return process.process(self, running, settings)
@@ -104,6 +105,8 @@ def init_threads(settings):
 
     if settings.restart:
         allthreads = pickle.load(open(settings.working_directory + '/restart.pkl', 'rb'))
+        for thread in allthreads:
+            thread.skip_update = True
         if settings.restart_terminated_threads:
             for thread in allthreads:
                 thread.terminated = False
