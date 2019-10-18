@@ -18,30 +18,6 @@ from scipy.special import erf
 
 
 def objective_function(params, A_data, B_data):
-    """
-    Evaluate the negative log likelihood function for the given parameters and lists of observations.
-
-    This function evaluates the goodness of fit of the given parameters and data to an error function ansatz, as
-    described in Peters, 2012. Chem. Phys. Lett. 554: 248.
-
-    Designed to be called by an optimization routine to obtain the best fitting params.
-
-    Parameters
-    ----------
-    params : list
-        Parameters for the current model to be tested
-    A_data : list
-        List of observations from aimless shooting that committed to basin "A" (usually the reactants)
-    B_data : list
-        List of observations from aimless shooting that committed to basin "B" (usually the products)
-
-    Returns
-    -------
-    negative_log_likelihood : float
-        The negative log likelihood of the fit to the error function for the given parameters and observations
-
-    """
-
     def erflike(arg):
         pl = numpy.ones(len(arg))
         ml = numpy.negative(numpy.ones(len(arg)))

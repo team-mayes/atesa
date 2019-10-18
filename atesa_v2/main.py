@@ -19,6 +19,8 @@ from atesa_v2 import process
 from atesa_v2 import interpret
 from atesa_v2 import utilities
 
+import tracemalloc
+
 class Thread(object):
     """
     Object representing a series of simulations and containing the relevant information to define its current state.
@@ -185,6 +187,13 @@ def main(settings):
     for thread in allthreads:
         running = thread.process(running, settings)
     while (not termination_criterion) and running:
+
+        snapshot = tracemalloc.take_snapshot()
+        top_stats = snapshot.statistics('lineno')
+        print("[ Top 10 ]")
+        for stat in top_stats[:10]:
+            print(stat)
+
         for thread in running:
             if thread.gatekeeper(settings):
                 termination_criterion, running = thread.interpret(allthreads, running, settings)
@@ -205,6 +214,7 @@ def main(settings):
         print('ATESA run exiting normally (all threads ended individually)')
 
 if __name__ == "__main__":
+    tracemalloc.start()
     # Obtain settings namespace, initialize threads, and move promptly into main.
     settings = configure.configure(sys.argv[1]) #'data/atesa.config')
     main(settings)

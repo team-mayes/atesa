@@ -16,9 +16,21 @@ matrix:
     - os: linux
       language: generic  # No need to set Python version since its conda
       env: PYTHON_VER=3.6
+      dist: xenial
     - os: linux
       language: generic
       env: PYTHON_VER=3.7
+      dist: xenial
+
+
+    - os: linux
+      language: generic  # No need to set Python version since its conda
+      env: PYTHON_VER=3.6
+      dist: bionic
+    - os: linux
+      language: generic
+      env: PYTHON_VER=3.7
+      dist: bionic
 
 
 before_install:

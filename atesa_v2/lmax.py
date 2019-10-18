@@ -223,6 +223,12 @@ def main(**kwargs):
         dims = -1
         running = 0
 
+    # Load settings object from .pkl file if present, to check for information criterion override
+    try:
+        settings = pickle.load(open('settings.pkl', 'rb'))
+    except FileNotFoundError:
+        pass
+
     # Get data from input file, and determine minimum and maximum values for each CV, reduce data
     input_data = [[float(item) for item in
                    line.replace('A <- ', '').replace('B <- ', '').replace(' \n', '').replace('\n', '').split(' ')]
@@ -333,11 +339,21 @@ def main(**kwargs):
             dims = len(fixed)
 
     if automagic and two_line_result < 0:   # ran out of CVs to append and two_line_test never passed
-        raise RuntimeError('The automagic convergence criterion was never satisfied even after including every '
+        err = RuntimeError('The automagic convergence criterion was never satisfied even after including every '
                            'candidate CV in the model reaction coordinate.\nThis almost certainly indicates that either'
-                           ' one or more key CVs are absent from the candidate list given with the cvs option in the '
-                           'configuration file, or that not enough unimportant CVs were included to give context to the'
-                           ' important ones. Either way you should add more CVs to the list.')
+                           ' one or more key CVs are absent from the aimless shooting output file supplied, or that not'
+                           ' enough unimportant CVs were included to give context to the important ones. Either way you'
+                           ' should add more CVs to the list.\nThis error can by bypassed by running lmax.py in a '
+                           'directory containing a settings.pkl file with the line "information_error_override = True" '
+                           '(without quotes). If you did supply this setting, then you are seeing this message because '
+                           'the settings.pkl file could not be found.')
+        try:
+            if settings.information_error_override:
+                pass
+            else:
+                raise err
+        except NameError:
+            raise err
 
     # Return output in desired format
     rc_string = str('%.3f' % current_best[0].x[0]) + ' + ' + ' + '.join(['%.3f' % current_best[0].x[i+1] + '*CV' +
