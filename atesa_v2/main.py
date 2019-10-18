@@ -116,6 +116,9 @@ def init_threads(settings):
     allthreads = []
     jobtype = factory.jobtype_factory(settings.job_type)
     for file in jobtype.get_initial_coordinates(None, settings):
+        if '/' in file:
+            file = file[file.rindex('/') + 1:]          # drop path to file from filename
+
         thread = Thread()
         jobtype.update_history(thread, settings, **{'initialize': True, 'inpcrd': file})
         thread.topology = settings.topology
@@ -165,8 +168,6 @@ def main(settings):
 
     # Build threads and move necessary files to working directory
     allthreads = init_threads(settings)
-    for thread in allthreads:
-        shutil.copy(thread.history.init_inpcrd[0], settings.working_directory)
     shutil.copy(settings.topology, settings.working_directory)
 
     # Move runtime to working directory

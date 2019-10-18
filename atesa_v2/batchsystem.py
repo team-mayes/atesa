@@ -126,24 +126,38 @@ class AdaptPBS(BatchSystem):
         if settings.DEBUG:
             return 'C'
 
-        command = 'qselect -u $USER ' + str(jobid)
-        process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+        # Iterate through each status three times for robustness in case the status changes while being checked
+        for status in ['CE', 'QHW', 'R', 'CE', 'QHW', 'R', 'CE', 'QHW', 'R']:
+            command = 'qselect -u $USER -s ' + status
+            process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                                       close_fds=True, shell=True)
+            output = process.stdout.read().decode()     # decode converts from bytes-like to string
+
+            # Some PBS-specific error handling to help handle common issues by simply resubmitting as necessary.
+            while 'Pbs Server is currently too busy to service this request. Please retry this request.' in str(output):
+                process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                                           close_fds=True, shell=True)
+                output = process.stdout.read()
+            if 'Bad UID for job execution MSG=user does not exist in server password file' in str(output) or \
+               'This stream has already been closed. End of File.' in str(output):
+                time.sleep(60)
+                process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                                           close_fds=True, shell=True)
+                output = process.stdout.read()
+
+            if str(jobid) in output:
+                if status == 'CE':      # 'Complete' or 'Exiting'
+                    return 'C'
+                elif status == 'QHW':   # 'Queued', 'Waiting', or 'Hold'
+                    return 'Q'
+                elif status == 'R':     # 'Running'
+                    return 'R'
+
+        # If this code is reached, it means the jobid did not appear in any of the above searches
+        process = subprocess.Popen('qstat -u $USER', stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                                    close_fds=True, shell=True)
-        output = process.stdout.read().decode()     # decode converts from bytes-like to string
-
-        # Some PBS-specific error handling to help handle common issues by simply resubmitting as necessary.
-        while 'Pbs Server is currently too busy to service this request. Please retry this request.' in str(output):
-            process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                                       close_fds=True, shell=True)
-            output = process.stdout.read()
-        if 'Bad UID for job execution MSG=user does not exist in server password file' in str(output) or \
-           'This stream has already been closed. End of File.' in str(output):
-            time.sleep(60)
-            process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                                       close_fds=True, shell=True)
-            output = process.stdout.read()
-
-        return output   # todo: this isn't fully implemented; needs to return a one-letter code (see AdaptSlurm)
+        output = process.stdout.read().decode()  # decode converts from bytes-like to string
+        raise RuntimeError('unexpected PBS status for jobid: ' + str(jobid) + '\nFull status string: ' + output)
 
     def cancel_job(self, jobid, settings):
         command = 'qdel ' + str(jobid)

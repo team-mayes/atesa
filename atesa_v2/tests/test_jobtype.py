@@ -79,7 +79,7 @@ class Tests(object):
         settings = configure('../../data/atesa.config')
         settings.job_type = 'aimless_shooting'
         settings.degeneracy = 1
-        settings.initial_coordinates = ['test_velocities.rst7']
+        settings.initial_coordinates = ['../test_data/test_velocities.rst7']
         allthreads = atesa_v2.init_threads(settings)
         allthreads[0].current_type = ['init']
         allthreads[0].history.init_coords = [['test_velocities.rst7_0_init.rst7']]
@@ -99,7 +99,7 @@ class Tests(object):
         settings.job_type = 'aimless_shooting'
         settings.degeneracy = 1
         settings.always_new = False
-        settings.initial_coordinates = ['test_velocities.rst7']
+        settings.initial_coordinates = ['../test_data/test_velocities.rst7']
         allthreads = atesa_v2.init_threads(settings)
         allthreads[0].current_type = ['prod', 'prod']
         allthreads[0].history.prod_results.append(['fwd', 'fwd'])  # not an accepted move
@@ -134,7 +134,7 @@ class Tests(object):
         settings = configure('../../data/atesa.config')
         settings.job_type = 'aimless_shooting'
         settings.topology = '../test_data/test.prmtop'
-        settings.initial_coordinates = ['test_velocities.rst7']
+        settings.initial_coordinates = ['../test_data/test_velocities.rst7']
         settings.degeneracy = 1
         settings.min_dt = -1
         settings.max_dt = -1     # set these to the same value to guarantee which frame is chosen
@@ -152,7 +152,7 @@ class Tests(object):
         settings = configure('../../data/atesa.config')
         settings.job_type = 'aimless_shooting'
         settings.degeneracy = 1
-        settings.initial_coordinates = ['test_velocities.rst7']
+        settings.initial_coordinates = ['../test_data/test_velocities.rst7']
         allthreads = atesa_v2.init_threads(settings)
         allthreads[0].current_type = ['init']
         these_kwargs = {'rst': 'fakey_mcfakename.rst'}
@@ -165,7 +165,7 @@ class Tests(object):
         settings = configure('../../data/atesa.config')
         settings.job_type = 'aimless_shooting'
         settings.degeneracy = 1
-        settings.initial_coordinates = ['test_velocities.rst7']
+        settings.initial_coordinates = ['../test_data/test_velocities.rst7']
         allthreads = atesa_v2.init_threads(settings)
         allthreads[0].current_type = ['prod', 'prod']
         these_kwargs = {'nc': 'fakey_mcfakename.nc'}
@@ -180,7 +180,7 @@ class Tests(object):
         settings = configure('../../data/atesa.config')
         settings.job_type = 'aimless_shooting'
         settings.degeneracy = 1
-        settings.initial_coordinates = ['test_velocities.rst7']
+        settings.initial_coordinates = ['../test_data/test_velocities.rst7']
         allthreads = atesa_v2.init_threads(settings)
         allthreads[0].current_type = ['init']
         jobtype = factory.jobtype_factory(settings.job_type)
@@ -192,7 +192,7 @@ class Tests(object):
         settings = configure('../../data/atesa.config')
         settings.job_type = 'aimless_shooting'
         settings.degeneracy = 1
-        settings.initial_coordinates = ['test_velocities.rst7']
+        settings.initial_coordinates = ['../test_data/test_velocities.rst7']
         allthreads = atesa_v2.init_threads(settings)
         allthreads[0].current_type = ['prod', 'prod']
         allthreads[0].history.init_coords = [['not_a_real_file_at_all_init.rst7', 'not_a_real_file_at_all_init_bwd.rst7']]
@@ -203,11 +203,11 @@ class Tests(object):
         """Tests get_initial_coordinates with job_type = 'aimless_shooting'"""
         settings = configure('../../data/atesa.config')
         settings.job_type = 'aimless_shooting'
-        settings.initial_coordinates = ['test.rst7', 'test_two_init.rst7']
-        shutil.copy('../test_data/test.rst7', './')
-        shutil.copy('../test_data/test_two_init.rst7', './')
+        settings.initial_coordinates = ['../test_data/test.rst7', '../test_data/test_two_init.rst7']
         settings.degeneracy = 2
         allthreads = atesa_v2.init_threads(settings)
+        for thread in allthreads:
+            print(thread.history.init_coords)
         jobtype = factory.jobtype_factory(settings.job_type)
         assert jobtype.get_initial_coordinates(allthreads[0], settings) == ['test.rst7_0', 'test.rst7_1', 'test_two_init.rst7_0', 'test_two_init.rst7_1']
 
@@ -318,7 +318,7 @@ class Tests(object):
         """Tests update_history with job_type = 'committor_analysis'"""
         settings = configure('../../data/atesa.config')
         settings.job_type = 'committor_analysis'
-        settings.initial_coordinates = ['test_velocities.rst7']
+        settings.initial_coordinates = ['../test_data/test_velocities.rst7']
         settings.committor_analysis_use_rc_out = False
         allthreads = atesa_v2.init_threads(settings)
         allthreads[0].current_type = ['prod', 'prod', 'prod']
@@ -333,7 +333,7 @@ class Tests(object):
         """Tests get_inpcrd with job_type = 'committor_analysis'"""
         settings = configure('../../data/atesa.config')
         settings.job_type = 'committor_analysis'
-        settings.initial_coordinates = ['test_velocities.rst7']
+        settings.initial_coordinates = ['../test_data/test_velocities.rst7']
         settings.committor_analysis_use_rc_out = False
         allthreads = atesa_v2.init_threads(settings)
         allthreads[0].current_type = ['prod', 'prod', 'prod']
@@ -635,7 +635,7 @@ class Tests(object):
         settings = configure('../../data/atesa.config')
         settings.job_type = 'aimless_shooting'
         settings.degeneracy = 1
-        settings.initial_coordinates = ['test_velocities.rst7']
+        settings.initial_coordinates = ['../test_data/test_velocities.rst7']
         allthreads = atesa_v2.init_threads(settings)
         allthreads[0].current_type = ['init']
         jobtype = factory.jobtype_factory(settings.job_type)
@@ -646,7 +646,7 @@ class Tests(object):
         settings = configure('../../data/atesa.config')
         settings.job_type = 'committor_analysis'
         settings.committor_analysis_use_rc_out = False
-        settings.initial_coordinates = ['test_velocities.rst7']
+        settings.initial_coordinates = ['../test_data/test_velocities.rst7']
         allthreads = atesa_v2.init_threads(settings)
         allthreads[0].current_type = ['init']
         jobtype = factory.jobtype_factory(settings.job_type)
@@ -680,7 +680,7 @@ def config_equilibrium_path_sampling():
         f.write('\neps_rc_min = -50')   # crazy wide range so everything gets included
         f.write('\neps_rc_max = 50')
         f.write('\neps_rc_step = 1')
-        f.write('\neps_overlap = 0.1')
+        f.write('\neps_rc_overlap = 0.1')
         f.write('\neps_n_steps = 6')
         f.write('\neps_out_freq = 1')
         f.write('\neps_dynamic_seed = 3')

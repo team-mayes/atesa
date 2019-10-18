@@ -290,7 +290,7 @@ def main(**kwargs):
             this_A = list(map(list, zip(*this_A)))  # transpose the matrices to get desired format
             this_B = list(map(list, zip(*this_B)))
             this_result = optimize.minimize(objective_function, numpy.asarray(start_params), (this_A, this_B),
-                                            method='BFGS', options={"disp": False, "maxiter": 20000 * (len(comb) + 1)})
+                                            method='BFGS', options={"disp": False, "maxiter": 20000 * (len(comb) + 1)}) # try SR1?
             if this_result.fun < current_best[0].fun:
                 current_best = [this_result, comb]
             this_speed = time.time() - t

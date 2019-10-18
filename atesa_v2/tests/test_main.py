@@ -48,12 +48,12 @@ class Tests(object):
     def test_init_threads_new(self):
         """Tests successful initialization of new threads"""
         settings = configure('../../data/atesa.config')
-        settings.initial_coordinates = ['init_1.rst7', 'init_2.rst7']
+        settings.initial_coordinates = ['../test_data/test.rst7', '../test_data/test_two_init.rst7']
         settings.degeneracy = 1
         allthreads = atesa_v2.init_threads(settings)
         assert len(allthreads) == 2
-        assert allthreads[0].history.init_inpcrd == ['init_1.rst7']
-        assert allthreads[1].history.init_inpcrd == ['init_2.rst7']
+        assert allthreads[0].history.init_inpcrd == ['test.rst7']
+        assert allthreads[1].history.init_inpcrd == ['test_two_init.rst7']
         assert allthreads[0].topology == 'topology.prmtop'
         assert allthreads[1].topology == 'topology.prmtop'
 

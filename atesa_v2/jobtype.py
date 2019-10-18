@@ -53,9 +53,7 @@ class JobType(abc.ABC):
     @abc.abstractmethod
     def get_initial_coordinates(self, settings):
         """
-        Obtain list of initial coordinate files.
-
-        At its most simple, implementations of this method can simply return settings.initial_coordinates.
+        Obtain list of initial coordinate files and copy them to the working directory.
 
         Parameters
         ----------
@@ -67,7 +65,7 @@ class JobType(abc.ABC):
         Returns
         -------
         initial_coordinates : list
-            List of strings naming the applicable initial coordinate files
+            List of strings naming the applicable initial coordinate files that were copied to the working directory
 
         """
 
@@ -323,12 +321,22 @@ class AimlessShooting(JobType):
     def get_initial_coordinates(self, settings):
         list_to_return = []
         for item in settings.initial_coordinates:
-            if settings.degeneracy > 1:
-                list_to_return += [item + '_' + str(this_index) for this_index in range(settings.degeneracy)]     # implements degeneracy option
+            if settings.degeneracy > 1:     # implements degeneracy option
+                og_item = item
+                if '/' in item:
+                    item = item[item.rindex('/') + 1:]
+                list_to_return += [item + '_' + str(this_index) for this_index in range(settings.degeneracy)]
                 for file_to_make in list_to_return:
-                    shutil.copy(item, settings.working_directory + '/' + file_to_make)
+                    shutil.copy(og_item, settings.working_directory + '/' + file_to_make)
             else:
+                og_item = item
+                if '/' in item:
+                    item = item[item.rindex('/') + 1:]
                 list_to_return += [item]
+                try:
+                    shutil.copy(og_item, settings.working_directory + '/' + item)
+                except shutil.SameFileError:
+                    pass
         return list_to_return
 
     def check_for_successful_step(self):
@@ -471,6 +479,7 @@ class AimlessShooting(JobType):
                 frame_to_check = self.get_frame(self.history.prod_trajs[-1][job_index], -1, settings)
                 self.history.prod_results[-1].append(utilities.check_commit(frame_to_check, settings))
                 os.remove(frame_to_check)
+                # todo: implement option to delete trajectory files after obtaining results
             self.total_moves += 1
             if self.history.prod_results[-1] in [['fwd', 'bwd'], ['bwd', 'fwd']]:
                 self.history.last_accepted = int(len(self.history.prod_trajs) - 1)   # new index of last accepted move
@@ -562,9 +571,20 @@ class CommittorAnalysis(JobType):
                 raise RuntimeError('attempted committor analysis, but couldn\'t find any shooting points with reaction '
                                    'coordinate values within ' + str(settings.rc_threshold) + ' of 0 in the RC output '
                                    'file: ' + settings.path_to_rc_out)
+            path = settings.path_to_rc_out[:settings.path_to_rc_out.rindex('/')]    # path where rc_out is located
+            for item in eligible:
+                shutil.copy(path + '/' + item, settings.working_directory + '/' + item)
             return eligible
         else:
             try:
+                for item in settings.initial_coordinates:
+                    og_item = item
+                    if '/' in item:
+                        item = item[item.rindex('/') + 1:]
+                    try:
+                        shutil.copy(og_item, settings.working_directory + '/' + item)
+                    except shutil.SameFileError:
+                        pass
                 return settings.initial_coordinates
             except AttributeError:
                 raise RuntimeError('committor_analysis_use_rc_out = False, but initial_coordinates was not provided.')
@@ -675,6 +695,14 @@ class EquilibriumPathSampling(JobType):
             return input_file_name
 
     def get_initial_coordinates(self, settings):
+        for item in settings.initial_coordinates:
+            og_item = item
+            if '/' in item:
+                item = item[item.rindex('/') + 1:]
+            try:
+                shutil.copy(og_item, settings.working_directory + '/' + item)
+            except shutil.SameFileError:
+                pass
         return settings.initial_coordinates
 
     def check_for_successful_step(self):
