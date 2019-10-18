@@ -1,19 +1,10 @@
 """
-Likelihood maximization script. This program is designed to be entirely separable from ATESA in that it can be called
-manually to perform likelihood maximization to user specifications and with arbitrary input files; however, it is
-required by ATESA's aimless shooting information error convergence criterion.
+Test likelihood maximization script to investigate apparent platform-dependent behavior in scipy.optimize.minimize.
 """
 
 import sys
-import os
 import numpy
-import time
-import math
-import itertools
-import argparse
-import warnings
 from scipy import optimize
-from scipy import stats
 from scipy.special import erf
 
 
