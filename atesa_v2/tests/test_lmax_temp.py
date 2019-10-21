@@ -22,11 +22,11 @@ class Tests(object):
             pass
 
 
-    def test_main(self):
-        """Tests main"""
-        err = lmax_temp.main()
-        print(err)
-        assert err == pytest.approx(0.209, 1E-2)
+    # def test_main(self):
+    #     """Tests main"""
+    #     err = lmax_temp.main()
+    #     print(err)
+    #     assert err == pytest.approx(0.209, 1E-2)
 
     @classmethod
     def teardown_method(self, method):

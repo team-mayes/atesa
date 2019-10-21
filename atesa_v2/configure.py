@@ -239,6 +239,8 @@ def configure(input_file):
             raise ValueError('eps_out_freq must be given as an integer')
         if not type(settings.eps_dynamic_seed) in [int, list]:
             raise ValueError('eps_dynamic_seed must be given as an integer or list')
+        if not type(settings.samples_per_window) == int:
+            raise ValueError('samples_per_window must be given as an integer')
     if settings.restart:
         if not type(settings.restart_terminated_threads) == bool:
             raise ValueError('restart_terminated_threads must be given as a boolean')

@@ -808,8 +808,17 @@ class EquilibriumPathSampling(JobType):
     def check_termination(self, allthreads, settings):
         global_terminate = False    # initialize
         if self.current_type == ['prod', 'prod']:  # equilibrium path sampling only checks termination after prod steps
-            thread_terminate = ''       # todo: are there termination criteria to implement for equilibrium path sampling threads?
+            thread_terminate = ''
             global_terminate = False    # no global termination criteria for this jobtype
+
+            if settings.samples_per_window > 0:
+                samples = 0
+                for thread in allthreads:
+                    if thread.history.bounds == self.history.bounds:
+                        for job_index in range(len(thread.history.prod_results)):
+                            samples += len([1 for i in range(len(thread.history.prod_results[job_index])) if thread.history.bounds[0] <= thread.history.prod_results[job_index][i] <= thread.history.bounds[1]])
+                if samples >= settings.samples_per_window:
+                    thread_terminate = 'reached desired number of samples in this window'
 
             if thread_terminate:
                 self.status = 'terminated after step ' + str(self.suffix) + ' due to: ' + thread_terminate

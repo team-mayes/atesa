@@ -419,14 +419,30 @@ class Tests(object):
         jobtype = factory.jobtype_factory(settings.job_type)
         assert jobtype.get_batch_template(allthreads[0], 'prod', settings) == 'amber_slurm.tpl'
 
-    def test_check_termination_equilibrium_path_sampling(self):
-        """Tests check_termination with job_type = 'equilibrium_path_sampling'"""
+    def test_check_termination_equilibrium_path_sampling_global(self):
+        """Tests check_termination global criterion with job_type = 'equilibrium_path_sampling'"""
         settings = config_equilibrium_path_sampling()
+        settings.samples_per_window = -1
         allthreads = atesa_v2.init_threads(settings)
         allthreads[0].current_type = ['prod', 'prod']
         jobtype = factory.jobtype_factory(settings.job_type)
         assert jobtype.check_termination(allthreads[0], allthreads, settings) == False
         assert allthreads[0].terminated == False
+
+    def test_check_termination_equilibrium_path_sampling_thread(self):
+        """Tests check_termination thread criterion with job_type = 'equilibrium_path_sampling'"""
+        settings = config_equilibrium_path_sampling()
+        settings.initial_coordinates = ['../test_data/test_velocities.rst7', '../test_data/test_velocities.rst7']
+        allthreads = atesa_v2.init_threads(settings)
+        allthreads[0].current_type = ['prod', 'prod']
+        allthreads[0].history.prod_trajs = [['../test_data/test.nc', '../test_data/test.nc']]
+        allthreads[0].history.init_coords = [['../test_data/test_velocities.rst7', '../test_data/test_velocities.rst7']]
+        jobtype = factory.jobtype_factory(settings.job_type)
+        jobtype.update_results(allthreads[0], allthreads, settings)
+        settings.samples_per_window = 1
+        jobtype = factory.jobtype_factory(settings.job_type)
+        assert jobtype.check_termination(allthreads[0], allthreads, settings) == False
+        assert allthreads[0].terminated == True
 
     def test_update_results_equilibrium_path_sampling(self):
         """Tests update_results with job_type = 'equilibrium_path_sampling'"""
@@ -684,6 +700,7 @@ def config_equilibrium_path_sampling():
         f.write('\neps_n_steps = 6')
         f.write('\neps_out_freq = 1')
         f.write('\neps_dynamic_seed = 3')
+        f.write('\nsamples_per_window = -1')
         f.close()
 
     settings = configure('eps.config')
