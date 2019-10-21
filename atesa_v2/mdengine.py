@@ -6,6 +6,7 @@ and implements its abstract methods.
 import abc
 import pytraj
 import os
+from io import StringIO
 
 class MDEngine(abc.ABC):
     """
@@ -55,6 +56,7 @@ class AdaptAmber(MDEngine):
             shift_frame = -1
         else:
             raise IndexError('invalid frame index for get_frame: ' + str(frame) + ' (must be >= 1, or exactly -1)')
+
         traj = pytraj.iterload(trajectory, settings.topology)
         try:
             pytraj.write_traj(new_restart_name, traj, format='rst7', frame_indices=[shift_frame], options='multi', overwrite=True)

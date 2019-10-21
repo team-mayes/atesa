@@ -76,7 +76,7 @@ def configure(input_file):
     else:
         sys.exit('Error: could not locate templates folder: ' + settings.path_to_templates)
 
-    # Check that each given value is valid # todo: implement this for every option
+    # Check that each given value is valid
     if not type(settings.job_type) == str:
         raise ValueError('job_type must be given as a string')
     if not type(settings.batch_system) == str:
@@ -192,7 +192,7 @@ def configure(input_file):
                                    ' be able to dynamically identify suitable reaction coordinates for evaluation of the model '
                                    'information error, and many more than five is strongly recommended for higher confidence in'
                                    ' the results. To override this behavior (only to be used if you are extremely confident '
-                                   'that your set of CVs is complete), set information_error_override = True')  # todo: implement
+                                   'that your set of CVs is complete), set information_error_override = True')
     if settings.job_type == 'committor_analysis':
         if not type(settings.committor_analysis_n) == int:
             raise ValueError('committor_analysis_n must be given as an integer')
