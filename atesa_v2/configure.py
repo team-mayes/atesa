@@ -180,6 +180,8 @@ def configure(input_file):
             raise ValueError('resample must be given as a boolean')
         if not type(settings.degeneracy) == int:
             raise ValueError('degeneracy must be given as an integer')
+        if not type(settings.cleanup) == bool:
+            raise ValueError('cleanup must be given as a boolean')
         if not type(settings.information_error_checking) == bool:
             raise ValueError('information_error_checking must be given as a boolean')
         if settings.information_error_checking:

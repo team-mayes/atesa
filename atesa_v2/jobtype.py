@@ -479,9 +479,11 @@ class AimlessShooting(JobType):
                 frame_to_check = self.get_frame(self.history.prod_trajs[-1][job_index], -1, settings)
                 self.history.prod_results[-1].append(utilities.check_commit(frame_to_check, settings))
                 os.remove(frame_to_check)
-                # todo: implement option to delete trajectory files after obtaining results
             self.total_moves += 1
-            if self.history.prod_results[-1] in [['fwd', 'bwd'], ['bwd', 'fwd']]:
+            if self.history.prod_results[-1] in [['fwd', 'bwd'], ['bwd', 'fwd']]:   # update last accepted move
+                if settings.cleanup and self.history.last_accepted >= 0:            # delete previous last accepted trajectories
+                    for job_index in range(len(self.current_type)):
+                        os.remove(self.history.prod_trajs[self.history.last_accepted][job_index])
                 self.history.last_accepted = int(len(self.history.prod_trajs) - 1)   # new index of last accepted move
                 self.accept_moves += 1
 
@@ -513,7 +515,7 @@ class AimlessShooting(JobType):
         # In aimless shooting, algorithm should decide whether or not a new shooting point is needed, obtain it if so,
         # and update self.history to reflect it.
         if self.current_type == ['prod', 'prod']:
-            if not all([os.path.exists(self.history.prod_trajs[-1][i]) for i in range(2)]):     # prod step failed, so retry it
+            if not all([os.path.exists(self.history.prod_trajs[-1][i]) for i in range(len(self.current_type))]):     # prod step failed, so retry it
                 self.current_type = ['init']    # will update to ['prod', 'prod'] in next thread.process call
                 return running  # escape immediately
 
@@ -532,6 +534,11 @@ class AimlessShooting(JobType):
                     self.history.init_inpcrd.append(new_point)
                 else:   # always_new = False or there have been no accepted moves in this thread yet
                     self.history.init_inpcrd.append(self.history.init_inpcrd[-1])   # begin next move from same point as last move
+
+            if settings.cleanup and self.history.last_accepted < self.suffix - 1:   # delete this trajectory if it is not the new last_accepted
+                for job_index in range(len(self.current_type)):
+                    os.remove(self.history.prod_trajs[-1][job_index])
+
         elif self.current_type == ['init']:
             if not os.path.exists(self.history.init_coords[-1][0]):  # init step failed, so retry it
                 self.current_type = []  # reset current_type so it will be pushed back to ['init'] by thread.process
