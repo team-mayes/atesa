@@ -4,9 +4,9 @@ and implements its abstract methods.
 """
 
 import abc
-import pytraj
 import os
-from io import StringIO
+import pytraj
+import mdtraj
 
 class MDEngine(abc.ABC):
     """
@@ -48,7 +48,7 @@ class AdaptAmber(MDEngine):
 
     def get_frame(self, trajectory, frame, settings):
         new_restart_name = trajectory + '_frame_' + str(frame) + '.rst7'
-        if not os.path.exists(trajectory):  # todo: figure out how to catch if the file exists but is empty
+        if not os.path.exists(trajectory):
             return ''   # since it's possible to call this before the trajectory file has been initialized
         if frame >= 1:
             shift_frame = frame - 1     # because write_traj is 0-indexed but get_frame is 1-indexed
@@ -56,6 +56,11 @@ class AdaptAmber(MDEngine):
             shift_frame = -1
         else:
             raise IndexError('invalid frame index for get_frame: ' + str(frame) + ' (must be >= 1, or exactly -1)')
+
+        # Use mdtraj to check for non-zero trajectory length (pytraj gives an error below if n_frames = 0)
+        traj = mdtraj.load(trajectory, top=settings.topology)
+        if traj.n_frames == 0:
+            return ''
 
         traj = pytraj.iterload(trajectory, settings.topology)
         try:
@@ -68,5 +73,6 @@ class AdaptAmber(MDEngine):
             if not os.path.exists(new_restart_name):
                 raise OSError('expected pytraj to write either ' + new_restart_name + ' or ' + new_restart_name + '.1, '
                               'but found neither.')
+
         return new_restart_name
 
