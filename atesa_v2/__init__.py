@@ -4,7 +4,8 @@ Version 2 of Aimless Transition Ensemble Sampling and Analysis refactors the cod
 """
 
 # Add imports here
-from atesa_v2.main import *
+#from atesa_v2.main import *
+from . import main
 from . import factory
 from . import configure
 from . import mdengine
@@ -14,7 +15,6 @@ from . import jobtype
 from . import batchsystem
 from . import utilities
 from . import taskmanager
-# from .atesa_v2 import *
 # from .configure import *
 # from .factory import *
 # from .mdengine import *

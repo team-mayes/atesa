@@ -21,7 +21,6 @@ class Tests(object):
         except FileNotFoundError:
             pass
 
-
     # def test_main(self):
     #     """Tests main"""
     #     err = lmax_temp.main()

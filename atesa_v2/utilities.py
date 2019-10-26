@@ -297,7 +297,8 @@ def resample(settings, write_raw=True):
     for thread in allthreads:
         this_decorr_time = 0    # initialize decorrelation time of this thread
         this_cvs_list = []      # initialize full nested list of CV values for this thread
-        for step_index in range(len(thread.history.init_coords)):
+        cvs_for_later = []      # need this one with empty lists for failed moves, for indexing reasons
+        for step_index in range(len(thread.history.prod_results)):
             if thread.history.prod_results[step_index][0] in ['fwd', 'bwd']:
                 if thread.history.prod_results[step_index][0] == 'fwd':
                     this_basin = 'B'
@@ -315,6 +316,9 @@ def resample(settings, write_raw=True):
 
                 # Append this_cvs to running list for evaluating decorrelation time
                 this_cvs_list.append([float(item) for item in this_cvs.split(' ')])
+                cvs_for_later.append([float(item) for item in this_cvs.split(' ')])
+            else:
+                cvs_for_later.append([])
 
         if this_cvs_list:       # if there were any 'fwd' or 'bwd' results in this thread
             mapped = list(map(list, zip(*this_cvs_list)))   # list of lists of values of each CV
@@ -322,6 +326,10 @@ def resample(settings, write_raw=True):
             slowest_lag = -1    # initialize running tally of slowest autocorrelation time among CVs in this thread
             if settings.include_qdot:
                 ndims = len(this_cvs_list[0]) / 2   # number of non-rate-of-change CVs
+                if not ndims % 1 == 0:
+                    raise ValueError('include_qdot = True but an odd number of dimensions were found in the threads in '
+                                     'restart.pkl')
+                ndims = int(ndims)
             else:
                 ndims = len(this_cvs_list[0])
 
@@ -352,7 +360,7 @@ def resample(settings, write_raw=True):
 
             if slowest_lag > 0:     # only proceed to writing to as_decorr.out if a valid slowest_lag was found
                 # Write to as_decorr.out the same way as to as_raw.out above, but starting the range at slowest_lag
-                for step_index in range(slowest_lag, len(thread.history.init_coords)):
+                for step_index in range(slowest_lag, len(thread.history.prod_results)):
                     if thread.history.prod_results[step_index][0] in ['fwd', 'bwd']:
                         if thread.history.prod_results[step_index][0] == 'fwd':
                             this_basin = 'B'
@@ -360,9 +368,9 @@ def resample(settings, write_raw=True):
                             this_basin = 'A'
 
                         # Get CVs for this shooting point
-                        this_cvs = this_cvs_list[step_index]    # retrieve CVs from last evaluation
+                        this_cvs = cvs_for_later[step_index]    # retrieve CVs from last evaluation
 
                         # Write CVs to as_raw.out
                         open(settings.working_directory + '/as_decorr.out', 'a').write(this_basin + ' <- ')
-                        open(settings.working_directory + '/as_decorr.out', 'a').write(this_cvs + '\n')
+                        open(settings.working_directory + '/as_decorr.out', 'a').write(' '.join([str(item) for item in this_cvs]) + '\n')
                         open(settings.working_directory + '/as_decorr.out', 'a').close()

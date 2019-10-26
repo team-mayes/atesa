@@ -11,6 +11,7 @@ import os
 import glob
 from atesa_v2.configure import configure
 from atesa_v2.process import process
+from atesa_v2 import main
 
 class Tests(object):
     def setup_method(self, test_method):
@@ -25,7 +26,7 @@ class Tests(object):
         """Tests process.py for a thread with terminated = True"""
         settings = configure('../../data/atesa.config')
         settings.degeneracy = 1
-        allthreads = atesa_v2.init_threads(settings)
+        allthreads = main.init_threads(settings)
         allthreads[0].terminated = True
         running = [allthreads[0]]
         process(allthreads[0], running, settings)
@@ -37,7 +38,7 @@ class Tests(object):
         settings.job_type = 'aimless_shooting'
         settings.degeneracy = 1
         settings.DEBUG = True
-        allthreads = atesa_v2.init_threads(settings)
+        allthreads = main.init_threads(settings)
         allthreads[0].terminated = False
         allthreads[0].current_type = []
         running = []

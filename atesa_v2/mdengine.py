@@ -61,6 +61,7 @@ class AdaptAmber(MDEngine):
         try:
             traj = mdtraj.load(trajectory, top=settings.topology)
             if traj.n_frames == 0:
+                del traj
                 return ''
         except ValueError:      # sometimes this is the result of trying to load a trajectory too early
             return ''

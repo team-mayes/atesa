@@ -172,7 +172,7 @@ def two_line_test(results):
         return -1
 
     slope_fract = best_closest[2].slope / best_closest[1].slope
-    if slope_fract > 0.25:  # best point does not meet threshold for relative difference in slopes
+    if slope_fract > 0.35:  # best point does not meet threshold for relative difference in slopes
         return -1
     else:                   # DOES meet threshold; return the index of the passing result
         return best_closest[0][0] - 1   # - 2 because of different indexing standards

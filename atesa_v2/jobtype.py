@@ -12,9 +12,11 @@ import pickle
 import argparse
 import numpy
 import shutil
+import time
 import pytraj
 from atesa_v2 import utilities
 from atesa_v2 import main
+# from atesa_v2.main import Thread
 
 class JobType(abc.ABC):
     """
@@ -455,8 +457,9 @@ class AimlessShooting(JobType):
                             kpssresult = 1      # 100% certainty of non-convergence!
                         kpssresults.append(kpssresult)
 
-                    if kpssresults[-1] <= 0.05:
-                        global_terminate = True     # todo: test information error termination criterion
+                    if len(kpssresults) > 0:
+                        if kpssresults[-1] <= 0.05:
+                            global_terminate = True     # todo: test information error termination criterion
 
             if thread_terminate:
                 self.status = 'terminated after step ' + str(self.suffix) + ' due to: ' + thread_terminate

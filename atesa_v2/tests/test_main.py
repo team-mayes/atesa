@@ -11,6 +11,7 @@ import os
 import glob
 import shutil
 from atesa_v2.configure import configure
+from atesa_v2 import main
 
 class Tests(object):
     def setup_method(self, test_method):
@@ -50,7 +51,7 @@ class Tests(object):
         settings = configure('../../data/atesa.config')
         settings.initial_coordinates = ['../test_data/test.rst7', '../test_data/test_two_init.rst7']
         settings.degeneracy = 1
-        allthreads = atesa_v2.init_threads(settings)
+        allthreads = main.init_threads(settings)
         assert len(allthreads) == 2
         assert allthreads[0].history.init_inpcrd == ['test.rst7']
         assert allthreads[1].history.init_inpcrd == ['test_two_init.rst7']
@@ -63,7 +64,7 @@ class Tests(object):
         settings.topology = '../test_data/test.prmtop'
         settings.md_engine = 'amber'
         settings.degeneracy = 1
-        allthreads = atesa_v2.init_threads(settings)
+        allthreads = main.init_threads(settings)
         allthreads[0].jobids.append('01234')
         allthreads[0].history.prod_trajs.append(['../test_data/test.nc'])
         compare_traj = pytraj.iterload('../test_data/test.rst7', allthreads[0].topology)

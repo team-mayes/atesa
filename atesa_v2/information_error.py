@@ -9,7 +9,7 @@ import time
 import re
 import pickle
 import subprocess
-from atesa_v2 import Thread
+from atesa_v2.main import Thread
 from atesa_v2 import utilities
 from statsmodels.tsa.stattools import kpss
 
@@ -66,7 +66,7 @@ def main(as_raw):
     # Write to info_err.out (and make it, if it doesn't yet exist)
     if not os.path.exists('info_err.out'):
         open('info_err.out', 'w').close()
-    open('info_err.out', 'a').write(pattern2.findall(as_raw)[0] + ' ' + str(inf_err))
+    open('info_err.out', 'a').write(pattern2.findall(as_raw)[0] + ' ' + str(inf_err) + '\n')
 
 
 if __name__ == "__main__":

@@ -86,14 +86,20 @@ class AdaptSlurm(BatchSystem):
         if settings.DEBUG:
             return 'C'
 
+        output = 'first_attempt'                        # first attempt
+        errors = ['first_attempt', 'slurm_load_jobs']   # error messages to retry on
+
         command = 'squeue -o %t --job ' + str(jobid)
-        process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                                   close_fds=True, shell=True)
-        output = process.stdout.read().decode()     # decode converts from bytes-like to string
-        try:
-            output = output.split('\n')[1]
-        except IndexError:
-            output = 'C'        # job isn't in the queue; so it's 'C'omplete
+        while True in [error in output for error in errors]:
+            if not output == 'first_attempt':
+                time.sleep(30)  # wait 30 seconds before trying again
+            process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                                       close_fds=True, shell=True)
+            output = process.stdout.read().decode()     # decode converts from bytes-like to string
+            try:
+                output = output.split('\n')[1]
+            except IndexError:
+                output = 'C'        # job isn't in the queue; so it's 'C'omplete
         if output == 'PD':
             output = 'Q'
         elif output == 'CG' or 'Invalid job id' in output or not output:  # 'Invalid job id' or empty output returned when job is finished in Slurm

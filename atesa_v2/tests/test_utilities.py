@@ -15,6 +15,7 @@ import pickle
 from atesa_v2 import utilities
 from atesa_v2.configure import configure
 from atesa_v2 import process
+from atesa_v2 import main
 
 class Tests(object):
     def setup_method(self, test_method):
@@ -133,7 +134,7 @@ class Tests(object):
         settings.cvs = ['pytraj.distance(traj, \'@1 @2\')[0]', 'pytraj.angle(traj, \'@2 @3 @4\')[0]']
         settings.include_qdot = False
         settings.topology = '../test_data/test.prmtop'
-        allthreads = atesa_v2.init_threads(settings)
+        allthreads = main.init_threads(settings)
         allthreads[0].history.init_coords = [['../test_data/test_velocities_init.rst7', '../test_data/test_velocities_init_bwd.rst7'],
                                              ['../test_data/test_two_init.rst7', '../test_data/test_two_init_bwd.rst7']]
         allthreads[0].history.prod_results = [['fwd', 'bwd'], ['bwd', 'bwd']]
