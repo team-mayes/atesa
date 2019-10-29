@@ -17,6 +17,12 @@ from scipy import optimize
 from scipy import stats
 from scipy.special import erf
 
+try:
+    import gnuplotlib
+    gnuplot = True
+except FileNotFoundError:   # gnuplot not installed
+    gnuplot = False
+
 def update_progress(progress, message='Progress', eta=0, quiet=False):
     """
     Print a dynamic progress bar to stdout.
@@ -168,14 +174,25 @@ def two_line_test(results):
             elif closest[1] < best_closest[0][1]:   # update the closest yet
                 best_closest = [closest, opt1, opt2]
 
+    if gnuplot:
+        points1 = [[i + 1 for i in range(len(results))],
+                   [best_closest[1].slope * (i + 1) + best_closest[1].intercept for i in range(len(results))]]
+        points2 = [[i + 1 for i in range(len(results))],
+                   [best_closest[2].slope * (i + 1) + best_closest[2].intercept for i in range(len(results))]]
+        gnuplotlib.plot((numpy.asarray([item + 1 for item in range(len(results))]),
+                        numpy.asarray([result.fun for result in results])),
+                        (numpy.asarray(points1[0]), numpy.asarray(points1[1]), {'legend': 'first slope: ' + '%.3f' % best_closest[1].slope}),
+                        (numpy.asarray(points2[0]), numpy.asarray(points2[1]), {'legend': 'first slope: ' + '%.3f' % best_closest[2].slope}),
+                        _with='lines', terminal='dumb 80,40', unset='grid')
+
     if not best_closest:    # no pairs of lines whose intersection was closest to their shared point
         return -1
 
     slope_fract = best_closest[2].slope / best_closest[1].slope
-    if slope_fract > 0.35:  # best point does not meet threshold for relative difference in slopes
+    if slope_fract > 0.55:  # best point does not meet threshold for relative difference in slopes
         return -1
     else:                   # DOES meet threshold; return the index of the passing result
-        return best_closest[0][0] - 1   # - 2 because of different indexing standards
+        return best_closest[0][0] - 1   # - 1 because of different indexing standards
 
 
 def main(**kwargs):

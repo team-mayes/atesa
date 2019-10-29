@@ -1,0 +1,4 @@
+Likelihood maximization complete!
+The optimized reaction coordinate (with CVs indexed from 1) is: -3.119 + 2.630*CV4 + 2.332*CV24 + -0.699*CV43 + 1.207*CV18 + 1.099*CV29
+The negative log likelihood of this model is: 87.236
+The mean information error for this model is: 0.432

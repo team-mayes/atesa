@@ -6,6 +6,7 @@ TaskManager and implements its abstract methods.
 import abc
 import subprocess
 import re
+import time
 
 class TaskManager(abc.ABC):
     """
@@ -63,6 +64,15 @@ class AdaptSimple(TaskManager):
 
         # Use a regular expression to extract the jobid from this string
         pattern = re.compile('[0-9]+')  # todo: it's not inconceivable that this should fail in some cases. Consider moving building this pattern to a method of BatchSystem.
-        return re.findall(pattern, output)[0]
-
+        try:
+            return re.findall(pattern, output)[0]
+        except IndexError:  # no number in the output
+            time.sleep(30)  # wait 30 seconds in case this is just a momentary timeout issue
+            process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                                       close_fds=True, shell=True)
+            output = process.stdout.read().decode()
+            try:
+                return re.findall(pattern, output)[0]
+            except IndexError:
+                raise RuntimeError('unable to submit batch job: ' + filename + '\nMessage from batch system: ' + output)
 

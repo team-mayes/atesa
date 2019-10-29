@@ -56,7 +56,7 @@ def main(as_raw):
     else:
         q_str = 'absent'
     command = 'lmax.py -i as_decorr.out -q ' + q_str + ' --automagic -o ' + as_raw + '_lmax.out'
-    subprocess.check_call(command.split(' '), stdout=subprocess.PIPE, preexec_fn=os.setsid)     # check_call waits for completion
+    subprocess.check_call(command.split(' '), stdout=sys.stdout, preexec_fn=os.setsid)     # check_call waits for completion
 
     # Now that the output file exists, obtain the information error from the last line
     pattern = re.compile('[0-9.]+')     # pattern to match information error number

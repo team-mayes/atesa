@@ -354,11 +354,12 @@ class AimlessShooting(JobType):
         if 'initialize' in kwargs.keys():
             if kwargs['initialize']:
                 self.history = argparse.Namespace()
-                self.history.init_inpcrd = []    # list of strings, inpcrd for init steps; initialized by main.init_threads and updated by algorithm
-                self.history.init_coords = []    # list of 2-length lists of strings, init [_fwd.rst7, _bwd.rst7]; updated by update_history and then in algorithm
-                self.history.prod_trajs = []     # list of 2-length lists of strings, [_fwd.nc, _bwd.nc]; updated by update_history
-                self.history.prod_results = []   # list of 2-length lists of strings ['fwd'/'bwd'/'', 'fwd'/'bwd'/'']; updated by update_results
-                self.history.last_accepted = -1  # int, index of last accepted prod_trajs entry; updated by update_results (-1 means none yet accepted)
+                self.history.init_inpcrd = []       # list of strings, inpcrd for init steps; initialized by main.init_threads and updated by algorithm
+                self.history.init_coords = []       # list of 2-length lists of strings, init [_fwd.rst7, _bwd.rst7]; updated by update_history and then in algorithm
+                self.history.prod_trajs = []        # list of 2-length lists of strings, [_fwd.nc, _bwd.nc]; updated by update_history
+                self.history.prod_results = []      # list of 2-length lists of strings ['fwd'/'bwd'/'', 'fwd'/'bwd'/'']; updated by update_results
+                self.history.last_accepted = -1     # int, index of last accepted prod_trajs entry; updated by update_results (-1 means none yet accepted)
+                self.history.timestamps = []        # list of ints representing seconds since the epoch for the end of each step; updated by update_results
             if 'inpcrd' in kwargs.keys():
                 self.history.init_inpcrd.append(kwargs['inpcrd'])
         else:   # self.history should already exist
@@ -438,7 +439,7 @@ class AimlessShooting(JobType):
                     # Start separate process calling information_error.py to evaluate information error
                     shutil.copy('as_raw.out', 'as_raw_' + str(len_data) + '.out')    # to avoid processes stepping on each other's toes
                     command = 'information_error.py as_raw_' + str(len_data) + '.out'
-                    process = subprocess.Popen(command.split(' '), stdout=subprocess.PIPE, preexec_fn=os.setsid)
+                    process = subprocess.Popen(command.split(' '), stdout=sys.stdout, preexec_fn=os.setsid)
 
                 # Perform KPSS test on series of data in info_err.out, and evaluate termination criterion
                 if os.path.exists('info_err.out'):
@@ -483,6 +484,7 @@ class AimlessShooting(JobType):
                 self.history.prod_results[-1].append(utilities.check_commit(frame_to_check, settings))
                 os.remove(frame_to_check)
             self.total_moves += 1
+            self.history.timestamps.append(int(time.time()))
             if self.history.prod_results[-1] in [['fwd', 'bwd'], ['bwd', 'fwd']]:   # update last accepted move
                 if settings.cleanup and self.history.last_accepted >= 0:            # delete previous last accepted trajectories
                     for job_index in range(len(self.current_type)):
