@@ -36,4 +36,8 @@ def interpret(thread, allthreads, running, settings):
         termination = jobtype.check_termination(thread, allthreads, settings)   # check global termination criteria
     running = jobtype.algorithm(thread, allthreads, running, settings)          # set thread parameters for next step
 
+    if settings.DEBUG:
+        termination = True
+        running = [thread]
+
     return termination, running

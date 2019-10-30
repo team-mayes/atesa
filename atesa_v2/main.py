@@ -148,6 +148,8 @@ def main(settings):
 
     """
 
+    tracemalloc.start()
+
     if settings.resample:
         utilities.resample(settings)
         sys.exit()
@@ -214,7 +216,6 @@ def main(settings):
         return 'ATESA run exiting normally (all threads ended individually)'
 
 if __name__ == "__main__":
-    tracemalloc.start()
     # Obtain settings namespace, initialize threads, and move promptly into main.
     settings = configure.configure(sys.argv[1]) #'data/atesa.config')
     exit_message = main(settings)

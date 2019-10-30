@@ -22,3 +22,5 @@ ignore:
   - "versioneer.py"
   - "atesa_v2/input_files"
   - "atesa_v2/templates"
+  - "atesa_v2/templates/temp.*"
+  - "atesa_v2/templates/.*temp"

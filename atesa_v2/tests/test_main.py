@@ -30,11 +30,13 @@ class Tests(object):
     def test_main(self):
         """Tests main.main with no initial coordinates given"""
         settings = configure('../../data/atesa.config')
-        settings.initial_coordinates = []
+        settings.initial_coordinates = ['../test_data/test.rst7']
         settings.topology = '../test_data/test.prmtop'
+        settings.degeneracy = 1
         settings.overwrite = True
         settings.resample = False
-        assert main.main(settings) == 'ATESA run exiting normally (all threads ended individually)'
+        settings.DEBUG = True
+        assert main.main(settings) == 'ATESA run exiting normally (global termination criterion met)'
 
     def test_configure_broken(self):
         """Tests configure.py with a non-existent file"""
