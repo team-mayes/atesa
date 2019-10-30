@@ -209,12 +209,13 @@ def main(settings):
     jobtype.cleanup(None, settings)
 
     if termination_criterion:
-        print('ATESA run exiting normally (global termination criterion met)')
+        return 'ATESA run exiting normally (global termination criterion met)'
     else:
-        print('ATESA run exiting normally (all threads ended individually)')
+        return 'ATESA run exiting normally (all threads ended individually)'
 
 if __name__ == "__main__":
     tracemalloc.start()
     # Obtain settings namespace, initialize threads, and move promptly into main.
     settings = configure.configure(sys.argv[1]) #'data/atesa.config')
-    main(settings)
+    exit_message = main(settings)
+    print(exit_message)

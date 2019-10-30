@@ -9,6 +9,7 @@ import time
 import re
 import pickle
 import subprocess
+import copy
 from atesa_v2.main import Thread
 from atesa_v2 import utilities
 from statsmodels.tsa.stattools import kpss
@@ -48,9 +49,7 @@ def main(as_raw):
 
     # Set resample_override to False (or back to False; it will only be set to True when called by resample)
     settings.resample_override = False
-    temp_settings = copy.deepcopy(settings)         # initialize temporary copy of settings to modify
-    temp_settings.__dict__.pop('env')               # env attribute is not picklable
-    pickle.dump(temp_settings, open('settings.pkl', 'wb'), protocol=2)
+    pickle.dump(settings, open('settings.pkl', 'wb'), protocol=2)
 
     # Exit if as_decorr.out has no content
     if len(open('as_decorr.out', 'r').readlines()) == 0:

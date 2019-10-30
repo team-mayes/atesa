@@ -547,7 +547,8 @@ class AimlessShooting(JobType):
         return running
 
     def cleanup(self, settings):
-        utilities.resample(settings)
+        # utilities.resample(settings)  # to build as_decorr.out I suppose. Kinda silly.
+        pass
 
 
 # noinspection PyAttributeOutsideInit

@@ -10,6 +10,7 @@ import pytraj
 import os
 import glob
 import shutil
+import pickle
 from atesa_v2.configure import configure
 from atesa_v2 import main
 
@@ -26,9 +27,14 @@ class Tests(object):
         """Sample test, will always pass so long as import statement worked"""
         assert "atesa_v2" in sys.modules
 
-    def test_init_threads_restart(self):
-        """Tests successful unpickle and return of a restart.pkl file"""
-        pass # todo: implement
+    def test_main(self):
+        """Tests main.main with no initial coordinates given"""
+        settings = configure('../../data/atesa.config')
+        settings.initial_coordinates = []
+        settings.topology = '../test_data/test.prmtop'
+        settings.overwrite = True
+        settings.resample = False
+        assert main.main(settings) == 'ATESA run exiting normally (all threads ended individually)'
 
     def test_configure_broken(self):
         """Tests configure.py with a non-existent file"""

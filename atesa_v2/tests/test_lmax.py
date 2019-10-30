@@ -38,7 +38,7 @@ class Tests(object):
         with pytest.raises(RuntimeError):
             lmax.two_line_test(results)
         # Next, data designed not to pass due to too mild a slope change
-        results = data_converter([-100, -110, -120, -125, -130])
+        results = data_converter([-100, -110, -120, -129, -138])
         assert lmax.two_line_test(results) == -1
         # Data designed to pass at index 2 because it's just garbage (very much a fringe test)
         results = data_converter([-100, -110, -120, -122, -124])

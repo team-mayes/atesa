@@ -141,6 +141,8 @@ class Tests(object):
         allthreads[1].history.init_coords = [['../test_data/test_velocities_init.rst7', '../test_data/test_velocities_init_bwd.rst7'],
                                              ['../test_data/test_two_init.rst7', '../test_data/test_two_init_bwd.rst7']]
         allthreads[1].history.prod_results = [['bwd', 'bwd'], ['fwd', 'bwd']]
+        allthreads[0].history.timestamps = [1, 3]
+        allthreads[1].history.timestamps = [2, 4]
         pickle.dump(allthreads, open('restart.pkl', 'wb'), protocol=2)  # file now exists
         utilities.resample(settings)
         assert os.path.exists('as_raw.out')
