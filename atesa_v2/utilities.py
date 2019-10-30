@@ -268,7 +268,9 @@ def resample(settings, write_raw=True):
     settings : argparse.Namespace
         Settings namespace object
     write_raw : bool
-        If True, writes a new copy of as_raw.out; if false, only writes as_decorr.out (if applicable)
+        If True, writes a new copy of as_raw.out; if false, only writes as_decorr.out (if applicable). Also if True and
+        settings.information_error_checking = True, writes new partial as_raw.out files and invokes information_error.py
+        to build a new info_err.out file.
 
     Returns
     -------
@@ -284,6 +286,8 @@ def resample(settings, write_raw=True):
     # Remove pre-existing as_raw.out if any, initialize new one
     if write_raw:
         open(settings.working_directory + '/as_raw.out', 'w').close()
+        if settings.information_error_checking:
+            open(settings.working_directory + '/as_raw_timestamped.out', 'w').close()
     open(settings.working_directory + '/as_decorr.out', 'w').close()
 
     # Load in allthreads from restart.pkl
@@ -295,9 +299,8 @@ def resample(settings, write_raw=True):
 
     # iterate through each thread's history.init_coords list
     for thread in allthreads:
-        this_decorr_time = 0    # initialize decorrelation time of this thread
-        this_cvs_list = []      # initialize full nested list of CV values for this thread
-        cvs_for_later = []      # need this one with empty lists for failed moves, for indexing reasons
+        thread.this_cvs_list = []       # initialize full nested list of CV values for this thread
+        thread.cvs_for_later = []       # need this one with empty lists for failed moves, for indexing reasons
         for step_index in range(len(thread.history.prod_results)):
             if thread.history.prod_results[step_index][0] in ['fwd', 'bwd']:
                 if thread.history.prod_results[step_index][0] == 'fwd':
@@ -313,64 +316,104 @@ def resample(settings, write_raw=True):
                     open(settings.working_directory + '/as_raw.out', 'a').write(this_basin + ' <- ')
                     open(settings.working_directory + '/as_raw.out', 'a').write(this_cvs + '\n')
                     open(settings.working_directory + '/as_raw.out', 'a').close()
+                    if settings.information_error_checking:
+                        open(settings.working_directory + '/as_raw_timestamped.out', 'a').write(thread.history.timestamps[step_index] + ' ')
+                        open(settings.working_directory + '/as_raw_timestamped.out', 'a').write(this_basin + ' <- ')
+                        open(settings.working_directory + '/as_raw_timestamped.out', 'a').write(this_cvs + '\n')
+                        open(settings.working_directory + '/as_raw_timestamped.out', 'a').close()
 
                 # Append this_cvs to running list for evaluating decorrelation time
-                this_cvs_list.append([float(item) for item in this_cvs.split(' ')])
-                cvs_for_later.append([float(item) for item in this_cvs.split(' ')])
+                thread.this_cvs_list.append([[float(item) for item in this_cvs.split(' ')], thread.history.timestamps[step_index]])
+                thread.cvs_for_later.append([float(item) for item in this_cvs.split(' ')])
             else:
-                cvs_for_later.append([])
+                thread.cvs_for_later.append([])
 
-        if this_cvs_list:       # if there were any 'fwd' or 'bwd' results in this thread
-            mapped = list(map(list, zip(*this_cvs_list)))   # list of lists of values of each CV
+    if write_raw and settings.information_error_checking:   # sort timestamped output file
+        shutil.copy(settings.working_directory + '/as_raw_timestamped.out', settings.working_directory + '/as_raw_timestamped_copy.out')
+        open(settings.working_directory + '/as_raw_timestamped.out', 'w').close()
+        with open(settings.working_directory + '/as_raw_timestamped_copy.out', 'r') as f:
+            for line in sorted(f):
+                open(settings.working_directory + '/as_raw_timestamped.out', 'a').write(line)
+            open(settings.working_directory + '/as_raw_timestamped.out', 'a').close()
+        os.remove(settings.working_directory + '/as_raw_timestamped_copy.out')
 
-            slowest_lag = -1    # initialize running tally of slowest autocorrelation time among CVs in this thread
-            if settings.include_qdot:
-                ndims = len(this_cvs_list[0]) / 2   # number of non-rate-of-change CVs
-                if not ndims % 1 == 0:
-                    raise ValueError('include_qdot = True but an odd number of dimensions were found in the threads in '
-                                     'restart.pkl')
-                ndims = int(ndims)
-            else:
-                ndims = len(this_cvs_list[0])
+    # Construct list of data lengths to perform decorrelation for
+    if write_raw and settings.information_error_checking:
+        lengths = [len for len in range(settings.information_error_freq, len(open(settings.working_directory + '/as_raw_timestamped.out', 'r').readlines()) + 1, settings.information_error_freq)]
+        pattern = re.compile('[0-9]+')  # pattern for reading out timestamp from string
+    else:
+        lengths = [len(open(settings.working_directory + '/as_raw.out', 'r').readlines())]
+        pattern = None
 
-            for dim_index in range(ndims):
-                this_cv = mapped[dim_index]
-                this_autocorr = [stattools.acf(this_cv[lag:], nlags=1, fft=True)[-1] for lag in range(len(this_cv) - 1)]
-                in_bounds = [this_autocorr[lag] < 1.96 / numpy.sqrt(len(this_cv[lag:])) for lag in range(len(this_autocorr))]
-                running = 0             # running count of successive steps "in bounds"
-                begin = len(in_bounds)  # initialize begin with maximum possible value
-                this_index = -1         # running count of each step regardless of whether "in bounds" or not
-                for item in in_bounds:
-                    this_index += 1
-                    if (not item and running > 0) or this_index == len(in_bounds) - 1:  # leaves threshold (in -> out) or ends
-                        if running >= begin:    # only get slowest_lag if been in bounds for at least as long as it took to get in bounds
-                            if begin > slowest_lag:     # only update slowest_lag if it's slower than the previous one
-                                slowest_lag = begin
-                            break       # once we've found the lag for this CV move on to the next one
-                        begin = 0
-                        running = 0
-                    elif item and running == 0:  # entered threshold after being outside (out -> in)
-                        running += 1
-                        begin = this_index  # index where we begin being "in bounds"
-                    elif item:  # inside threshold already and still in (in -> in)
-                        running += 1
-                    else:  # was not in threshold and continues not to be (out -> out)
-                        begin = 0
-                        running = 0
+    # Assess decorrelation and write as_decorr.out
+    for length in lengths:
+        if write_raw and settings.information_error_checking:
+            cutoff_timestamp = pattern.findall(open(settings.working_directory + '/as_raw_timestamped.out', 'r').readlines()[length])[0]
+        else:
+            cutoff_timestamp = math.inf
+        for thread in allthreads:
+            if thread.this_cvs_list:       # if there were any 'fwd' or 'bwd' results in this thread
+                mapped = list(map(list, zip(*[item[0] for item in thread.this_cvs_list if item[1] <= cutoff_timestamp])))   # list of lists of values of each CV
 
-            if slowest_lag > 0:     # only proceed to writing to as_decorr.out if a valid slowest_lag was found
-                # Write to as_decorr.out the same way as to as_raw.out above, but starting the range at slowest_lag
-                for step_index in range(slowest_lag, len(thread.history.prod_results)):
-                    if thread.history.prod_results[step_index][0] in ['fwd', 'bwd']:
-                        if thread.history.prod_results[step_index][0] == 'fwd':
-                            this_basin = 'B'
-                        else:  # 'bwd'
-                            this_basin = 'A'
+                slowest_lag = -1    # initialize running tally of slowest autocorrelation time among CVs in this thread
+                if settings.include_qdot:
+                    ndims = len(thread.this_cvs_list[0]) / 2   # number of non-rate-of-change CVs
+                    if not ndims % 1 == 0:
+                        raise ValueError('include_qdot = True but an odd number of dimensions were found in the threads in '
+                                         'restart.pkl')
+                    ndims = int(ndims)
+                else:
+                    ndims = len(thread.this_cvs_list[0])
 
-                        # Get CVs for this shooting point
-                        this_cvs = cvs_for_later[step_index]    # retrieve CVs from last evaluation
+                for dim_index in range(ndims):
+                    this_cv = mapped[dim_index]
+                    this_autocorr = [stattools.acf(this_cv[lag:], nlags=1, fft=True)[-1] for lag in range(len(this_cv) - 1)]
+                    in_bounds = [this_autocorr[lag] < 1.96 / numpy.sqrt(len(this_cv[lag:])) for lag in range(len(this_autocorr))]
+                    running = 0             # running count of successive steps "in bounds"
+                    begin = len(in_bounds)  # initialize begin with maximum possible value
+                    this_index = -1         # running count of each step regardless of whether "in bounds" or not
+                    for item in in_bounds:
+                        this_index += 1
+                        if (not item and running > 0) or this_index == len(in_bounds) - 1:  # leaves threshold (in -> out) or ends
+                            if running >= begin:    # only get slowest_lag if been in bounds for at least as long as it took to get in bounds
+                                if begin > slowest_lag:     # only update slowest_lag if it's slower than the previous one
+                                    slowest_lag = begin
+                                break       # once we've found the lag for this CV move on to the next one
+                            begin = 0
+                            running = 0
+                        elif item and running == 0:  # entered threshold after being outside (out -> in)
+                            running += 1
+                            begin = this_index  # index where we begin being "in bounds"
+                        elif item:  # inside threshold already and still in (in -> in)
+                            running += 1
+                        else:  # was not in threshold and continues not to be (out -> out)
+                            begin = 0
+                            running = 0
 
-                        # Write CVs to as_raw.out
-                        open(settings.working_directory + '/as_decorr.out', 'a').write(this_basin + ' <- ')
-                        open(settings.working_directory + '/as_decorr.out', 'a').write(' '.join([str(item) for item in this_cvs]) + '\n')
-                        open(settings.working_directory + '/as_decorr.out', 'a').close()
+                if slowest_lag > 0:     # only proceed to writing to as_decorr.out if a valid slowest_lag was found
+                    # Write to as_decorr.out the same way as to as_raw.out above, but starting the range at slowest_lag
+                    for step_index in range(slowest_lag, len(thread.history.prod_results)):
+                        if thread.history.prod_results[step_index][0] in ['fwd', 'bwd']:
+                            if thread.history.prod_results[step_index][0] == 'fwd':
+                                this_basin = 'B'
+                            else:  # 'bwd'
+                                this_basin = 'A'
+
+                            # Get CVs for this shooting point
+                            this_cvs = thread.cvs_for_later[step_index]    # retrieve CVs from last evaluation
+
+                            # Write CVs to as_raw.out
+                            open(settings.working_directory + '/as_decorr.out', 'a').write(this_basin + ' <- ')
+                            open(settings.working_directory + '/as_decorr.out', 'a').write(' '.join([str(item) for item in this_cvs]) + '\n')
+                            open(settings.working_directory + '/as_decorr.out', 'a').close()
+
+        if write_raw and settings.information_error_checking:
+            # Add resample_override to settings object to avoid information_error.py calling this function
+            settings.resample_override = True
+            temp_settings = copy.deepcopy(settings)     # initialize temporary copy of settings to modify
+            temp_settings.__dict__.pop('env')           # env attribute is not picklable
+            pickle.dump(temp_settings, open('settings.pkl', 'wb'), protocol=2)
+
+            shutil.copy('as_decorr.out', 'as_decorr_' + str(length) + '.out')  # to avoid processes stepping on each other's toes
+            command = 'information_error.py as_decorr_' + str(length) + '.out'
+            process = subprocess.check_call(command.split(' '), stdout=sys.stdout, preexec_fn=os.setsid)

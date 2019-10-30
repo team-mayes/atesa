@@ -443,12 +443,6 @@ class AimlessShooting(JobType):
 
                 # Perform KPSS test on series of data in info_err.out, and evaluate termination criterion
                 if os.path.exists('info_err.out'):
-                    time1 = 1
-                    time2 = 2
-                    while not time1 == time2:   # wait to perform KPSS test until the file is not being written to
-                        time1 = os.path.getmtime('info_err.out')
-                        time.sleep(2)
-                        time2 = os.path.getmtime('info_err.out')
                     info_errs = [line.split(' ')[1] for line in open('info_err.out', 'r').readlines()]
                     kpssresults = []
                     for cut in range(len(info_errs) - 1):

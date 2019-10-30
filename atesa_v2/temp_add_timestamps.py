@@ -3,12 +3,13 @@
 # each step's output file, and write a new restart.pkl (keep the old one for safety)
 
 import os
+import shutil
 import sys
 import pickle
 from atesa_v2.main import Thread
 
 os.chdir('/oasis/scratch/comet/tburgin/temp_project/atesa_v2_working/')
-os.copy('restart.pkl', 'restart_original.pkl')
+shutil.copy('restart.pkl', 'restart_original.pkl')
 
 allthreads = pickle.load(open('restart.pkl', 'rb'))
 

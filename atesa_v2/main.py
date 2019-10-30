@@ -176,8 +176,8 @@ def main(settings):
     os.chdir(settings.working_directory)
 
     # Store settings object in the working directory for posterity and for compatibility with analysis/utility scripts
-    temp_settings = copy.deepcopy(settings)        # initialize temporary copy of settings to modify
-    temp_settings.__dict__.pop('env')                           # env attribute is not picklable
+    temp_settings = copy.deepcopy(settings)         # initialize temporary copy of settings to modify
+    temp_settings.__dict__.pop('env')               # env attribute is not picklable
     pickle.dump(temp_settings, open('settings.pkl', 'wb'), protocol=2)
 
     termination_criterion = False   # initialize global termination criterion boolean
