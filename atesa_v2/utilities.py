@@ -317,7 +317,7 @@ def resample(settings, write_raw=True):
                     open(settings.working_directory + '/as_raw.out', 'a').write(this_cvs + '\n')
                     open(settings.working_directory + '/as_raw.out', 'a').close()
                     if settings.information_error_checking:
-                        open(settings.working_directory + '/as_raw_timestamped.out', 'a').write(thread.history.timestamps[step_index] + ' ')
+                        open(settings.working_directory + '/as_raw_timestamped.out', 'a').write(str(thread.history.timestamps[step_index]) + ' ')
                         open(settings.working_directory + '/as_raw_timestamped.out', 'a').write(this_basin + ' <- ')
                         open(settings.working_directory + '/as_raw_timestamped.out', 'a').write(this_cvs + '\n')
                         open(settings.working_directory + '/as_raw_timestamped.out', 'a').close()
@@ -339,7 +339,7 @@ def resample(settings, write_raw=True):
 
     # Construct list of data lengths to perform decorrelation for
     if write_raw and settings.information_error_checking:
-        lengths = [len for len in range(settings.information_error_freq, len(open(settings.working_directory + '/as_raw_timestamped.out', 'r').readlines()) + 1, settings.information_error_freq)]
+        lengths = [leng for leng in range(settings.information_error_freq, len(open(settings.working_directory + '/as_raw_timestamped.out', 'r').readlines()) + 1, settings.information_error_freq)]
         pattern = re.compile('[0-9]+')  # pattern for reading out timestamp from string
     else:
         lengths = [len(open(settings.working_directory + '/as_raw.out', 'r').readlines())]

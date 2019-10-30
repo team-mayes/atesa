@@ -17,4 +17,5 @@ dependencies:
     # Pip-only installs
   - pip:
     - pytraj
+    - gnuplotlib
 
