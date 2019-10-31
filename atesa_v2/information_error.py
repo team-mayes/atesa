@@ -9,7 +9,6 @@ import time
 import re
 import pickle
 import subprocess
-import copy
 from atesa_v2.main import Thread
 from atesa_v2 import utilities
 from statsmodels.tsa.stattools import kpss

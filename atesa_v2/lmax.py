@@ -174,7 +174,7 @@ def two_line_test(results):
             elif closest[1] < best_closest[0][1]:   # update the closest yet
                 best_closest = [closest, opt1, opt2]
 
-    if gnuplot:
+    if gnuplot and plots:
         points1 = [[i + 1 for i in range(len(results))],
                    [best_closest[1].slope * (i + 1) + best_closest[1].intercept for i in range(len(results))]]
         points2 = [[i + 1 for i in range(len(results))],
@@ -230,6 +230,7 @@ def main(**kwargs):
     running = kwargs['r'][0]
     output_file = kwargs['o'][0]
     automagic = kwargs['automagic']
+    plots = kwargs['plots']
     quiet = kwargs['quiet']
 
     # Ignore arguments as described in documentation
@@ -414,6 +415,9 @@ if __name__ == "__main__":
     parser.add_argument('--automagic', action='store_true',
                         help='If this option is given, arguments passed for k, f, and r are ignored, and the best RC is'
                              ' determined based on the two-line method (see documentation).')
+    parser.add_argument('--plots', action='store_true',
+                        help='If this option is given alongside automagic, gnuplot will be used to write plots to the '
+                             'terminal during evaluations of the automagic termination criterion (if it is installed)')
 
     arguments = vars(parser.parse_args())  # Retrieves arguments as a dictionary object
 

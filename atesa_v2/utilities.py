@@ -12,6 +12,8 @@ import sys
 import math
 import numpy
 import pickle
+import copy
+import subprocess
 from statsmodels.tsa import stattools
 
 def check_commit(filename, settings):
@@ -353,14 +355,14 @@ def resample(settings, write_raw=True):
             cutoff_timestamp = math.inf
         for thread in allthreads:
             if thread.this_cvs_list:       # if there were any 'fwd' or 'bwd' results in this thread
-                mapped = list(map(list, zip(*[item[0] for item in thread.this_cvs_list if item[1] <= cutoff_timestamp])))   # list of lists of values of each CV
+                mapped = list(map(list, zip(*[item[0] for item in thread.this_cvs_list if item[1] <= int(cutoff_timestamp)])))   # list of lists of values of each CV
 
                 slowest_lag = -1    # initialize running tally of slowest autocorrelation time among CVs in this thread
                 if settings.include_qdot:
                     ndims = len(thread.this_cvs_list[0]) / 2   # number of non-rate-of-change CVs
                     if not ndims % 1 == 0:
-                        raise ValueError('include_qdot = True but an odd number of dimensions were found in the threads in '
-                                         'restart.pkl')
+                        raise ValueError('include_qdot = True but an odd number of dimensions were found in the threads'
+                                         ' in restart.pkl')
                     ndims = int(ndims)
                 else:
                     ndims = len(thread.this_cvs_list[0])
