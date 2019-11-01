@@ -118,7 +118,7 @@ def objective_function(params, A_data, B_data):
     return -1 * sum
 
 
-def two_line_test(results):
+def two_line_test(results, plots):
     """
     Perform a double linear regression on intersecting subsets of the data in results to determine whether to terminate
     and how many dimensions to return in the RC during automagic.
@@ -130,6 +130,8 @@ def two_line_test(results):
     results : list
         List of dictionary objects indexed by step of automagic, each possessing attribute 'fun' giving the optimization
         score for that step
+    plots : bool
+        If True, plot lines using gnuplot
 
     Returns
     -------
@@ -342,7 +344,7 @@ def main(**kwargs):
                 termination = True
         elif automagic and not termination_2:
             if len(results) >= 5:   # can only confidently check for convergence with at least 5 points
-                two_line_result = two_line_test([result[0] for result in results])
+                two_line_result = two_line_test([result[0] for result in results], plots)
                 if two_line_result >= 0:
                     termination = True
                     current_best = results[two_line_result]
@@ -412,10 +414,10 @@ if __name__ == "__main__":
     parser.add_argument('--quiet', action='store_true',
                         help='If this option is given, output to the terminal is suppressed and only the output file is'
                              ' written.')
-    parser.add_argument('--automagic', action='store_true',
+    parser.add_argument('--automagic', action='store_true', default=False,
                         help='If this option is given, arguments passed for k, f, and r are ignored, and the best RC is'
                              ' determined based on the two-line method (see documentation).')
-    parser.add_argument('--plots', action='store_true',
+    parser.add_argument('--plots', action='store_true', default=False,
                         help='If this option is given alongside automagic, gnuplot will be used to write plots to the '
                              'terminal during evaluations of the automagic termination criterion (if it is installed)')
 

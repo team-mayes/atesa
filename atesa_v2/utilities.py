@@ -350,12 +350,12 @@ def resample(settings, write_raw=True):
     # Assess decorrelation and write as_decorr.out
     for length in lengths:
         if write_raw and settings.information_error_checking:
-            cutoff_timestamp = pattern.findall(open(settings.working_directory + '/as_raw_timestamped.out', 'r').readlines()[length])[0]
+            cutoff_timestamp = int(pattern.findall(open(settings.working_directory + '/as_raw_timestamped.out', 'r').readlines()[length])[0])
         else:
             cutoff_timestamp = math.inf
         for thread in allthreads:
             if thread.this_cvs_list:       # if there were any 'fwd' or 'bwd' results in this thread
-                mapped = list(map(list, zip(*[item[0] for item in thread.this_cvs_list if item[1] <= int(cutoff_timestamp)])))   # list of lists of values of each CV
+                mapped = list(map(list, zip(*[item[0] for item in thread.this_cvs_list if item[1] <= cutoff_timestamp])))   # list of lists of values of each CV
 
                 slowest_lag = -1    # initialize running tally of slowest autocorrelation time among CVs in this thread
                 if settings.include_qdot:

@@ -36,13 +36,13 @@ class Tests(object):
         # First assemble data designed not to pass due to insufficient data:
         results = data_converter([-100, -110, -120, -130])
         with pytest.raises(RuntimeError):
-            lmax.two_line_test(results)
+            lmax.two_line_test(results, False)
         # Next, data designed not to pass due to too mild a slope change
         results = data_converter([-100, -110, -120, -129, -138])
-        assert lmax.two_line_test(results) == -1
+        assert lmax.two_line_test(results, False) == -1
         # Data designed to pass at index 2 because it's just garbage (very much a fringe test)
         results = data_converter([-100, -110, -120, -122, -124])
-        assert lmax.two_line_test(results) == 2
+        assert lmax.two_line_test(results, False) == 2
 
     def test_objective_function(self):
         """Tests objective_function using dummy data"""
@@ -66,7 +66,7 @@ class Tests(object):
 
     def test_main_automagic(self):
         """Tests main using automagic"""
-        kwargs = {'automagic': True, 'i': ['../test_data/as.out'], 'k': [0], 'f': [], 'q': ['absent'], 'r': [0], 'o': ['lmax.out'], 'quiet': True}
+        kwargs = {'automagic': True, 'i': ['../test_data/as.out'], 'k': [0], 'f': [], 'q': ['absent'], 'r': [0], 'o': ['lmax.out'], 'quiet': True, 'plots': False}
         lmax.main(**kwargs)
         results = open('lmax.out', 'r').readlines()[1].split(' + ')
         assert float(results[0].replace('The optimized reaction coordinate (with CVs indexed from 1) is: ', '')) == pytest.approx(5.47, 1E-2)
@@ -76,7 +76,7 @@ class Tests(object):
 
     def test_main_running(self):
         """Tests main using running"""
-        kwargs = {'automagic': False, 'i': ['../test_data/as.out'], 'k': [0], 'f': [], 'q': ['absent'], 'r': [2], 'o': ['lmax.out'], 'quiet': True}
+        kwargs = {'automagic': False, 'i': ['../test_data/as.out'], 'k': [0], 'f': [], 'q': ['absent'], 'r': [2], 'o': ['lmax.out'], 'quiet': True, 'plots': False}
         lmax.main(**kwargs)
         results = open('lmax.out', 'r').readlines()[1].split(' + ')
         assert float(results[0].replace('The optimized reaction coordinate (with CVs indexed from 1) is: ', '')) == pytest.approx(5.47, 1E-2)
@@ -86,7 +86,7 @@ class Tests(object):
 
     def test_main_k(self):
         """Tests main using k and not f"""
-        kwargs = {'automagic': False, 'i': ['../test_data/as.out'], 'k': [2], 'f': [], 'q': ['absent'], 'r': [0], 'o': ['lmax.out'], 'quiet': True}
+        kwargs = {'automagic': False, 'i': ['../test_data/as.out'], 'k': [2], 'f': [], 'q': ['absent'], 'r': [0], 'o': ['lmax.out'], 'quiet': True, 'plots': False}
         lmax.main(**kwargs)
         results = open('lmax.out', 'r').readlines()[1].split(' + ')
         assert float(results[0].replace('The optimized reaction coordinate (with CVs indexed from 1) is: ', '')) == pytest.approx(-6.494, 1E-2)
@@ -96,7 +96,7 @@ class Tests(object):
 
     def test_main_k_and_f(self):
         """Tests main using k and f"""
-        kwargs = {'automagic': False, 'i': ['../test_data/as.out'], 'k': [2], 'f': [1, 4], 'q': ['absent'], 'r': [0], 'o': ['lmax.out'], 'quiet': False}
+        kwargs = {'automagic': False, 'i': ['../test_data/as.out'], 'k': [2], 'f': [1, 4], 'q': ['absent'], 'r': [0], 'o': ['lmax.out'], 'quiet': False, 'plots': False}
         lmax.main(**kwargs)
         results = open('lmax.out', 'r').readlines()[1].split(' + ')
         assert float(results[0].replace('The optimized reaction coordinate (with CVs indexed from 1) is: ', '')) == pytest.approx(5.47, 1E-2)
@@ -106,10 +106,10 @@ class Tests(object):
 
     def test_main_k_f_and_q(self):
         """Tests main using k, f, and q"""
-        kwargs = {'automagic': False, 'i': ['../test_data/as.out'], 'k': [2], 'f': [1, 4], 'q': ['present'], 'r': [0], 'o': ['lmax.out'], 'quiet': False}
+        kwargs = {'automagic': False, 'i': ['../test_data/as.out'], 'k': [2], 'f': [1, 4], 'q': ['present'], 'r': [0], 'o': ['lmax.out'], 'quiet': False, 'plots': False}
         with pytest.raises(RuntimeError):   # this as.out file has an uneven number of CVs
             lmax.main(**kwargs)
-        kwargs = {'automagic': False, 'i': ['as.out'], 'k': [2], 'f': [1, 2], 'q': ['present'], 'r': [0], 'o': ['lmax.out'], 'quiet': True}
+        kwargs = {'automagic': False, 'i': ['as.out'], 'k': [2], 'f': [1, 2], 'q': ['present'], 'r': [0], 'o': ['lmax.out'], 'quiet': True, 'plots': False}
         shutil.copy('../test_data/as.out', 'as_temp.out')   # need to make a new as.out file with an even number of CVs
         open('as.out', 'w').close()
         for line in open('as_temp.out', 'r').readlines():
