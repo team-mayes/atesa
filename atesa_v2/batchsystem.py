@@ -5,6 +5,7 @@ BatchSystem and implements its abstract methods.
 
 import abc
 import subprocess
+import time
 
 class BatchSystem(abc.ABC):
     """

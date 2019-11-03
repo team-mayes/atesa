@@ -11,6 +11,8 @@ import sys
 import os
 import shutil
 from jinja2 import Environment, FileSystemLoader
+import typing
+import pydantic
 
 def configure(input_file):
     """
@@ -27,6 +29,86 @@ def configure(input_file):
         Settings namespace object
 
     """
+
+    class Settings(pydantic.BaseModel):
+        # This class initializes the settings object with type hints. After being built, it gets exported as an
+        # argparse.Namelist object, just for convenience.
+
+        # Core settings required for all jobs and lacking defaults
+        job_type: str
+        batch_system: str
+        restart: bool
+        md_engine: str
+        task_manager: str
+        topology: str
+        working_directory: str
+        overwrite: bool
+
+        # Batch template settings
+        init_nodes: int = 1
+        init_ppn: int = 1
+        init_mem: str = '4000mb'
+        init_walltime: str = '00:30:00'
+        init_solver: str = 'sander'
+        prod_nodes: int = 1
+        prod_ppn: int = 8
+        prod_mem: str = '4000mb'
+        prod_walltime: str = '02:00:00'
+        prod_solver: str = 'sander'
+
+        # Optional settings (defaults will be used if omitted)  # todo: I think I'm adding a lot more defaults?
+        path_to_input_files: str = sys.path[0] + '/data/input_files'
+        path_to_templates: str = sys.path[0] + '/data/templates'
+
+        # Required only for aimless shooting, equilibrium path sampling, and committor analysis
+        cvs: typing.List[str]
+        include_qdot: bool = True
+
+        # Required only for aimless shooting and equilibrium path sampling
+        initial_coordinates: typing.List[str]
+
+        # Required only for aimless shooting and committor analysis
+        commit_fwd: typing.Tuple[typing.List[int], typing.List[int], typing.List[float], typing.List[str]]
+        commit_bwd: typing.Tuple[typing.List[int], typing.List[int], typing.List[float], typing.List[str]]
+
+        # Required only for committor analysis and equilibrium path sampling
+        rc_definition: str
+        as_out_file: str = 'as.out'
+        rc_reduced_cvs: bool = True
+
+        # Required only for aimless shooting
+        min_dt: int = 1
+        max_dt: int = 10
+        always_new: bool = True
+        resample: bool = False
+        degeneracy: int = 1
+        cleanup: bool = True
+        information_error_checking: bool = True
+        information_error_freq: int = 250
+        information_error_override: bool = False
+
+        # Required only for committor analysis
+        committor_analysis_n: int = 10
+        committor_analysis_use_rc_out: bool = True
+        path_to_rc_out: str = sys.path[0] + '/atesa_v2/tests/test_data/rc.out'
+        rc_threshold: float = 0.05
+
+        # Required only for equilibrium path sampling
+        eps_rc_min: float = -12
+        eps_rc_max: float = 12
+        eps_rc_step: float = 1
+        eps_rc_overlap: float = 0.1
+        eps_n_steps: int = 6
+        eps_out_freq: int = 1
+        eps_dynamic_seed: typing.Union[int, list] = 20  # int or list (int -> [int for window in eps_windows]; 0 or empty list turns off)
+        samples_per_window: int = -1
+
+        # Required only if restart = True
+        restart_terminated_threads: bool = False
+
+        # Not expected to be set by user
+        DEBUG: bool = False
+        settings.resample_override: bool = False
 
     # Import config file line-by-line using exec()
     try:
@@ -46,16 +128,10 @@ def configure(input_file):
                              + input_file + ': ' + str(e))
 
     # Define settings namespace to store all these variables
+    config_dict = {}
+    config_dict.update(locals())
     settings = argparse.Namespace()
-    settings.__dict__.update(locals())
-
-    # Set some default values
-    if not settings.__contains__('DEBUG'):
-        settings.DEBUG = False
-    if not settings.__contains__('path_to_input_files'):
-        settings.path_to_input_files = sys.path[0] + '/data/input_files'
-    if not settings.__contains__('path_to_templates'):
-        settings.path_to_templates = sys.path[0] + '/data/templates'
+    settings.__dict__.update(Settings(**config_dict))
 
     # Format directories properly (no trailing '/')
     if settings.working_directory[-1] == '/':
@@ -76,174 +152,174 @@ def configure(input_file):
     else:
         sys.exit('Error: could not locate templates folder: ' + settings.path_to_templates)
 
-    # Check that each given value is valid
-    if not type(settings.job_type) == str:
-        raise ValueError('job_type must be given as a string')
-    if not type(settings.batch_system) == str:
-        raise ValueError('batch_system must be given as a string')
-    if not type(settings.restart) == bool:
-        raise ValueError('restart must be given as a boolean')
-    if not type(settings.md_engine) == str:
-        raise ValueError('md_engine must be given as a string')
-    if not type(settings.task_manager) == str:
-        raise ValueError('task_manager must be given as a string')
-    if not type(settings.topology) == str:
-        raise ValueError('topology must be given as a string')
-    if not type(settings.working_directory) == str:
-        raise ValueError('working_directory must be given as a string')
-    if not type(settings.overwrite) == bool:
-        raise ValueError('overwrite must be given as a boolean')
-    if not type(settings.path_to_templates) == str:
-        raise ValueError('path_to_templates must be given as a string')
-    if not type(settings.path_to_input_files) == str:
-        raise ValueError('path_to_input_files must be given as a string')
-    if settings.job_type in ['aimless_shooting', 'equilibrium_path_sampling']:
-        if not type(settings.init_nodes) == int:
-            raise ValueError('init_nodes must be given as an integer')
-        if not type(settings.init_ppn) == int:
-            raise ValueError('init_ppn must be given as an integer')
-        if not type(settings.init_mem) in [str, int]:
-            raise ValueError('init_mem must be given as a string or integer')
-        if not type(settings.init_walltime) == str:
-            raise ValueError('init_walltime must be given as a string')
-        if not type(settings.init_solver) == str:
-            raise ValueError('init_solver must be given as a string')
-        if not type(settings.initial_coordinates) == list:
-            raise ValueError('initial_coordinates must be given as a list (even if it is of length 1)')
-        if not type(settings.commit_fwd) == list:
-            raise ValueError('commit_fwd must be given as a list (even if it is of length 1)')
-        for item in settings.commit_fwd:
-            if not type(item) == list:
-                raise ValueError('items in commit_fwd must be given as lists (even if they are of length 1)')
-        for item in settings.commit_fwd[0]:
-            if not type(item) == int:
-                raise ValueError('items in the first list within commit_fwd must be given as integers')
-        for item in settings.commit_fwd[1]:
-            if not type(item) == int:
-                raise ValueError('items in the second list within commit_fwd must be given as integers')
-        for item in settings.commit_fwd[2]:
-            if not type(item) in [int, float]:
-                raise ValueError('items in the third list within commit_fwd must be given as integers or floats')
-        for item in settings.commit_fwd[3]:
-            if not item in ['gt', 'lt']:
-                raise ValueError('items in the fourth list within commit_fwd must be either \'gt\' or \'lt\'')
-        if not type(settings.commit_bwd) == list:
-            raise ValueError('commit_bwd must be given as a list (even if it is of length 1)')
-        for item in settings.commit_bwd:
-            if not type(item) == list:
-                raise ValueError('items in commit_bwd must be given as lists (even if they are of length 1)')
-        for item in settings.commit_bwd[0]:
-            if not type(item) == int:
-                raise ValueError('items in the first list within commit_bwd must be given as integers')
-        for item in settings.commit_bwd[1]:
-            if not type(item) == int:
-                raise ValueError('items in the second list within commit_bwd must be given as integers')
-        for item in settings.commit_bwd[2]:
-            if not type(item) in [int, float]:
-                raise ValueError('items in the third list within commit_bwd must be given as integers or floats')
-        for item in settings.commit_bwd[3]:
-            if not item in ['gt', 'lt']:
-                raise ValueError('items in the fourth list within commit_bwd must be either \'gt\' or \'lt\'')
-    if settings.job_type in ['aimless_shooting', 'equilibrium_path_sampling', 'committor_analysis']:
-        if not type(settings.prod_nodes) == int:
-            raise ValueError('prod_nodes must be given as an integer')
-        if not type(settings.prod_ppn) == int:
-            raise ValueError('prod_ppn must be given as an integer')
-        if not type(settings.prod_mem) in [str, int]:
-            raise ValueError('prod_mem must be given as a string or integer')
-        if not type(settings.prod_walltime) == str:
-            raise ValueError('prod_walltime must be given as a string')
-        if not type(settings.prod_solver) == str:
-            raise ValueError('prod_solver must be given as a string')
-        if not type(settings.cvs) == list:
-            raise ValueError('cvs must be given as a list (even if it is of length 1)')
-        for item in settings.cvs:
-            if not type(item) == str:
-                raise ValueError('items in the cvs list must be given as strings')
-        if not type(settings.include_qdot) == bool:
-            raise ValueError('include_qdot must be given as a boolean')
-    if settings.job_type in ['equilibrium_path_sampling', 'committor_analysis']:
-        if not type(settings.rc_definition) == str:
-            raise ValueError('rc_definition must be given as a string')
-        if not type(settings.as_out_file) == str:
-            raise ValueError('as_out_file must be given as a string')
-        if not type(settings.rc_reduced_cvs) == bool:
-            raise ValueError('rc_reduced_cvs must be given as a boolean')
-    if settings.job_type == 'aimless_shooting':
-        if not type(settings.min_dt) == int:
-            raise ValueError('min_dt must be given as an integer')
-        if not type(settings.max_dt) == int:
-            raise ValueError('max_dt must be given as an integer')
-        if not type(settings.always_new) == bool:
-            raise ValueError('always_new must be given as a boolean')
-        if not type(settings.resample) == bool:
-            raise ValueError('resample must be given as a boolean')
-        if not type(settings.degeneracy) == int:
-            raise ValueError('degeneracy must be given as an integer')
-        if not type(settings.cleanup) == bool:
-            raise ValueError('cleanup must be given as a boolean')
-        if not type(settings.information_error_checking) == bool:
-            raise ValueError('information_error_checking must be given as a boolean')
-        if settings.information_error_checking:
-            if not type(settings.information_error_freq) == int:
-                raise ValueError('information_error_freq must be given as an integer')
-            if not type(settings.information_error_override) == bool:
-                raise ValueError('information_error_override must be given as a boolean')
-            if not settings.information_error_override and len(settings.cvs) < 5:
-                raise RuntimeError('information_error_checking = True requires that the cvs option has at least five entries to'
-                                   ' be able to dynamically identify suitable reaction coordinates for evaluation of the model '
-                                   'information error, and many more than five is strongly recommended for higher confidence in'
-                                   ' the results. To override this behavior (only to be used if you are extremely confident '
-                                   'that your set of CVs is complete), set information_error_override = True')
-    if settings.job_type == 'committor_analysis':
-        if not type(settings.committor_analysis_n) == int:
-            raise ValueError('committor_analysis_n must be given as an integer')
-        if not type(settings.committor_analysis_use_rc_out) == bool:
-            raise ValueError('committor_analysis_use_rc_out must be given as a boolean')
-        if settings.committor_analysis_use_rc_out:
-            if not type(settings.path_to_rc_out) == str:
-                raise ValueError('path_to_rc_out must be given as a string')
-            if not os.path.exists(settings.path_to_rc_out):
-                raise RuntimeError('reaction coordinate output (rc_out) file not found: ' + settings.path_to_rc_out)
-            if not type(settings.rc_threshold) in [int, float]:
-                raise ValueError('rc_threshold must be given as an integer or float')
-    if settings.job_type in ['aimless_shooting', 'equilibrium_path_sampling'] or (settings.job_type == 'committor_analysis' and not settings.committor_analysis_use_rc_out):
-        filenames = []  # check for duplicates in initial_coordinates
-        for item in settings.initial_coordinates:
-            if not type(item) == str:
-                raise ValueError('entries in the initial_coordinates list must be given as strings')
-            if '/' in item:
-                filenames.append(item[item.rindex('/') + 1:])
-            else:
-                filenames.append(item)
-        seen = []
-        for filename in filenames:
-            if filename in seen:
-                raise RuntimeWarning(
-                    'duplicate filename in initial_coordinates: ' + filename + '\nOnly the right-most file'
-                                                                               ' with this name (independent of path) will be used to seed each of the threads whose '
-                                                                               'initial coordinates share this name')
-            seen.append(filename)
-    if settings.job_type == 'equilibrium_path_sampling':
-        if not type(settings.eps_rc_min) in [int, float]:
-            raise ValueError('eps_rc_min must be given as an integer or float')
-        if not type(settings.eps_rc_max) in [int, float]:
-            raise ValueError('eps_rc_max must be given as an integer or float')
-        if not type(settings.eps_rc_step) in [int, float]:
-            raise ValueError('eps_rc_step must be given as an integer or float')
-        if not type(settings.eps_rc_overlap) in [int, float]:
-            raise ValueError('eps_rc_overlap must be given as an integer or float')
-        if not type(settings.eps_n_steps) == int:
-            raise ValueError('eps_n_steps must be given as an integer')
-        if not type(settings.eps_out_freq) == int:
-            raise ValueError('eps_out_freq must be given as an integer')
-        if not type(settings.eps_dynamic_seed) in [int, list]:
-            raise ValueError('eps_dynamic_seed must be given as an integer or list')
-        if not type(settings.samples_per_window) == int:
-            raise ValueError('samples_per_window must be given as an integer')
-    if settings.restart:
-        if not type(settings.restart_terminated_threads) == bool:
-            raise ValueError('restart_terminated_threads must be given as a boolean')
+    # # Check that each given value is valid
+    # if not type(settings.job_type) == str:
+    #     raise ValueError('job_type must be given as a string')
+    # if not type(settings.batch_system) == str:
+    #     raise ValueError('batch_system must be given as a string')
+    # if not type(settings.restart) == bool:
+    #     raise ValueError('restart must be given as a boolean')
+    # if not type(settings.md_engine) == str:
+    #     raise ValueError('md_engine must be given as a string')
+    # if not type(settings.task_manager) == str:
+    #     raise ValueError('task_manager must be given as a string')
+    # if not type(settings.topology) == str:
+    #     raise ValueError('topology must be given as a string')
+    # if not type(settings.working_directory) == str:
+    #     raise ValueError('working_directory must be given as a string')
+    # if not type(settings.overwrite) == bool:
+    #     raise ValueError('overwrite must be given as a boolean')
+    # if not type(settings.path_to_templates) == str:
+    #     raise ValueError('path_to_templates must be given as a string')
+    # if not type(settings.path_to_input_files) == str:
+    #     raise ValueError('path_to_input_files must be given as a string')
+    # if settings.job_type in ['aimless_shooting', 'equilibrium_path_sampling']:
+    #     if not type(settings.init_nodes) == int:
+    #         raise ValueError('init_nodes must be given as an integer')
+    #     if not type(settings.init_ppn) == int:
+    #         raise ValueError('init_ppn must be given as an integer')
+    #     if not type(settings.init_mem) in [str, int]:
+    #         raise ValueError('init_mem must be given as a string or integer')
+    #     if not type(settings.init_walltime) == str:
+    #         raise ValueError('init_walltime must be given as a string')
+    #     if not type(settings.init_solver) == str:
+    #         raise ValueError('init_solver must be given as a string')
+    #     if not type(settings.initial_coordinates) == list:
+    #         raise ValueError('initial_coordinates must be given as a list (even if it is of length 1)')
+    #     if not type(settings.commit_fwd) == tuple:
+    #         raise ValueError('commit_fwd must be given as a tuple')
+    #     for item in settings.commit_fwd:
+    #         if not type(item) == list:
+    #             raise ValueError('items in commit_fwd must be given as lists (even if they are of length 1)')
+    #     for item in settings.commit_fwd[0]:
+    #         if not type(item) == int:
+    #             raise ValueError('items in the first list within commit_fwd must be given as integers')
+    #     for item in settings.commit_fwd[1]:
+    #         if not type(item) == int:
+    #             raise ValueError('items in the second list within commit_fwd must be given as integers')
+    #     for item in settings.commit_fwd[2]:
+    #         if not type(item) in [int, float]:
+    #             raise ValueError('items in the third list within commit_fwd must be given as integers or floats')
+    #     for item in settings.commit_fwd[3]:
+    #         if not item in ['gt', 'lt']:
+    #             raise ValueError('items in the fourth list within commit_fwd must be either \'gt\' or \'lt\'')
+    #     if not type(settings.commit_bwd) == tuple:
+    #         raise ValueError('commit_bwd must be given as a tuple')
+    #     for item in settings.commit_bwd:
+    #         if not type(item) == list:
+    #             raise ValueError('items in commit_bwd must be given as lists (even if they are of length 1)')
+    #     for item in settings.commit_bwd[0]:
+    #         if not type(item) == int:
+    #             raise ValueError('items in the first list within commit_bwd must be given as integers')
+    #     for item in settings.commit_bwd[1]:
+    #         if not type(item) == int:
+    #             raise ValueError('items in the second list within commit_bwd must be given as integers')
+    #     for item in settings.commit_bwd[2]:
+    #         if not type(item) in [int, float]:
+    #             raise ValueError('items in the third list within commit_bwd must be given as integers or floats')
+    #     for item in settings.commit_bwd[3]:
+    #         if not item in ['gt', 'lt']:
+    #             raise ValueError('items in the fourth list within commit_bwd must be either \'gt\' or \'lt\'')
+    # if settings.job_type in ['aimless_shooting', 'equilibrium_path_sampling', 'committor_analysis']:
+    #     if not type(settings.prod_nodes) == int:
+    #         raise ValueError('prod_nodes must be given as an integer')
+    #     if not type(settings.prod_ppn) == int:
+    #         raise ValueError('prod_ppn must be given as an integer')
+    #     if not type(settings.prod_mem) in [str, int]:
+    #         raise ValueError('prod_mem must be given as a string or integer')
+    #     if not type(settings.prod_walltime) == str:
+    #         raise ValueError('prod_walltime must be given as a string')
+    #     if not type(settings.prod_solver) == str:
+    #         raise ValueError('prod_solver must be given as a string')
+    #     if not type(settings.cvs) == list:
+    #         raise ValueError('cvs must be given as a list (even if it is of length 1)')
+    #     for item in settings.cvs:
+    #         if not type(item) == str:
+    #             raise ValueError('items in the cvs list must be given as strings')
+    #     if not type(settings.include_qdot) == bool:
+    #         raise ValueError('include_qdot must be given as a boolean')
+    # if settings.job_type in ['equilibrium_path_sampling', 'committor_analysis']:
+    #     if not type(settings.rc_definition) == str:
+    #         raise ValueError('rc_definition must be given as a string')
+    #     if not type(settings.as_out_file) == str:
+    #         raise ValueError('as_out_file must be given as a string')
+    #     if not type(settings.rc_reduced_cvs) == bool:
+    #         raise ValueError('rc_reduced_cvs must be given as a boolean')
+    # if settings.job_type == 'aimless_shooting':
+    #     if not type(settings.min_dt) == int:
+    #         raise ValueError('min_dt must be given as an integer')
+    #     if not type(settings.max_dt) == int:
+    #         raise ValueError('max_dt must be given as an integer')
+    #     if not type(settings.always_new) == bool:
+    #         raise ValueError('always_new must be given as a boolean')
+    #     if not type(settings.resample) == bool:
+    #         raise ValueError('resample must be given as a boolean')
+    #     if not type(settings.degeneracy) == int:
+    #         raise ValueError('degeneracy must be given as an integer')
+    #     if not type(settings.cleanup) == bool:
+    #         raise ValueError('cleanup must be given as a boolean')
+    #     if not type(settings.information_error_checking) == bool:
+    #         raise ValueError('information_error_checking must be given as a boolean')
+    #     if settings.information_error_checking:
+    #         if not type(settings.information_error_freq) == int:
+    #             raise ValueError('information_error_freq must be given as an integer')
+    #         if not type(settings.information_error_override) == bool:
+    #             raise ValueError('information_error_override must be given as a boolean')
+    #         if not settings.information_error_override and len(settings.cvs) < 5:
+    #             raise RuntimeError('information_error_checking = True requires that the cvs option has at least five entries to'
+    #                                ' be able to dynamically identify suitable reaction coordinates for evaluation of the model '
+    #                                'information error, and many more than five is strongly recommended for higher confidence in'
+    #                                ' the results. To override this behavior (only to be used if you are extremely confident '
+    #                                'that your set of CVs is complete), set information_error_override = True')
+    # if settings.job_type == 'committor_analysis':
+    #     if not type(settings.committor_analysis_n) == int:
+    #         raise ValueError('committor_analysis_n must be given as an integer')
+    #     if not type(settings.committor_analysis_use_rc_out) == bool:
+    #         raise ValueError('committor_analysis_use_rc_out must be given as a boolean')
+    #     if settings.committor_analysis_use_rc_out:
+    #         if not type(settings.path_to_rc_out) == str:
+    #             raise ValueError('path_to_rc_out must be given as a string')
+    #         if not os.path.exists(settings.path_to_rc_out):
+    #             raise RuntimeError('reaction coordinate output (rc_out) file not found: ' + settings.path_to_rc_out)
+    #         if not type(settings.rc_threshold) in [int, float]:
+    #             raise ValueError('rc_threshold must be given as an integer or float')
+    # if settings.job_type in ['aimless_shooting', 'equilibrium_path_sampling'] or (settings.job_type == 'committor_analysis' and not settings.committor_analysis_use_rc_out):
+    #     filenames = []  # check for duplicates in initial_coordinates
+    #     for item in settings.initial_coordinates:
+    #         if not type(item) == str:
+    #             raise ValueError('entries in the initial_coordinates list must be given as strings')
+    #         if '/' in item:
+    #             filenames.append(item[item.rindex('/') + 1:])
+    #         else:
+    #             filenames.append(item)
+    #     seen = []
+    #     for filename in filenames:
+    #         if filename in seen:
+    #             raise RuntimeWarning(
+    #                 'duplicate filename in initial_coordinates: ' + filename + '\nOnly the right-most file'
+    #                                                                            ' with this name (independent of path) will be used to seed each of the threads whose '
+    #                                                                            'initial coordinates share this name')
+    #         seen.append(filename)
+    # if settings.job_type == 'equilibrium_path_sampling':
+    #     if not type(settings.eps_rc_min) in [int, float]:
+    #         raise ValueError('eps_rc_min must be given as an integer or float')
+    #     if not type(settings.eps_rc_max) in [int, float]:
+    #         raise ValueError('eps_rc_max must be given as an integer or float')
+    #     if not type(settings.eps_rc_step) in [int, float]:
+    #         raise ValueError('eps_rc_step must be given as an integer or float')
+    #     if not type(settings.eps_rc_overlap) in [int, float]:
+    #         raise ValueError('eps_rc_overlap must be given as an integer or float')
+    #     if not type(settings.eps_n_steps) == int:
+    #         raise ValueError('eps_n_steps must be given as an integer')
+    #     if not type(settings.eps_out_freq) == int:
+    #         raise ValueError('eps_out_freq must be given as an integer')
+    #     if not type(settings.eps_dynamic_seed) in [int, list]:
+    #         raise ValueError('eps_dynamic_seed must be given as an integer or list')
+    #     if not type(settings.samples_per_window) == int:
+    #         raise ValueError('samples_per_window must be given as an integer')
+    # if settings.restart:
+    #     if not type(settings.restart_terminated_threads) == bool:
+    #         raise ValueError('restart_terminated_threads must be given as a boolean')
 
     # Initialize EPS settings based on contents of config file
     if settings.job_type == 'equilibrium_path_sampling':

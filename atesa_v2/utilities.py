@@ -290,6 +290,7 @@ def resample(settings, write_raw=True):
         open(settings.working_directory + '/as_raw.out', 'w').close()
         if settings.information_error_checking:
             open(settings.working_directory + '/as_raw_timestamped.out', 'w').close()
+            open(settings.working_directory + '/info_err.out', 'w').close()
     open(settings.working_directory + '/as_decorr.out', 'w').close()
 
     # Load in allthreads from restart.pkl
