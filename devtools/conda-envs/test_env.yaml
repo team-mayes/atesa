@@ -8,6 +8,7 @@ dependencies:
   - numpy
   - statsmodels
   - mdtraj
+  - pydantic
 
     # Testing
   - pytest
