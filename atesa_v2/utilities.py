@@ -312,22 +312,25 @@ def resample(settings, write_raw=True):
                     this_basin = 'A'
 
                 # Get CVs for this shooting point
-                this_cvs = get_cvs(thread.history.init_coords[step_index][0], settings)
+                try:
+                    this_cvs = get_cvs(thread.history.init_coords[step_index][0], settings)
 
-                # Write CVs to as_raw.out
-                if write_raw:
-                    open(settings.working_directory + '/as_raw.out', 'a').write(this_basin + ' <- ')
-                    open(settings.working_directory + '/as_raw.out', 'a').write(this_cvs + '\n')
-                    open(settings.working_directory + '/as_raw.out', 'a').close()
-                    if settings.information_error_checking:
-                        open(settings.working_directory + '/as_raw_timestamped.out', 'a').write(str(thread.history.timestamps[step_index]) + ' ')
-                        open(settings.working_directory + '/as_raw_timestamped.out', 'a').write(this_basin + ' <- ')
-                        open(settings.working_directory + '/as_raw_timestamped.out', 'a').write(this_cvs + '\n')
-                        open(settings.working_directory + '/as_raw_timestamped.out', 'a').close()
+                    # Write CVs to as_raw.out
+                    if write_raw:
+                        open(settings.working_directory + '/as_raw.out', 'a').write(this_basin + ' <- ')
+                        open(settings.working_directory + '/as_raw.out', 'a').write(this_cvs + '\n')
+                        open(settings.working_directory + '/as_raw.out', 'a').close()
+                        if settings.information_error_checking:
+                            open(settings.working_directory + '/as_raw_timestamped.out', 'a').write(str(thread.history.timestamps[step_index]) + ' ')
+                            open(settings.working_directory + '/as_raw_timestamped.out', 'a').write(this_basin + ' <- ')
+                            open(settings.working_directory + '/as_raw_timestamped.out', 'a').write(this_cvs + '\n')
+                            open(settings.working_directory + '/as_raw_timestamped.out', 'a').close()
 
-                # Append this_cvs to running list for evaluating decorrelation time
-                thread.this_cvs_list.append([[float(item) for item in this_cvs.split(' ')], thread.history.timestamps[step_index]])
-                thread.cvs_for_later.append([float(item) for item in this_cvs.split(' ')])
+                    # Append this_cvs to running list for evaluating decorrelation time
+                    thread.this_cvs_list.append([[float(item) for item in this_cvs.split(' ')], thread.history.timestamps[step_index]])
+                    thread.cvs_for_later.append([float(item) for item in this_cvs.split(' ')])
+                except IndexError:  # getting cv's failed (maybe corrupt coordinate file) so consider this step failed
+                    thread.cvs_for_later.append([])
             else:
                 thread.cvs_for_later.append([])
 
