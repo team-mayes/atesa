@@ -2,12 +2,8 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="55679143-7654-431c-aee1-71d5375f0f66" name="Default" comment="">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/atesa_v2/batchsystem.py" afterPath="$PROJECT_DIR$/atesa_v2/batchsystem.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/atesa_v2/configure.py" afterPath="$PROJECT_DIR$/atesa_v2/configure.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/atesa_v2/data/atesa.config" afterPath="$PROJECT_DIR$/atesa_v2/data/atesa.config" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/atesa_v2/utilities.py" afterPath="$PROJECT_DIR$/atesa_v2/utilities.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/atesa_v2/main.py" afterPath="$PROJECT_DIR$/atesa_v2/main.py" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -86,10 +82,22 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
+      <file leaf-file-name="main.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/atesa_v2/main.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="147">
+              <caret line="146" column="7" lean-forward="false" selection-start-line="146" selection-start-column="7" selection-end-line="146" selection-end-column="7" />
+              <folding>
+                <element signature="e#319#329#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
       <file leaf-file-name="jobtype.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/atesa_v2/jobtype.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="49">
+            <state relative-caret-position="-7758">
               <caret line="437" column="51" lean-forward="true" selection-start-line="437" selection-start-column="51" selection-end-line="437" selection-end-column="51" />
               <folding>
                 <element signature="e#164#174#0" expanded="true" />
@@ -133,8 +141,8 @@
       <file leaf-file-name="configure.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/atesa_v2/configure.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="1650">
-              <caret line="110" column="40" lean-forward="false" selection-start-line="110" selection-start-column="40" selection-end-line="110" selection-end-column="40" />
+            <state relative-caret-position="202">
+              <caret line="110" column="8" lean-forward="false" selection-start-line="110" selection-start-column="8" selection-end-line="110" selection-end-column="8" />
               <folding>
                 <element signature="e#82#97#0" expanded="true" />
               </folding>
@@ -297,7 +305,6 @@
         <option value="$PROJECT_DIR$/atesa_v2/temp_add_timestamps.py" />
         <option value="$PROJECT_DIR$/devtools/conda-envs/test_env.yaml" />
         <option value="$PROJECT_DIR$/atesa_v2/tests/test_utilities.py" />
-        <option value="$PROJECT_DIR$/atesa_v2/main.py" />
         <option value="$PROJECT_DIR$/atesa_v2/interpret.py" />
         <option value="$PROJECT_DIR$/atesa_v2/tests/test_main.py" />
         <option value="$PROJECT_DIR$/atesa_v2/lmax.py" />
@@ -308,6 +315,7 @@
         <option value="$PROJECT_DIR$/atesa_v2/data/atesa.config" />
         <option value="$PROJECT_DIR$/atesa_v2/batchsystem.py" />
         <option value="$PROJECT_DIR$/atesa_v2/information_error.py" />
+        <option value="$PROJECT_DIR$/atesa_v2/main.py" />
         <option value="$PROJECT_DIR$/atesa_v2/configure.py" />
       </list>
     </option>
@@ -959,16 +967,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/atesa_v2/main.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="531">
-          <caret line="213" column="77" lean-forward="false" selection-start-line="213" selection-start-column="43" selection-end-line="213" selection-end-column="77" />
-          <folding>
-            <element signature="e#319#329#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/atesa_v2/tests/test_main.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="468">
@@ -1083,16 +1081,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/atesa_v2/jobtype.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="49">
-          <caret line="437" column="51" lean-forward="true" selection-start-line="437" selection-start-column="51" selection-end-line="437" selection-end-column="51" />
-          <folding>
-            <element signature="e#164#174#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/atesa_v2/information_error.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="178">
@@ -1111,10 +1099,30 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/atesa_v2/jobtype.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-7758">
+          <caret line="437" column="51" lean-forward="true" selection-start-line="437" selection-start-column="51" selection-end-line="437" selection-end-column="51" />
+          <folding>
+            <element signature="e#164#174#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/atesa_v2/main.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="147">
+          <caret line="146" column="7" lean-forward="false" selection-start-line="146" selection-start-column="7" selection-end-line="146" selection-end-column="7" />
+          <folding>
+            <element signature="e#319#329#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/atesa_v2/configure.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1650">
-          <caret line="110" column="40" lean-forward="false" selection-start-line="110" selection-start-column="40" selection-end-line="110" selection-end-column="40" />
+        <state relative-caret-position="202">
+          <caret line="110" column="8" lean-forward="false" selection-start-line="110" selection-start-column="8" selection-end-line="110" selection-end-column="8" />
           <folding>
             <element signature="e#82#97#0" expanded="true" />
           </folding>

@@ -108,7 +108,7 @@ def configure(input_file):
 
         # Not expected to be set by user
         DEBUG: bool = False
-        settings.resample_override: bool = False
+        resample_override: bool = False
 
     # Import config file line-by-line using exec()
     try:
