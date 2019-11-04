@@ -406,12 +406,13 @@ def resample(settings, write_raw=True):
                                 this_basin = 'A'
 
                             # Get CVs for this shooting point
-                            this_cvs = thread.cvs_for_later[step_index]    # retrieve CVs from last evaluation
+                            if thread.cvs_for_later[step_index]:
+                                this_cvs = thread.cvs_for_later[step_index]    # retrieve CVs from last evaluation
 
-                            # Write CVs to as_raw.out
-                            open(settings.working_directory + '/as_decorr.out', 'a').write(this_basin + ' <- ')
-                            open(settings.working_directory + '/as_decorr.out', 'a').write(' '.join([str(item) for item in this_cvs]) + '\n')
-                            open(settings.working_directory + '/as_decorr.out', 'a').close()
+                                # Write CVs to as_raw.out
+                                open(settings.working_directory + '/as_decorr.out', 'a').write(this_basin + ' <- ')
+                                open(settings.working_directory + '/as_decorr.out', 'a').write(' '.join([str(item) for item in this_cvs]) + '\n')
+                                open(settings.working_directory + '/as_decorr.out', 'a').close()
 
         if write_raw and settings.information_error_checking:
             # Add resample_override to settings object to avoid information_error.py calling this function
