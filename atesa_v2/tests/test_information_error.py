@@ -42,7 +42,7 @@ class Tests(object):
         settings.__dict__.pop('env')    # env attribute is not picklable
         pickle.dump(settings, open('settings.pkl', 'wb'), protocol=2)   # main will look for this file to load in settings
 
-        shutil.copy('../test_data/as_big.out', 'as_decorr.out')
+        shutil.copy('../test_data/as_big.out', 'as_decorr_6054.out')
 
         information_error.main('as_6054.out')
         assert os.path.exists('info_err.out')
