@@ -357,6 +357,8 @@ def resample(settings, suffix='', write_raw=True):
     for length in lengths:
         if write_raw and settings.information_error_checking:
             cutoff_timestamp = int(pattern.findall(open(settings.working_directory + '/as_raw_timestamped' + suffix + '.out', 'r').readlines()[length])[0])
+            suffix = length     # only use-case with multiple lengths, so this keeps them from stepping on one another's toes
+            open(settings.working_directory + '/as_decorr' + suffix + '.out', 'w').close()
         else:
             cutoff_timestamp = math.inf
         for thread in allthreads:
