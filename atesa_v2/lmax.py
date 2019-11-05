@@ -348,6 +348,10 @@ def main(**kwargs):
                 if two_line_result >= 0:
                     termination = True
                     current_best = results[two_line_result]
+        elif len(cv_combs[0]) == settings.information_error_max_dims and not termination_2:
+            termination = True
+            if automagic:
+                current_best = results[-1]
         if termination_2:
             termination = True
         if qdot == 'present' and termination and not termination_2:

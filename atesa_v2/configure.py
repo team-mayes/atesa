@@ -86,6 +86,7 @@ def configure(input_file):
         information_error_checking: bool = True
         information_error_freq: int = 250
         information_error_override: bool = False
+        information_error_max_dims: int = 6
 
         # Required only for committor analysis
         committor_analysis_n: int = 10
