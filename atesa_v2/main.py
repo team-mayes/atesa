@@ -114,7 +114,7 @@ def init_threads(settings):
             if os.path.exists(settings.working_directory + '/info_err.out'):
                 len_data = len(open(settings.working_directory + '/as_raw.out', 'r').readlines())
                 last_info_err = open(settings.working_directory + '/info_err.out', 'r').readlines()[-1].split(' ')[0]
-                last_breakpoint = len_data - (len_data % settings.information_err_freq)
+                last_breakpoint = len_data - (len_data % settings.information_error_freq)
                 if last_breakpoint > 0 and not last_info_err == last_breakpoint:
                     utilities.resample(settings, write_raw=True, partial=True)
         return allthreads
