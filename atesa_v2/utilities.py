@@ -257,7 +257,7 @@ def evaluate_rc(rc_definition, cv_list):
     return eval(rc_definition)
 
 
-def resample(settings, suffix='', write_raw=True):
+def resample(settings, suffix='', write_raw=True, partial=False):
     """
     Resample each shooting point in each thread with different CV definitions to produce new as.out files with extant
     aimless shooting data.
@@ -275,6 +275,11 @@ def resample(settings, suffix='', write_raw=True):
         If True, writes a new copy of as_raw.out; if false, only writes as_decorr.out (if applicable). Also if True and
         settings.information_error_checking = True, writes new partial as_raw.out files and invokes information_error.py
         to build a new info_err.out file.
+    partial : bool
+        If True and write_raw = True, reads the info_err.out file and only invokes information_error.py to build new
+        lines for the info_err.out file where they are missing. This setting is for use when restarting an aimless
+        shooting run with information_error_checking = True where some information error evaluations may have been
+        interrupted.
 
     Returns
     -------
@@ -347,7 +352,10 @@ def resample(settings, suffix='', write_raw=True):
 
     # Construct list of data lengths to perform decorrelation for
     if write_raw and settings.information_error_checking:
-        lengths = [leng for leng in range(settings.information_error_freq, len(open(settings.working_directory + '/as_raw_timestamped.out', 'r').readlines()) + 1, settings.information_error_freq)]
+        if not partial:
+            lengths = [leng for leng in range(settings.information_error_freq, len(open(settings.working_directory + '/as_raw_timestamped.out', 'r').readlines()) + 1, settings.information_error_freq)]
+        else:   # if partial
+            lengths = [leng for leng in range(settings.information_error_freq, len(open(settings.working_directory + '/as_raw_timestamped.out', 'r').readlines()) + 1, settings.information_error_freq) if not leng in [int(line.split(' ')[0]) for line in open(settings.working_directory + '/info_err.out', 'r').readlines()]]
         pattern = re.compile('[0-9]+')  # pattern for reading out timestamp from string
     else:
         lengths = [len(open(settings.working_directory + '/as_raw.out', 'r').readlines())]
@@ -364,6 +372,7 @@ def resample(settings, suffix='', write_raw=True):
         for thread in allthreads:
             if thread.this_cvs_list:       # if there were any 'fwd' or 'bwd' results in this thread
                 mapped = list(map(list, zip(*[item[0] for item in thread.this_cvs_list if item[1] <= cutoff_timestamp])))   # list of lists of values of each CV
+                open(thread.name + '_' + str(length) + '_cvs_tempfile.out', 'w').write(str([str(line) + '\n' for line in mapped]))    # todo: remove this line
 
                 slowest_lag = -1    # initialize running tally of slowest autocorrelation time among CVs in this thread
                 if settings.include_qdot:

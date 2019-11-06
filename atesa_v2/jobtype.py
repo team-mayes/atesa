@@ -14,6 +14,7 @@ import numpy
 import shutil
 import time
 import pytraj
+import warnings
 from atesa_v2 import utilities
 from atesa_v2 import main
 from statsmodels.tsa.stattools import kpss
@@ -443,25 +444,31 @@ class AimlessShooting(JobType):
 
                 # Perform KPSS test on series of data in info_err.out, and evaluate termination criterion
                 if os.path.exists('info_err.out'):
-                    info_err_lines = open('info_err.out', 'r').readlines()
-                    info_errs = [float(line.split(' ')[1]) for line in info_err_lines]  # cast to float removes '\n'
-                    kpssresults = []
-                    for cut in range(len(info_errs) - 1):
-                        try:
-                            kpssresult = (kpss(info_errs[0:cut + 1], lags='auto')[1] - 0.01) / (0.1 - 0.01)
-                        except (ValueError, OverflowError):
-                            kpssresult = 1      # 100% certainty of non-convergence!
-                        kpssresults.append(kpssresult)
-                    open('info_err.out', 'w').write(info_err_lines[0])  # write new info_err.out with kpss values
-                    for line_index in range(1, len(info_err_lines)):
-                        line_data = [float(item) for item in info_err_lines[line_index].split(' ')]
-                        new_line = '%.0f' % line_data[0] + ' ' + '%.3f' % line_data[1] + ' ' + '%.3f' % kpssresults[line_index - 1] + '\n'
-                        open('info_err.out', 'a').write(new_line)
-                    open('info_err.out', 'a').close()
+                    if not len(open('info_err.out', 'r').readlines()[-1].split(' ')) == 3:  # if no kpss p-value for last line
+                        # Suppress warnings that occur frequently during normal operation of kpss
+                        warnings.filterwarnings('ignore', message='p-value is greater than the indicated p-value')
+                        warnings.filterwarnings('ignore', message='invalid value encountered in double_scalars')
+                        warnings.filterwarnings('ignore', message='divide by zero encountered in double_scalars')
 
-                    if len(kpssresults) > 0:
-                        if kpssresults[-1] <= 0.05:
-                            global_terminate = True     # todo: test information error termination criterion
+                        info_err_lines = open('info_err.out', 'r').readlines()
+                        info_errs = [float(line.split(' ')[1]) for line in info_err_lines]  # cast to float removes '\n'
+                        kpssresults = []
+                        for cut in range(len(info_errs) - 1):
+                            try:
+                                kpssresult = (kpss(info_errs[0:cut + 1], lags='auto')[1] - 0.01) / (0.1 - 0.01)
+                            except (ValueError, OverflowError):
+                                kpssresult = 1      # 100% certainty of non-convergence!
+                            kpssresults.append(kpssresult)
+                        open('info_err.out', 'w').write(info_err_lines[0])  # write new info_err.out with kpss values
+                        for line_index in range(1, len(info_err_lines)):
+                            line_data = [float(item) for item in info_err_lines[line_index].split(' ')]
+                            new_line = '%.0f' % line_data[0] + ' ' + '%.3f' % line_data[1] + ' ' + '%.3f' % kpssresults[line_index - 1] + '\n'
+                            open('info_err.out', 'a').write(new_line)
+                        open('info_err.out', 'a').close()
+
+                        if len(kpssresults) > 0:
+                            if kpssresults[-1] <= 0.05:
+                                global_terminate = True     # todo: test information error termination criterion
 
             if thread_terminate:
                 self.status = 'terminated after step ' + str(self.suffix) + ' due to: ' + thread_terminate
