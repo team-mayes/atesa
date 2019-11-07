@@ -175,7 +175,11 @@ def main(settings):
 
     # Build threads and move necessary files to working directory
     allthreads = init_threads(settings)
-    shutil.copy(settings.topology, settings.working_directory)
+    topology_file_name = settings.topology
+    if '/' in topology_file_name:
+        topology_file_name = topology_file_name[topology_file_name.rindex('/') + 1:]    # just the filename, no path
+    if not os.path.exists(settings.working_directory + '/' + topology_file_name):
+        shutil.copy(settings.topology, settings.working_directory)
 
     # Move runtime to working directory
     os.chdir(settings.working_directory)
