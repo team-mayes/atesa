@@ -2,29 +2,9 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="55679143-7654-431c-aee1-71d5375f0f66" name="Default" comment="">
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/temp/ts_guess.rst7_10_193_init_fwd.rst_0_200_3750_cvs_tempfile.out" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/temp/ts_guess.rst7_10_193_init_fwd.rst_1_188_3750_cvs_tempfile.out" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/temp/ts_guess.rst7_10_193_init_fwd.rst_2_198_3750_cvs_tempfile.out" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/temp/ts_guess.rst7_10_193_init_fwd.rst_3_196_3750_cvs_tempfile.out" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/temp/ts_guess.rst7_10_193_init_fwd.rst_4_197_3750_cvs_tempfile.out" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/temp/ts_guess.rst7_10_193_init_fwd.rst_5_188_3750_cvs_tempfile.out" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/temp/ts_guess.rst7_10_193_init_fwd.rst_6_194_3750_cvs_tempfile.out" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/temp/ts_guess.rst7_10_193_init_fwd.rst_7_188_3750_cvs_tempfile.out" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/temp/ts_guess.rst7_10_193_init_fwd.rst_8_202_3750_cvs_tempfile.out" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/temp/ts_guess.rst7_10_193_init_fwd.rst_9_183_3750_cvs_tempfile.out" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/temp/ts_guess.rst7_7_60_init_fwd.rst_0_190_3750_cvs_tempfile.out" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/temp/ts_guess.rst7_7_60_init_fwd.rst_1_198_3750_cvs_tempfile.out" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/temp/ts_guess.rst7_7_60_init_fwd.rst_2_201_3750_cvs_tempfile.out" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/temp/ts_guess.rst7_7_60_init_fwd.rst_3_190_3750_cvs_tempfile.out" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/temp/ts_guess.rst7_7_60_init_fwd.rst_4_195_3750_cvs_tempfile.out" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/temp/ts_guess.rst7_7_60_init_fwd.rst_5_186_3750_cvs_tempfile.out" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/temp/ts_guess.rst7_7_60_init_fwd.rst_6_193_3750_cvs_tempfile.out" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/temp/ts_guess.rst7_7_60_init_fwd.rst_7_213_3750_cvs_tempfile.out" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/temp/ts_guess.rst7_7_60_init_fwd.rst_8_197_3750_cvs_tempfile.out" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/temp/ts_guess.rst7_7_60_init_fwd.rst_9_195_3750_cvs_tempfile.out" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/atesa_v2/main.py" afterPath="$PROJECT_DIR$/atesa_v2/main.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/atesa_v2/utilities.py" afterPath="$PROJECT_DIR$/atesa_v2/utilities.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/docs/index.rst" afterPath="$PROJECT_DIR$/docs/index.rst" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -176,8 +156,8 @@
       <file leaf-file-name="utilities.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/atesa_v2/utilities.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="247">
-              <caret line="375" column="0" lean-forward="true" selection-start-line="375" selection-start-column="0" selection-end-line="375" selection-end-column="0" />
+            <state relative-caret-position="112">
+              <caret line="423" column="149" lean-forward="false" selection-start-line="423" selection-start-column="149" selection-end-line="423" selection-end-column="149" />
               <folding>
                 <element signature="e#147#160#0" expanded="true" />
               </folding>
@@ -344,10 +324,10 @@
     <sorting>DEFINITION_ORDER</sorting>
   </component>
   <component name="ProjectFrameBounds" extendedState="6">
-    <option name="x" value="1279" />
+    <option name="x" value="38" />
     <option name="y" value="23" />
-    <option name="width" value="1920" />
-    <option name="height" value="1177" />
+    <option name="width" value="1242" />
+    <option name="height" value="777" />
   </component>
   <component name="ProjectInspectionProfilesVisibleTreeState">
     <entry key="Project Default">
@@ -657,16 +637,17 @@
     </todo-panel>
   </component>
   <component name="ToolWindowManager">
-    <frame x="1279" y="23" width="1920" height="1177" extended-state="6" />
+    <frame x="36" y="23" width="1244" height="777" extended-state="6" />
+    <editor active="true" />
     <layout>
-      <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.2628263" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
+      <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.20815752" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32943293" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
-      <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.38433844" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.23347399" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25112513" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
-      <window_info id="Coverage" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.095846646" sideWeight="0.5" order="3" side_tool="true" content_ui="tabs" />
+      <window_info id="Coverage" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.14975041" sideWeight="0.5" order="3" side_tool="true" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
-      <window_info id="Project" active="true" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.10915868" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.17054908" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="Database" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32960597" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32911393" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.13727121" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
@@ -1129,8 +1110,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/atesa_v2/utilities.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="247">
-          <caret line="375" column="0" lean-forward="true" selection-start-line="375" selection-start-column="0" selection-end-line="375" selection-end-column="0" />
+        <state relative-caret-position="112">
+          <caret line="423" column="149" lean-forward="false" selection-start-line="423" selection-start-column="149" selection-end-line="423" selection-end-column="149" />
           <folding>
             <element signature="e#147#160#0" expanded="true" />
           </folding>

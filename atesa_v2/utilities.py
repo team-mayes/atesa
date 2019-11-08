@@ -18,7 +18,7 @@ from statsmodels.tsa import stattools
 
 def check_commit(filename, settings):
     """
-    Check commitment of coordinate file to basins defined by settings.commit_fwd and settings.commit_bwd
+    Check commitment of coordinate file to basins defined by settings.commit_fwd and settings.commit_bwd.
 
     Parameters
     ----------
@@ -85,6 +85,7 @@ def get_cvs(filename, settings, reduce=False):
 
     If reduce = True, the returned CVs will be reduced to between 0 and 1 based on the minimum and maximum values of
     that CV in as.out, which is assumed to exist at settings.as_out_file.
+
     Parameters
     ----------
     filename : str
@@ -366,7 +367,7 @@ def resample(settings, suffix='', write_raw=True, partial=False):
         if write_raw and settings.information_error_checking:
             suffix = '_' + str(length)     # only use-case with multiple lengths, so this keeps them from stepping on one another's toes
             open(settings.working_directory + '/as_decorr' + suffix + '.out', 'w').close()
-            cutoff_timestamp = int(pattern.findall(open(settings.working_directory + '/as_raw_timestamped.out', 'r').readlines()[length])[0])
+            cutoff_timestamp = int(pattern.findall(open(settings.working_directory + '/as_raw_timestamped.out', 'r').readlines()[length - 1])[0])
         else:
             cutoff_timestamp = math.inf
         for thread in allthreads:
@@ -420,7 +421,7 @@ def resample(settings, suffix='', write_raw=True, partial=False):
                 if slowest_lag > 0:     # only proceed to writing to as_decorr.out if a valid slowest_lag was found
                     # Write to as_decorr.out the same way as to as_raw.out above, but starting the range at slowest_lag
                     for step_index in range(slowest_lag, len(thread.history.prod_results)):
-                        if thread.history.prod_results[step_index][0] in ['fwd', 'bwd']:
+                        if thread.history.prod_results[step_index][0] in ['fwd', 'bwd'] and thread.history.timestamps[step_index] <= cutoff_timestamp:
                             if thread.history.prod_results[step_index][0] == 'fwd':
                                 this_basin = 'B'
                             else:  # 'bwd'
@@ -442,5 +443,6 @@ def resample(settings, suffix='', write_raw=True, partial=False):
             temp_settings.__dict__.pop('env')           # env attribute is not picklable
             pickle.dump(temp_settings, open('settings.pkl', 'wb'), protocol=2)
 
-            command = 'information_error.py as_decorr' + suffix + '.out'
-            process = subprocess.check_call(command.split(' '), stdout=sys.stdout, preexec_fn=os.setsid)
+            if len(open('as_decorr' + suffix + '.out', 'r').readlines()) > 0:
+                command = 'information_error.py as_decorr' + suffix + '.out'
+                process = subprocess.check_call(command.split(' '), stdout=sys.stdout, preexec_fn=os.setsid)
