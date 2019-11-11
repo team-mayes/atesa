@@ -10,6 +10,7 @@ import re
 import pickle
 import subprocess
 import shutil
+import glob
 from atesa_v2.main import Thread
 from atesa_v2 import utilities
 from statsmodels.tsa.stattools import kpss
@@ -89,16 +90,20 @@ def main(as_raw):
     if dims == '':
         raise RuntimeError('Likelihood maximization output file is improperly formatted: ' + as_raw + '_lmax.out')
 
-    datalengths = [line.split(' ')[0] for line in open('info_err.out', 'r').readlines() if not line.split(' ')[0] == length]
+    datalengths = [item for item in glob.glob('as_decorr_*.out') if not 'lmax' in item and not length + '.out' in item]
     if datalengths:
         open('info_err_temp.out', 'w').close()
 
     # Call lmax for each further dataset and write new info_err output file
-    for datalength in datalengths + [length]:
-        command = 'lmax.py -i as_decorr_' + datalength + '.out -q ignore -f ' + dims + ' -k ' + str(int(len(dims.split(' ')))) + ' -o ' + datalength + '_redo_lmax.out'
+    for datalength in datalengths:
+        command = 'lmax.py -i as_decorr_' + datalength + '.out -q ' + q_str + ' -f ' + dims + ' -k ' + str(int(len(dims.split(' ')))) + ' -o ' + datalength + '_redo_lmax.out'
         subprocess.check_call(command.split(' '), stdout=sys.stdout, preexec_fn=os.setsid)
         inf_err = float(pattern.findall(open(datalength + '_redo_lmax.out', 'r').readlines()[-1])[0])
         open('info_err_temp.out', 'a').write(datalength + ' ' + str(inf_err) + '\n')
+
+    # Add information error from previously completed lmax for this length
+    inf_err = float(pattern.findall(open(as_raw + '_lmax.out', 'r').readlines()[-1])[0])
+    open('info_err_temp.out', 'a').write(length + ' ' + str(inf_err) + '\n')
 
     # Copy info_err_temp to info_err.out
     shutil.move('info_err_temp.out', 'info_err.out')
