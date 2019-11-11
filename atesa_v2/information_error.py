@@ -9,6 +9,7 @@ import time
 import re
 import pickle
 import subprocess
+import shutil
 from atesa_v2.main import Thread
 from atesa_v2 import utilities
 from statsmodels.tsa.stattools import kpss
@@ -33,6 +34,10 @@ def main(as_raw):
     None
 
     """
+
+    # Initialize info_err.out if it does not yet exist
+    if not os.path.exists('info_err.out'):
+        open('info_err.out', 'w').close()
 
     # Initialize regular expressions for obtaining strings later
     pattern = re.compile('[0-9.]+')     # pattern to match information error number
@@ -68,14 +73,35 @@ def main(as_raw):
         q_str = 'absent'
     command = 'lmax.py -i as_decorr_' + length + '.out -q ' + q_str + ' --automagic -o ' + as_raw + '_lmax.out'
     subprocess.check_call(command.split(' '), stdout=sys.stdout, preexec_fn=os.setsid)     # check_call waits for completion
+    if not os.path.exists(as_raw + '_lmax.out'):
+        raise FileNotFoundError('Likelihood maximization did not produce output file:' + as_raw + '_lmax.out')
 
-    # Now that the output file exists, obtain the information error from the last line
-    inf_err = float(pattern.findall(open(as_raw + '_lmax.out', 'r').readlines()[-1])[0])
+    # Assemble model dimensions just obtained for calling lmax for other data sets
+    model_str = open(as_raw + '_lmax.out', 'r').readlines()[1]
+    model_str = model_str[model_str.rindex(': ') + 2:]
+    dims = ''
+    while 'CV' in model_str:
+        model_str = model_str[model_str.index('CV') + 2:]    # chop off everything up to and including the next 'CV'
+        if ' ' in model_str:
+            dims += model_str[:model_str.index(' ')] + ' '  # CV index is everything up until the next space
+        else:
+            dims += model_str[:model_str.index('\n')]       # last dimensions has a newline instead of a space
+    if dims == '':
+        raise RuntimeError('Likelihood maximization output file is improperly formatted: ' + as_raw + '_lmax.out')
 
-    # Write to info_err.out (and make it, if it doesn't yet exist)
-    if not os.path.exists('info_err.out'):
-        open('info_err.out', 'w').close()
-    open('info_err.out', 'a').write(length + ' ' + str(inf_err) + '\n')
+    datalengths = [line.split(' ')[0] for line in open('info_err.out', 'r').readlines() if not line.split(' ')[0] == length]
+    if datalengths:
+        open('info_err_temp.out', 'w').close()
+
+    # Call lmax for each further dataset and write new info_err output file
+    for datalength in datalengths + [length]:
+        command = 'lmax.py -i as_decorr_' + datalength + '.out -q ignore -f ' + dims + ' -k ' + str(int(len(dims.split(' ')))) + ' -o ' + datalength + '_redo_lmax.out'
+        subprocess.check_call(command.split(' '), stdout=sys.stdout, preexec_fn=os.setsid)
+        inf_err = float(pattern.findall(open(datalength + '_redo_lmax.out', 'r').readlines()[-1])[0])
+        open('info_err_temp.out', 'a').write(datalength + ' ' + str(inf_err) + '\n')
+
+    # Copy info_err_temp to info_err.out
+    shutil.move('info_err_temp.out', 'info_err.out')
 
 
 if __name__ == "__main__":

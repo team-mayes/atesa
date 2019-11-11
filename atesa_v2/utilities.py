@@ -298,7 +298,8 @@ def resample(settings, suffix='', write_raw=True, partial=False):
         open(settings.working_directory + '/as_raw.out', 'w').close()
         if settings.information_error_checking:
             open(settings.working_directory + '/as_raw_timestamped.out', 'w').close()
-            open(settings.working_directory + '/info_err.out', 'w').close()
+            if not partial:
+                open(settings.working_directory + '/info_err.out', 'w').close()
     open(settings.working_directory + '/as_decorr' + suffix + '.out', 'w').close()
 
     # Load in allthreads from restart.pkl
@@ -436,7 +437,7 @@ def resample(settings, suffix='', write_raw=True, partial=False):
                                 open(settings.working_directory + '/as_decorr' + suffix + '.out', 'a').write(' '.join([str(item) for item in this_cvs]) + '\n')
                                 open(settings.working_directory + '/as_decorr' + suffix + '.out', 'a').close()
 
-        if write_raw and settings.information_error_checking:
+        if write_raw and settings.information_error_checking and length == lengths[-1]:
             # Add resample_override to settings object to avoid information_error.py calling this function
             settings.resample_override = True
             temp_settings = copy.deepcopy(settings)     # initialize temporary copy of settings to modify
