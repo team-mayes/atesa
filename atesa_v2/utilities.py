@@ -150,7 +150,7 @@ def get_cvs(filename, settings, reduce=False):
     if reduce:
         # Prepare cv_minmax list
         asout_lines = [[float(item) for item in line.replace('A <- ', '').replace('B <- ', '').replace(' \n', '').replace('\n', '').split(' ')] for line in open(settings.as_out_file, 'r').readlines()]
-        open('as.out', 'r').close()
+        open(settings.as_out_file, 'r').close()
         mapped = list(map(list, zip(*asout_lines)))
         rc_minmax = [[numpy.min(item) for item in mapped], [numpy.max(item) for item in mapped]]
 
