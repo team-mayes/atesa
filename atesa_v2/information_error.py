@@ -91,7 +91,7 @@ def main(as_raw):
         raise RuntimeError('Likelihood maximization output file is improperly formatted: ' + as_raw + '_lmax.out')
 
 
-    datalengths = [pattern2.findall(item)[-1] for item in glob.glob('as_decorr_*.out') if not 'lmax' in item and not length + '.out' in item]
+    datalengths = [pattern2.findall(item)[-1] for item in glob.glob('as_decorr_*.out') if not 'lmax' in item and not length + '.out' in item]   # todo: sort
     if datalengths:
         open('info_err_temp.out', 'w').close()
 

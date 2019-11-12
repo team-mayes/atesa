@@ -716,6 +716,8 @@ class EquilibriumPathSampling(JobType):
             return input_file_name
 
     def get_initial_coordinates(self, settings):
+        if settings.as_out_file and settings.rc_reduced_cvs:
+            shutil.copy(settings.as_out_file, settings.working_directory + '/')
         for item in settings.initial_coordinates:
             og_item = item
             if '/' in item:
