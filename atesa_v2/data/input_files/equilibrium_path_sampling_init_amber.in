@@ -12,6 +12,7 @@ Short QM run to check for direction of reaction progress
   temp0=300.0,
   ntpr=10,  					! Steps between writes to out
   ntwx=1,						! Steps between writes to mdcrd. 0 = no mdcrd
+  ntwv=-1,						! -1 indicates that velocities should be included in mdcrd
   cut=8.0,
   ntb=2,						! Periodicity. = 2 for ntp > 0
   ntp=1,

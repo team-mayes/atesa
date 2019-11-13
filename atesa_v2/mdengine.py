@@ -68,7 +68,7 @@ class AdaptAmber(MDEngine):
 
         traj = pytraj.iterload(trajectory, settings.topology)
         try:
-            pytraj.write_traj(new_restart_name, traj, format='rst7', frame_indices=[shift_frame], options='multi', overwrite=True)
+            pytraj.write_traj(new_restart_name, traj, format='rst7', frame_indices=[shift_frame], options='multi', overwrite=True, velocity=True)
         except ValueError:  # pytraj raises a ValueError if frame index is out of range
             raise IndexError('frame index ' + str(frame) + ' is out of range for trajectory: ' + trajectory)
         try:
