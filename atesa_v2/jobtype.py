@@ -15,6 +15,7 @@ import shutil
 import time
 import pytraj
 import warnings
+import copy
 from atesa_v2 import utilities
 from atesa_v2 import main
 from statsmodels.tsa.stattools import kpss
