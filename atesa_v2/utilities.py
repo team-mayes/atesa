@@ -122,7 +122,9 @@ def get_cvs(filename, settings, reduce=False):
                     fileinput.close()
                     raise IndexError('get_cvs.increment_coords() encountered an IndexError. This is caused '
                              'by attempting to read qdot values from a coordinate file lacking velocity information, or'
-                             ' else by that file being truncated. The offending file is: ' + filename)
+                             ' else by that file being truncated. Ensure that the relevant simulation input file is set'
+                             ' to write velocities to output trajectories, as this may not be default behavior.\n'
+                             'The offending file is: ' + filename)
 
                 # Sometimes items in coords or vels 'stick together' at a negative sign (e.g., '-1.8091748-112.6420521')
                 # This next loop is just to split them up
