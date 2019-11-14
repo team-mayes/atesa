@@ -13,6 +13,7 @@ import itertools
 import argparse
 import warnings
 import pickle
+import numdifftools
 from scipy import optimize
 from scipy import stats
 from scipy.special import erf
@@ -197,7 +198,7 @@ def two_line_test(results, plots):
         return best_closest[0][0] - 1   # - 1 because of different indexing standards
 
 
-def main(**kwargs):
+def main(i, k, f, q, r, o, automagic, plots, quiet, **kwargs):
     """
     Main runtime function of lmax.py.
 
@@ -216,7 +217,7 @@ def main(**kwargs):
     """
 
     # Ensure existence and validity of input file
-    input_file = kwargs['i'][0]
+    input_file = i[0]
     if not os.path.exists(input_file):
         raise FileNotFoundError('could not find input file: ' + input_file)
     input_file_lines = open(input_file, 'r').readlines()
@@ -226,14 +227,14 @@ def main(**kwargs):
                            'line. Is this the correct file? Be sure to remove any blank lines.')
 
     # Bring in other arguments, just for neatness
-    dims = kwargs['k'][0]
-    fixed = kwargs['f']      # we actually want this one to stay a list
-    qdot = kwargs['q'][0]
-    running = kwargs['r'][0]
-    output_file = kwargs['o'][0]
-    automagic = kwargs['automagic']
-    plots = kwargs['plots']
-    quiet = kwargs['quiet']
+    dims = k[0]
+    fixed = f  # we actually want this one to stay a list
+    qdot = q[0]
+    running = r[0]
+    output_file = o[0]
+    automagic = automagic
+    plots = plots
+    quiet = quiet
 
     # Ignore arguments as described in documentation
     if running:
@@ -282,7 +283,7 @@ def main(**kwargs):
     results = []  # initialize for automagic
     while not termination and len(cv_combs[0]) <= N:
         # Initialize current best result
-        current_best = [argparse.Namespace(), [0]]
+        current_best = [argparse.Namespace(), [0], [], []]
         current_best[0].fun = math.inf
 
         # Assemble list of RCs to optimize
@@ -319,7 +320,7 @@ def main(**kwargs):
             this_result = optimize.minimize(objective_function, numpy.asarray(start_params), (this_A, this_B),
                                             method='BFGS', options={"disp": False, "maxiter": 20000 * (len(comb) + 1)}) # try SR1?
             if this_result.fun < current_best[0].fun:
-                current_best = [this_result, comb]
+                current_best = [this_result, comb, this_A, this_B]
             this_speed = time.time() - t
             speed_data = [(speed_data[1] * speed_data[0] + this_speed) / (speed_data[1] + 1), speed_data[1] + 1]
             count += 1
@@ -380,13 +381,17 @@ def main(**kwargs):
         except NameError:
             raise err
 
+    # Calculate hessian using the model in current_best (current_best[2] and [3] are corresponding this_A and this_B)
+    l_objective_function = lambda x: objective_function(x, current_best[2], current_best[3])
+    hess = numdifftools.Hessian(l_objective_function)(current_best[0].x)
+
     # Return output in desired format
     rc_string = str('%.3f' % current_best[0].x[0]) + ' + ' + ' + '.join(['%.3f' % current_best[0].x[i+1] + '*CV' +
                         str(current_best[1][i]) for i in range(len(current_best[1]))])
     output_string = 'Likelihood maximization complete!\n' \
                     'The optimized reaction coordinate (with CVs indexed from 1) is: ' + rc_string + '\n' \
                     'The negative log likelihood of this model is: ' + '%.3f' % current_best[0].fun + '\n' \
-                    'The mean information error for this model is: ' + '%.3f' % numpy.mean([float(numpy.sqrt(item)) for item in numpy.diag(current_best[0].hess_inv)])
+                    'The mean information error for this model is: ' + '%.3f' % numpy.mean([float(numpy.sqrt(item)) for item in numpy.diag(numpy.linalg.inv(hess))])
 
     if output_file:
         open(output_file, 'w').write(output_string)

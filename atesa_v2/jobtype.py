@@ -720,7 +720,7 @@ class EquilibriumPathSampling(JobType):
         if settings.as_out_file and settings.rc_reduced_cvs:
             shutil.copy(settings.as_out_file, settings.working_directory + '/')
             if '/' in settings.as_out_file:
-                settings.as_out_file = settings.as_out_file[settings.as_out_file.rindex('/') + 1:]
+                settings.as_out_file = settings.working_directory + '/' + settings.as_out_file[settings.as_out_file.rindex('/') + 1:]
                 temp_settings = copy.deepcopy(settings)     # initialize temporary copy of settings to modify
                 temp_settings.__dict__.pop('env')           # env attribute is not picklable
                 pickle.dump(temp_settings, open(settings.working_directory + '/settings.pkl', 'wb'), protocol=2)
