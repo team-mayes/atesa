@@ -398,29 +398,6 @@ def resample(settings, suffix='', write_raw=True, partial=False):
                             slowest_lag = lag + 1
                             break
 
-                    # this_autocorr = [stattools.acf(this_cv[lag:], nlags=1, fft=True)[-1] for lag in range(len(this_cv) - 1)]
-                    # in_bounds = [this_autocorr[lag] < 1.96 / numpy.sqrt(len(this_cv[lag:])) for lag in range(len(this_autocorr))]
-                    # running = 0             # running count of successive steps "in bounds"
-                    # begin = len(in_bounds)  # initialize begin with maximum possible value
-                    # this_index = -1         # running count of each step regardless of whether "in bounds" or not
-                    # for item in in_bounds:
-                    #     this_index += 1
-                    #     if (not item and running > 0) or this_index == len(in_bounds) - 1:  # leaves threshold (in -> out) or ends
-                    #         if running >= begin:    # only get slowest_lag if been in bounds for at least as long as it took to get in bounds
-                    #             if begin > slowest_lag:     # only update slowest_lag if it's slower than the previous one
-                    #                 slowest_lag = begin
-                    #             break       # once we've found the lag for this CV move on to the next one
-                    #         begin = 0
-                    #         running = 0
-                    #     elif item and running == 0:  # entered threshold after being outside (out -> in)
-                    #         running += 1
-                    #         begin = this_index  # index where we begin being "in bounds"
-                    #     elif item:  # inside threshold already and still in (in -> in)
-                    #         running += 1
-                    #     else:  # was not in threshold and continues not to be (out -> out)
-                    #         begin = 0
-                    #         running = 0
-
                 if slowest_lag > 0:     # only proceed to writing to as_decorr.out if a valid slowest_lag was found
                     # Write to as_decorr.out the same way as to as_raw.out above, but starting the range at slowest_lag
                     for step_index in range(slowest_lag, len(thread.history.prod_results)):

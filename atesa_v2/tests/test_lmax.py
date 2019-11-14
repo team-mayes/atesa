@@ -54,13 +54,13 @@ class Tests(object):
 
     def test_main_non_existent_input(self):
         """Tests main using an input file name that does not exist"""
-        kwargs = {'automagic': True, 'i': ['definitely_not_a_real_file_who_would_name_a_file_this.txt']}
+        kwargs = {'automagic': True, 'i': ['definitely_not_a_real_file_who_would_name_a_file_this.txt'], 'k': [0], 'f': [], 'q': ['absent'], 'r': [0], 'o': ['lmax.out'], 'quiet': True, 'plots': False}
         with pytest.raises(FileNotFoundError):
             lmax.main(**kwargs)
 
     def test_main_improper_input(self):
         """Tests main using an input file that does exist, but is improperly formatted"""
-        kwargs = {'automagic': True, 'i': ['../test_data/test.rst7']}
+        kwargs = {'automagic': True, 'i': ['../test_data/test.rst7'], 'k': [0], 'f': [], 'q': ['absent'], 'r': [0], 'o': ['lmax.out'], 'quiet': True, 'plots': False}
         with pytest.raises(RuntimeError):
             lmax.main(**kwargs)
 

@@ -602,6 +602,7 @@ class Tests(object):
         settings = config_equilibrium_path_sampling()
         settings.min_dt = -1
         settings.max_dt = -1     # set these to the same value to guarantee which frame is chosen
+        settings.eps_dynamic_seed = 0
         allthreads = main.init_threads(settings)
         allthreads[0].current_type = ['prod', 'prod']
         allthreads[0].history.prod_results = [[-34.12, -35.1, -36], [12, 13, 11]]      # accepted then not accepted

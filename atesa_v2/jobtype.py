@@ -956,31 +956,36 @@ class EquilibriumPathSampling(JobType):
                     if not self.history.bounds[0] <= rc_value <= self.history.bounds[1]:
                         try:
                             window_index = [bounds[0] <= rc_value <= bounds[1] for bounds in settings.eps_bounds].index(True)
-                            if settings.eps_empty_windows[window_index] > 0:    # time to make a new Thread here
-                                # First have to get or make the file for the initial coordinates
-                                frame_index = self.history.prod_results[-1].index(rc_value)
-                                if frame_index == 0:        # init coordinates
-                                    coord_file = self.history.init_coords[-1][0]
-                                elif frame_index <= n_fwd:  # in fwd trajectory
-                                    coord_file = self.get_frame(self.history.prod_trajs[-1][0], frame_index, settings)
-                                else:                       # in bwd trajectory
-                                    coord_file = self.get_frame(self.history.prod_trajs[-1][1], frame_index - n_fwd, settings)
-
-                                # Now make the thread and set its parameters
-                                new_thread = main.Thread()
-                                EquilibriumPathSampling.update_history(new_thread, settings, **{'initialize': True, 'inpcrd': coord_file})
-                                new_thread.topology = settings.topology
-                                new_thread.name = coord_file + '_' + str(new_thread.suffix)
-
-                                # Append the new thread to allthreads and running
-                                allthreads.append(new_thread)
-                                running.append(new_thread)
-
-                                if not settings.DEBUG:  # if DEBUG, keep going to maximize coverage
-                                    return running  # return after initializing one thread to encourage sampling diversity
-
                         except ValueError:  # rc_value not in range of eps_bounds, so nothing to do here
-                            pass
+                            continue
+                        if settings.eps_empty_windows[window_index] > 0:    # time to make a new Thread here
+                            # First have to get or make the file for the initial coordinates
+                            frame_index = self.history.prod_results[-1].index(rc_value)
+                            if frame_index == 0:        # init coordinates
+                                coord_file = self.history.init_coords[-1][0]
+                            elif frame_index <= n_fwd:  # in fwd trajectory
+                                coord_file = self.get_frame(self.history.prod_trajs[-1][0], frame_index, settings)
+                                if coord_file == '':
+                                    raise FileNotFoundError('Trajectory ' + self.history.prod_trajs[-1][0] + ' was not '
+                                                            'found in spite of an RC value having been assigned to it.')
+                            else:                       # in bwd trajectory
+                                coord_file = self.get_frame(self.history.prod_trajs[-1][1], frame_index - n_fwd, settings)
+                                if coord_file == '':
+                                    raise FileNotFoundError('Trajectory ' + self.history.prod_trajs[-1][1] + ' was not '
+                                                            'found in spite of an RC value having been assigned to it.')
+
+                            # Now make the thread and set its parameters
+                            new_thread = main.Thread()
+                            EquilibriumPathSampling.update_history(new_thread, settings, **{'initialize': True, 'inpcrd': coord_file})
+                            new_thread.topology = settings.topology
+                            new_thread.name = coord_file + '_' + str(new_thread.suffix)
+
+                            # Append the new thread to allthreads and running
+                            allthreads.append(new_thread)
+                            running.append(new_thread)
+
+                            if not settings.DEBUG:  # if DEBUG, keep going to maximize coverage
+                                return running  # return after initializing one thread to encourage sampling diversity
 
         elif self.current_type == ['init']:
             if not os.path.exists(self.history.init_coords[-1][0]):  # init step failed, so retry it

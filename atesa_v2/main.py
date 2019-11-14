@@ -155,6 +155,8 @@ def main(settings):
 
     if settings.resample:
         utilities.resample(settings)
+        #if ... # todo: remove the information_error call from resample and put it here under the appropriate if statement. This will allow me to clean up both functions appreciably.
+        #   information_error.main()
         sys.exit()
 
     # Make working directory if it does not exist, handling overwrite and restart as needed
