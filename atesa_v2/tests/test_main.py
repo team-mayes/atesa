@@ -66,6 +66,37 @@ class Tests(object):
         assert allthreads[0].topology == 'topology.prmtop'
         assert allthreads[1].topology == 'topology.prmtop'
 
+    def test_init_threads_restart(self):
+        """Tests successful initialization of restarted threads"""
+        settings = configure('../../data/atesa.config')
+        # First, make restart.pkl
+        settings.initial_coordinates = ['../test_data/test.rst7', '../test_data/test_two_init.rst7']
+        settings.rc_definition = '1.00 + 2.34*CV0 - 5.67*CV1'
+        settings.rc_reduced_cvs = False
+        settings.cvs = ['pytraj.distance(traj, \'@1 @2\')[0]', 'pytraj.angle(traj, \'@2 @3 @4\')[0]']
+        settings.include_qdot = False
+        settings.topology = '../test_data/test.prmtop'
+        allthreads = main.init_threads(settings)
+        allthreads[0].history.init_coords = [['../test_data/test_velocities_init.rst7', '../test_data/test_velocities_init_bwd.rst7'],
+                                             ['../test_data/test_two_init.rst7', '../test_data/test_two_init_bwd.rst7']]
+        allthreads[0].history.prod_results = [['fwd', 'bwd'], ['bwd', 'bwd']]
+        allthreads[1].history.init_coords = [['../test_data/test_velocities_init.rst7', '../test_data/test_velocities_init_bwd.rst7'],
+                                             ['../test_data/test_two_init.rst7', '../test_data/test_two_init_bwd.rst7']]
+        allthreads[1].history.prod_results = [['bwd', 'bwd'], ['fwd', 'bwd']]
+        allthreads[0].history.timestamps = [1, 3]
+        allthreads[1].history.timestamps = [2, 4]
+        pickle.dump(allthreads, open('restart.pkl', 'wb'), protocol=2)
+        # Then, reset settings, set restart = True, and try again
+        settings = configure('../../data/atesa.config')
+        settings.restart = True
+        settings.degeneracy = 1
+        allthreads = main.init_threads(settings)
+        assert len(allthreads) == 2
+        assert allthreads[0].history.prod_results == [['fwd', 'bwd'], ['bwd', 'bwd']]
+        assert allthreads[1].history.prod_results == [['bwd', 'bwd'], ['fwd', 'bwd']]
+        assert allthreads[0].topology == 'test.prmtop'
+        assert allthreads[1].topology == 'test.prmtop'
+
     def test_thread_get_frame_amber(self):
         """Tests thread.get_frame method with md_engine = 'amber' and frame = -1"""
         settings = configure('../../data/atesa.config')

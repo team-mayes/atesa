@@ -112,11 +112,21 @@ def init_threads(settings):
                 thread.terminated = False
         if settings.information_error_checking:
             if os.path.exists(settings.working_directory + '/info_err.out'):
-                len_data = len(open(settings.working_directory + '/as_raw.out', 'r').readlines())
-                last_info_err = open(settings.working_directory + '/info_err.out', 'r').readlines()[-1].split(' ')[0]
-                last_breakpoint = len_data - (len_data % settings.information_error_freq)
-                if last_breakpoint > 0 and not int(last_info_err) == int(last_breakpoint):
+                info_err_lines = open(settings.working_directory + '/info_err.out', 'r').readlines()
+
+                # Resample if info_err.out is improperly formatted
+                if False in [len(info_err_lines[i].split(' ')) == 3 for i in range(len(info_err_lines))]:
                     utilities.resample(settings, partial=True)
+                    information_error.main()
+
+                # Resample if info_err.out is missing lines (will not run if resample called just above)
+                len_data = len(open(settings.working_directory + '/as_raw.out', 'r').readlines())
+                last_info_err = info_err_lines[-1].split(' ')[0]
+                last_breakpoint = len_data - (len_data % settings.information_error_freq)
+                if (last_breakpoint > 0 and not int(last_info_err) == int(last_breakpoint)):
+                    utilities.resample(settings, partial=True)
+                    information_error.main()
+
         return allthreads
 
     # If not restart:
@@ -128,7 +138,17 @@ def init_threads(settings):
 
         thread = Thread()
         jobtype.update_history(thread, settings, **{'initialize': True, 'inpcrd': file})
+
+        # Set topology properly even if it's given as a path
+        og_prmtop = settings.topology
+        if '/' in settings.topology:
+            settings.topology = settings.topology[settings.topology.rindex('/') + 1:]
+        try:
+            shutil.copy(og_prmtop, settings.working_directory + '/' + settings.topology)
+        except shutil.SameFileError:
+            pass
         thread.topology = settings.topology
+
         thread.name = file + '_' + str(thread.suffix)
         allthreads.append(thread)
 
