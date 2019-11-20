@@ -108,8 +108,9 @@ def configure(input_file):
         restart_terminated_threads: bool = False
 
         # Not expected to be set by user
-        DEBUG: bool = False
-        resample_override: bool = False
+        DEBUG: bool = False     # True causes some functions to return dummy values for testing purposes
+        pid: int = -1           # Process ID of information_error call used in aimless shooting
+        information_error_overdue : bool = False    # Used for handling information_error calls cleanly
 
     # Import config file line-by-line using exec()
     try:

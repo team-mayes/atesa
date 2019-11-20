@@ -33,18 +33,18 @@ class Tests(object):
         shutil.copy('../test_data/test_velocities_init.rst7', '../test_temp')
         shutil.copy('../test_data/test_two_init.rst7', '../test_temp')
         shutil.copy('../test_data/as.out', '../test_temp')
-        shutil.copy('../test_data/as_big.out', 'as_6054.out')
+        shutil.copy('../test_data/as_big.out', 'as_decorr_6054.out')
 
         # First test without extant settings.pkl file
         with pytest.raises(FileNotFoundError):
-            information_error.main('as_6054.out')
+            information_error.main()
 
         settings.__dict__.pop('env')    # env attribute is not picklable
         pickle.dump(settings, open('settings.pkl', 'wb'), protocol=2)   # main will look for this file to load in settings
 
         shutil.copy('../test_data/as_big.out', 'as_decorr_6054.out')
 
-        information_error.main('as_6054.out')
+        information_error.main()
         assert os.path.exists('info_err.out')
         assert float(open('info_err.out', 'r').readlines()[0].split(' ')[0]) == 6054
         assert float('%.1f' % float(open('info_err.out', 'r').readlines()[0].split(' ')[1])) == pytest.approx(0.2, 1E-2)

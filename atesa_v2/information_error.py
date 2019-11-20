@@ -11,24 +11,24 @@ import pickle
 import subprocess
 import shutil
 import glob
+import warnings
 from atesa_v2.main import Thread
 from atesa_v2 import utilities
 from statsmodels.tsa.stattools import kpss
 
-def main(as_raw):
+def main():
     """
     Evaluate the information error during aimless shooting and output results to info_err.out.
 
-    Reads as_raw.out from the present directory to evaluate the information error of the aimless shooting process as
-    well as the likelihood that the series of information error values represents a trend stationary process
+    Reads decorrelated aimless shooting output files from the present directory to evaluate the information error of the
+    aimless shooting process as well as the likelihood that the series of information error values represents a trend stationary process
     (informally, is converged) using the Kwiatkowski-Phillips-Schmidt-Shin (KPSS) test.
 
     This function depends on lmax.py for evaluations of the information error.
 
     Parameters
     ----------
-    as_raw : str
-        Name of the raw aimless shooting file to operate on
+    None
 
     Returns
     -------
@@ -41,11 +41,22 @@ def main(as_raw):
         open('info_err.out', 'w').close()
 
     # Initialize regular expressions for obtaining strings later
-    pattern = re.compile('[0-9.]+')     # pattern to match information error number
-    pattern2 = re.compile('[0-9]+')     # pattern to match amount of data in as_raw
+    pattern = re.compile('[0-9.]+')     # pattern to match information error number in lmax output file
+    pattern2 = re.compile('[0-9]+')     # pattern to match amount of data in decorrelated datafile names
 
-    # Get number string from as_raw
-    length = pattern2.findall(as_raw)[0]
+    # Assemble list of data lengths to perform information error evaluation for
+    datalengths = [pattern2.findall(item)[-1] for item in glob.glob('as_decorr_*.out') if not 'lmax' in item]
+    if not datalengths:
+        raise RuntimeError('attempted to evaluate information error, but found no files matching the pattern '
+                           '\'as_decorr_*.out\' in the directory: ' + os.getcwd() + '\n'
+                           'Was utilities.resample called first to produce these files?')
+    datalengths = sorted(datalengths, key=lambda x: int(x))     # sort ascending to order chronologically
+    if datalengths:
+        open('info_err_temp.out', 'w').close()
+
+    # Get length of largest datafile to perform automagic model optimization on
+    length = max(datalengths)
+    datalengths.remove(length)  # so as to skip repeat optimization later
 
     # Read settings from pickle file
     try:
@@ -55,30 +66,25 @@ def main(as_raw):
                                 'automatically when running ATESA, but one was not found in the working directory: '
                                 + os.getcwd())
 
-    # Run resampling to make decorrelated data file
-    if not settings.DEBUG and not settings.resample_override:
-        utilities.resample(settings, suffix='_' + length, write_raw=False)
-
-    # Set resample_override to False (or back to False; it will only be set to True when called by resample)
-    settings.resample_override = False
-    pickle.dump(settings, open('settings.pkl', 'wb'), protocol=2)
-
-    # Exit if as_decorr.out has no content
+    # Exit if the datafile has no content (as in, no decorrelated steps (almost impossible, included for robustness))
     if len(open('as_decorr_' + length + '.out', 'r').readlines()) == 0:
+        warnings.warn('skipping information error evaluation because decorrelated datafile as_decorr_' + length +
+                      '.out is empty. This may indicate an unusual error, especially if you see this message multiple '
+                      'times in the course of sampling.', RuntimeWarning)
         return None
 
-    # Run likelihood maximization on current as_decorr.out
+    # Run likelihood maximization on largest decorrelated datafile
     if settings.include_qdot:
         q_str = 'present'
     else:
         q_str = 'absent'
-    command = 'lmax.py -i as_decorr_' + length + '.out -q ' + q_str + ' --automagic -o ' + as_raw + '_lmax.out'
+    command = 'lmax.py -i as_decorr_' + length + '.out -q ' + q_str + ' --automagic -o ' + length + '_lmax.out'
     subprocess.check_call(command.split(' '), stdout=sys.stdout, preexec_fn=os.setsid)     # check_call waits for completion
-    if not os.path.exists(as_raw + '_lmax.out'):
-        raise FileNotFoundError('Likelihood maximization did not produce output file:' + as_raw + '_lmax.out')
+    if not os.path.exists(length + '_lmax.out'):
+        raise FileNotFoundError('Likelihood maximization did not produce output file:' + length + '_lmax.out')
 
     # Assemble model dimensions just obtained for calling lmax for other data sets
-    model_str = open(as_raw + '_lmax.out', 'r').readlines()[1]
+    model_str = open(length + '_lmax.out', 'r').readlines()[1]
     model_str = model_str[model_str.rindex(': ') + 2:]
     dims = ''
     while 'CV' in model_str:
@@ -88,27 +94,47 @@ def main(as_raw):
         else:
             dims += model_str[:model_str.index('\n')]       # last dimensions has a newline instead of a space
     if dims == '':
-        raise RuntimeError('Likelihood maximization output file is improperly formatted: ' + as_raw + '_lmax.out')
-
-
-    datalengths = [pattern2.findall(item)[-1] for item in glob.glob('as_decorr_*.out') if not 'lmax' in item and not length + '.out' in item]   # todo: sort
-    if datalengths:
-        open('info_err_temp.out', 'w').close()
+        raise RuntimeError('Likelihood maximization output file is improperly formatted: ' + length + '_lmax.out')
 
     # Call lmax for each further dataset and write new info_err output file
     for datalength in datalengths:
-        command = 'lmax.py -i as_decorr_' + datalength + '.out -q ' + q_str + ' -f ' + dims + ' -k ' + str(int(len(dims.split(' ')))) + ' -o ' + datalength + '_redo_lmax.out'
+        command = 'lmax.py -i as_decorr_' + datalength + '.out -q ' + q_str + ' -f ' + dims + ' -k ' + str(int(len(dims.split(' ')))) + ' -o ' + datalength + '_lmax.out'
         subprocess.check_call(command.split(' '), stdout=sys.stdout, preexec_fn=os.setsid)
         inf_err = float(pattern.findall(open(datalength + '_redo_lmax.out', 'r').readlines()[-1])[0])
         open('info_err_temp.out', 'a').write(datalength + ' ' + str(inf_err) + '\n')
 
     # Add information error from previously completed lmax for this length
-    inf_err = float(pattern.findall(open(as_raw + '_lmax.out', 'r').readlines()[-1])[0])
+    inf_err = float(pattern.findall(open(length + '_lmax.out', 'r').readlines()[-1])[0])
     open('info_err_temp.out', 'a').write(length + ' ' + str(inf_err) + '\n')
 
-    # Copy info_err_temp to info_err.out
+    # Move info_err_temp.out to info_err.out
     shutil.move('info_err_temp.out', 'info_err.out')
+
+    # Next, evaluate the KPSS statistic for the dataset in info_err.out
+    # Begin by suppressing warnings that occur frequently during normal operation of kpss
+    warnings.filterwarnings('ignore', message='p-value is greater than the indicated p-value')
+    warnings.filterwarnings('ignore', message='invalid value encountered in double_scalars')
+    warnings.filterwarnings('ignore', message='divide by zero encountered in double_scalars')
+
+    # Get data back out from info_err.out (weird but robust)
+    info_err_lines = open('info_err.out', 'r').readlines()
+    info_errs = [float(line.split(' ')[1]) for line in info_err_lines]  # cast to float removes '\n'
+    kpssresults = []
+    for cut in range(len(info_errs) - 1):
+        try:
+            kpssresult = (kpss(info_errs[0:cut + 1], lags='auto')[1] - 0.01) / (0.1 - 0.01)
+        except (ValueError, OverflowError):
+            kpssresult = 1  # 100% certainty of non-convergence!
+        kpssresults.append(kpssresult)
+
+    # Write new info_err.out with kpss values
+    open('info_err.out', 'w').write(info_err_lines[0])  # no KPSS statistic for the first line
+    for line_index in range(1, len(info_err_lines)):
+        line_data = [float(item) for item in info_err_lines[line_index].split(' ')]
+        new_line = '%.0f' % line_data[0] + ' ' + '%.3f' % line_data[1] + ' ' + '%.3f' % kpssresults[line_index - 1] + '\n'
+        open('info_err.out', 'a').write(new_line)
+    open('info_err.out', 'a').close()
 
 
 if __name__ == "__main__":
-    main(sys.argv[1])
+    main()

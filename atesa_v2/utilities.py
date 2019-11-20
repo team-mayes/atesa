@@ -260,29 +260,24 @@ def evaluate_rc(rc_definition, cv_list):
     return eval(rc_definition)
 
 
-def resample(settings, suffix='', write_raw=True, partial=False):
+def resample(settings, partial=False):
     """
-    Resample each shooting point in each thread with different CV definitions to produce new as.out files with extant
+    Resample each shooting point in each thread with different CV definitions to produce new output files with extant
     aimless shooting data.
 
-    Produces two files: as_raw.out, containing CVs from every shooting point, and as_decorr.out, containing only those
-    shooting points where every CV in each thread has decorrelated from its initial coordinates.
+    This function also assesses decorrelation times and produces one or more decorrelated output files. If and only if
+    settings.information_error_checking == True, decorrelated files are produced at each settings.information_error_freq
+    increment. In this case, if partial == True, decorrelation will only be assessed for data lengths absent from the
+    info_err.out file in the working directory.
 
     Parameters
     ----------
     settings : argparse.Namespace
         Settings namespace object
-    suffix : str
-        String to append to end of as_decorr.out file name(s) (before extension) to differentiate them
-    write_raw : bool
-        If True, writes a new copy of as_raw.out; if false, only writes as_decorr.out (if applicable). Also if True and
-        settings.information_error_checking = True, writes new partial as_raw.out files and invokes information_error.py
-        to build a new info_err.out file.
     partial : bool
-        If True and write_raw = True, reads the info_err.out file and only invokes information_error.py to build new
-        lines for the info_err.out file where they are missing. This setting is for use when restarting an aimless
-        shooting run with information_error_checking = True where some information error evaluations may have been
-        interrupted.
+        If True, reads the info_err.out file and only builds new decorrelated output files where the corresponding lines
+        are missing from that file. If partial == False, decorrelation is assessed for every valid data length. Has no
+        effect if not settings.information_error_checking.
 
     Returns
     -------
@@ -295,14 +290,10 @@ def resample(settings, suffix='', write_raw=True, partial=False):
     # This function is sometimes called from outside the working directory, so make sure we're there
     os.chdir(settings.working_directory)
 
-    # Remove pre-existing as_raw.out if any, initialize new one
-    if write_raw:
-        open(settings.working_directory + '/as_raw.out', 'w').close()
-        if settings.information_error_checking:
-            open(settings.working_directory + '/as_raw_timestamped.out', 'w').close()
-            if not partial:
-                open(settings.working_directory + '/info_err.out', 'w').close()
-    open(settings.working_directory + '/as_decorr' + suffix + '.out', 'w').close()
+    # Remove pre-existing output files if any, initialize new one
+    open(settings.working_directory + '/as_raw_resample.out', 'w').close()
+    if settings.information_error_checking:
+        open(settings.working_directory + '/as_raw_timestamped.out', 'w').close()
 
     # Load in allthreads from restart.pkl
     try:
@@ -325,54 +316,55 @@ def resample(settings, suffix='', write_raw=True, partial=False):
                 # Get CVs for this shooting point
                 try:
                     this_cvs = get_cvs(thread.history.init_coords[step_index][0], settings)
-
-                    # Write CVs to as_raw.out
-                    if write_raw:
-                        open(settings.working_directory + '/as_raw.out', 'a').write(this_basin + ' <- ')
-                        open(settings.working_directory + '/as_raw.out', 'a').write(this_cvs + '\n')
-                        open(settings.working_directory + '/as_raw.out', 'a').close()
-                        if settings.information_error_checking:
-                            open(settings.working_directory + '/as_raw_timestamped.out', 'a').write(str(thread.history.timestamps[step_index]) + ' ')
-                            open(settings.working_directory + '/as_raw_timestamped.out', 'a').write(this_basin + ' <- ')
-                            open(settings.working_directory + '/as_raw_timestamped.out', 'a').write(this_cvs + '\n')
-                            open(settings.working_directory + '/as_raw_timestamped.out', 'a').close()
-
-                    # Append this_cvs to running list for evaluating decorrelation time
-                    thread.this_cvs_list.append([[float(item) for item in this_cvs.split(' ')], thread.history.timestamps[step_index]])
-                    thread.cvs_for_later.append([float(item) for item in this_cvs.split(' ')])
                 except IndexError:  # getting cv's failed (maybe corrupt coordinate file) so consider this step failed
                     thread.cvs_for_later.append([])
+                    continue        # skip to next step_index
+
+                # Write CVs to as_raw_resample.out
+                open(settings.working_directory + '/as_raw_resample.out', 'a').write(this_basin + ' <- ')
+                open(settings.working_directory + '/as_raw_resample.out', 'a').write(this_cvs + '\n')
+                open(settings.working_directory + '/as_raw_resample.out', 'a').close()
+                if settings.information_error_checking:
+                    open(settings.working_directory + '/as_raw_timestamped.out', 'a').write(str(thread.history.timestamps[step_index]) + ' ')
+                    open(settings.working_directory + '/as_raw_timestamped.out', 'a').write(this_basin + ' <- ')
+                    open(settings.working_directory + '/as_raw_timestamped.out', 'a').write(this_cvs + '\n')
+                    open(settings.working_directory + '/as_raw_timestamped.out', 'a').close()
+
+                # Append this_cvs to running list for evaluating decorrelation time
+                thread.this_cvs_list.append([[float(item) for item in this_cvs.split(' ')], thread.history.timestamps[step_index]])
+                thread.cvs_for_later.append([float(item) for item in this_cvs.split(' ')])
             else:
                 thread.cvs_for_later.append([])
 
-    if write_raw and settings.information_error_checking:   # sort timestamped output file
-        shutil.copy(settings.working_directory + '/as_raw_timestamped.out', settings.working_directory + '/as_raw_timestamped_copy' + suffix + '.out')
+    if settings.information_error_checking:   # sort timestamped output file
+        shutil.copy(settings.working_directory + '/as_raw_timestamped.out', settings.working_directory + '/as_raw_timestamped_copy.out')
         open(settings.working_directory + '/as_raw_timestamped.out', 'w').close()
-        with open(settings.working_directory + '/as_raw_timestamped_copy' + suffix + '.out', 'r') as f:
+        with open(settings.working_directory + '/as_raw_timestamped_copy.out', 'r') as f:
             for line in sorted(f):
                 open(settings.working_directory + '/as_raw_timestamped.out', 'a').write(line)
             open(settings.working_directory + '/as_raw_timestamped.out', 'a').close()
-        os.remove(settings.working_directory + '/as_raw_timestamped_copy' + suffix + '.out')
+        os.remove(settings.working_directory + '/as_raw_timestamped_copy.out')
 
     # Construct list of data lengths to perform decorrelation for
-    if write_raw and settings.information_error_checking:
+    if settings.information_error_checking:
         if not partial:
             lengths = [leng for leng in range(settings.information_error_freq, len(open(settings.working_directory + '/as_raw_timestamped.out', 'r').readlines()) + 1, settings.information_error_freq)]
         else:   # if partial
             lengths = [leng for leng in range(settings.information_error_freq, len(open(settings.working_directory + '/as_raw_timestamped.out', 'r').readlines()) + 1, settings.information_error_freq) if not leng in [int(line.split(' ')[0]) for line in open(settings.working_directory + '/info_err.out', 'r').readlines()]]
         pattern = re.compile('[0-9]+')  # pattern for reading out timestamp from string
     else:
-        lengths = [len(open(settings.working_directory + '/as_raw.out', 'r').readlines())]
+        lengths = [len(open(settings.working_directory + '/as_raw_resample.out', 'r').readlines())]
         pattern = None
 
     # Assess decorrelation and write as_decorr.out
     for length in lengths:
-        if write_raw and settings.information_error_checking:
+        if settings.information_error_checking:
             suffix = '_' + str(length)     # only use-case with multiple lengths, so this keeps them from stepping on one another's toes
-            open(settings.working_directory + '/as_decorr' + suffix + '.out', 'w').close()
             cutoff_timestamp = int(pattern.findall(open(settings.working_directory + '/as_raw_timestamped.out', 'r').readlines()[length - 1])[0])
         else:
             cutoff_timestamp = math.inf
+            suffix = ''
+        open(settings.working_directory + '/as_decorr' + suffix + '.out', 'w').close()
         for thread in allthreads:
             if thread.this_cvs_list:       # if there were any 'fwd' or 'bwd' results in this thread
                 mapped = list(map(list, zip(*[item[0] for item in thread.this_cvs_list if item[1] <= cutoff_timestamp])))   # list of lists of values of each CV
@@ -399,7 +391,7 @@ def resample(settings, suffix='', write_raw=True, partial=False):
                             break
 
                 if slowest_lag > 0:     # only proceed to writing to as_decorr.out if a valid slowest_lag was found
-                    # Write to as_decorr.out the same way as to as_raw.out above, but starting the range at slowest_lag
+                    # Write to as_decorr.out the same way as to as_raw_resample.out above, but starting the range at slowest_lag
                     for step_index in range(slowest_lag, len(thread.history.prod_results)):
                         if thread.history.prod_results[step_index][0] in ['fwd', 'bwd'] and thread.history.timestamps[step_index] <= cutoff_timestamp:
                             if thread.history.prod_results[step_index][0] == 'fwd':
@@ -411,18 +403,21 @@ def resample(settings, suffix='', write_raw=True, partial=False):
                             if thread.cvs_for_later[step_index]:
                                 this_cvs = thread.cvs_for_later[step_index]    # retrieve CVs from last evaluation
 
-                                # Write CVs to as_raw.out
+                                # Write CVs to as_raw_resample.out
                                 open(settings.working_directory + '/as_decorr' + suffix + '.out', 'a').write(this_basin + ' <- ')
                                 open(settings.working_directory + '/as_decorr' + suffix + '.out', 'a').write(' '.join([str(item) for item in this_cvs]) + '\n')
                                 open(settings.working_directory + '/as_decorr' + suffix + '.out', 'a').close()
 
-        if write_raw and settings.information_error_checking and length == lengths[-1]:
-            # Add resample_override to settings object to avoid information_error.py calling this function
-            settings.resample_override = True
-            temp_settings = copy.deepcopy(settings)     # initialize temporary copy of settings to modify
-            temp_settings.__dict__.pop('env')           # env attribute is not picklable
-            pickle.dump(temp_settings, open('settings.pkl', 'wb'), protocol=2)
+    # Move resample raw output file to take its place as the only raw output file
+    shutil.move(settings.working_directory + '/as_raw_resample.out', settings.working_directory + '/as_raw.out')
 
-            if len(open('as_decorr' + suffix + '.out', 'r').readlines()) > 0:
-                command = 'information_error.py as_decorr' + suffix + '.out'
-                process = subprocess.check_call(command.split(' '), stdout=sys.stdout, preexec_fn=os.setsid)
+        # if settings.information_error_checking and length == lengths[-1]:
+        #     # Add resample_override to settings object to avoid information_error.py calling this function
+        #     settings.resample_override = True
+        #     temp_settings = copy.deepcopy(settings)     # initialize temporary copy of settings to modify
+        #     temp_settings.__dict__.pop('env')           # env attribute is not picklable
+        #     pickle.dump(temp_settings, open('settings.pkl', 'wb'), protocol=2)
+        #
+        #     if len(open('as_decorr' + suffix + '.out', 'r').readlines()) > 0:
+        #         command = 'information_error.py as_decorr' + suffix + '.out'
+        #         process = subprocess.check_call(command.split(' '), stdout=sys.stdout, preexec_fn=os.setsid)

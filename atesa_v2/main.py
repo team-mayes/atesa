@@ -116,7 +116,7 @@ def init_threads(settings):
                 last_info_err = open(settings.working_directory + '/info_err.out', 'r').readlines()[-1].split(' ')[0]
                 last_breakpoint = len_data - (len_data % settings.information_error_freq)
                 if last_breakpoint > 0 and not last_info_err == last_breakpoint:
-                    utilities.resample(settings, write_raw=True, partial=True)
+                    utilities.resample(settings, partial=True)
         return allthreads
 
     # If not restart:
@@ -153,10 +153,15 @@ def main(settings):
 
     """
 
+    # Store settings object in the working directory for posterity and for compatibility with analysis/utility scripts
+    temp_settings = copy.deepcopy(settings)         # initialize temporary copy of settings to modify
+    temp_settings.__dict__.pop('env')               # env attribute is not picklable
+    pickle.dump(temp_settings, open('settings.pkl', 'wb'), protocol=2)
+
     if settings.resample:
-        utilities.resample(settings)
-        #if ... # todo: remove the information_error call from resample and put it here under the appropriate if statement. This will allow me to clean up both functions appreciably.
-        #   information_error.main()
+        utilities.resample(settings, partial=False)
+        if settings.information_error_checking:
+            information_error.main()
         sys.exit()
 
     # Make working directory if it does not exist, handling overwrite and restart as needed
@@ -185,11 +190,6 @@ def main(settings):
     # Move runtime to working directory
     os.chdir(settings.working_directory)
 
-    # Store settings object in the working directory for posterity and for compatibility with analysis/utility scripts
-    temp_settings = copy.deepcopy(settings)         # initialize temporary copy of settings to modify
-    temp_settings.__dict__.pop('env')               # env attribute is not picklable
-    pickle.dump(temp_settings, open('settings.pkl', 'wb'), protocol=2)
-
     termination_criterion = False   # initialize global termination criterion boolean
     running = allthreads            # to be pruned later by thread.process()
 
@@ -215,6 +215,7 @@ def main(settings):
         return 'ATESA run exiting normally (global termination criterion met)'
     else:
         return 'ATESA run exiting normally (all threads ended individually)'
+
 
 if __name__ == "__main__":
     # Obtain settings namespace, initialize threads, and move promptly into main.

@@ -16,6 +16,7 @@ import time
 import pytraj
 import warnings
 import copy
+import psutil
 from atesa_v2 import utilities
 from atesa_v2 import main
 from statsmodels.tsa.stattools import kpss
@@ -435,41 +436,37 @@ class AimlessShooting(JobType):
             global_terminate = False
 
             # Implement information error termination criterion
+            # proc_status variable is used to prevent multiple calls to information_error from occuring at once
             if settings.information_error_checking:
                 len_data = len(open('as_raw.out', 'r').readlines())     # number of shooting points to date
-                if len_data % settings.information_error_freq == 0 and len_data > 0:
-                    # Start separate process calling information_error.py to evaluate information error
-                    shutil.copy('as_raw.out', 'as_raw_' + str(len_data) + '.out')    # to avoid processes stepping on each other's toes
-                    command = 'information_error.py as_raw_' + str(len_data) + '.out'
-                    process = subprocess.Popen(command.split(' '), stdout=sys.stdout, preexec_fn=os.setsid)
+                if settings.pid == -1:
+                    proc_status = 'not_running'     # default value for new process, no process running
+                else:
+                    try:
+                        proc = psutil.Process(settings.pid).status()
+                        if proc in [psutil.STATUS_RUNNING, psutil.STATUS_SLEEPING]:
+                            proc_status = 'running'
+                        elif proc in [psutil.STATUS_ZOMBIE, psutil.STATUS_DEAD]:
+                            proc_status = 'not_running'
+                        else:
+                            warnings.warn('unexpected process state for information_error.py subprocess: ' + proc +
+                                          '\nSkipping information error checking at this step')
+                            proc_status = 'error'
+                    except (psutil.NoSuchProcess, ProcessLookupError):
+                        proc_status = 'not_running'
+                if (len_data % settings.information_error_freq == 0 and len_data > 0 and proc_status == 'not_running') or (settings.information_error_overdue and proc_status == 'not_running'):
+                    # Start separate process calling resample and then information_error
+                    process = subprocess.Popen(['resample_and_inferr.py'], stdout=sys.stdout, preexec_fn=os.setsid)
+                    settings.pid = process.pid  # store process ID in settings
+                    settings.information_error_overdue = False
+                elif len_data % settings.information_error_freq == 0 and len_data > 0 and not proc_status == 'not_running':
+                    settings.information_error_overdue = True   # so that information error will be checked next time proc_status == 'not_running' regardless of len_data
 
-                # Perform KPSS test on series of data in info_err.out, and evaluate termination criterion
+                # Evaluate termination criterion using KPSS statistic data in info_err.out
                 if os.path.exists('info_err.out'):
-                    if not len(open('info_err.out', 'r').readlines()[-1].split(' ')) == 3:  # if no kpss p-value for last line
-                        # Suppress warnings that occur frequently during normal operation of kpss
-                        warnings.filterwarnings('ignore', message='p-value is greater than the indicated p-value')
-                        warnings.filterwarnings('ignore', message='invalid value encountered in double_scalars')
-                        warnings.filterwarnings('ignore', message='divide by zero encountered in double_scalars')
-
-                        info_err_lines = open('info_err.out', 'r').readlines()
-                        info_errs = [float(line.split(' ')[1]) for line in info_err_lines]  # cast to float removes '\n'
-                        kpssresults = []
-                        for cut in range(len(info_errs) - 1):
-                            try:
-                                kpssresult = (kpss(info_errs[0:cut + 1], lags='auto')[1] - 0.01) / (0.1 - 0.01)
-                            except (ValueError, OverflowError):
-                                kpssresult = 1      # 100% certainty of non-convergence!
-                            kpssresults.append(kpssresult)
-                        open('info_err.out', 'w').write(info_err_lines[0])  # write new info_err.out with kpss values
-                        for line_index in range(1, len(info_err_lines)):
-                            line_data = [float(item) for item in info_err_lines[line_index].split(' ')]
-                            new_line = '%.0f' % line_data[0] + ' ' + '%.3f' % line_data[1] + ' ' + '%.3f' % kpssresults[line_index - 1] + '\n'
-                            open('info_err.out', 'a').write(new_line)
-                        open('info_err.out', 'a').close()
-
-                        if len(kpssresults) > 0:
-                            if kpssresults[-1] <= 0.05:
-                                global_terminate = True     # todo: test information error termination criterion
+                    kpss_stat = open('info_err.out', 'r').readlines()[-1].split(' ')[2]     # kpss statistic read from last line
+                    if float(kpss_stat) <= 0.05:
+                        global_terminate = True     # todo: test information error termination criterion
 
             if thread_terminate:
                 self.status = 'terminated after step ' + str(self.suffix) + ' due to: ' + thread_terminate
