@@ -12,7 +12,6 @@ import subprocess
 import shutil
 import glob
 import warnings
-from atesa_v2.main import Thread
 from atesa_v2 import utilities
 from statsmodels.tsa.stattools import kpss
 
