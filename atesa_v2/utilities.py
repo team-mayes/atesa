@@ -134,7 +134,7 @@ def get_cvs(filename, settings, reduce=False):
                     while len(replace_string) < length:
                         replace_string += '0'
                     newline = newline.replace(coords[index], replace_string)
-                sys.stdout.write(newline)
+                sys.stdout.write(newline)   # todo: replace this with an internal object that gets returned
             else:
                 sys.stdout.write(line)
 
@@ -302,7 +302,12 @@ def resample(settings, partial=False):
         raise FileNotFoundError('resample = True requires restart.pkl, but could not find one in working directory: '
                                 + settings.working_directory)
 
-    # iterate through each thread's history.init_coords list
+    # Open files for writing outside loop (much faster than opening/closing for each write)
+    f1 = open(settings.working_directory + '/as_raw_resample.out', 'a')
+    if settings.information_error_checking:
+        f2 = open(settings.working_directory + '/as_raw_timestamped.out', 'a')
+
+    # Iterate through each thread's history.init_coords list and obtain CV values as needed
     for thread in allthreads:
         thread.this_cvs_list = []       # initialize full nested list of CV values for this thread
         thread.cvs_for_later = []       # need this one with empty lists for failed moves, for indexing reasons
@@ -321,20 +326,20 @@ def resample(settings, partial=False):
                     continue        # skip to next step_index
 
                 # Write CVs to as_raw_resample.out
-                open(settings.working_directory + '/as_raw_resample.out', 'a').write(this_basin + ' <- ')
-                open(settings.working_directory + '/as_raw_resample.out', 'a').write(this_cvs + '\n')
-                open(settings.working_directory + '/as_raw_resample.out', 'a').close()
+                f1.write(this_basin + ' <- ' + this_cvs + '\n')
                 if settings.information_error_checking:
-                    open(settings.working_directory + '/as_raw_timestamped.out', 'a').write(str(thread.history.timestamps[step_index]) + ' ')
-                    open(settings.working_directory + '/as_raw_timestamped.out', 'a').write(this_basin + ' <- ')
-                    open(settings.working_directory + '/as_raw_timestamped.out', 'a').write(this_cvs + '\n')
-                    open(settings.working_directory + '/as_raw_timestamped.out', 'a').close()
+                    f2.write(str(thread.history.timestamps[step_index]) + ' ' + this_basin + ' <- ' + this_cvs + '\n')
 
                 # Append this_cvs to running list for evaluating decorrelation time
                 thread.this_cvs_list.append([[float(item) for item in this_cvs.split(' ')], thread.history.timestamps[step_index]])
                 thread.cvs_for_later.append([float(item) for item in this_cvs.split(' ')])
             else:
                 thread.cvs_for_later.append([])
+
+    # Close files just to be sure
+    f1.close()
+    if settings.information_error_checking:
+        f2.close()
 
     if settings.information_error_checking:   # sort timestamped output file
         shutil.copy(settings.working_directory + '/as_raw_timestamped.out', settings.working_directory + '/as_raw_timestamped_copy.out')
@@ -365,6 +370,7 @@ def resample(settings, partial=False):
             cutoff_timestamp = math.inf
             suffix = ''
         open(settings.working_directory + '/as_decorr' + suffix + '.out', 'w').close()
+        f3 = open(settings.working_directory + '/as_decorr' + suffix + '.out', 'a')
         for thread in allthreads:
             if thread.this_cvs_list:       # if there were any 'fwd' or 'bwd' results in this thread
                 mapped = list(map(list, zip(*[item[0] for item in thread.this_cvs_list if item[1] <= cutoff_timestamp])))   # list of lists of values of each CV
@@ -390,8 +396,8 @@ def resample(settings, partial=False):
                             slowest_lag = lag + 1
                             break
 
-                if slowest_lag > 0:     # only proceed to writing to as_decorr.out if a valid slowest_lag was found
-                    # Write to as_decorr.out the same way as to as_raw_resample.out above, but starting the range at slowest_lag
+                if slowest_lag > 0:     # only proceed to writing decorrelated output file if a slowest_lag was found
+                    # Write the same way as to as_raw_resample.out above, but starting the range at slowest_lag
                     for step_index in range(slowest_lag, len(thread.history.prod_results)):
                         if thread.history.prod_results[step_index][0] in ['fwd', 'bwd'] and thread.history.timestamps[step_index] <= cutoff_timestamp:
                             if thread.history.prod_results[step_index][0] == 'fwd':
@@ -399,25 +405,12 @@ def resample(settings, partial=False):
                             else:  # 'bwd'
                                 this_basin = 'A'
 
-                            # Get CVs for this shooting point
+                            # Get CVs for this shooting point and write them to the decorrelated output file
                             if thread.cvs_for_later[step_index]:
                                 this_cvs = thread.cvs_for_later[step_index]    # retrieve CVs from last evaluation
+                                f3.write(this_basin + ' <- ' + ' '.join([str(item) for item in this_cvs]) + '\n')
 
-                                # Write CVs to as_raw_resample.out
-                                open(settings.working_directory + '/as_decorr' + suffix + '.out', 'a').write(this_basin + ' <- ')
-                                open(settings.working_directory + '/as_decorr' + suffix + '.out', 'a').write(' '.join([str(item) for item in this_cvs]) + '\n')
-                                open(settings.working_directory + '/as_decorr' + suffix + '.out', 'a').close()
+        f3.close()
 
     # Move resample raw output file to take its place as the only raw output file
     shutil.move(settings.working_directory + '/as_raw_resample.out', settings.working_directory + '/as_raw.out')
-
-        # if settings.information_error_checking and length == lengths[-1]:
-        #     # Add resample_override to settings object to avoid information_error.py calling this function
-        #     settings.resample_override = True
-        #     temp_settings = copy.deepcopy(settings)     # initialize temporary copy of settings to modify
-        #     temp_settings.__dict__.pop('env')           # env attribute is not picklable
-        #     pickle.dump(temp_settings, open('settings.pkl', 'wb'), protocol=2)
-        #
-        #     if len(open('as_decorr' + suffix + '.out', 'r').readlines()) > 0:
-        #         command = 'information_error.py as_decorr' + suffix + '.out'
-        #         process = subprocess.check_call(command.split(' '), stdout=sys.stdout, preexec_fn=os.setsid)

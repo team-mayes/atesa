@@ -44,7 +44,7 @@ def main():
     pattern2 = re.compile('[0-9]+')     # pattern to match amount of data in decorrelated datafile names
 
     # Assemble list of data lengths to perform information error evaluation for
-    datalengths = [pattern2.findall(item)[-1] for item in glob.glob('as_decorr_*.out') if not 'lmax' in item]
+    datalengths = [int(pattern2.findall(item)[-1]) for item in glob.glob('as_decorr_*.out') if not 'lmax' in item]
     if not datalengths:
         raise RuntimeError('attempted to evaluate information error, but found no files matching the pattern '
                            '\'as_decorr_*.out\' in the directory: ' + os.getcwd() + '\n'
@@ -66,8 +66,8 @@ def main():
                                 + os.getcwd())
 
     # Exit if the datafile has no content (as in, no decorrelated steps (almost impossible, included for robustness))
-    if len(open('as_decorr_' + length + '.out', 'r').readlines()) == 0:
-        warnings.warn('skipping information error evaluation because decorrelated datafile as_decorr_' + length +
+    if len(open('as_decorr_' + str(length) + '.out', 'r').readlines()) == 0:
+        warnings.warn('skipping information error evaluation because decorrelated datafile as_decorr_' + str(length) +
                       '.out is empty. This may indicate an unusual error, especially if you see this message multiple '
                       'times in the course of sampling.', RuntimeWarning)
         return None
@@ -77,13 +77,13 @@ def main():
         q_str = 'present'
     else:
         q_str = 'absent'
-    command = 'lmax.py -i as_decorr_' + length + '.out -q ' + q_str + ' --automagic -o ' + length + '_lmax.out'
+    command = 'lmax.py -i as_decorr_' + str(length) + '.out -q ' + q_str + ' --automagic -o ' + str(length) + '_lmax.out'
     subprocess.check_call(command.split(' '), stdout=sys.stdout, preexec_fn=os.setsid)     # check_call waits for completion
-    if not os.path.exists(length + '_lmax.out'):
-        raise FileNotFoundError('Likelihood maximization did not produce output file:' + length + '_lmax.out')
+    if not os.path.exists(str(length) + '_lmax.out'):
+        raise FileNotFoundError('Likelihood maximization did not produce output file:' + str(length) + '_lmax.out')
 
     # Assemble model dimensions just obtained for calling lmax for other data sets
-    model_str = open(length + '_lmax.out', 'r').readlines()[1]
+    model_str = open(str(length) + '_lmax.out', 'r').readlines()[1]
     model_str = model_str[model_str.rindex(': ') + 2:]
     dims = ''
     while 'CV' in model_str:
@@ -93,18 +93,18 @@ def main():
         else:
             dims += model_str[:model_str.index('\n')]       # last dimensions has a newline instead of a space
     if dims == '':
-        raise RuntimeError('Likelihood maximization output file is improperly formatted: ' + length + '_lmax.out')
+        raise RuntimeError('Likelihood maximization output file is improperly formatted: ' + str(length) + '_lmax.out')
 
     # Call lmax for each further dataset and write new info_err output file
     for datalength in datalengths:
-        command = 'lmax.py -i as_decorr_' + datalength + '.out -q ' + q_str + ' -f ' + dims + ' -k ' + str(int(len(dims.split(' ')))) + ' -o ' + datalength + '_lmax.out'
+        command = 'lmax.py -i as_decorr_' + str(datalength) + '.out -q ' + q_str + ' -f ' + dims + ' -k ' + str(int(len(dims.split(' ')))) + ' -o ' + str(datalength) + '_lmax.out'
         subprocess.check_call(command.split(' '), stdout=sys.stdout, preexec_fn=os.setsid)
-        inf_err = float(pattern.findall(open(datalength + '_redo_lmax.out', 'r').readlines()[-1])[0])
-        open('info_err_temp.out', 'a').write(datalength + ' ' + str(inf_err) + '\n')
+        inf_err = float(pattern.findall(open(str(datalength) + '_redo_lmax.out', 'r').readlines()[-1])[0])
+        open('info_err_temp.out', 'a').write(str(datalength) + ' ' + str(inf_err) + '\n')
 
     # Add information error from previously completed lmax for this length
-    inf_err = float(pattern.findall(open(length + '_lmax.out', 'r').readlines()[-1])[0])
-    open('info_err_temp.out', 'a').write(length + ' ' + str(inf_err) + '\n')
+    inf_err = float(pattern.findall(open(str(length) + '_lmax.out', 'r').readlines()[-1])[0])
+    open('info_err_temp.out', 'a').write(str(length) + ' ' + str(inf_err) + '\n')
 
     # Move info_err_temp.out to info_err.out
     shutil.move('info_err_temp.out', 'info_err.out')
