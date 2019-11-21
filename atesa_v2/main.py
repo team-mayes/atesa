@@ -18,6 +18,7 @@ from atesa_v2 import factory
 from atesa_v2 import process
 from atesa_v2 import interpret
 from atesa_v2 import utilities
+from atesa_v2 import information_error
 
 class Thread(object):
     """
