@@ -2,6 +2,7 @@
 Helper file to call utilities.resample and then information_error.main in sequence in a single process.
 """
 
+import pickle
 from atesa_v2 import utilities
 from atesa_v2 import information_error
 
