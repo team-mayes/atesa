@@ -63,13 +63,14 @@ class Tests(object):
         assert len(allthreads) == 2
         assert allthreads[0].history.init_inpcrd == ['test.rst7']
         assert allthreads[1].history.init_inpcrd == ['test_two_init.rst7']
-        assert allthreads[0].topology == 'topology.prmtop'
-        assert allthreads[1].topology == 'topology.prmtop'
+        assert allthreads[0].topology == 'test.prmtop'
+        assert allthreads[1].topology == 'test.prmtop'
 
     def test_init_threads_restart(self):
         """Tests successful initialization of restarted threads"""
         settings = configure('../../data/atesa.config')
         # First, make restart.pkl
+        settings.degeneracy = 1
         settings.initial_coordinates = ['../test_data/test.rst7', '../test_data/test_two_init.rst7']
         settings.rc_definition = '1.00 + 2.34*CV0 - 5.67*CV1'
         settings.rc_reduced_cvs = False

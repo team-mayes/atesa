@@ -116,7 +116,7 @@ def init_threads(settings):
                 info_err_lines = open(settings.working_directory + '/info_err.out', 'r').readlines()
 
                 # Resample if info_err.out is improperly formatted
-                if False in [len(info_err_lines[i].split(' ')) == 3 for i in range(len(info_err_lines))]:
+                if False in [len(info_err_lines[i].split(' ')) == 3 for i in range(1, len(info_err_lines))] or not len(info_err_lines[0].split(' ')) == 2:
                     utilities.resample(settings, partial=True)
                     information_error.main()
 
@@ -201,12 +201,8 @@ def main(settings):
             raise RuntimeError('Working directory ' + settings.working_directory + ' does not yet exist, but restart = '
                                'True.')
 
-    # Build threads and move necessary files to working directory
+    # Build or load threads
     allthreads = init_threads(settings)
-    try:
-        shutil.copy(settings.topology, settings.working_directory)
-    except shutil.SameFileError:
-        pass
 
     # Move runtime to working directory
     os.chdir(settings.working_directory)
