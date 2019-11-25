@@ -14,6 +14,7 @@ import numpy
 import pickle
 import copy
 import subprocess
+import warnings
 from statsmodels.tsa import stattools
 
 def check_commit(filename, settings):
@@ -319,6 +320,11 @@ def resample(settings, partial=False):
                     this_basin = 'A'
 
                 # Get CVs for this shooting point
+                if not os.path.exists(thread.history.init_coords[step_index][0]):
+                    warnings.warn('attempted to resample ' + thread.history.init_coords[step_index][0] + ' but no such '
+                                  'file exists in the working directory\nSkipping and continuing', RuntimeWarning)
+                    thread.cvs_for_later.append([])
+                    continue        # skip to next step_index
                 try:
                     this_cvs = get_cvs(thread.history.init_coords[step_index][0], settings)
                 except IndexError:  # getting cv's failed (maybe corrupt coordinate file) so consider this step failed
