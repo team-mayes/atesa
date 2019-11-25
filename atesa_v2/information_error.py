@@ -99,7 +99,7 @@ def main():
     for datalength in datalengths:
         command = 'lmax.py -i as_decorr_' + str(datalength) + '.out -q ' + q_str + ' -f ' + dims + ' -k ' + str(int(len(dims.split(' ')))) + ' -o ' + str(datalength) + '_lmax.out'
         subprocess.check_call(command.split(' '), stdout=sys.stdout, preexec_fn=os.setsid)
-        inf_err = float(pattern.findall(open(str(datalength) + '_redo_lmax.out', 'r').readlines()[-1])[0])
+        inf_err = float(pattern.findall(open(str(datalength) + '_lmax.out', 'r').readlines()[-1])[0])
         open('info_err_temp.out', 'a').write(str(datalength) + ' ' + str(inf_err) + '\n')
 
     # Add information error from previously completed lmax for this length
