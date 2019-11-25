@@ -2,8 +2,9 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="55679143-7654-431c-aee1-71d5375f0f66" name="Default" comment="">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/atesa_v2/utilities.py" afterPath="$PROJECT_DIR$/atesa_v2/utilities.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/docs/index.rst" afterPath="$PROJECT_DIR$/docs/index.rst" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/docs/theory_of_operation.rst" afterPath="$PROJECT_DIR$/docs/theory_of_operation.rst" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -86,7 +87,7 @@
         <entry file="file://$PROJECT_DIR$/atesa_v2/main.py">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="-1101">
-              <caret line="47" column="14" lean-forward="true" selection-start-line="47" selection-start-column="14" selection-end-line="47" selection-end-column="14" />
+              <caret line="47" column="14" lean-forward="false" selection-start-line="47" selection-start-column="14" selection-end-line="47" selection-end-column="14" />
               <folding>
                 <element signature="e#319#329#0" expanded="true" />
               </folding>
@@ -107,8 +108,8 @@
       <file leaf-file-name="utilities.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/atesa_v2/utilities.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="330">
-              <caret line="326" column="61" lean-forward="false" selection-start-line="326" selection-start-column="61" selection-end-line="326" selection-end-column="61" />
+            <state relative-caret-position="304">
+              <caret line="321" column="96" lean-forward="false" selection-start-line="321" selection-start-column="96" selection-end-line="321" selection-end-column="96" />
               <folding>
                 <element signature="e#147#160#0" expanded="true" />
               </folding>
@@ -132,7 +133,7 @@
         <entry file="file://$PROJECT_DIR$/atesa_v2/resample_and_inferr.py">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="90">
-              <caret line="6" column="38" lean-forward="true" selection-start-line="6" selection-start-column="38" selection-end-line="6" selection-end-column="38" />
+              <caret line="6" column="38" lean-forward="false" selection-start-line="6" selection-start-column="38" selection-end-line="6" selection-end-column="38" />
               <folding>
                 <element signature="e#113#126#0" expanded="true" />
               </folding>
@@ -1091,7 +1092,7 @@
     <entry file="file://$PROJECT_DIR$/atesa_v2/resample_and_inferr.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="90">
-          <caret line="6" column="38" lean-forward="true" selection-start-line="6" selection-start-column="38" selection-end-line="6" selection-end-column="38" />
+          <caret line="6" column="38" lean-forward="false" selection-start-line="6" selection-start-column="38" selection-end-line="6" selection-end-column="38" />
           <folding>
             <element signature="e#113#126#0" expanded="true" />
           </folding>
@@ -1101,7 +1102,7 @@
     <entry file="file://$PROJECT_DIR$/atesa_v2/main.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="-1101">
-          <caret line="47" column="14" lean-forward="true" selection-start-line="47" selection-start-column="14" selection-end-line="47" selection-end-column="14" />
+          <caret line="47" column="14" lean-forward="false" selection-start-line="47" selection-start-column="14" selection-end-line="47" selection-end-column="14" />
           <folding>
             <element signature="e#319#329#0" expanded="true" />
           </folding>
@@ -1118,8 +1119,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/atesa_v2/utilities.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="330">
-          <caret line="326" column="61" lean-forward="false" selection-start-line="326" selection-start-column="61" selection-end-line="326" selection-end-column="61" />
+        <state relative-caret-position="304">
+          <caret line="321" column="96" lean-forward="false" selection-start-line="321" selection-start-column="96" selection-end-line="321" selection-end-column="96" />
           <folding>
             <element signature="e#147#160#0" expanded="true" />
           </folding>
