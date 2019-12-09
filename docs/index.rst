@@ -18,6 +18,7 @@ ATESA contains methods to automate initial transition state guessing, flexible l
 
    theory_of_operation
    getting_started
+   the_config_file
    on_termination_criteria
    
 .. toctree::

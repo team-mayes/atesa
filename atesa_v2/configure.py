@@ -14,7 +14,7 @@ from jinja2 import Environment, FileSystemLoader
 import typing
 import pydantic
 
-def configure(input_file):
+def configure(input_file, user_working_directory=''):
     """
     Configure the settings namespace based on the config file.
 
@@ -22,6 +22,8 @@ def configure(input_file):
     ----------
     input_file : str
         Name of the configuration file to read
+    user_working_directory : str
+        User override for working directory (overrides value in input_file), ignored if set to ''
 
     Returns
     -------
@@ -56,7 +58,7 @@ def configure(input_file):
         prod_walltime: str = '02:00:00'
         prod_solver: str = 'sander'
 
-        # Optional settings (defaults will be used if omitted)  # todo: I think I'm adding a lot more defaults?
+        # File path settings (required for all jobs, but do have defaults)
         path_to_input_files: str = sys.path[0] + '/data/input_files'
         path_to_templates: str = sys.path[0] + '/data/templates'
 
@@ -87,6 +89,7 @@ def configure(input_file):
         information_error_freq: int = 250
         information_error_override: bool = False
         information_error_max_dims: int = 6
+        max_moves: int = -1
 
         # Required only for committor analysis
         committor_analysis_n: int = 10
@@ -134,6 +137,10 @@ def configure(input_file):
     config_dict.update(locals())
     settings = argparse.Namespace()
     settings.__dict__.update(Settings(**config_dict))
+
+    # Override working directory if provided with user_working_directory
+    if user_working_directory:
+        settings.working_directory = user_working_directory
 
     # Format directories properly (no trailing '/')
     if settings.working_directory[-1] == '/':

@@ -35,6 +35,8 @@ def check_commit(filename, settings):
 
     """
 
+    # todo: consider adding support for angles and dihedrals
+
     traj = pytraj.iterload(filename, settings.topology)
     commit_flag = ''    # initialize
 

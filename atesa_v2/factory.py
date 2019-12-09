@@ -71,7 +71,7 @@ def jobtype_factory(jobtype_toolkit):
 
     """
 
-    jobtype_toolkits = {'aimless_shooting': jobtype.AimlessShooting, 'committor_analysis': jobtype.CommittorAnalysis, 'equilibrium_path_sampling': jobtype.EquilibriumPathSampling}
+    jobtype_toolkits = {'aimless_shooting': jobtype.AimlessShooting, 'committor_analysis': jobtype.CommittorAnalysis, 'equilibrium_path_sampling': jobtype.EquilibriumPathSampling, 'find_ts': jobtype.FindTS}
 
     if jobtype_toolkit not in jobtype_toolkits.keys():
         raise ValueError('unsupported JobType name: ' + jobtype_toolkit)

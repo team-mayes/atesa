@@ -16,10 +16,10 @@ import time
 import pytraj
 import warnings
 import copy
+import re
 import psutil
 from atesa_v2 import utilities
 from atesa_v2 import main
-from statsmodels.tsa.stattools import kpss
 
 class JobType(abc.ABC):
     """
@@ -432,10 +432,14 @@ class AimlessShooting(JobType):
     def check_termination(self, allthreads, settings):
         global_terminate = False    # initialize
         if self.current_type == ['prod', 'prod']:  # aimless shooting only checks termination after prod steps
-            thread_terminate = ''       # todo: are there termination criteria to implement for aimless shooting threads?
+            thread_terminate = ''
             global_terminate = False
 
-            # Implement information error termination criterion
+            # Implement settings.max_moves thread termination criterion
+            if self.total_moves >= settings.max_moves and settings.max_moves > 0:
+                thread_terminate = 'maximum move limit (' + str(settings.max_moves) + ') reached'
+
+            # Implement information error global termination criterion
             # proc_status variable is used to prevent multiple calls to information_error from occuring at once
             if settings.information_error_checking:
                 len_data = len(open('as_raw.out', 'r').readlines())     # number of shooting points to date
@@ -695,11 +699,14 @@ class EquilibriumPathSampling(JobType):
     """
 
     def get_input_file(self, job_index, settings):
+        if not settings.eps_n_steps % settings.eps_out_freq == 0:
+            raise RuntimeError('eps_n_steps must be evenly divisible by eps_out_freq')
+
         if self.current_type == ['init']:
             return settings.path_to_input_files + '/' + settings.job_type + '_' + self.current_type[job_index] + '_' + settings.md_engine + '.in'
         else:
             if job_index == 0:  # have to roll to determine the number of fwd and bwd steps
-                roll = random.randint(0, settings.eps_n_steps)
+                roll = random.randint(0, int(settings.eps_n_steps/settings.eps_out_freq)) * settings.eps_out_freq  # todo
                 self.history.prod_lens.append([roll, settings.eps_n_steps - roll])
 
             input_file_name = 'eps_' + str(self.history.prod_lens[-1][job_index]) + '.in'
@@ -991,6 +998,352 @@ class EquilibriumPathSampling(JobType):
                 self.history.init_coords[-1].append(utilities.rev_vels(self.history.init_coords[-1][0]))
 
         return running
+
+    def cleanup(self, settings):
+        pass
+
+
+class FindTS(JobType):
+    """
+    Adapter class for finding transition state (find TS)
+    """
+
+    def get_input_file(self, job_index, settings):
+        # In find TS, not only do we want to get the input filename, we also want to store the initial basin and write
+        # the restraint file to push it into the other basin. First, get the basin...
+        commit = utilities.check_commit(self.history.prod_inpcrd[0], settings)
+        if commit == '':
+            raise RuntimeError('the coordinates provided during a find_ts run must represent a structure in either the '
+                               'fwd or bwd basin, but the coordinate file ' + self.history.prod_inpcrd[0] + ' is '
+                               'in neither.\nIf it is a transition state guess, you should set jobtype = '
+                               '\'aimless_shooting\' instead to begin aimless shooting.')
+        elif commit in ['fwd', 'bwd']:
+            self.history.init_basin = commit
+        else:
+            raise RuntimeError('internal error in utilities.check_commit(); did not return valid output with coordinate'
+                               ' file: ' + self.history.prod_inpcrd[0])
+
+        # Then, write the restraint file
+        if self.history.init_basin == 'fwd':
+            other_basin = settings.commit_bwd
+        else:  # == 'bwd', the only other valid option
+            other_basin = settings.commit_fwd
+        mdengine = factory.mdengine_factory(settings.md_engine)
+        input_file = mdengine.write_find_ts_restraint(other_basin, settings.path_to_input_files + '/find_ts_' + settings.md_engine + '.in')
+
+        return input_file
+
+    def get_initial_coordinates(self, settings):
+        if not len(settings.initial_coordinates) == 1:
+            raise RuntimeError('when jobtype = \'find_ts\', initial_coordinates must be of length exactly one')
+
+        for item in settings.initial_coordinates:
+            og_item = item
+            if '/' in item:
+                item = item[item.rindex('/') + 1:]
+            try:
+                shutil.copy(og_item, settings.working_directory + '/' + item)
+            except shutil.SameFileError:
+                pass
+
+        return settings.initial_coordinates
+
+    def check_for_successful_step(self):
+        return True  # nothing to check for in find TS
+
+    def update_history(self, settings, **kwargs):
+        if 'initialize' in kwargs.keys():
+            if kwargs['initialize']:
+                self.history = argparse.Namespace()
+                self.history.prod_inpcrd = []   # one-length list of strings; set by main.init_threads
+                self.history.prod_trajs = []    # list of strings; updated by update_history
+                self.history.prod_result = ''   # string, 'fwd'/'bwd'/''; set by update_results or gatekeeper
+                self.history.init_basin = ''    # string, 'fwd'/'bwd'/''; set by get_inpcrd
+            if 'inpcrd' in kwargs.keys():
+                self.history.prod_inpcrd.append(kwargs['inpcrd'])
+        else:  # self.history should already exist
+            if 'nc' in kwargs.keys():
+                self.history.prod_trajs.append(kwargs['nc'])
+
+    def get_inpcrd(self):
+        return [self.history.prod_inpcrd[0]]
+
+    def gatekeeper(self, settings):
+        for job_index in range(len(self.jobids)):
+            if self.get_status(job_index, settings) == 'R':  # if the job in question is running
+                frame_to_check = self.get_frame(self.history.prod_trajs[-1][job_index], -1, settings)
+                if self.history.init_basin == 'fwd':
+                    commit_basin = 'bwd'
+                else:   # self.history.init_basin = 'bwd'; get_inpcrd only allows for these two values
+                    commit_basin = 'fwd'
+                if frame_to_check and utilities.check_commit(frame_to_check, settings) == commit_basin:  # if it has committed to the opposite basin
+                    self.history.prod_result = commit_basin
+                    self.cancel_job(job_index, settings)  # cancel it
+                    os.remove(frame_to_check)
+
+        # if every job in this thread has status 'C'ompleted/'C'anceled...
+        if all(item == 'C' for item in
+               [self.get_status(job_index, settings) for job_index in range(len(self.jobids))]):
+            return True
+        else:
+            return False
+
+    def get_next_step(self, settings):
+        self.current_type = ['prod']
+        self.current_name = ['ts_guess']
+        return self.current_type, self.current_name
+
+    def get_batch_template(self, type, settings):
+        if type == 'prod':
+            templ = settings.md_engine + '_' + settings.batch_system + '.tpl'
+            if os.path.exists(settings.path_to_templates + '/' + templ):
+                return templ
+            else:
+                raise FileNotFoundError('cannot find required template file: ' + templ)
+        else:
+            raise ValueError('unexpected batch template type for find_ts: ' + str(type))
+
+    def check_termination(self, allthreads, settings):
+        self.terminated = True  # find TS threads always terminate after one step
+        return False            # no global termination criterion exists for find TS
+
+    # todo: execute the entire find TS process from the end of the simulation to the output right here
+    def update_results(self, allthreads, settings):
+        # First, store commitment basin if that didn't get set in gatekeeper
+        if not self.history.prod_result:
+            frame_to_check = self.get_frame(self.history.prod_trajs[-1][job_index], -1, settings)
+            self.history.prod_result = utilities.check_commit(frame_to_check, settings)
+
+        if self.history.init_basin == 'fwd':
+            dir_to_check = 'bwd'
+            other_basin_define = settings.commit_bwd
+        else:  # self.history.init_basin = 'bwd'; get_inpcrd only allows for these two values
+            dir_to_check = 'fwd'
+            other_basin_define = settings.commit_fwd
+
+        if not self.history.prod_result == dir_to_check:
+            raise RuntimeError('find TS failed to commit to the opposite basin from its given initial coordinates. The '
+                               'most likely explanation is that the definition of the target basin ('
+                               + dir_to_check + ') is unsuitable for some reason. Please check the produced '
+                               'trajectory and output file in the working directory (' +
+                               settings.working_directory + ') and either modify the basin definition(s) or the find_ts'
+                               ' input file (' + settings.path_to_input_files + '/find_ts_' + settings.md_engine +
+                               '.in) accordingly.')
+
+        # Now harvest TSs by inspecting values of target-basin-defining bond lengths vs. frame number
+
+        # We need two helper functions to optimize for the portion of the trajectory most likely to contain the TS
+        # There is no need for these functions to be performance-optimized; they will only be used sparingly
+
+        # First just a numerical integrator
+        def my_integral(params, my_list):
+            # Evaluate a numerical integral of the data in list my_list on the range (params[0],params[1]), where the
+            # values in params should be integers referring to indices of my_list.
+            partial_list = my_list[int(params[0]):int(params[1])]
+            return numpy.trapz(partial_list)
+
+        # And then an optimizer to find the bounds (params) of my_integral that maximize its output
+        def my_bounds_opt(objective, data):
+            list_of_bounds = []
+            for left_bound in range(len(data) - 1):
+                for right_bound in range(left_bound + 1, len(data) + 1):
+                    if right_bound - left_bound > 1:
+                        list_of_bounds.append([left_bound, right_bound])
+            output = argparse.Namespace()
+            output.best_max = objective(list_of_bounds[0], data)
+            output.best_bounds = list_of_bounds[0]
+            for bounds in list_of_bounds:
+                this_result = objective(bounds, data)
+                if this_result > output.best_max:
+                    output.best_max = this_result
+                    output.best_bounds = bounds
+            return output
+
+        # We'll also want a helper function for writing the potential transition state frames to individual files
+        def write_ts_guess_frames(traj, frame_indices):
+            ts_guesses = []  # initialize list of transition state guesses to test
+            for frame_index in frame_indices:
+                pytraj.write_traj(self.name + '_ts_guess_' + str(frame_index) + '.rst7', traj,
+                                  frame_indices=[frame_index], options='multi', overwrite=True)
+                try:
+                    os.rename(self.name + '_ts_guess_' + str(frame_index) + '.rst7.1',
+                              self.name + '_ts_guess_' + str(frame_index) + '.rst7')
+                except FileNotFoundError:
+                    if not os.path.exists(self.name + '_ts_guess_' + str(frame_index) + '.rst7'):
+                        raise RuntimeError(
+                            'Error: attempted to write file ' + self.name + '_ts_guess_' + str(frame_index)
+                            + '.rst7, but was unable to. Please ensure that you have '
+                              'permission to write to the working directory: ' + settings.working_directory)
+                ts_guesses.append(self.name + '_ts_guess_' + str(frame_index) + '.rst7')
+
+            return ts_guesses
+
+        # Now we measure the relevant bond lengths for each frame in the trajectory
+        traj = pytraj.iterload(self.history.prod_trajs[0], settings.topology)
+        this_lengths = []
+        for def_index in range(len(other_basin_define[0])):
+            # Each iteration appends a list of the appropriate distances to this_lengths
+            this_lengths.append(pytraj.distance(traj, mask='@' + other_basin_define[0][def_index] +
+                                                           ' @' + other_basin_define[1][def_index]))
+
+        # Now look for the TS by identifying the region in the trajectory with all of the bond lengths at intermediate
+        # values (which we'll define as 0.25 < X < 0.75 on a scale of 0 to 1), preferably for several frames in a row.
+        norm_lengths = []       # initialize list of normalized (between 0 and 1) lengths
+        scored_lengths = []     # initialize list of scores based on lengths
+        for lengths in this_lengths:
+            normd = [(this_len - min(lengths)) / (max(lengths) - min(lengths)) for this_len in lengths]
+            norm_lengths.append(normd)
+            scored_lengths.append([(-(this_len - 0.5) ** 2 + 0.0625) for this_len in normd])  # scored on parabola
+        sum_of_scores = []
+        for frame_index in range(len(scored_lengths[0])):  # sum together scores from each distance at each frame
+            sum_of_scores.append(sum([[x[i] for x in scored_lengths] for i in range(len(scored_lengths[0]))][frame_index]))
+
+        # Now I want to find the boundaries between which the TS is most likely to reside. To do this I'll perform a 2D
+        # optimization on the integral to find the continuous region that is most positively scored
+        opt_result = my_bounds_opt(my_integral, sum_of_scores)
+
+        # If all of sum_of_scores is negative we still want to find a workable max. Also, if there are fewer than five
+        # candidate frames we want to test more than that. Either way, shift scores up by 0.1 and try again:
+        while opt_result.best_max <= 0 or int(opt_result.best_bounds[1] - opt_result.best_bounds[0]) < 5:
+            sum_of_scores = [(item + 0.1) for item in sum_of_scores]
+            opt_result = my_bounds_opt(my_integral, sum_of_scores)
+
+        # opt_result.best_bounds now contains the frame indices bounding the region of interest. I want to use pytraj to
+        # extract each of these frames as a .rst7 coordinate file and return their names. I'll put a cap on the number
+        # of frames that this is done for at, say, 50, so as to avoid somehow ending up with a huge number of candidate
+        # TS structures to test.
+
+        if int(opt_result.best_bounds[1] - opt_result.best_bounds[0] + 1) > 50:
+            # The best-fit for evenly spacing 50 frames from the bounded region
+            frame_indices = [int(ii) for ii in numpy.linspace(opt_result.best_bounds[0], opt_result.best_bounds[1], 50)]
+        else:   # number of frames in bounds <= 50, so we'll take all of them
+            frame_indices = [int(ii) for ii in range(opt_result.best_bounds[0], opt_result.best_bounds[1]+1)]
+
+        ts_guesses = write_ts_guess_frames(traj, frame_indices)
+
+        ### Here, we do something pretty weird. We want to test the transition state guesses in the ts_guesses list
+        ### using aimless shooting, but this isn't an aimless shooting job. So we'll write a new settings object using
+        ### the extant one for a template and call main.main() with settings.jobtype = 'aimless_shooting'. Then, we'll
+        ### take back control here and use the resulting files to decide what to do next.
+
+        # First, set up the new settings object
+        as_settings = settings
+        as_settings.initial_coordinates = ts_guesses
+        as_settings.working_directory += '/as_test'     # run in a new subdirectory of the current working directory
+        as_settings.jobtype = 'aimless_shooting'
+        as_settings.max_moves = 10
+        as_settings.restart = False
+        as_settings.overwrite = True    # in case this is a repeat attempt
+        as_settings.cvs = []            # don't need any CVs for this, but this needs to be set to something
+        as_settings.resample = False    # just to be safe
+        as_settings.information_error_checking = False
+
+        # Because one of the branches below involves repeating this step an unknown (but finite!) number of times, we'll
+        # put the whole thing in a while loop controlled by a simple boolean variable.
+        not_finished = True
+
+        while not_finished and as_settings.initial_coordinates:     # second condition to ensure initial_coordinates exists
+            # Now call main.main() with the new settings object
+            main.main(as_settings)   # todo: maybe clean this up sometime for intelligibility
+            os.chdir(settings.working_directory)    # chdir back to original working directory
+
+            # Decide what to do next based on the contents of the status.txt file in the new working directory
+            if not os.path.exists(as_settings.working_directory + '/status.txt'):
+                raise FileNotFoundError('attempted to test transition state guesses in working directory ' +
+                                        as_settings.working_directory + ', but the aimless shooting job ended without '
+                                        'producing a status.txt file')
+            status_lines = open(as_settings.working_directory + '/status.txt', 'r').readlines()
+            pattern = re.compile('[0-9.]+\%')
+            ratios = []
+            names = []
+            for line in status_lines:
+                if '%' in line:
+                    accept_ratio = float(pattern.findall(line)[0].replace('%', ''))/100     # acceptance as a fraction
+                    thread_name = line[0:line.index(' ')]
+                    ratios.append(accept_ratio)
+                    names.append(thread_name)
+
+            if True in [ratio > 0 for ratio in ratios]:     # successful run, so return results and exit
+                final_names = []
+                for line_index in range(len(ratios)):
+                    if ratios[line_index] > 0:
+                        final_names.append(names[line_index])
+                print('Found working transition state guess(es):\n' + '\n'.join(final_names) + '\nSee ' +
+                      as_settings.working_directory + '/status.txt for more information')
+                not_finished = False
+                continue
+            else:       # not so straightforward; this case requires diagnosis
+                # Our primary diagnostic tool: the thread.history attributes from the aimless shooting threads
+                as_threads = pickle.load(open(as_settings.working_directory + '/restart.pkl', 'rb'))
+
+                # First option: examples of fwd and bwd results found within the same thread indicate that it is a TS,
+                # if a poor one; return it and exit
+                final_names = []
+                for thread in as_threads:
+                    reformatted_results = ' '.join([res[0] + ' ' + res[1] for res in thread.history.prod_results])
+                    if 'fwd' in reformatted_results and 'bwd' in reformatted_results:
+                        final_names.append(thread.history.init_inpcrd[0])   # to match format in status.txt and be maximally useful
+                if final_names:
+                    print('Found working transition state guess(es):\n' + '\n'.join(final_names) + '\nSee ' +
+                          as_settings.working_directory + '/status.txt for more information (acceptance probabilities '
+                          'very low; consider trying again with revised basin definitions for better results)')
+                    not_finished = False
+                    continue
+
+                # Next option: there are only examples of commitment in a single direction. In this case, we want to
+                # move the window of test frames over in the appropriate direction and run aimless shooting again
+                reformatted_results = ''
+                for thread in as_threads:
+                    reformatted_results += ' '.join([res[0] + ' ' + res[1] for res in thread.history.prod_results]) + ' '
+
+                if 'fwd' in reformatted_results and not 'bwd' in reformatted_results:       # went to 'fwd' only
+                    ts_guesses = []  # re-initialize list of transition state guesses to test
+                    if dir_to_check == 'fwd':   # restraint target was 'fwd' so shift to the left (earlier frames)
+                        frame_indices = [frame_index - (max(frame_indices) - min(frame_indices)) - 1 for frame_index in frame_indices if frame_index - (max(frame_indices) - min(frame_indices)) - 1 >= 0]
+                    if dir_to_check == 'bwd':   # restraint target was 'bwd' so shift to the right (later frames)
+                        frame_indices = [frame_index + (max(frame_indices) - min(frame_indices)) + 1 for frame_index in frame_indices if frame_index + (max(frame_indices) - min(frame_indices)) + 1 < traj.n_frames]
+
+                    ts_guesses = write_ts_guess_frames(traj, frame_indices)
+
+                elif 'bwd' in reformatted_results and not 'fwd' in reformatted_results:     # went to 'bwd' only
+                    ts_guesses = []  # re-initialize list of transition state guesses to test
+                    if dir_to_check == 'bwd':   # restraint target was 'bwd' so shift to the left (earlier frames)
+                        frame_indices = [frame_index - (max(frame_indices) - min(frame_indices)) - 1 for frame_index in frame_indices if frame_index - (max(frame_indices) - min(frame_indices)) - 1 >= 0]
+                    if dir_to_check == 'fwd':   # restraint target was 'fwd' so shift to the right (later frames)
+                        frame_indices = [frame_index + (max(frame_indices) - min(frame_indices)) + 1 for frame_index in frame_indices if frame_index + (max(frame_indices) - min(frame_indices)) + 1 < traj.n_frames]
+
+                    ts_guesses = write_ts_guess_frames(traj, frame_indices)
+
+                # Final option: two possibilities remain here...
+                else:
+                    if not 'fwd' in reformatted_results and not 'bwd' in reformatted_results:   # no commitment at all
+                        raise RuntimeError('no commitments to either basin were observed during aimless shooting.\n'
+                                           'The restraint in the barrier crossing simulation appears to have broken the'
+                                           ' system in some way, so either try changing your target commitment basin '
+                                           'definition and restarting, or you’ll have to use another method to obtain '
+                                           'an initial transition state.')
+                    else:   # 'fwd' and 'bwd' were both found, but not within a single thread
+                        raise RuntimeError('commitments to both the forward and backward basins were observed, but not '
+                                           'from any single transition state candidate.\nThe most likely explanation is'
+                                           ' that the transition state region is very narrow and lies between two '
+                                           'frames in the barrier crossing simulation. Try increasing the frame output '
+                                           'frequency or reducing the step size in ' + settings.path_to_input_files +
+                                           '/find_ts_' + settings.md_engine + '.in. Alternatively, try adjusting the '
+                                           'basin definitions in the config file.')
+
+                # This block only reached if there were only commitments in one direction
+                as_settings.initial_coordinates = ts_guesses
+                continue    # not_finished = True, so loop will repeat with new initial_coordinates
+
+        if not_finished:    # loop exited because no further ts_guesses were available to test
+            raise RuntimeError('transition state guessing was unable to identify a working transition state due to even'
+                               ' extreme frames in the barrier crossing simulation failing to commit to the desired '
+                               'basin during aimless shooting.\nThe most likely explanation is that one or both basin '
+                               'definitions are too loose (states that are not yet truly committed to one or both '
+                               'basins are being wrongly identified as committed) or are simply wrong.')
+
+    def algorithm(self, allthreads, running, settings):
+        return running  # nothing to set because there is no next step
 
     def cleanup(self, settings):
         pass

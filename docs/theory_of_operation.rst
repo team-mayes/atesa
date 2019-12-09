@@ -27,10 +27,14 @@ ATESA automates the aimless shooting process with a system of independent “thr
 
 ATESA also features a suite of analysis and utility tools that run in much the same fashion. Most importantly, once aimless shooting has been completed (see :ref:`OnTerminationCriteria`), ATESA automates likelihood maximization to mine the data for a reaction coordinate that describes the transition path, committor analysis to verify that reaction coordinate, and equilibrium path sampling to obtain the free energy profile along it.
 
+.. _LikelihoodMaximization:
+
 Likelihood Maximization
 -----------------------
 
 The product of aimless shooting is a (large) set of combined variable (CV) values paired with corresponding commitment basins (products or reactants). In order to convert this information into a usable form, the method of likelihood maximization can be used to select a model that describes the reaction progress in terms of relatively few parameters. ATESA uses the intertial likelihood maximization procedure first published in `Peters 2012 <https://doi.org/10.1016/j.cplett.2012.10.051>`_.
+
+.. _CommittorAnalysis:
 
 Committor Analysis
 ------------------

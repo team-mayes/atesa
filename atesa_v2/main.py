@@ -179,7 +179,8 @@ def main(settings):
     temp_settings.__dict__.pop('env')               # env attribute is not picklable
     pickle.dump(temp_settings, open('settings.pkl', 'wb'), protocol=2)
 
-    if settings.resample:
+    # Implement resample
+    if settings.job_type == 'aimless_shooting' and settings.resample:
         utilities.resample(settings, partial=False)
         if settings.information_error_checking:
             information_error.main()
@@ -187,7 +188,7 @@ def main(settings):
 
     # Make working directory if it does not exist, handling overwrite and restart as needed
     if os.path.exists(settings.working_directory):
-        if settings.overwrite:
+        if settings.overwrite and not settings.restart:
             shutil.rmtree(settings.working_directory)
             os.mkdir(settings.working_directory)
         elif not settings.restart:
@@ -236,6 +237,11 @@ def main(settings):
 
 if __name__ == "__main__":
     # Obtain settings namespace, initialize threads, and move promptly into main.
-    settings = configure.configure(sys.argv[1]) #'data/atesa.config')
+    try:
+        working_directory = sys.argv[2]
+    except IndexError:
+        working_directory = ''
+    settings = configure.configure(sys.argv[1], working_directory)
     exit_message = main(settings)
     print(exit_message)
+    sys.exit()

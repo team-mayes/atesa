@@ -37,8 +37,8 @@ QM run to pull initial structure from one basin to the other for find_ts > 0
  &end
  &wt
   type="REST",
-  istep1=1001,					! Equal to istep1 above, plus 1
-  istep2=2000,					! Equal to nstlim
+  istep1=1001,
+  istep2=2000,
   value1=1,
   value2=1,
  &end

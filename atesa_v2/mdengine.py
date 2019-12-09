@@ -39,6 +39,26 @@ class MDEngine(abc.ABC):
         """
         pass
 
+    @abc.abstractmethod
+    def write_find_ts_restraint(self, basin, inp_file):
+        """
+        Return the input file for a restrained simulation that performs barrier crossing in find_ts
+
+        Parameters
+        ----------
+        basin : tuple
+            Either settings.commit_fwd or settings.commit_bwd, defining the basin to restrain towards
+        inp_file : str
+            Name of original input file without restraint
+
+        Returns
+        -------
+        input_file : str
+            Name of the simulation input file
+
+        """
+        pass
+
 
 class AdaptAmber(MDEngine):
     """
@@ -80,3 +100,27 @@ class AdaptAmber(MDEngine):
 
         return new_restart_name
 
+    def write_find_ts_restraint(self, basin, inp_file):
+        # Writing an amber-style restraint file from scratch
+        open('find_ts_restraints.disang', 'w').write('')  # initialize file
+        with open('find_ts_restraints.disang', 'a') as f:
+            f.write('DISANG restraint file produced by ATESA with find_ts > 0 to produce transition state guesses\n')
+            for def_index in range(len(basin[0])):
+                extra = 0  # additional distance to add to basin definition to push *into* basin rather than to its edge
+                if basin[3][def_index] == 'lt':
+                    extra = -0.1 * basin[2][def_index]  # minus 10% # todo: this doesn't work for negative angles/dihedrals (moves them towards zero instead of "more negative"), which is fine for now since angles and dihedrals are not yet supported
+                elif basin[3][def_index] == 'gt':
+                    extra = 0.1 * basin[2][def_index]   # plus 10%
+                else:
+                    raise RuntimeError('entries in the last list in commitment definitions (commit_fwd and commit_bwd) '
+                                       'must be either \'lt\' (less than) or \'gt\' (greater than)')
+
+                f.write(' &rst\n')
+                f.write('  iat=' + basin[0][def_index][1:] + ',' + basin[1][def_index][1:] + ',\n')
+                f.write('  r1=0, r2=' + str(basin[2][def_index] + extra) + \
+                        ', r3=' + str(basin[2][def_index] + extra) + \
+                        ', r4=' + str(basin[2][def_index] + extra + 2) + ',\n')
+                f.write('  rk2=500, rk3=500,\n')
+                f.write(' &end\n')
+
+        return inp_file     # unmodified, as find_ts_amber already includes the reference to find_ts_restraints.disang
