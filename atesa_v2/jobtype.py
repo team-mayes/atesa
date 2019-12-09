@@ -1030,7 +1030,7 @@ class FindTS(JobType):
         else:  # == 'bwd', the only other valid option
             other_basin = settings.commit_fwd
         mdengine = factory.mdengine_factory(settings.md_engine)
-        input_file = mdengine.write_find_ts_restraint(other_basin, settings.path_to_input_files + '/find_ts_' + settings.md_engine + '.in')
+        input_file = mdengine.write_find_ts_restraint(None, other_basin, settings.path_to_input_files + '/find_ts_' + settings.md_engine + '.in')
 
         return input_file
 
