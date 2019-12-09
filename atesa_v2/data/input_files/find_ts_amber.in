@@ -1,4 +1,4 @@
-QM run to pull initial structure from one basin to the other for find_ts > 0
+QM run to pull initial structure from one basin to the other for find_ts
  &cntrl
   imin=0,
   ioutfm=1,						!netCDF output format

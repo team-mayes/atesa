@@ -20,6 +20,7 @@ import re
 import psutil
 from atesa_v2 import utilities
 from atesa_v2 import main
+from atesa_v2 import factory
 
 class JobType(abc.ABC):
     """

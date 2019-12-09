@@ -63,18 +63,18 @@ def configure(input_file, user_working_directory=''):
         path_to_templates: str = sys.path[0] + '/data/templates'
 
         # Required only for aimless shooting, equilibrium path sampling, and committor analysis
-        cvs: typing.List[str]
+        cvs: typing.List[str] = ['']
         include_qdot: bool = True
 
         # Required only for aimless shooting and equilibrium path sampling
-        initial_coordinates: typing.List[str]
+        initial_coordinates: typing.List[str] = ['']
 
         # Required only for aimless shooting and committor analysis
-        commit_fwd: typing.Tuple[typing.List[int], typing.List[int], typing.List[float], typing.List[str]]
-        commit_bwd: typing.Tuple[typing.List[int], typing.List[int], typing.List[float], typing.List[str]]
+        commit_fwd: typing.Tuple[typing.List[int], typing.List[int], typing.List[float], typing.List[str]] = ([-1], [-1], [-1], ['unset'])
+        commit_bwd: typing.Tuple[typing.List[int], typing.List[int], typing.List[float], typing.List[str]] = ([-1], [-1], [-1], ['unset'])
 
         # Required only for committor analysis and equilibrium path sampling
-        rc_definition: str
+        rc_definition: str = ''
         as_out_file: str = 'as.out'
         rc_reduced_cvs: bool = True
 
