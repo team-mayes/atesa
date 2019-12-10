@@ -42,7 +42,7 @@ for data_length in range(750, 7500 + 750, 750):
 
     # Finally, call committor analysis on the collected shooting points and collect the results into an output file
     comana_settings = settings
-    comana_settings.jobtype = 'committor_analysis'
+    comana_settings.job_type = 'committor_analysis'
     comana_settings.committor_analysis_n = 10
     comana_settings.committor_analysis_use_rc_out = False
     comana_settings.rc_threshold = 0.05

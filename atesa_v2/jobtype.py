@@ -1232,7 +1232,7 @@ class FindTS(JobType):
         as_settings = settings
         as_settings.initial_coordinates = ts_guesses
         as_settings.working_directory += '/as_test'     # run in a new subdirectory of the current working directory
-        as_settings.jobtype = 'aimless_shooting'
+        as_settings.job_type = 'aimless_shooting'
         as_settings.max_moves = 10
         as_settings.restart = False
         as_settings.overwrite = True    # in case this is a repeat attempt
