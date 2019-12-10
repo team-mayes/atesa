@@ -1112,7 +1112,7 @@ class FindTS(JobType):
     def update_results(self, allthreads, settings):
         # First, store commitment basin if that didn't get set in gatekeeper
         if not self.history.prod_result:
-            frame_to_check = self.get_frame(self.history.prod_trajs[-1][job_index], -1, settings)
+            frame_to_check = self.get_frame(self.history.prod_trajs[-1], -1, settings)
             self.history.prod_result = utilities.check_commit(frame_to_check, settings)
 
         if self.history.init_basin == 'fwd':
@@ -1184,8 +1184,8 @@ class FindTS(JobType):
         this_lengths = []
         for def_index in range(len(other_basin_define[0])):
             # Each iteration appends a list of the appropriate distances to this_lengths
-            this_lengths.append(pytraj.distance(traj, mask='@' + other_basin_define[0][def_index] +
-                                                           ' @' + other_basin_define[1][def_index]))
+            this_lengths.append(pytraj.distance(traj, mask='@' + str(other_basin_define[0][def_index]) +
+                                                           ' @' + str(other_basin_define[1][def_index])))
 
         # Now look for the TS by identifying the region in the trajectory with all of the bond lengths at intermediate
         # values (which we'll define as 0.25 < X < 0.75 on a scale of 0 to 1), preferably for several frames in a row.
