@@ -25,7 +25,7 @@ ATESA
 
 ATESA automates the aimless shooting process with a system of independent “threads” representing one particular path in the search through phase space. A thread has a given set of initial coordinates, which it repeatedly “shoots” until it finds a successful reactive trajectory, at which point it picks a new shooting point on the reactive trajectory and continues. Because threads run entirely in parallel, aimless shooting with ATESA scales perfectly so long as sufficient computational resources are available.
 
-ATESA also features a suite of analysis and utility tools that run in much the same fashion. Most importantly, once aimless shooting has been completed (see :ref:`OnTerminationCriteria`), ATESA automates likelihood maximization to mine the data for a reaction coordinate that describes the transition path, committor analysis to verify that reaction coordinate, and equilibrium path sampling to obtain the free energy profile along it.
+ATESA also features a suite of analysis and utility tools that run in much the same fashion. Most importantly, once aimless shooting has been completed (see :ref:`OnTerminationCriteria`), ATESA can be used to automate likelihood maximization to mine the data for a reaction coordinate that describes the transition path, committor analysis to verify that reaction coordinate, and equilibrium path sampling to obtain the free energy profile along it.
 
 .. _LikelihoodMaximization:
 

@@ -707,7 +707,7 @@ class EquilibriumPathSampling(JobType):
             return settings.path_to_input_files + '/' + settings.job_type + '_' + self.current_type[job_index] + '_' + settings.md_engine + '.in'
         else:
             if job_index == 0:  # have to roll to determine the number of fwd and bwd steps
-                roll = random.randint(0, int(settings.eps_n_steps/settings.eps_out_freq)) * settings.eps_out_freq  # todo
+                roll = random.randint(0, int(settings.eps_n_steps/settings.eps_out_freq)) * settings.eps_out_freq  # todo: this sometimes leads to submitting jobs with length zero! Any way to preclude them?
                 self.history.prod_lens.append([roll, settings.eps_n_steps - roll])
 
             input_file_name = 'eps_' + str(self.history.prod_lens[-1][job_index]) + '.in'
@@ -870,12 +870,13 @@ class EquilibriumPathSampling(JobType):
             self.history.prod_results[-1].append(utilities.evaluate_rc(settings.rc_definition, cvs))
             # Then, add results from fwd and then bwd trajectories, frame-by-frame
             for job_index in range(len(self.current_type)):
-                n_frames = pytraj.iterload(self.history.prod_trajs[-1][job_index], settings.topology).n_frames
-                for frame in range(n_frames):
-                    frame_to_check = self.get_frame(self.history.prod_trajs[-1][job_index], frame + 1, settings)
-                    cvs = utilities.get_cvs(frame_to_check, settings, reduce=settings.rc_reduced_cvs).split(' ')
-                    self.history.prod_results[-1].append(utilities.evaluate_rc(settings.rc_definition, cvs))
-                    os.remove(frame_to_check)
+                if self.history.prod_lens[-1][job_index] > 0:
+                    n_frames = pytraj.iterload(self.history.prod_trajs[-1][job_index], settings.topology).n_frames
+                    for frame in range(n_frames):
+                        frame_to_check = self.get_frame(self.history.prod_trajs[-1][job_index], frame + 1, settings)
+                        cvs = utilities.get_cvs(frame_to_check, settings, reduce=settings.rc_reduced_cvs).split(' ')
+                        self.history.prod_results[-1].append(utilities.evaluate_rc(settings.rc_definition, cvs))
+                        os.remove(frame_to_check)
             self.total_moves += 1
             if True in [self.history.bounds[0] <= rc_value <= self.history.bounds[1] for rc_value in self.history.prod_results[-1]]:
                 self.history.last_accepted = int(len(self.history.prod_trajs) - 1)   # new index of last accepted move
