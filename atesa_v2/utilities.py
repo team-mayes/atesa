@@ -257,7 +257,7 @@ def evaluate_rc(rc_definition, cv_list):
 
     # Fill in CV[X] slots with corresponding values from cv_list
     for i in reversed(range(len(cv_list))):     # reversed so that e.g. CV10 doesn't get interpreted as '[CV1]0'
-        rc_definition = rc_definition.replace('CV' + str(i), str(cv_list[i]))
+        rc_definition = rc_definition.replace('CV' + str(i + 1), str(cv_list[i]))
 
     # Evaluate the filled-in rc_definition and return the result
     return eval(rc_definition)

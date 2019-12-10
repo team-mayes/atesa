@@ -359,7 +359,7 @@ class AimlessShooting(JobType):
             if kwargs['initialize']:
                 self.history = argparse.Namespace()
                 self.history.init_inpcrd = []       # list of strings, inpcrd for init steps; initialized by main.init_threads and updated by algorithm
-                self.history.init_coords = []       # list of 2-length lists of strings, init [_fwd.rst7, _bwd.rst7]; updated by update_history and then in algorithm
+                self.history.init_coords = []       # list of 2-length lists of strings, init[_fwd.rst7, _bwd.rst7]; updated by update_history and then in algorithm
                 self.history.prod_trajs = []        # list of 2-length lists of strings, [_fwd.nc, _bwd.nc]; updated by update_history
                 self.history.prod_results = []      # list of 2-length lists of strings ['fwd'/'bwd'/'', 'fwd'/'bwd'/'']; updated by update_results
                 self.history.last_accepted = -1     # int, index of last accepted prod_trajs entry; updated by update_results (-1 means none yet accepted)
@@ -707,7 +707,7 @@ class EquilibriumPathSampling(JobType):
             return settings.path_to_input_files + '/' + settings.job_type + '_' + self.current_type[job_index] + '_' + settings.md_engine + '.in'
         else:
             if job_index == 0:  # have to roll to determine the number of fwd and bwd steps
-                roll = random.randint(0, int(settings.eps_n_steps/settings.eps_out_freq)) * settings.eps_out_freq  # todo: this sometimes leads to submitting jobs with length zero! Any way to preclude them?
+                roll = random.randint(0, int(settings.eps_n_steps/settings.eps_out_freq)) * settings.eps_out_freq
                 self.history.prod_lens.append([roll, settings.eps_n_steps - roll])
 
             input_file_name = 'eps_' + str(self.history.prod_lens[-1][job_index]) + '.in'
