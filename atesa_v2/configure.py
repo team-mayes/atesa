@@ -113,7 +113,8 @@ def configure(input_file, user_working_directory=''):
         # Not expected to be set by user
         DEBUG: bool = False     # True causes some functions to return dummy values for testing purposes
         pid: int = -1           # Process ID of information_error call used in aimless shooting
-        information_error_overdue : bool = False    # Used for handling information_error calls cleanly
+        information_error_overdue: bool = False    # Used for handling information_error calls cleanly
+        dont_dump: bool = False     # When True, prevents dumping settings to settings.pkl
 
     # Import config file line-by-line using exec()
     try:

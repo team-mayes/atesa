@@ -1239,6 +1239,7 @@ class FindTS(JobType):
         as_settings.cvs = []            # don't need any CVs for this, but this needs to be set to something
         as_settings.resample = False    # just to be safe
         as_settings.information_error_checking = False
+        as_settings.dont_dump = True
 
         # Because one of the branches below involves repeating this step an unknown (but finite!) number of times, we'll
         # put the whole thing in a while loop controlled by a simple boolean variable.

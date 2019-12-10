@@ -53,6 +53,7 @@ for data_length in range(750, 7500 + 750, 750):
     comana_settings.restart = False
     comana_settings.overwrite = True
     comana_settings.working_directory += '/comana_' + str(data_length)
+    comana_settings.dont_dump = True
 
     main.main(comana_settings)
 
