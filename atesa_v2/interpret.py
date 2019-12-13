@@ -31,7 +31,7 @@ def interpret(thread, allthreads, running, settings):
     jobtype = factory.jobtype_factory(settings.job_type)
     termination = False
 
-    if jobtype.check_for_successful_step(thread):                               # ensure this step did not crash/fail
+    if jobtype.check_for_successful_step(thread, settings):                     # ensure this step did not crash/fail
         jobtype.update_results(thread, allthreads, settings)                    # update results as needed
         termination = jobtype.check_termination(thread, allthreads, settings)   # check global termination criteria
     running = jobtype.algorithm(thread, allthreads, running, settings)          # set thread parameters for next step

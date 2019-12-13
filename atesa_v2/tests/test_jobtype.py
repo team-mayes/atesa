@@ -232,9 +232,9 @@ class Tests(object):
         allthreads[0].current_type = ['init']
         allthreads[0].history.init_coords = [['some_init_coords.rst7']]
         jobtype = factory.jobtype_factory(settings.job_type)
-        assert jobtype.check_for_successful_step(allthreads[0]) == False    # necessary file does not yet exist
+        assert jobtype.check_for_successful_step(allthreads[0], settings) == False    # necessary file does not yet exist
         shutil.copy('../test_data/test.rst7', 'some_init_coords.rst7')      # make the necessary file
-        assert jobtype.check_for_successful_step(allthreads[0]) == True     # necessary file exists
+        assert jobtype.check_for_successful_step(allthreads[0], settings) == True     # necessary file exists
 
     def test_get_next_step_aimless_shooting_init(self):
         """Tests thread.get_next_step with job_type = 'aimless_shooting' and type = ['init']"""
@@ -263,11 +263,11 @@ class Tests(object):
         allthreads[0].current_type = ['prod', 'prod']
         allthreads[0].history.prod_trajs = [['some_prod_traj_1.nc', 'some_prod_traj_2.nc']]
         jobtype = factory.jobtype_factory(settings.job_type)
-        assert jobtype.check_for_successful_step(allthreads[0]) == False    # necessary files do not yet exist
+        assert jobtype.check_for_successful_step(allthreads[0], settings) == False    # necessary files do not yet exist
         shutil.copy('../test_data/test.nc', 'some_prod_traj_1.nc')          # make one necessary file
-        assert jobtype.check_for_successful_step(allthreads[0]) == False    # still missing one
+        assert jobtype.check_for_successful_step(allthreads[0], settings) == False    # still missing one
         shutil.copy('../test_data/test.nc', 'some_prod_traj_2.nc')          # make other necessary file
-        assert jobtype.check_for_successful_step(allthreads[0]) == True     # both files exist
+        assert jobtype.check_for_successful_step(allthreads[0], settings) == True     # both files exist
 
     def test_get_batch_file_aimless_shooting_amber(self):
         """Tests thread.get_batch_template with job_type = 'aimless_shooting' and md_engine = 'amber'"""
@@ -437,6 +437,7 @@ class Tests(object):
         allthreads = main.init_threads(settings)
         allthreads[0].current_type = ['prod', 'prod']
         allthreads[0].history.prod_trajs = [['../test_data/test.nc', '../test_data/test.nc']]
+        allthreads[0].history.prod_lens = [[2, 2]]
         allthreads[0].history.init_coords = [['../test_data/test_velocities.rst7', '../test_data/test_velocities.rst7']]
         jobtype = factory.jobtype_factory(settings.job_type)
         jobtype.update_results(allthreads[0], allthreads, settings)
@@ -452,6 +453,7 @@ class Tests(object):
         allthreads = main.init_threads(settings)
         allthreads[0].current_type = ['prod', 'prod']
         allthreads[0].history.prod_trajs = [['../test_data/test.nc', '../test_data/test.nc']]
+        allthreads[0].history.prod_lens = [[2, 2]]
         allthreads[0].history.init_coords = [['../test_data/test_velocities.rst7', '../test_data/test_velocities.rst7']]
         jobtype = factory.jobtype_factory(settings.job_type)
         jobtype.update_results(allthreads[0], allthreads, settings)
@@ -498,7 +500,7 @@ class Tests(object):
         settings.rc_reduced_cvs = False
         settings.include_qdot = False
         settings.cvs = ['pytraj.distance(traj, \'@1 @2\')[0]', 'pytraj.angle(traj, \'@2 @3 @4\')[0]']
-        settings.rc_definition = '1.00 + 2.34*CV0 - 0.67*CV1'
+        settings.rc_definition = '1.00 + 2.34*CV1 - 0.67*CV2'
         settings.initial_coordinates = ['../test_data/test.rst7']
         with pytest.raises(RuntimeError):
             allthreads = main.init_threads(settings)
@@ -712,7 +714,7 @@ def config_equilibrium_path_sampling():
     settings.rc_reduced_cvs = False
     settings.include_qdot = False
     settings.cvs = ['pytraj.distance(traj, \'@1 @2\')[0]', 'pytraj.angle(traj, \'@2 @3 @4\')[0]']
-    settings.rc_definition = '1.00 + 2.34*CV0 - 0.67*CV1'
+    settings.rc_definition = '1.00 + 2.34*CV1 - 0.67*CV2'
     settings.initial_coordinates = ['../test_data/test.rst7']
 
     return settings

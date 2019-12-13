@@ -35,7 +35,7 @@ class Tests(object):
 
         # First test without extant settings.pkl file
         with pytest.raises(FileNotFoundError):
-            rc_eval.main('../test_temp/', '3*CV0 - 0.3*CV1')
+            rc_eval.main('../test_temp/', '3*CV1 - 0.3*CV2')
         process = subprocess.Popen('rc_eval.py ../test_temp/ \'3*CV0 - 0.3*CV1\'', stdin=subprocess.PIPE,
                                    stdout=subprocess.PIPE, stderr=subprocess.STDOUT, close_fds=True, shell=True)
         output = process.stdout.read().decode()
@@ -44,7 +44,7 @@ class Tests(object):
         settings.__dict__.pop('env')    # env attribute is not picklable
         pickle.dump(settings, open('settings.pkl', 'wb'), protocol=2)   # main will look for this file to load in settings
         # shutil.move('settings.pkl', '../test_data/settings.pkl')
-        rc_eval.main('../test_temp/', '3*CV0 - 0.3*CV1')
+        rc_eval.main('../test_temp/', '3*CV1 - 0.3*CV2')
         assert os.path.exists('rc.out')
         lines = open('rc.out', 'r').readlines()
         for i in range(len(lines)):

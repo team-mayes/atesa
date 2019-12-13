@@ -78,7 +78,7 @@ class JobType(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def check_for_successful_step(self):
+    def check_for_successful_step(self, settings):
         """
         Check whether a just-completed step was successful, as defined by whether the update_results and
         check_termination methods should be run.
@@ -92,6 +92,8 @@ class JobType(abc.ABC):
         ----------
         self : Thread
             Methods in the JobType abstract base class are intended to be invoked by Thread objects
+        settings : argparse.Namespace
+            Settings namespace object
 
         Returns
         -------
@@ -345,7 +347,7 @@ class AimlessShooting(JobType):
                     pass
         return list_to_return
 
-    def check_for_successful_step(self):
+    def check_for_successful_step(self, settings):
         if self.current_type == ['init']:   # requires that self.history.init_coords[-1] exists
             if os.path.exists(self.history.init_coords[-1][0]):
                 self.history.consec_fails = 0
@@ -627,7 +629,7 @@ class CommittorAnalysis(JobType):
             except AttributeError:
                 raise RuntimeError('committor_analysis_use_rc_out = False, but initial_coordinates was not provided.')
 
-    def check_for_successful_step(self):
+    def check_for_successful_step(self, settings):
         return True     # nothing to check for in committor analysis
 
     def update_history(self, settings, **kwargs):
@@ -753,7 +755,7 @@ class EquilibriumPathSampling(JobType):
                 pass
         return settings.initial_coordinates
 
-    def check_for_successful_step(self):
+    def check_for_successful_step(self, settings):
         if self.current_type == ['init']:   # requires that self.history.init_coords[-1] exists
             if os.path.exists(self.history.init_coords[-1][0]):
                 return True
@@ -929,7 +931,7 @@ class EquilibriumPathSampling(JobType):
             traj = pytraj.iterload(self.history.prod_trajs[self.history.last_accepted][1], settings.topology)
             n_bwd = traj.n_frames
 
-            if True in [self.history.bounds[0] <= rc_value <= self.history.bounds[1] for rc_value in self.history.prod_results[-1]] and check_for_successful_step(self):    # accepted move, both trajectories exist
+            if True in [self.history.bounds[0] <= rc_value <= self.history.bounds[1] for rc_value in self.history.prod_results[-1]] and EquilibriumPathSampling.check_for_successful_step(self, settings):    # accepted move, both trajectories exist
                 traj = pytraj.iterload(self.history.prod_trajs[-1][0], settings.topology)
                 n_fwd = traj.n_frames
                 traj = pytraj.iterload(self.history.prod_trajs[-1][1], settings.topology)
@@ -1064,7 +1066,7 @@ class FindTS(JobType):
 
         return settings.initial_coordinates
 
-    def check_for_successful_step(self):
+    def check_for_successful_step(self, settings):
         return True  # nothing to check for in find TS
 
     def update_history(self, settings, **kwargs):
