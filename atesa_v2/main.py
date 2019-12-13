@@ -210,7 +210,7 @@ def main(settings):
     os.chdir(settings.working_directory)
 
     termination_criterion = False   # initialize global termination criterion boolean
-    running = allthreads            # to be pruned later by thread.process()
+    running = allthreads.copy()     # to be pruned later by thread.process()
 
     # Begin main loop
     for thread in allthreads:

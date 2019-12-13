@@ -348,10 +348,23 @@ class AimlessShooting(JobType):
     def check_for_successful_step(self):
         if self.current_type == ['init']:   # requires that self.history.init_coords[-1] exists
             if os.path.exists(self.history.init_coords[-1][0]):
+                self.history.consec_fails = 0
                 return True
-        if self.current_type == ['prod', 'prod']:   # requires that both files in self.history.prod_trajs[-1] exist
+            else:
+                self.history.consec_fails += 1
+        elif self.current_type == ['prod', 'prod']:   # requires that both files in self.history.prod_trajs[-1] exist
             if all([os.path.exists(self.history.prod_trajs[-1][i]) for i in range(2)]):
+                self.history.consec_fails = 0
                 return True
+            else:
+                self.history.consec_fails += 1
+
+        if self.history.consec_fails > settings.max_consecutive_fails:
+            raise RuntimeError('number of consecutive failures in ' + self.current_type[0] + ' step of thread ' +
+                               self.history.init_ipcrd[0] + ' exceeds the maximum of ' +
+                               str(settings.max_consecutive_fails) + '. This value can be modified with the option '
+                               '\'max_consecutive_fails\' in the configuration file.')
+
         return False
 
     def update_history(self, settings, **kwargs):
@@ -364,6 +377,7 @@ class AimlessShooting(JobType):
                 self.history.prod_results = []      # list of 2-length lists of strings ['fwd'/'bwd'/'', 'fwd'/'bwd'/'']; updated by update_results
                 self.history.last_accepted = -1     # int, index of last accepted prod_trajs entry; updated by update_results (-1 means none yet accepted)
                 self.history.timestamps = []        # list of ints representing seconds since the epoch for the end of each step; updated by update_results
+                self.history.consec_fails = 0  # tally of consecutive failures of init steps
             if 'inpcrd' in kwargs.keys():
                 self.history.init_inpcrd.append(kwargs['inpcrd'])
         else:   # self.history should already exist
@@ -915,7 +929,7 @@ class EquilibriumPathSampling(JobType):
             traj = pytraj.iterload(self.history.prod_trajs[self.history.last_accepted][1], settings.topology)
             n_bwd = traj.n_frames
 
-            if True in [self.history.bounds[0] <= rc_value <= self.history.bounds[1] for rc_value in self.history.prod_results[-1]]:    # accepted move
+            if True in [self.history.bounds[0] <= rc_value <= self.history.bounds[1] for rc_value in self.history.prod_results[-1]] and check_for_successful_step(self):    # accepted move, both trajectories exist
                 traj = pytraj.iterload(self.history.prod_trajs[-1][0], settings.topology)
                 n_fwd = traj.n_frames
                 traj = pytraj.iterload(self.history.prod_trajs[-1][1], settings.topology)
@@ -936,7 +950,7 @@ class EquilibriumPathSampling(JobType):
                     new_point = self.history.init_inpcrd[-1]
                 self.history.init_inpcrd.append(new_point)
 
-            else:   # not an accepted move
+            else:   # not an accepted move or not both trajectories exist (which we'll not accept no matter what)
                 if self.history.last_accepted >= 0:  # choose a new shooting move from last accepted trajectory
                     if settings.DEBUG:
                         random_bead = n_fwd + n_bwd
@@ -1233,13 +1247,14 @@ class FindTS(JobType):
         as_settings.initial_coordinates = ts_guesses
         as_settings.working_directory += '/as_test'     # run in a new subdirectory of the current working directory
         as_settings.job_type = 'aimless_shooting'
-        as_settings.max_moves = 10
         as_settings.restart = False
         as_settings.overwrite = True    # in case this is a repeat attempt
-        as_settings.cvs = []            # don't need any CVs for this, but this needs to be set to something
+        as_settings.cvs = ['0']         # don't need any CVs for this, but this needs to be set to something
         as_settings.resample = False    # just to be safe
         as_settings.information_error_checking = False
         as_settings.dont_dump = True
+        if as_settings.max_moves <= 0:   # the default is -1; in other words, sets new default to 10 for this run
+            as_settings.max_moves = 10
 
         # Because one of the branches below involves repeating this step an unknown (but finite!) number of times, we'll
         # put the whole thing in a while loop controlled by a simple boolean variable.

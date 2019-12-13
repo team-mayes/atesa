@@ -59,7 +59,7 @@ def configure(input_file, user_working_directory=''):
         prod_solver: str = 'sander'
 
         # File path settings (required for all jobs, but do have defaults)
-        path_to_input_files: str = sys.path[0] + '/data/input_files'
+        path_to_input_files: str = sys.path[0] + '/data/input_files'    # todo: fix this for final publication
         path_to_templates: str = sys.path[0] + '/data/templates'
 
         # Required only for aimless shooting, equilibrium path sampling, and committor analysis
@@ -89,7 +89,8 @@ def configure(input_file, user_working_directory=''):
         information_error_freq: int = 250
         information_error_override: bool = False
         information_error_max_dims: int = 6
-        max_moves: int = -1
+        max_moves: int = -1     # also used by find_ts
+        max_consecutive_fails: int = 4
 
         # Required only for committor analysis
         committor_analysis_n: int = 10

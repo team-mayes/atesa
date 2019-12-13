@@ -7,10 +7,19 @@ from atesa_v2 import utilities
 import subprocess
 import pickle
 import numpy
-
+import re
+import sys
+import os
+from jinja2 import Environment, FileSystemLoader
 
 settings = pickle.load(open('settings.pkl', 'rb'))
 allthreads = pickle.load(open('restart.pkl', 'rb'))
+
+# Set Jinja2 environment (not stored in settings.pkl)
+if os.path.exists(settings.path_to_templates):
+    settings.env = Environment(loader=FileSystemLoader(settings.path_to_templates))
+else:
+    sys.exit('Error: could not locate templates folder: ' + settings.path_to_templates)
 
 with open('comana_results.out', 'w') as f:
     f.write('data_length information_error comana_n comana_mean comana_std\n')
@@ -19,6 +28,7 @@ with open('comana_results.out', 'w') as f:
 for data_length in range(750, 7500 + 750, 750):
     # First, perform LMAX and information error
     pattern = re.compile('[0-9.]+')     # pattern to match information error number in lmax output file
+    settings.as_out_file = 'as_decorr_' + str(data_length) + '.out'
 
     command = 'lmax.py -i as_decorr_' + str(data_length) + '.out -q present --automagic -o ' + str(data_length) + '_comana_lmax.out'
     subprocess.check_call(command.split(' '), stdout=sys.stdout, preexec_fn=os.setsid)
@@ -48,7 +58,7 @@ for data_length in range(750, 7500 + 750, 750):
     comana_settings.rc_threshold = 0.05
     comana_settings.initial_coordinates = comana_init_coords
     comana_settings.rc_definition = rc
-    comana_settings.as_out_file = 'as_decorr_' + str(data_length)
+    comana_settings.as_out_file = 'as_decorr_' + str(data_length) + '.out'
     comana_settings.rc_reduced_cvs = True
     comana_settings.restart = False
     comana_settings.overwrite = True
