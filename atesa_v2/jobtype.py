@@ -974,7 +974,9 @@ class EquilibriumPathSampling(JobType):
 
             # Implement dynamic seeding of EPS windows
             if settings.eps_dynamic_seed:
+                frame_index = -1
                 for rc_value in self.history.prod_results[-1]:  # results are ordered as: [init, fwd, bwd]
+                    frame_index += 1
                     if not self.history.bounds[0] <= rc_value <= self.history.bounds[1]:
                         try:
                             window_index = [bounds[0] <= rc_value <= bounds[1] for bounds in settings.eps_bounds].index(True)
@@ -982,7 +984,6 @@ class EquilibriumPathSampling(JobType):
                             continue
                         if settings.eps_empty_windows[window_index] > 0:    # time to make a new Thread here
                             # First have to get or make the file for the initial coordinates
-                            frame_index = self.history.prod_results[-1].index(rc_value)
                             if frame_index == 0:        # init coordinates
                                 coord_file = self.history.init_coords[-1][0]
                             elif frame_index <= n_fwd:  # in fwd trajectory
@@ -996,9 +997,22 @@ class EquilibriumPathSampling(JobType):
                                     raise FileNotFoundError('Trajectory ' + self.history.prod_trajs[-1][1] + ' was not '
                                                             'found in spite of an RC value having been assigned to it.')
 
+                            if not os.path.exists(coord_file):
+                                if frame_index == 0:
+                                    traj_name = self.history.init_coords[-1][0]
+                                elif frame_index <= n_fwd:
+                                    traj_name = self.history.prod_trajs[-1][0]
+                                else:
+                                    traj_name = self.history.prod_trajs[-1][1]
+                                raise FileNotFoundError('attempted to make a new equilibrium path sampling thread from '
+                                                        + traj_name + ', but was unable to create a new coordinate file'
+                                                        '. Verify that this file has not become corrupted and that you '
+                                                        'have sufficient permissions to create files in the working '
+                                                        'directory.')
+
                             # Now make the thread and set its parameters
                             new_thread = main.Thread()
-                            EquilibriumPathSampling.update_history(new_thread, settings, **{'initialize': True, 'inpcrd': coord_file})
+                            EquilibriumPathSampling.update_history(new_thread, settings, **{'initialize': True, 'inpcrd': coord_file})  # todo: apparently it's somehow possible for coord_file not to exist here. Figure that out.
                             new_thread.topology = settings.topology
                             new_thread.name = coord_file + '_' + str(new_thread.suffix)
 

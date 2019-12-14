@@ -129,7 +129,7 @@ class Tests(object):
             utilities.resample(settings)
         settings.degeneracy = 1
         settings.initial_coordinates = ['../test_data/test.rst7', '../test_data/test_two_init.rst7']
-        settings.rc_definition = '1.00 + 2.34*CV0 - 5.67*CV1'
+        settings.rc_definition = '1.00 + 2.34*CV1 - 5.67*CV2'
         settings.rc_reduced_cvs = False
         settings.cvs = ['pytraj.distance(traj, \'@1 @2\')[0]', 'pytraj.angle(traj, \'@2 @3 @4\')[0]']
         settings.include_qdot = False

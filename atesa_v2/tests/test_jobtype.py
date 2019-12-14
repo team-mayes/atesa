@@ -394,7 +394,7 @@ class Tests(object):
         settings.committor_analysis_use_rc_out = False
         allthreads = main.init_threads(settings)
         jobtype = factory.jobtype_factory(settings.job_type)
-        assert jobtype.check_for_successful_step(allthreads[0]) == True
+        assert jobtype.check_for_successful_step(allthreads[0], settings) == True
 
     def test_get_next_step_committor_analysis(self):
         """Tests get_next_step with job_type = 'committor_analysis'"""
@@ -537,14 +537,14 @@ class Tests(object):
         allthreads[0].current_type = ['init']
         allthreads[0].history.init_coords = [['test_velocities.rst7']]
         jobtype = factory.jobtype_factory(settings.job_type)
-        assert jobtype.check_for_successful_step(allthreads[0]) == False
+        assert jobtype.check_for_successful_step(allthreads[0], settings) == False
         shutil.copy('../test_data/test_velocities.rst7', 'test_velocities.rst7')
-        assert jobtype.check_for_successful_step(allthreads[0]) == True
+        assert jobtype.check_for_successful_step(allthreads[0], settings) == True
         allthreads[0].current_type = ['prod', 'prod']
         allthreads[0].history.prod_trajs = [['test.nc', 'test.nc']]
-        assert jobtype.check_for_successful_step(allthreads[0]) == False
+        assert jobtype.check_for_successful_step(allthreads[0], settings) == False
         shutil.copy('../test_data/test.nc', 'test.nc')
-        assert jobtype.check_for_successful_step(allthreads[0]) == True
+        assert jobtype.check_for_successful_step(allthreads[0], settings) == True
 
     def test_get_next_step_equilibrium_path_sampling_first(self):
         """Tests get_next_step with job_type = 'equilibrium_path_sampling' and an empty current_type"""
