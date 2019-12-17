@@ -925,13 +925,15 @@ class EquilibriumPathSampling(JobType):
             self.suffix += 1
             self.name = self.history.init_inpcrd[0] + '_' + str(self.suffix)
 
+            successful_step = EquilibriumPathSampling.check_for_successful_step(self, settings) # since algorithm runs either way
+
             # Need these values for non-accepted move behavior and also for dynamic seeding
             traj = pytraj.iterload(self.history.prod_trajs[self.history.last_accepted][0], settings.topology)
             n_fwd = traj.n_frames
             traj = pytraj.iterload(self.history.prod_trajs[self.history.last_accepted][1], settings.topology)
             n_bwd = traj.n_frames
 
-            if True in [self.history.bounds[0] <= rc_value <= self.history.bounds[1] for rc_value in self.history.prod_results[-1]] and EquilibriumPathSampling.check_for_successful_step(self, settings):    # accepted move, both trajectories exist
+            if True in [self.history.bounds[0] <= rc_value <= self.history.bounds[1] for rc_value in self.history.prod_results[-1]] and successful_step:    # accepted move, both trajectories exist
                 traj = pytraj.iterload(self.history.prod_trajs[-1][0], settings.topology)
                 n_fwd = traj.n_frames
                 traj = pytraj.iterload(self.history.prod_trajs[-1][1], settings.topology)
@@ -973,9 +975,9 @@ class EquilibriumPathSampling(JobType):
                     self.history.init_inpcrd.append(self.history.init_inpcrd[-1])   # begin next move from same point as last move
 
             # Implement dynamic seeding of EPS windows
-            if settings.eps_dynamic_seed:
+            if settings.eps_dynamic_seed and successful_step:
                 frame_index = -1
-                for rc_value in self.history.prod_results[-1]:  # results are ordered as: [init, fwd, bwd]
+                for rc_value in self.history.prod_results[-1]:  # results are ordered as: [init, fwd, bwd]  # todo: it must somehow be possible to get an rc_value entry in self.history.prod_results without the file it's supposed to correspond to actually existing?
                     frame_index += 1
                     if not self.history.bounds[0] <= rc_value <= self.history.bounds[1]:
                         try:

@@ -23,7 +23,7 @@ def main(working_directory, rc_definition):
         The path to the aimless shooting working directory in which to act
     rc_definition : str
         A reaction coordinate definition formatted as a string of python-readable code with "CV[X]" standing in for the
-        Xth CV value (zero-indexed); this RC definition should be in terms of reduced variables (values between 0 and 1)
+        Xth CV value (one-indexed); this RC definition should be in terms of reduced variables (values between 0 and 1)
 
     Returns
     -------

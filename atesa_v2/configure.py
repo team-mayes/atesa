@@ -75,7 +75,7 @@ def configure(input_file, user_working_directory=''):
 
         # Required only for committor analysis and equilibrium path sampling
         rc_definition: str = ''
-        as_out_file: str = 'as.out'
+        as_out_file: str = 'as_raw.out'
         rc_reduced_cvs: bool = True
 
         # Required only for aimless shooting
@@ -176,3 +176,6 @@ def configure(input_file, user_working_directory=''):
             settings.eps_empty_windows = settings.eps_dynamic_seed
 
     return settings
+
+if __name__ == "__main__":
+    configure('','')

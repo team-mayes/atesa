@@ -178,7 +178,7 @@ def main(settings):
     if not settings.dont_dump:
         temp_settings = copy.deepcopy(settings)         # initialize temporary copy of settings to modify
         temp_settings.__dict__.pop('env')               # env attribute is not picklable
-        pickle.dump(temp_settings, open('settings.pkl', 'wb'), protocol=2)
+        pickle.dump(temp_settings, open(settings.working_directory + '/settings.pkl', 'wb'), protocol=2)
 
     # Implement resample
     if settings.job_type == 'aimless_shooting' and settings.resample:
