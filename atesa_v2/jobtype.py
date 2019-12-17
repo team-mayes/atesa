@@ -977,7 +977,7 @@ class EquilibriumPathSampling(JobType):
             # Implement dynamic seeding of EPS windows
             if settings.eps_dynamic_seed and successful_step:
                 frame_index = -1
-                for rc_value in self.history.prod_results[-1]:  # results are ordered as: [init, fwd, bwd]  # todo: it must somehow be possible to get an rc_value entry in self.history.prod_results without the file it's supposed to correspond to actually existing?
+                for rc_value in self.history.prod_results[-1]:  # results are ordered as: [init, fwd, bwd]
                     frame_index += 1
                     if not self.history.bounds[0] <= rc_value <= self.history.bounds[1]:
                         try:
