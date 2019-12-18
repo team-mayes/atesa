@@ -174,12 +174,6 @@ def main(settings):
 
     """
 
-    # Store settings object in the working directory for posterity and for compatibility with analysis/utility scripts
-    if not settings.dont_dump:
-        temp_settings = copy.deepcopy(settings)         # initialize temporary copy of settings to modify
-        temp_settings.__dict__.pop('env')               # env attribute is not picklable
-        pickle.dump(temp_settings, open(settings.working_directory + '/settings.pkl', 'wb'), protocol=2)
-
     # Implement resample
     if settings.job_type == 'aimless_shooting' and settings.resample:
         utilities.resample(settings, partial=False)
@@ -202,6 +196,12 @@ def main(settings):
         else:
             raise RuntimeError('Working directory ' + settings.working_directory + ' does not yet exist, but restart = '
                                'True.')
+
+    # Store settings object in the working directory for posterity and for compatibility with analysis/utility scripts
+    if not settings.dont_dump:
+        temp_settings = copy.deepcopy(settings)  # initialize temporary copy of settings to modify
+        temp_settings.__dict__.pop('env')  # env attribute is not picklable
+        pickle.dump(temp_settings, open(settings.working_directory + '/settings.pkl', 'wb'), protocol=2)
 
     # Build or load threads
     allthreads = init_threads(settings)
