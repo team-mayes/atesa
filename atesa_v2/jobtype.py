@@ -684,8 +684,8 @@ class CommittorAnalysis(JobType):
     def update_results(self, allthreads, settings):
         # Initialize committor_analysis.out if not already extant
         if not os.path.exists('committor_analysis.out'):
-            open('committor_analysis.out', 'w').write('Committed to Forward Basin / Total Committed to Either Basin')
-            open('committor_analysis.out', 'w').close()
+            with open('committor_analysis.out', 'w') as f:
+                f.write('Committed to Forward Basin / Total Committed to Either Basin')
 
         # Update current_results
         for job_index in range(len(self.current_type)):

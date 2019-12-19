@@ -28,7 +28,9 @@ To date, the most common method of determining when to stop aimless shooting has
 
 In practice, this means that the researcher performing aimless shooting must either perform rounds of committor analysis many times throughout the study, or else collect such an excess of data that any unsatisfactory result in committor analysis is assumed to be due to issues elsewhere. Either option wastes time, both computational and real.
 
-An Improvement: Information Error
+.. _InformationError
+
+Information Error
 ---------------------------------
 
 ATESA introduces a new method of addressing the two shortcomings identified above, based on an assessment of the error in the likelihood maximization procedure. Specifically, by default ATESA measures the convergence of the mean value of the Fisher Information Error (or simply "information error") for a given model as a function of the amount of data collected, and uses the convergence of this parameter as a termination criterion.

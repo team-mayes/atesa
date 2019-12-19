@@ -67,6 +67,8 @@ for data_length in range(750, 7500 + 750, 750):
 
     main.main(comana_settings)
 
+    os.chdir('../')     # cd back to original working directory
+
     results_lines = open(comana_settings.working_directory + '/committor_analysis.out', 'r').readlines()[1:]
     total_committed = sum([string[string.index('/') + 1:] for string in results_lines])
     evald = [eval(string) for string in results_lines]
