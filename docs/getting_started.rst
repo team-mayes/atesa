@@ -22,6 +22,4 @@ Although ATESA can be run directly from the command line, because its process co
 The Configuration File
 ----------------------
 
-ATESA comes packaged with a configuration (or "config") file containing the default value for every setting; however, these defaults are set internally to the software and will still be used if the line that sets them is omitted from the configuration file.
-
-Certain settings should be given regardless of the job type, while others are necessary for only a subset of job types. Recommendations for each job type as well as detailed documentation of each setting are available on the :ref:`TheConfigFile` page.
+ATESA requires a configuration (or "config") file to define its job type and other behavior. Recommendations for each job type as well as detailed documentation of each setting are available on the :ref:`TheConfigFile` page.

@@ -685,13 +685,14 @@ class CommittorAnalysis(JobType):
         # Initialize committor_analysis.out if not already extant
         if not os.path.exists('committor_analysis.out'):
             with open('committor_analysis.out', 'w') as f:
-                f.write('Committed to Forward Basin / Total Committed to Either Basin')
+                f.write('Committed to Forward Basin / Total Committed to Either Basin\n')
 
         # Update current_results
         for job_index in range(len(self.current_type)):
             frame_to_check = self.get_frame(self.history.prod_trajs[job_index], -1, settings)
-            self.history.prod_results.append(utilities.check_commit(frame_to_check, settings))
-            os.remove(frame_to_check)
+            if frame_to_check:
+                self.history.prod_results.append(utilities.check_commit(frame_to_check, settings))
+                os.remove(frame_to_check)
 
         # Write results to committor_analysis.out
         fwds = 0
@@ -1141,7 +1142,6 @@ class FindTS(JobType):
         self.terminated = True  # find TS threads always terminate after one step
         return False            # no global termination criterion exists for find TS
 
-    # todo: execute the entire find TS process from the end of the simulation to the output right here
     def update_results(self, allthreads, settings):
         # First, store commitment basin if that didn't get set in gatekeeper
         if not self.history.prod_result:
@@ -1261,7 +1261,8 @@ class FindTS(JobType):
         ### take back control here and use the resulting files to decide what to do next.
 
         # First, set up the new settings object
-        as_settings = settings
+        as_settings = argparse.Namespace()
+        as_settings.__dict__.update(settings.__dict__)
         as_settings.initial_coordinates = ts_guesses
         as_settings.working_directory += '/as_test'     # run in a new subdirectory of the current working directory
         as_settings.job_type = 'aimless_shooting'

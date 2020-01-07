@@ -10,6 +10,7 @@ import numpy
 import re
 import sys
 import os
+import argparse
 from jinja2 import Environment, FileSystemLoader
 
 settings = pickle.load(open('settings.pkl', 'rb'))
@@ -47,11 +48,12 @@ for data_length in range(750, 7500 + 750, 750):
             if thread.history.timestamps[move_index] <= cutoff_timestamp:
                 cvs = utilities.get_cvs(thread.history.init_coords[move_index][0], settings, reduce=True).split(' ')
                 rc_value = utilities.evaluate_rc(rc, cvs)
-                if abs(rc_value) <= 0.05:
+                if abs(rc_value) <= 0.05 and len(comana_init_coords) < 200:
                     comana_init_coords.append(thread.history.init_coords[move_index][0])
 
     # Finally, call committor analysis on the collected shooting points and collect the results into an output file
-    comana_settings = settings
+    comana_settings = argparse.Namespace()
+    comana_settings.__dict__.update(settings.__dict__)
     comana_settings.job_type = 'committor_analysis'
     comana_settings.committor_analysis_n = 10
     comana_settings.committor_analysis_use_rc_out = False
@@ -62,15 +64,15 @@ for data_length in range(750, 7500 + 750, 750):
     comana_settings.rc_reduced_cvs = True
     comana_settings.restart = False
     comana_settings.overwrite = True
-    comana_settings.working_directory += '/comana_' + str(data_length)
+    comana_settings.working_directory = settings.working_directory + '/comana_' + str(data_length)
     comana_settings.dont_dump = True
 
     main.main(comana_settings)
 
-    os.chdir('../')     # cd back to original working directory
+    os.chdir(settings.working_directory)     # cd back to original working directory
 
     results_lines = open(comana_settings.working_directory + '/committor_analysis.out', 'r').readlines()[1:]
-    total_committed = sum([string[string.index('/') + 1:] for string in results_lines])
+    total_committed = sum([int(string[string.index('/') + 1:]) for string in results_lines])
     evald = [eval(string) for string in results_lines]
     mean = numpy.mean(evald)
     std = numpy.std(evald)

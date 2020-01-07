@@ -184,8 +184,8 @@ def two_line_test(results, plots):
                    [best_closest[2].slope * (i + 1) + best_closest[2].intercept for i in range(len(results))]]
         gnuplotlib.plot((numpy.asarray([item + 1 for item in range(len(results))]),
                         numpy.asarray([result.fun for result in results])),
-                        (numpy.asarray(points1[0]), numpy.asarray(points1[1]), {'legend': 'first slope: ' + '%.3f' % best_closest[1].slope}),
-                        (numpy.asarray(points2[0]), numpy.asarray(points2[1]), {'legend': 'first slope: ' + '%.3f' % best_closest[2].slope}),
+                        (numpy.asarray(points1[0]), numpy.asarray(points1[1]), {'legend': '1st slope: ' + '%.3f' % best_closest[1].slope}),
+                        (numpy.asarray(points2[0]), numpy.asarray(points2[1]), {'legend': '2nd slope: ' + '%.3f' % best_closest[2].slope}),
                         _with='lines', terminal='dumb 80,40', unset='grid')
 
     if not best_closest:    # no pairs of lines whose intersection was closest to their shared point
@@ -407,13 +407,13 @@ if __name__ == "__main__":
                         help='number of CVs to include in RC. Default=none')
     parser.add_argument('-f', metavar='fixed', type=int, nargs='*', default=[None],
                         help='CVs to require inside the RC. Default=none')
-    parser.add_argument('-q', metavar='include_qdot', type=str, nargs=1, default=['absent'],
+    parser.add_argument('-q', metavar='include_qdot', type=str, nargs=1, default=['present'],
                         help='valid options are: "present", "absent", and "ignore" (quotes excluded). If "present" or '
                              '"ignore", the input file is assumed to include rate-of-change ("q") data for each CV '
-                             '(formatted as in "A <- CV0 CV1 q0 q1"); in the former case, a q term will be included in '
-                             'the RC for each CV, implementing inertial likelihood maximization. In the latter, no such'
-                             ' terms will be included. Finally, if "absent", the q data will be assumed not to be '
-                             'present in the input file. Default=absent')
+                             '(formatted as in e.g., "A <- CV0 CV1 q0 q1"); in the former case, a q term will be '
+                             'included in the RC for each CV, implementing inertial likelihood maximization. In the '
+                             'latter, no such terms will be included. Finally, if "absent", the q data will be assumed '
+                             'not to be present in the input file. Default=present')
     parser.add_argument('-r', metavar='running', type=int, nargs=1, default=[0],
                         help='if > 0, runs from k = 1 to "running" using the previously obtained k - 1 results as the '
                              'argument for f, ignoring the arguments passed for k and f. Default=0')
@@ -421,8 +421,8 @@ if __name__ == "__main__":
                         help='Prints output to a new file whose name is given with this argument, instead of directly '
                              'to the terminal. The file will be overwritten if it exists. Default=none')
     parser.add_argument('--quiet', action='store_true',
-                        help='If this option is given, output to the terminal is suppressed and only the output file is'
-                             ' written.')
+                        help='If this option is given, progress messages outputted to the terminal are suppressed and ' 
+                             'only the final result is written (either to the terminal or the output file.)')
     parser.add_argument('--automagic', action='store_true', default=False,
                         help='If this option is given, arguments passed for k, f, and r are ignored, and the best RC is'
                              ' determined based on the two-line method (see documentation).')

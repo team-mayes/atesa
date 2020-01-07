@@ -71,7 +71,9 @@ See :ref:`CommitmentBasinDefinitions` for details on the `commit_fwd` and `commi
 Committor Analysis
 ~~~~~~~~~~~~~~~~~~
 
+After completing aimless shooting, the next step is to obtain a reaction coordinate and verify it with committor analysis. Before running committor analysis, the user should call  likelihood maximization (lmax.py, see :ref:`LikelihoodMaximization`) and reaction coordinate evaluation (rc_eval.py, see :ref:`RCEval`). 
 
+Then, 
 
 Full Configuration Options
 --------------------------
@@ -111,6 +113,8 @@ Commitment Basin Definitions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         commit_fwd: typing.Tuple[typing.List[int], typing.List[int], typing.List[float], typing.List[str]] = ([-1], [-1], [-1], ['unset'])
         commit_bwd: typing.Tuple[typing.List[int], typing.List[int], typing.List[float], typing.List[str]] = ([-1], [-1], [-1], ['unset'])
+
+.. _ReactionCoordinateDefinition
 
 Reaction Coordinate Definition
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

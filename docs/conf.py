@@ -16,6 +16,9 @@
 import os
 import sys
 sys.path.insert(0, os.path.abspath('..'))
+#sys.path.insert(0, '/Users/tburgin/miniconda3/lib/python3.7/site-packages')
+
+#sys.path = ['', '/Users/tburgin/miniconda3/lib/python37.zip', '/Users/tburgin/miniconda3/lib/python3.7', '/Users/tburgin/miniconda3/lib/python3.7/lib-dynload', '/Users/tburgin/miniconda3/lib/python3.7/site-packages', '/Users/tburgin/Documents/PycharmProjects/atesa_v2']
 
 import atesa_v2
 

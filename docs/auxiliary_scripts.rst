@@ -1,0 +1,90 @@
+.. _AuxiliaryScripts:
+
+Auxiliary Scripts
+==================
+
+.. _LikelihoodMaximization:
+
+Likelihood Maximization
+-----------------------
+
+In addition to the core job types performed through calls directly to ``atesa``, ATESA comes packaged with a separate likelihood maximization (LMax) script for obtaining reaction coordinates (RC's) from aimless shooting output.
+
+The product of aimless shooting is a (large) set of combined variable (CV) values paired with corresponding commitment basins (products or reactants). In order to convert this information into a usable form, likelihood maximization selects a model that describes the reaction progress in terms of relatively few parameters. ATESA supports the intertial likelihood maximization procedure first published in `Peters 2012 <https://doi.org/10.1016/j.cplett.2012.10.051>`_, in addition to the original non-inertial procedure.
+
+Likelihood maximization is invoked from the command line as:
+
+::
+
+	lmax.py -i input_file [-k dimensions [-f fixed_cvs] | -r dimensions | --automagic [--plots]] [-q qdot_setting] [-o output_file] [--quiet]
+	
+`-i input_file`
+	The only strictly required argument for lmax.py, `input_file` should point to the aimless shooting output file of interest. Usually, this should be the longest "decorrelated" aimless shooting output file in the target working directory.
+	
+`-k dimensions`
+	This option mutually exclusive with `-r` and `--automagic`. The `dimensions` argument should be an integer number of dimensions to include in the final reaction coordinate. This options will always return a reaction coordinate with "k" dimensions (assuming there are at least "k" CVs in the input file), and will arrive at that number of dimensions immediately by comparing every k-dimensional combination of CVs.
+	
+	`-f fixed_cvs`
+		This option is only applicable when paired with the `-k` option, and specifies one or more CVs that are required in the final RC. For example, `-k 4 -f 12 31` would return the best four-dimensional RC that contains both CV12 and CV31. Obviously, the number of required CVs specified with this option must be less than or equal to the number given for `-k`.
+	
+`-r dimensions`
+	This option mutually exclusive with `-k` and `--automagic`. The `dimensions` argument should be an integer number of dimensions to include in the final reaction coordinate. This options will always return a reaction coordinate with "r" dimensions (assuming there are at least "r" CVs in the input file), but unlike the `-k` setting, arrives at an r-dimensional result incrementally by finding the best 1-dimensional RC, then the best 2-dimensional RC that includes the coordinate from the best 1-dimensional RC, and so on. This procedure is much faster for high-dimensional data but may not result in the absolute best possible RC.
+	
+`--automagic`
+	This option mutually exclusive with `-k` and `-r`. If this argument is given, the dimensionality of the result is determined "automagically" by assessing the relative slopes of best-fit lines on different portions of the scoring data for successively higher-dimensional RCs. The exact operation of this algorithm is described in more detail in the :ref:`Automagic` section below.
+	
+	`--plots`
+		Produces ASCII-style plots in the terminal for each step of automagic above four dimensions, if Python package gnuplot is available. See :ref:`Automagic` for details.
+
+`-q qdot_setting`
+	Specifies the inertial behavior of LMax. Valid options are: `present`, `absent`, and `ignore`. Default is `present`.
+	`present` specifies that for each CV in the input file, there is a corresponding rate-of-change (or "qdot") value, such that the input file is formatted as:
+	
+	::
+	
+	<basin> <-- <CV1> <CV2> ... <CVn> <qdot1> <qdot2> ... <qdotn>
+	
+	This format is the one created by aimless shooting runs in ATESA when called with the `include_qdot = True` option (which is the default, as is this setting).
+	`absent` specifies that the input file does NOT contain rate-of-change values for its CVs; that is, every number in every row of the input file is a separate CV.
+	`ignore` specifies that the input file DOES contain rate-of-change values, but that they should be ignored.
+	
+`-o output_file`
+	If this option is given, a new file named `output_file` is written containing the results of the optimization. If this option is not given, the results are instead written directly to the terminal. This option will overwrite existing files.
+
+`--quiet`
+	By default, ``lmax.py`` writes one or more progress bars (one for each optimization step) to the terminal. If this option is given, these progress bars are suppressed. Note that the output will still be written to the terminal if no output file is specified with the `-o` option.
+	
+.. _Automagic:
+
+The Automagic Option
+~~~~~~~~~~~~~~~~~~~~
+
+A common problem when attempting to find a suitable reaction coordinate for a given dataset is that the appropriate dimensionality of the final RC cannot be identified in advance. There are several approaches to comparing the "information content" of various models aimed towards penalizing each successive parameter such that only significant improvements are permitted, such as the Bayesian and Akaike information criteria. However, these methods are designed to find the "best" model for a given process, regardless of how many parameters that model contains, whereas for practical reasons useful RCs are usually low-dimensional. That is, while an RC selected using even a highly selective Bayesian information criterion may contain many (*e.g.*, upwards of ten) parameters, a much simpler model (say, of three or four dimensions) is usually sufficient and more useful. This is the motivation behind the "automagic" algorithm. In short, whether automagic is appropriate for your use-case depends on whether you would rather sacrifice a modicum of model accuracy in exchange for a fast and fully automated approach to obtaining a reaction coordinate.
+
+Automagic attempts to include only the most important parameters in the final RC, as defined by the change in model score for each successive parameter. To accomplish this, the algorithm first uses the `-r` approach to model optimization as described above to obtain one- through five-dimensional RCs; then, it fits two lines onto contiguous subsections of the data [1, M] and [M, N] (where N is the dimensionality of the highest-dimensional model yet derived and 2 <= M <= N - 1). The resulting RC is the one containing M dimensions, if and only if the two lines intersect closer to the M'th point than any other point and the ratio of slopes s[M, N]/s[1, M] is at least 0.55 (that is, the slope of the second line is at most 55% that of the first line). An example meeting these two criteria is shown here:
+
+.. image:: ../../_images/two-line_test.png
+
+This plot (in ASCII form) would be outputted to the terminal at the end of the optimization if the *--plots* option were supplied. If the criteria cannot be met, an additional model of dimensionality N+1 is obtained and the process is repeated. If enough dimensions are available, this algorithm will always converge eventually. This approach is very efficient for arriving at a *good* reaction coordinate (though it is by no means guaranteed to be the "best" possible one), though it suffers from two shortcomings:
+
+1. One-dimensional models can never be selected; and
+2. The cutoff ratio of slopes is arbitrary (that is, it reflects an arbitrary judgement of what constitutes a sufficient drop in the rate of change of model scores)
+
+.. _RCEval:
+
+Reaction Coordinate Evaluation
+------------------------------
+
+ATESA also comes with a separate script for evaluating reaction coordinates for each shooting point coordinate file in a given directory. This script should be given an aimless shooting working directory, where it will produce a new file `rc.out` containing the reaction coordinate values of each point, sorted in descending order by absolute value. The syntax is as follows:
+
+::
+
+	rc_eval.py working_directory rc_definition
+	
+`working_directory`
+	Specifies the aimless shooting working directory in which to operate
+	
+`rc_definition`
+	Defines the reaction coordinate to evaluate for each shooting point. The format is the same as in the `rc_definition` configuration file setting (see :ref:`ReactionCoordinateDefinition`), except that here there must be no whitespace (' ') characters. The identities of CVs are determined from the settings.pkl object stored in the working directory.
+	
+The produced output file `rc.out` is (optionally) used as input for a committor analysis run (see :ref:`CommittorAnalysis`).

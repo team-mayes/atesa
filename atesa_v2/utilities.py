@@ -210,7 +210,11 @@ def rev_vels(restart_file):
     open(restart_file).close()
     pattern = re.compile(r'[-0-9.]+')            # regex to match numbers including decimals and negatives
     pattern2 = re.compile(r'\s[-0-9.]+')         # regex to match numbers including decimals and negatives, with one space in front
-    n_atoms = pattern.findall(byline[1])[0]     # number of atoms indicated on second line of .rst7 file
+    try:
+        n_atoms = pattern.findall(byline[1])[0]     # number of atoms indicated on second line of .rst7 file
+    except IndexError:
+        raise RuntimeError('restart file: ' + restart_file + ' exists but is improperly formatted. It must contain the '
+                           'number of atoms as the first integer on its second line.')
     offset = 2                  # appropriate for n_atoms is odd; offset helps avoid modifying the box line
     if int(n_atoms) % 2 == 0:   # if n_atoms is even...
         offset = 1              # appropriate for n_atoms is even

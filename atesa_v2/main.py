@@ -13,6 +13,7 @@ import shutil
 import pickle
 import pytraj
 import copy
+import time
 from atesa_v2 import configure
 from atesa_v2 import factory
 from atesa_v2 import process
@@ -226,6 +227,8 @@ def main(settings):
                         running = []
                     break
                 running = thread.process(running, settings)
+            else:
+                time.sleep(30)
 
     jobtype = factory.jobtype_factory(settings.job_type)
     jobtype.cleanup(None, settings)

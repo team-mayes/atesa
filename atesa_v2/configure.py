@@ -58,7 +58,7 @@ def configure(input_file, user_working_directory=''):
         prod_walltime: str = '02:00:00'
         prod_solver: str = 'sander'
 
-        # File path settings (required for all jobs, but do have defaults)
+        # File path settings (required for all jobs, but do have sensible defaults)
         path_to_input_files: str = sys.path[0] + '/data/input_files'    # todo: fix this for final publication
         path_to_templates: str = sys.path[0] + '/data/templates'
 

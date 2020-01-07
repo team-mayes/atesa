@@ -1,6 +1,6 @@
 """
 rc_eval.py
-Standalone script to evaluate RC values given an aimless shooting working directory
+Standalone script to evaluate RC values given an aimless shooting working directory and reaction coordinate definition
 """
 
 import sys
