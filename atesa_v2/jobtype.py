@@ -207,7 +207,7 @@ class JobType(abc.ABC):
         type : str
             Name of the type of job desired, corresponding to the template file
         settings : argparse.Namespace
-                Settings namespace object
+            Settings namespace object
 
         Returns
         -------
@@ -233,7 +233,7 @@ class JobType(abc.ABC):
         allthreads : list
             The list of all extant Thread objects
         settings : argparse.Namespace
-                Settings namespace object
+            Settings namespace object
 
         Returns
         -------
@@ -259,7 +259,7 @@ class JobType(abc.ABC):
         allthreads : list
             The list of all extant Thread objects
         settings : argparse.Namespace
-                Settings namespace object
+            Settings namespace object
 
         Returns
         -------
@@ -286,7 +286,7 @@ class JobType(abc.ABC):
         running : list
             The list of all currently running Thread objects
         settings : argparse.Namespace
-                Settings namespace object
+            Settings namespace object
 
         Returns
         -------
@@ -307,7 +307,29 @@ class JobType(abc.ABC):
         self : None
             self is not used in cleanup methods
         settings : argparse.Namespace
-                Settings namespace object
+            Settings namespace object
+
+        Returns
+        -------
+        None
+
+        """
+
+        pass
+
+    @abc.abstractmethod
+    def verify(self, arg, argtype):
+        """
+        Confirm or deny that the object arg is a valid object of type type.
+
+        Parameters
+        ----------
+        self : None
+            self is not used in verify methods
+        arg : any_type
+            Object to verify
+        argtype : str
+            Name of type of object
 
         Returns
         -------
@@ -583,6 +605,37 @@ class AimlessShooting(JobType):
         # utilities.resample(settings)  # to build as_decorr.out I suppose. Kinda silly.
         pass
 
+    def verify(self, arg, argtype):
+        # Supported verify types for aimless shooting: 'history', 'type'
+        print(self.terminated)
+        if argtype == 'type':
+            if not arg in [[''], ['init'], ['prod', 'prod']]:
+                return False
+        elif argtype == 'history':
+            try:
+                if False in [type(item) == str for item in arg.init_inpcrd]:
+                    return False# list of strings, inpcrd for init steps; initialized by main.init_threads and updated by algorithm
+                if not os.path.exists(arg.init_inpcrd[-1]):
+                    return False
+
+                if False in [len(item) == 2 and type(item) == list and all([type(subitem) == str for subitem in item]) for item in arg.init_coords]:
+                    return False
+                if not all([os.path.exists(item) for item in arg.init_coords[-1]]):
+                    return False
+
+                # todo: continue writing...
+
+                # arg.prod_trajs = []  # list of 2-length lists of strings, [_fwd.nc, _bwd.nc]; updated by update_history
+                # arg.prod_results = []  # list of 2-length lists of strings ['fwd'/'bwd'/'', 'fwd'/'bwd'/'']; updated by update_results
+                # arg.last_accepted = -1  # int, index of last accepted prod_trajs entry; updated by update_results (-1 means none yet accepted)
+                # arg.timestamps = []  # list of ints representing seconds since the epoch for the end of each step; updated by update_results
+                # arg.consec_fails = 0  # tally of consecutive failures of init steps
+            except (AttributeError, IndexError) as e:
+                print(e)
+                return False
+
+        return True
+
 
 # noinspection PyAttributeOutsideInit
 class CommittorAnalysis(JobType):
@@ -709,6 +762,9 @@ class CommittorAnalysis(JobType):
 
     def cleanup(self, settings):
         pass
+
+    def verify(self, arg, argtype):
+        return True
 
 
 class EquilibriumPathSampling(JobType):
@@ -985,6 +1041,7 @@ class EquilibriumPathSampling(JobType):
                             window_index = [bounds[0] <= rc_value <= bounds[1] for bounds in settings.eps_bounds].index(True)
                         except ValueError:  # rc_value not in range of eps_bounds, so nothing to do here
                             continue
+
                         if settings.eps_empty_windows[window_index] > 0:    # time to make a new Thread here
                             # First have to get or make the file for the initial coordinates
                             if frame_index == 0:        # init coordinates
@@ -1013,18 +1070,42 @@ class EquilibriumPathSampling(JobType):
                                                         'have sufficient permissions to create files in the working '
                                                         'directory.')
 
-                            # Now make the thread and set its parameters
-                            new_thread = main.Thread()
-                            EquilibriumPathSampling.update_history(new_thread, settings, **{'initialize': True, 'inpcrd': coord_file})  # todo: apparently it's somehow possible for coord_file not to exist here. Figure that out.
-                            new_thread.topology = settings.topology
-                            new_thread.name = coord_file + '_' + str(new_thread.suffix)
+                            # todo: figure out how it's possible that coord_file has an out-of-bounds RC value
+                            # todo: maybe set a diagnostic try-except block that requires that the rc_value entry is correct when checked against the file and go from there?
+                            try:
+                                # Newly inserted assertion check
+                                frame_to_check = coord_file
+                                cvs = utilities.get_cvs(frame_to_check, settings, reduce=settings.rc_reduced_cvs).split(' ')
+                                temp_rc = utilities.evaluate_rc(settings.rc_definition, cvs)
+                                assert '%.3f' % temp_rc == '%.3f' % rc_value
 
-                            # Append the new thread to allthreads and running
-                            allthreads.append(new_thread)
-                            running.append(new_thread)
+                                # Now make the thread and set its parameters
+                                new_thread = main.Thread()
+                                EquilibriumPathSampling.update_history(new_thread, settings, **{'initialize': True, 'inpcrd': coord_file})
+                                new_thread.topology = settings.topology
+                                new_thread.name = coord_file + '_' + str(new_thread.suffix)
 
-                            if not settings.DEBUG:  # if DEBUG, keep going to maximize coverage
-                                return running  # return after initializing one thread to encourage sampling diversity
+                                # Append the new thread to allthreads and running
+                                allthreads.append(new_thread)
+                                running.append(new_thread)
+
+                                if not settings.DEBUG:  # if DEBUG, keep going to maximize coverage
+                                    return running  # return after initializing one thread to encourage sampling diversity
+
+                            except AssertionError:  # should be inaccessible but apparently not?
+                                warnings.warn('Error in spawning new EPS thread: expected RC value of rc_value: ' + str(rc_value)
+                                              + ' but got temp_rc: ' + str(temp_rc) +
+                                              '\nDEBUG:' +
+                                              '\n coord_file: ' + str(coord_file) +
+                                              '\n self.history.prod_results[-1]: ' + str(self.history.prod_results[-1]) +
+                                              '\n frame_index: ' + str(frame_index) +
+                                              '\n self.history.prod_trajs[-1]: ' + str(self.history.prod_trajs[-1]) +
+                                              '\n self.history.init_coords[-1][0]: ' + str(self.history.init_coords[-1][0]) +
+                                              '\n self.history.bounds: ' + str(self.history.bounds) +
+                                              '\n n_fwd: ' + str(n_fwd) +
+                                              '\n n_bwd: ' + str(n_bwd), RuntimeWarning)
+
+
 
         elif self.current_type == ['init']:
             if not os.path.exists(self.history.init_coords[-1][0]):  # init step failed, so retry it
@@ -1036,6 +1117,9 @@ class EquilibriumPathSampling(JobType):
 
     def cleanup(self, settings):
         pass
+
+    def verify(self, arg, argtype):
+        return True
 
 
 class FindTS(JobType):
@@ -1384,3 +1468,6 @@ class FindTS(JobType):
 
     def cleanup(self, settings):
         pass
+
+    def verify(self, arg, argtype):
+        return True

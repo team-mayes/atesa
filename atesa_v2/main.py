@@ -108,7 +108,8 @@ def init_threads(settings):
     if settings.restart:
         allthreads = pickle.load(open(settings.working_directory + '/restart.pkl', 'rb'))
         for thread in allthreads:
-            thread.skip_update = True
+            if not thread.current_type == []:
+                thread.skip_update = True
         if settings.restart_terminated_threads:
             for thread in allthreads:
                 thread.terminated = False
@@ -157,7 +158,73 @@ def init_threads(settings):
     return allthreads
 
 
-def main(settings):
+def handle_loop_exception(attempted_rescue, running, settings):
+    """
+    Handle attempted rescue of main loop after encountering an exception, or cancellation of jobs if rescue fails.
+
+    Parameters
+    ----------
+    attempted_rescue : bool
+        True if rescue has already been attempted and this function is being called again. Skips attempting rescue again
+        and simply cancels all running jobs.
+    running : list
+        List of Thread objects that are currently running. These are the threads that will be canceled if the ATESA run
+        cannot be rescued.
+    settings : argparse.Namespace
+        Settings namespace object
+
+    Returns
+    -------
+    None
+
+    """
+
+    class UnableToRescueException(Exception):
+        """ Custom exception for closing out ATESA after an unsuccessful rescue attempt """
+        pass
+
+    # # todo: finish implementing and then uncomment this
+    # if not attempted_rescue:
+    #     print('Attempting to remove offending thread(s) and rescue the operation...')
+    #     verify_outcome_str, verify_outcome_int = verify_threads.main('restart.pkl')
+    #     print(verify_outcome_str)
+    #
+    #     if verify_outcome_int == 1:  # broken thread removed, continue with attempted rescue
+    #         # First, set rescue_running equal to running with deleted threads removed
+    #         remaining_threads = pickle.load(open('restart.pkl', 'rb'))
+    #         rescue_running = [thread for thread in running if thread in remaining_threads]
+    #
+    #         # If rescue_running == running, removed threads weren't running so rescue fails. Otherwise...
+    #         if not rescue_running == running:
+    #             # Then, cancel jobs belonging to deleted threads
+    #             deleted_threads = list(set(running) - set(rescue_running))
+    #             for thread in deleted_threads:
+    #                 try:
+    #                     for job_index in range(thread.jobids):
+    #                         thread.cancel_job(job_index, settings)
+    #                 except Exception as little_e:
+    #                     print('Encountered exception while attempting to cancel a job: ' + str(little_e) +
+    #                           '\nIgnoring and continuing...')
+    #
+    #             # Finally, resubmit main() with rescue_running list
+    #             main(settings, rescue_running=rescue_running)
+    #             return None
+
+    # This code reached if return statement above is not
+    print('Rescue failed. Cancelling currently running batch jobs belonging to this process in order to '
+          'preserve resources.')
+    for thread in running:
+        try:
+            for job_index in range(thread.jobids):
+                thread.cancel_job(job_index, settings)
+        except Exception as little_e:
+            print('Encountered exception while attempting to cancel a job: ' + str(little_e) +
+                  '\nIgnoring and continuing...')
+
+    raise UnableToRescueException('Job cancellation complete, ATESA is now shutting down.')
+
+
+def main(settings, rescue_running=[]):
     """
     Perform the primary loop of building, submitting, monitoring, and analyzing jobs.
 
@@ -168,6 +235,9 @@ def main(settings):
     ----------
     settings : argparse.Namespace
         Settings namespace object
+    rescue_running : list
+        List of threads passed in from handle_loop_exception, containing running threads. If given, setup is skipped and
+        the function proceeds directly to the main loop.
 
     Returns
     -------
@@ -175,60 +245,89 @@ def main(settings):
 
     """
 
-    # Implement resample
-    if settings.job_type == 'aimless_shooting' and settings.resample:
-        utilities.resample(settings, partial=False)
-        if settings.information_error_checking:
-            information_error.main()
-        sys.exit()
+    if not rescue_running:
+        # Implement resample
+        if settings.job_type == 'aimless_shooting' and settings.resample:
+            utilities.resample(settings, partial=False)
+            if settings.information_error_checking:
+                information_error.main()
+            sys.exit()
 
-    # Make working directory if it does not exist, handling overwrite and restart as needed
-    if os.path.exists(settings.working_directory):
-        if settings.overwrite and not settings.restart:
-            shutil.rmtree(settings.working_directory)
-            os.mkdir(settings.working_directory)
-        elif not settings.restart:
-            raise RuntimeError('Working directory ' + settings.working_directory + ' already exists, but overwrite = '
-                               'False and restart = False. Either change one of these two settings or choose a '
-                               'different working directory.')
-    else:
-        if not settings.restart:
-            os.mkdir(settings.working_directory)
+        # Make working directory if it does not exist, handling overwrite and restart as needed
+        if os.path.exists(settings.working_directory):
+            if settings.overwrite and not settings.restart:
+                shutil.rmtree(settings.working_directory)
+                os.mkdir(settings.working_directory)
+            elif not settings.restart:
+                raise RuntimeError('Working directory ' + settings.working_directory + ' already exists, but overwrite '
+                                   '= False and restart = False. Either change one of these two settings or choose a '
+                                   'different working directory.')
         else:
-            raise RuntimeError('Working directory ' + settings.working_directory + ' does not yet exist, but restart = '
-                               'True.')
+            if not settings.restart:
+                os.mkdir(settings.working_directory)
+            else:
+                raise RuntimeError('Working directory ' + settings.working_directory + ' does not yet exist, but '
+                                   'restart = True.')
 
-    # Store settings object in the working directory for posterity and for compatibility with analysis/utility scripts
-    if not settings.dont_dump:
-        temp_settings = copy.deepcopy(settings)  # initialize temporary copy of settings to modify
-        temp_settings.__dict__.pop('env')  # env attribute is not picklable
-        pickle.dump(temp_settings, open(settings.working_directory + '/settings.pkl', 'wb'), protocol=2)
+        # Store settings object in the working directory for compatibility with analysis/utility scripts
+        if not settings.dont_dump:
+            temp_settings = copy.deepcopy(settings)  # initialize temporary copy of settings to modify
+            temp_settings.__dict__.pop('env')  # env attribute is not picklable
+            pickle.dump(temp_settings, open(settings.working_directory + '/settings.pkl', 'wb'), protocol=2)
 
-    # Build or load threads
-    allthreads = init_threads(settings)
+        # Build or load threads
+        allthreads = init_threads(settings)
 
-    # Move runtime to working directory
-    os.chdir(settings.working_directory)
+        # Move runtime to working directory
+        os.chdir(settings.working_directory)
+
+        running = allthreads.copy()     # to be pruned later by thread.process()
+        attempted_rescue = False        # to keep track of general error handling below
+    else:
+        allthreads = pickle.load(open(settings.working_directory + '/restart.pkl', 'rb'))
+        running = rescue_running
+        attempted_rescue = True
 
     termination_criterion = False   # initialize global termination criterion boolean
-    running = allthreads.copy()     # to be pruned later by thread.process()
+    interpreted = []                # threads that have finished an interpret step, for resetting attempted_rescue
+
+    # Initialize threads with first process step
+    try:
+        if not rescue_running:  # if rescue_running, this step has already finished and we just want the while loop
+            for thread in allthreads:
+                running = thread.process(running, settings)
+    except Exception as e:
+        if settings.restart:
+            print('The following error occurred while attempting to initialize threads from restart.pkl. If you '
+                  'haven\'t already done so, consider running verify_threads.py to remove corrupted threads from this '
+                  'file.')
+        raise e
 
     # Begin main loop
-    for thread in allthreads:
-        running = thread.process(running, settings)
-    while (not termination_criterion) and running:
-        for thread in running:
-            if thread.gatekeeper(settings):
-                termination_criterion, running = thread.interpret(allthreads, running, settings)
-                if termination_criterion:
-                    for thread in running:    # todo: should I replace this with something to finish up running jobs and just block submission of new ones?
-                        for job_index in range(len(thread.current_type)):
-                            thread.cancel_job(job_index, settings)
-                        running = []
-                    break
-                running = thread.process(running, settings)
-            else:
-                time.sleep(30)
+    # This whole thing is in a try-except block to handle cancellation of jobs when the code crashes in any way
+    try:
+        while (not termination_criterion) and running:
+            for thread in running:
+                if thread.gatekeeper(settings):
+                    termination_criterion, running = thread.interpret(allthreads, running, settings)
+                    if attempted_rescue == True:
+                        interpreted.append(thread)
+                    if termination_criterion:
+                        for thread in running:    # todo: should I replace this with something to finish up running jobs and just block submission of new ones?
+                            for job_index in range(len(thread.current_type)):
+                                thread.cancel_job(job_index, settings)
+                            running = []
+                        break
+                    running = thread.process(running, settings)
+                else:
+                    time.sleep(30)
+
+            if all([thread in interpreted for thread in running]):
+                attempted_rescue = False    # every thread has passed at an interpret step, so rescue was successful!
+
+    except Exception as e:
+        print(str(e))
+        handle_loop_exception(attempted_rescue, running, settings)
 
     jobtype = factory.jobtype_factory(settings.job_type)
     jobtype.cleanup(None, settings)
@@ -248,4 +347,4 @@ if __name__ == "__main__":
     settings = configure.configure(sys.argv[1], working_directory)
     exit_message = main(settings)
     print(exit_message)
-    sys.exit()
+

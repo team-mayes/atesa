@@ -6,6 +6,7 @@ Thread, passing them to a task manager to submit them, and updating the list of 
 import jinja2
 import os
 import sys
+import warnings
 from atesa_v2 import factory
 
 def process(thread, running, settings):
@@ -67,9 +68,18 @@ def process(thread, running, settings):
 
         filled = template.render(these_kwargs)
         newfilename = thread.name + '_' + name + '.' + settings.batch_system
-        with open(newfilename, 'w') as newfile:
-            newfile.write(filled)
-            newfile.close()
+        try:
+            with open(newfilename, 'w') as newfile:
+                newfile.write(filled)
+                newfile.close()
+        except OSError as e:
+            if 'name too long' in str(e):
+                warnings.warn('Encountered too-long filename: ' + newfilename + '. Skipping submission of this thread '
+                              'to the task manager, terminating it, and continuing. Consider renaming a sample of the '
+                              'initial coordinate files you like best and starting a new ATESA run. If this limitation '
+                              'is a problem for you, please raise an issue on GitHub detailing your use-case.')
+                thread.terminated = True
+                return running
 
         batchfiles.append(newfilename)
         jobtype.update_history(thread, settings, **these_kwargs)
