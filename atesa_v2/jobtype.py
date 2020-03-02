@@ -14,6 +14,7 @@ import numpy
 import shutil
 import time
 import pytraj
+import mdtraj
 import warnings
 import copy
 import re
@@ -605,8 +606,9 @@ class AimlessShooting(JobType):
         # utilities.resample(settings)  # to build as_decorr.out I suppose. Kinda silly.
         pass
 
-    def verify(self, arg, argtype):
+    def verify(self, arg, suffix, argtype):
         # Supported verify types for aimless shooting: 'history', 'type'
+        print(suffix)
         print(self.terminated)
         if argtype == 'type':
             if not arg in [[''], ['init'], ['prod', 'prod']]:
@@ -755,7 +757,11 @@ class CommittorAnalysis(JobType):
                 fwds += 1
             elif result == 'bwd':
                 bwds += 1
-        open('committor_analysis.out', 'a').write(str(int(fwds)) + '/' + str(int(fwds + bwds)) + '\n')
+        if int(fwds + bwds) > 0:
+            open('committor_analysis.out', 'a').write(str(int(fwds)) + '/' + str(int(fwds + bwds)) + '\n')
+
+        # Write updated restart.pkl
+        pickle.dump(allthreads, open('restart.pkl', 'wb'), protocol=2)
 
     def algorithm(self, allthreads, running, settings):
         return running    # nothing to set because there is no next step

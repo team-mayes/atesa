@@ -21,6 +21,7 @@ ATESA contains methods to automate initial transition state guessing, flexible l
    the_config_file
    auxiliary_scripts
    on_termination_criteria
+   troubleshooting
    
 .. toctree::
    :maxdepth: 1

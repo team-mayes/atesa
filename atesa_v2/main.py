@@ -215,7 +215,7 @@ def handle_loop_exception(attempted_rescue, running, settings):
           'preserve resources.')
     for thread in running:
         try:
-            for job_index in range(thread.jobids):
+            for job_index in range(len(thread.jobids)):
                 thread.cancel_job(job_index, settings)
         except Exception as little_e:
             print('Encountered exception while attempting to cancel a job: ' + str(little_e) +

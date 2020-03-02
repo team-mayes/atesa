@@ -61,6 +61,9 @@ def main(pkl_file, settings_pkl='settings.pkl'):
     class ValidThread(BaseModel):
         """ Template for a valid Thread object """
 
+        # def __init__(self, dict):
+        #     self.dict = dict
+
         topology: str = ''
         jobids: typing.List = []
         terminated: bool = False
@@ -85,8 +88,8 @@ def main(pkl_file, settings_pkl='settings.pkl'):
             return v
 
         @validator('history')
-        def valid_history(cls, v):
-            if not jobtype.verify(cls, v, 'history'):   # todo: can I pass in the thread object I'm validating here?
+        def valid_history(cls, v, values):
+            if not jobtype.verify(cls, v, values['suffix'], 'history'):
                 raise ThreadValidationError
             return v
 

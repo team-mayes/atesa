@@ -8,8 +8,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 import sys
+import os
 
-def main(input_file, bootstrap=True, bootstrapN=0, error=[], nbins=4):
+def main(input_file, output_file, bootstrap=True, bootstrapN=0, error=[], nbins=4, temp=300, noplot=False):
     """
     Process equilibrium path sampling output file input_file to obtain free energy profile.
 
@@ -19,18 +20,28 @@ def main(input_file, bootstrap=True, bootstrapN=0, error=[], nbins=4):
 
     Parameters
     ----------
-    progress : float
-        A number between 0 and 1 indicating the fractional completeness of the bar. A value under 0 represents a 'halt'.
-        A value at 1 or bigger represents 100%.
-    message : str
-        The string to precede the progress bar (so as to indicate what is progressing)
+    input_file : str
+        Name of input file containing raw EPS data
+    bootstrap : bool
+        If True, this is a bootstrapping iteration, and the resulting PMF will be returned for averaging instead of
+        being plotted
+    bootstrapN : int
+        Number of bootstrapping samples to include (used only if bootstrap == True)
+    error : list
+        Error values for each window, generally calculated by bootstrapping (used only if bootstrap == False)
+    nbins : int
+        Number of bins to divide each EPS window into for constructing the PMF
+    temp : float
+        Temperature in Kelvin at which to assess the PMF
 
     Returns
     -------
-    None
+    partial_pmf : list
+        Calculated PMF energies for each window; returned only if bootstrap == True
 
     """
 
+    kT = temp * 0.001987    # kcal/mol-K
 
     file = open(input_file, 'r').readlines()[1:]    # skip header line
     open(input_file, 'r').close()
@@ -42,7 +53,7 @@ def main(input_file, bootstrap=True, bootstrapN=0, error=[], nbins=4):
     # Determine the window boundaries
     for line in file:
         line = line.strip('\n')
-        split = line.split(' ')
+        split = line.split()
         if [float('%.3f' % float(split[0])), float('%.3f' % (float(split[1])))] not in windows:
             windows.append([float('%.3f' % (float(split[0]))), float('%.3f' % (float(split[1])))])
             data.append([])
@@ -73,12 +84,29 @@ def main(input_file, bootstrap=True, bootstrapN=0, error=[], nbins=4):
         ax4 = fig.add_subplot(111)
         error_index = 0
 
+    # if not bootstrap:
+    #     if not os.path.exists('wham_eps.in'):
+    #         open('wham_eps.in', 'w').close()
+
     for window_index in range(len(windows)):
+        # if not bootstrap:
+        #     if not os.path.exists('eps_window_' + str(window_index) + '.out'):
+        #         open('eps_window_' + str(window_index) + '.out', 'w').close()
+        #     with open('eps_window_' + str(window_index) + '.out', 'a') as f:
+        #         n = 0
+        #         for item in data[window_index]:
+        #             n += 1
+        #             f.write(str(n) + ' ' + str(item) + '\n')
+        #
+        #     open('wham_eps.in', 'a').write('eps_window_' + str(window_index) + '.out ' + str(np.mean(windows[window_index])) + ' 0.0001\n')
+
         RC_values = np.linspace(windows[window_index][0], windows[window_index][1], nbins)  # list RC value of each bin
 
         probs = [0 for null in range(nbins)]    # initialize probabilities by bin
         thismin = min(RC_values)       # obtain min and max values within the window
         thismax = max(RC_values)
+
+        RC_values = [windows[window_index][0] + (windows[window_index][1] - windows[window_index][0]) * np.mean([i / nbins, (i + 1) / nbins]) for i in range(nbins)]
 
         if min(data[window_index]) == max(data[window_index]):
             raise RuntimeError('Found a window containing only a single sampled value. The boundaries of the offending '
@@ -102,9 +130,9 @@ def main(input_file, bootstrap=True, bootstrapN=0, error=[], nbins=4):
         # Calculate energy corresponding to each probability in this window
         for prob in probs:
             if local_index == 0 and not bootstrap:
-                offset = -0.596 * np.log(prob)
+                offset = -1 * kT * np.log(prob)
             if not prob == 0:
-                U[local_index] = -0.596 * np.log(prob) - offset
+                U[local_index] = -1 * kT * np.log(prob) - offset
             local_index += 1
 
         # Adjust energy values uniformly up or down to stitch adjacent windows together smoothly
@@ -123,8 +151,7 @@ def main(input_file, bootstrap=True, bootstrapN=0, error=[], nbins=4):
         fullPMF += U    # append the just-calculated data to the full energy profile
 
         # Do the plotting
-        if not bootstrap:
-            # ax0.errorbar(RC_values[1:-1], U[1:-1], error[error_index + 1:error_index + len(U) - 1])
+        if not bootstrap and not noplot:
             ax0.errorbar(RC_values, U, error[error_index:error_index + len(U)])
 
             actualRC += list(RC_values[1:-1])
@@ -150,9 +177,6 @@ def main(input_file, bootstrap=True, bootstrapN=0, error=[], nbins=4):
     i = 1
     while i < len(fullPMF):
         if (i+1) % nbins == 0 and i + 1 < len(fullPMF):
-            # tempPMF.append(np.mean([fullPMF[i], fullPMF[i + 1]]))
-            # tempRC.append(np.mean([fullRC[i], fullRC[i + 1]]))
-            # tempErr.append(np.mean([error[i], error[i + 1]]))
             i += 1  # skip next point
         else:
             tempPMF.append(fullPMF[i])
@@ -165,40 +189,18 @@ def main(input_file, bootstrap=True, bootstrapN=0, error=[], nbins=4):
     tempPMF = list(reversed(tempPMF))
     tempRC = list(reversed([-1*RC for RC in tempRC]))
 
-    actualErr = list(reversed(actualErr))
-    actualPMF = list(reversed(actualPMF))
-    actualRC = list(reversed([-1 * RC for RC in actualRC]))
-
-    # drop_index = 0
-    # altflag = False
-    # temperRC = tempRC
-    # temperPMF = tempPMF
-    # temperErr = tempErr
-    # while drop_index < len(tempRC) - 1:
-    #     print(drop_index)
-    #     temperRC.remove(tempRC[drop_index])
-    #     temperPMF.remove(tempPMF[drop_index])
-    #     temperErr.remove(tempErr[drop_index])
-    #     if not altflag:
-    #         drop_index += nbins - 1
-    #         altflag = True
-    #     else:
-    #         drop_index += 1
-    #         altflag = False
-
-    with open(input_file + '.data', 'w') as f:
+    with open(output_file, 'w') as f:
         for i in range(len(tempRC)):
             f.write(str(tempRC[i]) + ' ' + str(tempPMF[i]) + ' ' + str(tempErr[i]) + '\n')
 
-    ax1.plot(actualRC,actualPMF,color='#0072BD',lw=2)
-    plt.fill_between(np.asarray(actualRC), np.asarray(actualPMF) - np.asarray(actualErr), np.asarray(actualPMF) + np.asarray(actualErr),
-                   alpha=0.5, facecolor='#0072BD')
-    plt.ylabel('Free Energy (kcal/mol)', weight='bold')
-    plt.xlabel('Reaction Coordinate', weight='bold')
-    fig.canvas.draw()
-    plt.show()
-
-    # todo: also write raw values to a text file for users who would prefer to do their own plotting or analysis
+    if not noplot:
+        ax1.plot(tempRC,tempPMF,color='#0072BD',lw=2)
+        plt.fill_between(np.asarray(tempRC), np.asarray(tempPMF) - np.asarray(tempErr), np.asarray(tempPMF) + np.asarray(tempErr),
+                       alpha=0.5, facecolor='#0072BD')
+        plt.ylabel('Free Energy (kcal/mol)', weight='bold')
+        plt.xlabel('Reaction Coordinate', weight='bold')
+        fig.canvas.draw()
+        plt.show()
 
     # Section for writing WHAM input files, if desired (deprecated)
     # open('eps.meta','w').close()
@@ -265,29 +267,38 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Perform LMAX on the given input data')
     parser.add_argument('-i', metavar='input_file', type=str, nargs=1, default=['eps.out'],
                         help='input filename (output from equilibrium path sampling). Default=eps.out')
-    parser.add_argument('-n', metavar='nbins', type=int, nargs=1, default=[4],
-                        help='number of bins to divide each window into. Default=25')
+    parser.add_argument('-o', metavar='output_file', type=str, nargs=1, default=['fep.out'],
+                        help='output filename. Default=fep.out')
+    parser.add_argument('-t', metavar='temp', type=int, nargs=1, default=[300],
+                        help='temperature in Kelvin to evaluate energy at. Default=300')
+    parser.add_argument('-n', metavar='nbins', type=int, nargs=1, default=[5],
+                        help='number of bins to divide each window into. Default=5')
     parser.add_argument('-b', metavar='bootstrapN', type=int, nargs=1, default=[25],
                         help='number of bootstrapping samples to include in each window. Default=25')
     parser.add_argument('-c', metavar='bootstrapCyc', type=int, nargs=1, default=[100],
                         help='number of bootstrapping cycles to average over. Default=100')
+    parser.add_argument('--noplot', action='store_true', default=False,
+                        help='suppress free energy profile and window histogram plots')
 
     arguments = vars(parser.parse_args())  # Retrieves arguments as a dictionary object
     input_file = arguments['i'][0]
+    output_file = arguments['o'][0]
+    temp = arguments['t'][0]
     nbins = arguments['n'][0]
     bootstrapN = arguments['b'][0]
     bootstrapCyc = arguments['c'][0]
+    noplot = arguments['noplot']
 
     # Implement bootstrapping if needed; I wrote this a long time ago and it's sloppy as hell, but it works.
     if bootstrapCyc:
         means = []          # initialize list of bootstrapping results
         std = []            # initialize list of standard error values
         for i in range(bootstrapCyc):
-            means.append(main(input_file, bootstrap=True, bootstrapN=bootstrapN, nbins=nbins))
+            means.append(main(input_file, output_file, bootstrap=True, bootstrapN=bootstrapN, nbins=nbins, temp=temp, noplot=noplot))
             update_progress((i+1)/bootstrapCyc, message='Bootstrapping')
         for j in range(len(means[0])):
             this_window = [u[j] for u in means]                     # j'th value from each bootstrapping iteration
             std.append(np.std(this_window))                         # standard deviation for this window
-        main(input_file, bootstrap=False, error=std, nbins=nbins)
+        main(input_file, output_file, bootstrap=False, error=std, nbins=nbins, temp=temp, noplot=noplot)
     else:
-        main(input_file, bootstrap=False, nbins=nbins)
+        main(input_file, output_file, bootstrap=False, nbins=nbins, temp=temp, noplot=noplot)

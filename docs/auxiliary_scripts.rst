@@ -5,8 +5,8 @@ Auxiliary Scripts
 
 .. _LikelihoodMaximization:
 
-Likelihood Maximization
------------------------
+lmax.py: Likelihood Maximization
+--------------------------------
 
 In addition to the core job types performed through calls directly to ``atesa``, ATESA comes packaged with a separate likelihood maximization (LMax) script for obtaining reaction coordinates (RC's) from aimless shooting output.
 
@@ -72,8 +72,8 @@ This plot (in ASCII form) would be outputted to the terminal at the end of the o
 
 .. _RCEval:
 
-Reaction Coordinate Evaluation
-------------------------------
+rc_eval.py: Reaction Coordinate Evaluation 
+------------------------------------------
 
 ATESA also comes with a separate script for evaluating reaction coordinates for each shooting point coordinate file in a given directory. This script should be given an aimless shooting working directory, where it will produce a new file `rc.out` containing the reaction coordinate values of each point, sorted in descending order by absolute value. The syntax is as follows:
 
@@ -88,3 +88,49 @@ ATESA also comes with a separate script for evaluating reaction coordinates for 
 	Defines the reaction coordinate to evaluate for each shooting point. The format is the same as in the `rc_definition` configuration file setting (see :ref:`ReactionCoordinateDefinition`), except that here there must be no whitespace (' ') characters. The identities of CVs are determined from the settings.pkl object stored in the working directory.
 	
 The produced output file `rc.out` is (optionally) used as input for a committor analysis run (see :ref:`CommittorAnalysis`).
+
+.. _BoltzmannWeight:
+
+boltzmann_weight.py: Energy Profiles from EPS
+---------------------------------------------
+
+The output file from an equilibrium path sampling (EPS) run can be converted into a free energy profile by simply weighting the observed probability of each state (that is, a certain discretized range of RC values) according to the Boltzmann distribution:
+
+.. math::
+
+	∆G = -k_B T ln(p)
+	
+Where :math:`∆G` is the relative free energy, :math:`k_B T` is the Boltzmann constant times the absolute temperature :math:`T`, and :math:`p` is the relative probability of the state in question.
+
+boltzmann_weight.py is a utility script that automates this calculation for data in the format of an ATESA equilibrium path sampling output file, and stitches together the free energy profiles of adjacent windows to construct the overall free energy profile. It also automates subsampling of the data for bootstrapping in order to obtain error bars. It is called as follows:
+
+::
+
+	boltzmann_weight.py -i input_file [-o output_file] [-t temp] [-n nbins] [-c bootstrapCyc] [-b bootstrapN] [--noplot]
+	
+`-i input_file`
+	Path to the EPS output file containing the data to analyze. This file should be formatted in three columns separated by whitespace:
+	
+	[EPS window lower boundary] [EPS window upper boundary] [sampled RC value]
+	
+	Samples from each window do not need to be in contiguous groups of lines, but the first two columns of samples from the same EPS window do need to be identical when rounded to three decimal places in order to be counted as belonging to the same window.
+	
+`-o output_file`
+	Name of the output file to produce, containing the final free energy profile and bootstrapped error if applicable. Default is 'fep.out'.
+	
+`-t temp`
+	The temperature in Kelvin at which to evaluate the free energy profile (that is, :math:`T` in :math:`k_B T`). Default is 300.
+	
+`-n nbins`
+	The number of bins into which each EPS window is divided. Must be an integer. Larger values allow for higher resolution, but also require more data in order to remain smooth. Too-low values of n may provide misleading results, while too-high values will add considerable noise. The user is advised to try a few different values of n before settling on one, in order to get a feel for how it affects the result. Default is 5.
+	
+`-c bootstrapCyc`
+	The number of bootstrapping iterations to perform. Must be an integer. A value of zero turns off bootstrapping. Each iteration subsamples the data in each window to get a new estimate of the free energy profile, and then the standard deviation of the distribution of energy values from across the iterations is provided in the final result. Default is 100.
+	
+`-b bootstrapN`
+	The number of samples to include in each window when bootstrapping. Must be an integer. Default is 25.
+
+`--noplot`
+	By default, boltzmann_weight.py produces a histogram of the binned data in each window to help assess good overlap between adjacent windows, as well as a plot of the resulting free energy profile using matplotlib, if supported by the interpreter. Providing this option suppresses this behavior.
+	
+Note that if `--noplot` is not provided and a histogram is shown, the plot window must be manually closed before the remainder of the calculation will take place. Similarly, the program will not terminate until the free energy profile plot window is closed.

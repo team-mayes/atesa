@@ -64,7 +64,8 @@ def process(thread, running, settings):
                          'inpcrd': this_inpcrd[job_index],
                          'rst': thread.name + '_' + name + '.rst7',
                          'nc': thread.name + '_' + name + '.nc',
-                         'working_directory': settings.working_directory }
+                         'working_directory': settings.working_directory,
+                         'extra': eval('settings.' + type + '_extra') }
 
         filled = template.render(these_kwargs)
         newfilename = thread.name + '_' + name + '.' + settings.batch_system

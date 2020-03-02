@@ -5,6 +5,7 @@ Takes user input file and returns settings namespace object
 
 import argparse
 import pytraj       # to support pytraj calls in input file
+import mdtraj       # to support mdtraj calls in the input file
 import numpy        # to support numpy  calls in input file
 import numpy as np  # to support numpy  calls even if called as np
 import sys
@@ -52,11 +53,13 @@ def configure(input_file, user_working_directory=''):
         init_mem: str = '4000mb'
         init_walltime: str = '00:30:00'
         init_solver: str = 'sander'
+        init_extra: str = ''
         prod_nodes: int = 1
         prod_ppn: int = 8
         prod_mem: str = '4000mb'
         prod_walltime: str = '02:00:00'
         prod_solver: str = 'sander'
+        prod_extra: str = ''
 
         # File path settings (required for all jobs, but do have sensible defaults)
         path_to_input_files: str = sys.path[0] + '/data/input_files'    # todo: fix this for final publication

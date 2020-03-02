@@ -1,19 +1,19 @@
-A Quick Theory Primer
-=====================
+Theory and Definitions
+======================
 
-This page is intended to briefly introduce readers to the theory of transition path sampling (TPS) with aimless shooting, as well as to how ATESA works. It is intended for prospective users who may not yet be sure whether TPS or ATESA is right for their application. A thorough explanation of TPS as a technique and its relationship to other methods is beyond the scope of this document, and the reader is instead directed to `Beckham and Peters, 2010 <https://pubs.acs.org/doi/abs/10.1021/bk-2010-1052.ch013>`_.
+This page is intended to briefly introduce readers to some of the theory and vocabulary of transition path sampling (TPS) with aimless shooting, as well as to how ATESA works. It is intended for prospective users who may not yet be sure whether TPS or ATESA is right for their application. A thorough explanation of TPS as a technique and its relationship to other methods is beyond the scope of this document; for this the reader is instead directed to `Beckham and Peters, 2010 <https://pubs.acs.org/doi/abs/10.1021/bk-2010-1052.ch013>`_.
 
 Characterizing the Problem...
 -----------------------------
 
-Molecular simulations are a powerful tool for investigating the workings of chemical systems at the extremely small scale. However, due to technical limitations, simulations are necessarily quite limited in scope and cannot replicate the time- and length-scales relevant in laboratory studies. This can be particularly troublesome when the important feature of a system is a chemical reaction or transformation with a significant activation barrier; although such an event may take place very quickly in the eyes of an experimentalist, it could take years of computer time before the same event might be expected to occur just once in a simulation -- this is what is meant when we call certain reactions or transformations "rare events".
+Molecular simulations are a powerful tool for investigating the workings of chemical systems at the extremely small scale. However, due to technical limitations, simulations are necessarily quite limited in scope and cannot replicate the time- and length-scales relevant in laboratory studies. This can be particularly troublesome when the important feature of a system is a chemical reaction or transformation with a significant activation barrier; although such an event may take place very quickly in the eyes of an experimentalist, it could take years of computer time before the same event might be expected to occur just once in a simulation. This is what is meant when we call certain reactions or transformations "rare events".
 
-In order to apply simulations to the study of rare events, we must make use of one or more advanced sampling methods. These methods take advantage of outside knowledge to modify the behavior of simulations and narrow their focus to a particular event or events and allow them to be simulated on tractable timescales. In particular, ATESA automates a transition path sampling workflow.
+In order to apply simulations to the study of rare events, we must make use of advanced sampling methods. These methods take advantage of knowledge about the system or about chemistry in general to modify the behavior of simulations and narrow their focus to a particular event or events and allow them to be simulated on tractable timescales. In particular, ATESA automates a transition path sampling workflow using aimless shooting.
 
 Transition Path Sampling
 ------------------------
 
-Transition path sampling refers to any method of rare event sampling that aims to characterize the ensemble of "transition paths" (that is, paths through phase space that connect one discrete state to another) as a proxy for characterizing the event as a generalized whole.
+Transition path sampling refers to any method of rare event sampling that aims to characterize the ensemble of "transition paths" (that is, trajectories through phase space that connect one discrete state to another) as a proxy for characterizing the event as a generalized whole.
 
 Aimless Shooting
 ----------------
@@ -32,7 +32,7 @@ ATESA also features a suite of analysis and utility tools that run in much the s
 Likelihood Maximization
 -----------------------
 
-The product of aimless shooting is a (large) set of combined variable (CV) values paired with corresponding commitment basins (products or reactants). In order to convert this information into a usable form, the method of likelihood maximization can be used to select a model that describes the reaction progress in terms of relatively few parameters. ATESA supports the intertial likelihood maximization procedure first published in `Peters 2012 <https://doi.org/10.1016/j.cplett.2012.10.051>`_, in addition to the original non-inertial procedure. For details on ATESA's implementation of likelihood maximization, see :ref:`LikelihoodMaximization`.
+The output of aimless shooting is a large set of combined variable (CV) values paired with corresponding commitment basins (products or reactants). In order to convert this information into a usable form, the method of likelihood maximization can be used to select a model that describes the reaction progress in terms of relatively few parameters. ATESA supports the intertial likelihood maximization procedure first published in `Peters 2012 <https://doi.org/10.1016/j.cplett.2012.10.051>`_, in addition to the original non-inertial procedure. For details on ATESA's implementation of likelihood maximization, see :ref:`LikelihoodMaximization`.
 
 .. _CommittorAnalysis:
 
@@ -44,4 +44,4 @@ Once a reaction coordinate has been obtained, it should be verified using new, u
 Equilibrium Path Sampling
 -------------------------
 
-The free energy profile along the reaction coordinate can be determined by several methods, but the most robust and general of them is equilibrium path sampling, wherein the reaction coordinate is divided into bins and the unbiased distribution of simulations within those bins is converted directly into free energy. ATESA automates collection of equilibrium path sampling data from an arbitrary array of initial coordinates, filling in gaps automatically using the tails of simulations from adjacent windows.
+The free energy profile along the reaction coordinate can be determined by several methods, but the most general of them is equilibrium path sampling, wherein the reaction coordinate is divided into bins and the unbiased distribution of reaction coordinate values sampled within those bins is converted directly into free energy. ATESA automates collection of equilibrium path sampling data from an arbitrary array of initial coordinates, filling in gaps automatically using the tails of simulations from adjacent windows.

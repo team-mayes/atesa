@@ -4,6 +4,7 @@ interface or script.
 """
 
 import pytraj
+import mdtraj
 import shutil
 import fileinput
 import re
@@ -150,6 +151,7 @@ def get_cvs(filename, settings, reduce=False):
         return (float(unreduced_value) - this_min) / (this_max - this_min)
 
     traj = pytraj.iterload(filename, settings.topology)
+    traj_name = filename
 
     rc_minmax = [[],[]]
     if reduce:

@@ -17,6 +17,7 @@ import numdifftools
 from scipy import optimize
 from scipy import stats
 from scipy.special import erf
+import matplotlib.pyplot as plt
 
 try:
     import gnuplotlib
@@ -103,7 +104,7 @@ def objective_function(params, A_data, B_data):
     Returns
     -------
     negative_log_likelihood : float
-        The negative log likelihood of the fit to the error function for the given parameters and observations
+        The negative log likelihood of the fit to the ansatz for the given parameters and observations
 
     """
 
@@ -287,12 +288,12 @@ def main(i, k, f, q, r, o, automagic, plots, quiet, **kwargs):
         current_best[0].fun = math.inf
 
         # Assemble list of RCs to optimize
-        if len(fixed) == dims:
+        if not fixed == [None] and len(fixed) == dims:
             cv_combs = [fixed]
         elif running or automagic:
             cv_combs = [fixed + [new] for new in range(1, num_cvs + 1) if not new in fixed]
         else:
-            cv_combs = [comb for comb in itertools.combinations(range(1, num_cvs + 1), dims) if (not fixed or set(fixed).issubset(comb))]
+            cv_combs = [comb for comb in itertools.combinations(range(1, num_cvs + 1), dims) if (fixed == [None] or set(fixed).issubset(comb))]
         if qdot == 'present' and not termination_2:
             cv_combs_temp = cv_combs
             cv_combs = []
@@ -398,13 +399,52 @@ def main(i, k, f, q, r, o, automagic, plots, quiet, **kwargs):
     else:
         print(output_string)
 
+    ### Experimental ###
+    # RCmin = []
+    # RCmax = []
+    # RC = []
+    # errs = [float(numpy.sqrt(item)) for item in numpy.diag(numpy.linalg.inv(hess))]
+    # this_A = []
+    # this_B = []
+    # for index in current_best[1]:  # produce k-by-len(A_data) matrices (list of lists) for the selected CVs
+    #     this_A.append([obs[index - 1] for obs in reduced_A])
+    #     this_B.append([obs[index - 1] for obs in reduced_B])
+    # this_A = list(map(list, zip(*this_A)))  # transpose the matrices to get desired format
+    # this_B = list(map(list, zip(*this_B)))
+    # for obs in this_B + this_A:
+    #     RCmin.append(current_best[0].x[0] - errs[0] + numpy.inner([current_best[0].x[i + 1] - errs[i + 1] for i in range(len(current_best[0].x[1:]))], obs))
+    #     RCmax.append(current_best[0].x[0] + errs[0] + numpy.inner([current_best[0].x[i + 1] + errs[i + 1] for i in range(len(current_best[0].x[1:]))], obs))
+    #     RC.append(numpy.mean([RCmin[-1], RCmax[-1]]))
+    #
+    # RCvals = [RC, RCmin, RCmax]
+    # mapped = list(map(list, zip(*RCvals)))
+    # mapped = sorted(mapped, key=lambda x: float(x[0]))
+    # RCvals = list(map(list, zip(*mapped)))
+
+    #(0, 1/4, 1/4, 1/4, 1/4)V(0, 1/4, 1/4, 1/4, 1/4)'
+    V = numpy.linalg.inv(hess)  # variance/covariance matrix
+    weights = [0] + [1 / (len(V[0]) - 1) for null in range(len(V[0]) - 1)]
+    rc_stderr = numpy.inner(weights, numpy.diag(V))
+    #rc_stderr = numpy.matmul(numpy.matmul(weights, V), numpy.transpose(weights))
+    #rc_stderr = numpy.diag(V)[1]
+
+    if not os.path.exists('rc_stderr.out'):
+        open('rc_stderr.out', 'w').close()
+    open('rc_stderr.out', 'a').write(str(input_file) + ' ' + str(rc_stderr) + '\n')
+
+    # fig = plt.figure()
+    # ax0 = fig.add_subplot(111)
+    # ax0.plot(range(len(RC)), RCvals[0], lw=0.5)
+    # plt.fill_between(range(len(RC)), numpy.asarray(RCvals[1]), numpy.asarray(RCvals[2]), alpha=0.5)
+    # plt.show()
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Perform LMAX on the given input data')
     parser.add_argument('-i', metavar='input_file', type=str, nargs=1, default=['as_decorr.out'],
                         help='input filename (output from aimless shooting). Default=as_decorr.out')
-    parser.add_argument('-k', metavar='dimensionality', type=int, nargs=1, default=[0],
-                        help='number of CVs to include in RC. Default=none')
+    parser.add_argument('-k', metavar='dimensionality', type=int, nargs=1, default=[1],
+                        help='number of CVs to include in RC. Default=1')
     parser.add_argument('-f', metavar='fixed', type=int, nargs='*', default=[None],
                         help='CVs to require inside the RC. Default=none')
     parser.add_argument('-q', metavar='include_qdot', type=str, nargs=1, default=['present'],
