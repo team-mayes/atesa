@@ -14,6 +14,7 @@ import argparse
 import warnings
 import pickle
 import numdifftools
+import statsmodels
 from scipy import optimize
 from scipy import stats
 from scipy.special import erf
@@ -113,9 +114,16 @@ def objective_function(params, A_data, B_data):
         ml = numpy.negative(numpy.ones(len(arg)))
         return numpy.where(arg > 5.7, pl, numpy.where(arg < -5.7, ml, erf(arg)))
 
-    qa = params[0] + numpy.inner(params[1:], A_data)
-    qb = params[0] + numpy.inner(params[1:], B_data)
-    sum = numpy.sum(numpy.log((1 - erflike(qa)) / 2)) + numpy.sum(numpy.log((1 + erflike(qb)) / 2))
+    if A_data and not B_data:
+        qa = params[0] + numpy.inner(params[1:], A_data)
+        sum = numpy.sum(numpy.log((1 - erflike(qa)) / 2))
+    elif B_data and not A_data:
+        qb = params[0] + numpy.inner(params[1:], B_data)
+        sum = numpy.sum(numpy.log((1 + erflike(qb)) / 2))
+    else:
+        qa = params[0] + numpy.inner(params[1:], A_data)
+        qb = params[0] + numpy.inner(params[1:], B_data)
+        sum = numpy.sum(numpy.log((1 - erflike(qa)) / 2)) + numpy.sum(numpy.log((1 + erflike(qb)) / 2))
 
     return -1 * sum
 
@@ -246,11 +254,25 @@ def main(i, k, f, q, r, o, automagic, plots, quiet, **kwargs):
         dims = -1
         running = 0
 
-    # Load settings object from .pkl file if present, to check for information criterion override
-    try:
-        settings = pickle.load(open('settings.pkl', 'rb'))
-    except FileNotFoundError:
-        pass
+    # Load settings object from .pkl file if present, to check for information criterion override and max_dims
+    if automagic:
+        try:
+            settings = pickle.load(open('settings.pkl', 'rb'))
+            print('Loaded settings.pkl...')
+            try:
+                information_error_override = settings.information_error_override
+                print('Setting information_error_override = ' + str(information_error_override))
+            except AttributeError:
+                information_error_override = False
+                print('information_error_override is not set; defaulting to False')
+            try:
+                information_error_max_dims = settings.information_error_max_dims
+                print('Setting maximum number of automagic dimensions to: ' + str(int(information_error_max_dims)))
+            except AttributeError:
+                information_error_max_dims = -1
+                print('information_error_max_dims is not set; defaulting to no limit')
+        except FileNotFoundError:
+            pass
 
     # Get data from input file, and determine minimum and maximum values for each CV, reduce data
     input_data = [[float(item) for item in
@@ -350,7 +372,7 @@ def main(i, k, f, q, r, o, automagic, plots, quiet, **kwargs):
                 if two_line_result >= 0:
                     termination = True
                     current_best = results[two_line_result]
-        elif len(cv_combs[0]) == settings.information_error_max_dims and not termination_2:
+        elif len(cv_combs[0]) == information_error_max_dims and not termination_2:
             termination = True
             if automagic:
                 current_best = results[-1]
@@ -375,16 +397,31 @@ def main(i, k, f, q, r, o, automagic, plots, quiet, **kwargs):
                            '(without quotes). If you did supply this setting, then you are seeing this message because '
                            'the settings.pkl file could not be found.')
         try:
-            if settings.information_error_override:
+            if information_error_override:
                 pass
             else:
                 raise err
         except NameError:
             raise err
 
-    # Calculate hessian using the model in current_best (current_best[2] and [3] are corresponding this_A and this_B)
+    # Calculate hess and jaco using the model in current_best (current_best[2] and [3] are corresponding this_A and this_B)
     l_objective_function = lambda x: objective_function(x, current_best[2], current_best[3])
     hess = numdifftools.Hessian(l_objective_function)(current_best[0].x)
+
+    # jaco has to be a sum of the jacobian transpose times the jacobian over each individual observation in the data
+    jaco = 0
+    for this_A in current_best[2]:
+        l_objective_function = lambda x: objective_function(x, [this_A], [])
+        this_jaco = numdifftools.Jacobian(l_objective_function)(current_best[0].x)
+        jaco += numpy.matmul(numpy.transpose(this_jaco), this_jaco)
+    for this_B in current_best[3]:
+        l_objective_function = lambda x: objective_function(x, [], [this_B])
+        this_jaco = numdifftools.Jacobian(l_objective_function)(current_best[0].x)
+        jaco += numpy.matmul(numpy.transpose(this_jaco), this_jaco)
+
+    V = numpy.matmul(numpy.matmul(numpy.linalg.inv(numpy.negative(hess)), jaco), numpy.linalg.inv(numpy.negative(hess)))  # Godambe Information
+    weights = [0] + [1 / (len(V[0]) - 1) for null in range(len(V[0]) - 1)]  # weights for mean excluding constant term
+    mean_std = numpy.inner(weights, [numpy.sqrt(item) for item in numpy.diag(V)])   # mean of estimated standard errors
 
     # Return output in desired format
     rc_string = str('%.3f' % current_best[0].x[0]) + ' + ' + ' + '.join(['%.3f' % current_best[0].x[i+1] + '*CV' +
@@ -392,51 +429,16 @@ def main(i, k, f, q, r, o, automagic, plots, quiet, **kwargs):
     output_string = 'Likelihood maximization complete!\n' \
                     'The optimized reaction coordinate (with CVs indexed from 1) is: ' + rc_string + '\n' \
                     'The negative log likelihood of this model is: ' + '%.3f' % current_best[0].fun + '\n' \
-                    'The mean information error for this model is: ' + '%.3f' % numpy.mean([float(numpy.sqrt(item)) for item in numpy.diag(numpy.linalg.inv(hess))])
+                    'The mean information error for this model is: ' + '%.3f' % numpy.sqrt(mean_std)
 
     if output_file:
         open(output_file, 'w').write(output_string)
     else:
         print(output_string)
 
-    ### Experimental ###
-    # RCmin = []
-    # RCmax = []
-    # RC = []
-    # errs = [float(numpy.sqrt(item)) for item in numpy.diag(numpy.linalg.inv(hess))]
-    # this_A = []
-    # this_B = []
-    # for index in current_best[1]:  # produce k-by-len(A_data) matrices (list of lists) for the selected CVs
-    #     this_A.append([obs[index - 1] for obs in reduced_A])
-    #     this_B.append([obs[index - 1] for obs in reduced_B])
-    # this_A = list(map(list, zip(*this_A)))  # transpose the matrices to get desired format
-    # this_B = list(map(list, zip(*this_B)))
-    # for obs in this_B + this_A:
-    #     RCmin.append(current_best[0].x[0] - errs[0] + numpy.inner([current_best[0].x[i + 1] - errs[i + 1] for i in range(len(current_best[0].x[1:]))], obs))
-    #     RCmax.append(current_best[0].x[0] + errs[0] + numpy.inner([current_best[0].x[i + 1] + errs[i + 1] for i in range(len(current_best[0].x[1:]))], obs))
-    #     RC.append(numpy.mean([RCmin[-1], RCmax[-1]]))
-    #
-    # RCvals = [RC, RCmin, RCmax]
-    # mapped = list(map(list, zip(*RCvals)))
-    # mapped = sorted(mapped, key=lambda x: float(x[0]))
-    # RCvals = list(map(list, zip(*mapped)))
-
-    #(0, 1/4, 1/4, 1/4, 1/4)V(0, 1/4, 1/4, 1/4, 1/4)'
-    V = numpy.linalg.inv(hess)  # variance/covariance matrix
-    weights = [0] + [1 / (len(V[0]) - 1) for null in range(len(V[0]) - 1)]
-    rc_stderr = numpy.inner(weights, numpy.diag(V))
-    #rc_stderr = numpy.matmul(numpy.matmul(weights, V), numpy.transpose(weights))
-    #rc_stderr = numpy.diag(V)[1]
-
     if not os.path.exists('rc_stderr.out'):
         open('rc_stderr.out', 'w').close()
-    open('rc_stderr.out', 'a').write(str(input_file) + ' ' + str(rc_stderr) + '\n')
-
-    # fig = plt.figure()
-    # ax0 = fig.add_subplot(111)
-    # ax0.plot(range(len(RC)), RCvals[0], lw=0.5)
-    # plt.fill_between(range(len(RC)), numpy.asarray(RCvals[1]), numpy.asarray(RCvals[2]), alpha=0.5)
-    # plt.show()
+    open('rc_stderr.out', 'a').write(str(input_file) + ' ' + str(mean_std) + '\n')
 
 
 if __name__ == "__main__":

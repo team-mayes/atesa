@@ -506,11 +506,17 @@ class AimlessShooting(JobType):
                 elif len_data % settings.information_error_freq == 0 and len_data > 0 and not proc_status == 'not_running':
                     settings.information_error_overdue = True   # so that information error will be checked next time proc_status == 'not_running' regardless of len_data
 
-                # Evaluate termination criterion using KPSS statistic data in info_err.out
+                # Compare latest information error value to threshold
                 if os.path.exists('info_err.out'):
-                    kpss_stat = open('info_err.out', 'r').readlines()[-1].split(' ')[2]     # kpss statistic read from last line
-                    if float(kpss_stat) <= 0.05:
+                    last_value = open('info_err.out', 'r').readlines()[-1].split(' ')[1]
+                    if float(last_value) <= settings.information_error_threshold:
                         global_terminate = True     # todo: test information error termination criterion
+
+                # # Evaluate termination criterion using KPSS statistic data in info_err.out
+                # if os.path.exists('info_err.out'):
+                #     kpss_stat = open('info_err.out', 'r').readlines()[-1].split(' ')[2]     # kpss statistic read from last line
+                #     if float(kpss_stat) <= 0.05:
+                #         global_terminate = True
 
             if thread_terminate:
                 self.status = 'terminated after step ' + str(self.suffix) + ' due to: ' + thread_terminate

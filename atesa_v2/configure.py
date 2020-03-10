@@ -89,15 +89,16 @@ def configure(input_file, user_working_directory=''):
         degeneracy: int = 1
         cleanup: bool = True
         information_error_checking: bool = True
+        information_error_threshold: float = 0.1
         information_error_freq: int = 250
         information_error_override: bool = False
         information_error_max_dims: int = 6
         max_moves: int = -1     # also used by find_ts
-        max_consecutive_fails: int = 4
+        max_consecutive_fails: int = -1
 
         # Required only for committor analysis
         committor_analysis_n: int = 10
-        committor_analysis_use_rc_out: bool = True
+        committor_analysis_use_rc_out: bool = False
         path_to_rc_out: str = sys.path[0] + '/atesa_v2/tests/test_data/rc.out'
         rc_threshold: float = 0.05
 

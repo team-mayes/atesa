@@ -63,8 +63,13 @@ def main(input_file, output_file, bootstrap=True, bootstrapN=0, error=[], nbins=
     for line in file:
         line = line.strip('\n')
         split = line.split(' ')
-        data[windows.index([float('%.3f' % float(split[0])),float('%.3f' % float(split[1]))])].append(float(split[2]))
-        alldata.append(float(split[2]))
+        if float('%.3f' % float(split[0])) <= float(split[2]) <= float('%.3f' % float(split[1])):
+            data[windows.index([float('%.3f' % float(split[0])),float('%.3f' % float(split[1]))])].append(float(split[2]))
+            alldata.append(float(split[2]))
+
+    for window_index in range(len(windows)):
+        data[window_index] = data[window_index][int(len(data[window_index])*0.8):]
+
 
     if bootstrap:
         for i in range(len(windows)):
@@ -103,8 +108,8 @@ def main(input_file, output_file, bootstrap=True, bootstrapN=0, error=[], nbins=
         RC_values = np.linspace(windows[window_index][0], windows[window_index][1], nbins)  # list RC value of each bin
 
         probs = [0 for null in range(nbins)]    # initialize probabilities by bin
-        thismin = min(RC_values)       # obtain min and max values within the window
-        thismax = max(RC_values)
+        thismin = min(data[window_index])       # obtain min and max values within the window
+        thismax = max(data[window_index])
 
         RC_values = [windows[window_index][0] + (windows[window_index][1] - windows[window_index][0]) * np.mean([i / nbins, (i + 1) / nbins]) for i in range(nbins)]
 
@@ -116,9 +121,16 @@ def main(input_file, output_file, bootstrap=True, bootstrapN=0, error=[], nbins=
         for value in data[window_index]:
             reduced = (value - thismin)/(thismax - thismin)     # reduce to between 0 and 1
             local_index = int(np.floor(reduced * nbins))        # sort into bin within window
-            if local_index == nbins:
-                local_index -= 1        # handle case where reduced == 1
-            probs[local_index] += 1     # increment probability count in the appropriate window
+            if local_index == nbins:    # todo: this can't handle RC values outside the bounds. Is this a problem?
+                local_index = nbins - 1        # handle case where reduced == 1
+            try:
+                probs[local_index] += 1     # increment probability count in the appropriate window
+            except IndexError:
+                print(reduced)
+                print(thismin)
+                print(thismax)
+                print(local_index)
+                sys.exit()
 
         for i in range(len(probs)):
             probs[i] = probs[i]/len(data[window_index])     # scale probability counts to get fractions

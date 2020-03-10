@@ -13,15 +13,14 @@ import shutil
 import glob
 import warnings
 from atesa_v2 import utilities
-from statsmodels.tsa.stattools import kpss
+# from statsmodels.tsa.stattools import kpss    # deprecated
 
 def main():
     """
     Evaluate the information error during aimless shooting and output results to info_err.out.
 
-    Reads decorrelated aimless shooting output files from the present directory to evaluate the information error of the
-    aimless shooting process as well as the likelihood that the series of information error values represents a trend stationary process
-    (informally, is converged) using the Kwiatkowski-Phillips-Schmidt-Shin (KPSS) test.
+    Reads decorrelated aimless shooting output files from the present directory to evaluate the mean parametric variance
+    based on the Godambe information error of the aimless shooting process.
 
     This function depends on lmax.py for evaluations of the information error.
 
@@ -110,30 +109,31 @@ def main():
     # Move info_err_temp.out to info_err.out
     shutil.move('info_err_temp.out', 'info_err.out')
 
-    # Next, evaluate the KPSS statistic for the dataset in info_err.out
-    # Begin by suppressing warnings that occur frequently during normal operation of kpss
-    warnings.filterwarnings('ignore', message='p-value is greater than the indicated p-value')
-    warnings.filterwarnings('ignore', message='invalid value encountered in double_scalars')
-    warnings.filterwarnings('ignore', message='divide by zero encountered in double_scalars')
-
-    # Get data back out from info_err.out (weird but robust)
-    info_err_lines = open('info_err.out', 'r').readlines()
-    info_errs = [float(line.split(' ')[1]) for line in info_err_lines]  # cast to float removes '\n'
-    kpssresults = []
-    for cut in range(len(info_errs) - 1):
-        try:
-            kpssresult = (kpss(info_errs[0:cut + 1], lags='auto')[1] - 0.01) / (0.1 - 0.01)
-        except (ValueError, OverflowError):
-            kpssresult = 1  # 100% certainty of non-convergence!
-        kpssresults.append(kpssresult)
-
-    # Write new info_err.out with kpss values
-    open('info_err.out', 'w').write(info_err_lines[0])  # no KPSS statistic for the first line
-    for line_index in range(1, len(info_err_lines)):
-        line_data = [float(item) for item in info_err_lines[line_index].split(' ')]
-        new_line = '%.0f' % line_data[0] + ' ' + '%.3f' % line_data[1] + ' ' + '%.3f' % kpssresults[line_index - 1] + '\n'
-        open('info_err.out', 'a').write(new_line)
-    open('info_err.out', 'a').close()
+    # Deprecated (no longer using KPSS)
+    # # Next, evaluate the KPSS statistic for the dataset in info_err.out
+    # # Begin by suppressing warnings that occur frequently during normal operation of kpss
+    # warnings.filterwarnings('ignore', message='p-value is greater than the indicated p-value')
+    # warnings.filterwarnings('ignore', message='invalid value encountered in double_scalars')
+    # warnings.filterwarnings('ignore', message='divide by zero encountered in double_scalars')
+    #
+    # # Get data back out from info_err.out (weird but robust)
+    # info_err_lines = open('info_err.out', 'r').readlines()
+    # info_errs = [float(line.split(' ')[1]) for line in info_err_lines]  # cast to float removes '\n'
+    # kpssresults = []
+    # for cut in range(len(info_errs) - 1):
+    #     try:
+    #         kpssresult = (kpss(info_errs[0:cut + 1], lags='auto')[1] - 0.01) / (0.1 - 0.01)
+    #     except (ValueError, OverflowError):
+    #         kpssresult = 1  # 100% certainty of non-convergence!
+    #     kpssresults.append(kpssresult)
+    #
+    # # Write new info_err.out with kpss values
+    # open('info_err.out', 'w').write(info_err_lines[0])  # no KPSS statistic for the first line
+    # for line_index in range(1, len(info_err_lines)):
+    #     line_data = [float(item) for item in info_err_lines[line_index].split(' ')]
+    #     new_line = '%.0f' % line_data[0] + ' ' + '%.3f' % line_data[1] + ' ' + '%.3f' % kpssresults[line_index - 1] + '\n'
+    #     open('info_err.out', 'a').write(new_line)
+    # open('info_err.out', 'a').close()
 
 
 if __name__ == "__main__":
