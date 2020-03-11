@@ -47,7 +47,7 @@ class Tests(object):
         information_error.main()
         assert os.path.exists('info_err.out')
         assert float(open('info_err.out', 'r').readlines()[0].split(' ')[0]) == 6054
-        assert float('%.1f' % float(open('info_err.out', 'r').readlines()[0].split(' ')[1])) == pytest.approx(0.4, 1E-2)
+        assert float('%.2f' % float(open('info_err.out', 'r').readlines()[0].split(' ')[1])) == pytest.approx(0.16, 1E-2)
 
     @classmethod
     def teardown_method(self, method):

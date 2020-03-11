@@ -429,7 +429,7 @@ def main(i, k, f, q, r, o, automagic, plots, quiet, **kwargs):
     output_string = 'Likelihood maximization complete!\n' \
                     'The optimized reaction coordinate (with CVs indexed from 1) is: ' + rc_string + '\n' \
                     'The negative log likelihood of this model is: ' + '%.3f' % current_best[0].fun + '\n' \
-                    'The mean information error for this model is: ' + '%.3f' % numpy.sqrt(mean_std)
+                    'The mean information error for this model is: ' + '%.3f' % mean_std
 
     if output_file:
         open(output_file, 'w').write(output_string)

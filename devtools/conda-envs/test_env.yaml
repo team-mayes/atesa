@@ -9,6 +9,7 @@ dependencies:
   - statsmodels
   - mdtraj
   - pydantic
+  - matplotlib
 
     # Testing
   - pytest
