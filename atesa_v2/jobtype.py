@@ -384,9 +384,9 @@ class AimlessShooting(JobType):
             else:
                 self.history.consec_fails += 1
 
-        if self.history.consec_fails > settings.max_consecutive_fails:
+        if self.history.consec_fails > settings.max_consecutive_fails and settings.max_consecutive_fails >= 0:
             raise RuntimeError('number of consecutive failures in ' + self.current_type[0] + ' step of thread ' +
-                               self.history.init_ipcrd[0] + ' exceeds the maximum of ' +
+                               self.history.init_inpcrd[0] + ' exceeds the maximum of ' +
                                str(settings.max_consecutive_fails) + '. This value can be modified with the option '
                                '\'max_consecutive_fails\' in the configuration file.')
 
@@ -1045,7 +1045,7 @@ class EquilibriumPathSampling(JobType):
                     self.history.init_inpcrd.append(self.history.init_inpcrd[-1])   # begin next move from same point as last move
 
             # Implement dynamic seeding of EPS windows
-            if settings.eps_dynamic_seed and successful_step:
+            if settings.eps_dynamic_seed and successful_step and self.history.last_accepted >= 0:
                 frame_index = -1
                 for rc_value in self.history.prod_results[-1]:  # results are ordered as: [init, fwd, bwd]
                     frame_index += 1
