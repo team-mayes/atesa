@@ -62,8 +62,8 @@ def configure(input_file, user_working_directory=''):
         prod_extra: str = ''
 
         # File path settings (required for all jobs, but do have sensible defaults)
-        path_to_input_files: str = sys.path[0] + '/data/input_files'    # todo: fix this for final publication
-        path_to_templates: str = sys.path[0] + '/data/templates'
+        path_to_input_files: str = os.path.dirname(os.path.realpath(__file__)) + '/data/input_files'
+        path_to_templates: str = os.path.dirname(os.path.realpath(__file__)) + '/data/templates'
 
         # Required only for aimless shooting, equilibrium path sampling, and committor analysis
         cvs: typing.List[str] = ['']
