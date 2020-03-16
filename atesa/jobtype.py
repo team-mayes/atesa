@@ -19,9 +19,9 @@ import warnings
 import copy
 import re
 import psutil
-from atesa_v2 import utilities
-from atesa_v2 import main
-from atesa_v2 import factory
+from atesa import utilities
+from atesa import main
+from atesa import factory
 
 class JobType(abc.ABC):
     """

@@ -99,7 +99,7 @@ def configure(input_file, user_working_directory=''):
         # Required only for committor analysis
         committor_analysis_n: int = 10
         committor_analysis_use_rc_out: bool = False
-        path_to_rc_out: str = sys.path[0] + '/atesa_v2/tests/test_data/rc.out'
+        path_to_rc_out: str = sys.path[0] + '/atesa/tests/test_data/rc.out'
         rc_threshold: float = 0.05
 
         # Required only for equilibrium path sampling
@@ -126,7 +126,7 @@ def configure(input_file, user_working_directory=''):
         lines = open(input_file, 'r').readlines()
     except FileNotFoundError:
         try:
-            lines = open('atesa_v2/' + input_file, 'r').readlines()     # for testing
+            lines = open('atesa/' + input_file, 'r').readlines()     # for testing
         except:
             lines = open(input_file, 'r').readlines()   # to reproduce original error
     line_index = 0

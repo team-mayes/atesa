@@ -2,8 +2,8 @@
 # There should be no real use case for this for users; it is merely useful to me as a method developer to illustrate my
 # new method!
 
-from atesa_v2 import main
-from atesa_v2 import utilities
+from atesa import main
+from atesa import utilities
 import subprocess
 import pickle
 import numpy

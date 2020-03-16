@@ -50,7 +50,7 @@ class AdaptSimple(TaskManager):
         try:    # import here to avoid circular import
             import factory
         except ModuleNotFoundError:
-            import atesa_v2.factory as factory
+            import atesa.factory as factory
 
         batchsystem = factory.batchsystem_factory(settings.batch_system)
         command = batchsystem.get_submit_command(None).replace('{file}', filename)

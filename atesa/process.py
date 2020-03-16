@@ -7,7 +7,7 @@ import jinja2
 import os
 import sys
 import warnings
-from atesa_v2 import factory
+from atesa import factory
 
 def process(thread, running, settings):
     """

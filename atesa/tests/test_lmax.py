@@ -3,21 +3,21 @@ Unit and regression test for lmax.py.
 """
 
 # Import package, test suite, and other packages as needed
-import atesa_v2
+import atesa
 import sys
 import pytest
 import os
 import shutil
 import glob
 import argparse
-from atesa_v2 import lmax
+from atesa import lmax
 
 class Tests(object):
     def setup_method(self, test_method):
         try:
-            if not os.path.exists('atesa_v2/tests/test_temp'):
-                os.mkdir('atesa_v2/tests/test_temp')
-            os.chdir('atesa_v2/tests/test_temp')
+            if not os.path.exists('atesa/tests/test_temp'):
+                os.mkdir('atesa/tests/test_temp')
+            os.chdir('atesa/tests/test_temp')
         except FileNotFoundError:
             pass
 
@@ -125,5 +125,5 @@ class Tests(object):
     @classmethod
     def teardown_method(self, method):
         "Runs at end of class"
-        for filename in glob.glob(sys.path[0] + '/atesa_v2/tests/test_temp/*'):
+        for filename in glob.glob(sys.path[0] + '/atesa/tests/test_temp/*'):
             os.remove(filename)

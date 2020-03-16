@@ -10,7 +10,7 @@
   <component name="TemplatesService">
     <option name="TEMPLATE_FOLDERS">
       <list>
-        <option value="$MODULE_DIR$/docs/_templates" />
+        <option value="$MODULE_DIR$/../atesa_v2/docs/_templates" />
       </list>
     </option>
   </component>

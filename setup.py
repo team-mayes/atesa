@@ -1,6 +1,6 @@
 """
-atesa_v2
-Version 2 of Aimless Transition Ensemble Sampling and Analysis refactors the code to make it portable, extensible, and flexible.
+atesa
+Python program for automating the "Aimless Transition Ensemble Sampling and Analysis" (ATESA) aimless shooting workflow on PBS/TORQUE or Slurm.
 """
 import sys
 from setuptools import setup, find_packages
@@ -21,7 +21,7 @@ except:
 
 setup(
     # Self-descriptive entries which should always be present
-    name='atesa_v2',
+    name='atesa',
     author='Tucker Burgin',
     author_email='tburgin@umich.edu',
     description=short_description[0],
@@ -30,7 +30,7 @@ setup(
     version=versioneer.get_version(),
     cmdclass=versioneer.get_cmdclass(),
     license='BSD-3-Clause',
-    scripts=['atesa_v2/main.py', 'atesa_v2/lmax.py', 'atesa_v2/rc_eval.py', 'atesa_v2/resample_and_inferr.py', 'atesa_v2/temp_comana.py'],
+    scripts=['atesa/main.py', 'atesa/lmax.py', 'atesa/rc_eval.py', 'atesa/resample_and_inferr.py', 'atesa/temp_comana.py'],
 
     # Which Python importable modules should be included when your package is installed
     # Handled automatically by setuptools. Use 'exclude' to prevent some specific

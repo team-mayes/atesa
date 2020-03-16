@@ -14,12 +14,12 @@ import pickle
 import pytraj
 import copy
 import time
-from atesa_v2 import configure
-from atesa_v2 import factory
-from atesa_v2 import process
-from atesa_v2 import interpret
-from atesa_v2 import utilities
-from atesa_v2 import information_error
+from atesa import configure
+from atesa import factory
+from atesa import process
+from atesa import interpret
+from atesa import utilities
+from atesa import information_error
 
 class Thread(object):
     """

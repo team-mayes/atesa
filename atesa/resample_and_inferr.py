@@ -3,8 +3,8 @@ Helper file to call utilities.resample and then information_error.main in sequen
 """
 
 import pickle
-from atesa_v2 import utilities
-from atesa_v2 import information_error
+from atesa import utilities
+from atesa import information_error
 
 def main():
     # Read settings from pickle file

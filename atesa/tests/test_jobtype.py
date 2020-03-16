@@ -3,23 +3,23 @@ Unit and regression test for jobtype.py.
 """
 
 # Import package, test suite, and other packages as needed
-# import atesa_v2
+# import atesa
 import pytest
 import sys
 import glob
 import os
 import filecmp
 import shutil
-from atesa_v2.configure import configure
-from atesa_v2 import factory
-from atesa_v2 import main
+from atesa.configure import configure
+from atesa import factory
+from atesa import main
 
 class Tests(object):
     def setup_method(self, test_method):
         try:
-            if not os.path.exists('atesa_v2/tests/test_temp'):
-                os.mkdir('atesa_v2/tests/test_temp')
-            os.chdir('atesa_v2/tests/test_temp')
+            if not os.path.exists('atesa/tests/test_temp'):
+                os.mkdir('atesa/tests/test_temp')
+            os.chdir('atesa/tests/test_temp')
         except FileNotFoundError:
             pass
 
@@ -415,7 +415,7 @@ class Tests(object):
         settings.md_engine = 'amber'
         settings.batch_system = 'slurm'
         settings.committor_analysis_use_rc_out = False
-        settings.path_to_templates = sys.path[0] + '/atesa_v2/data/templates'
+        settings.path_to_templates = sys.path[0] + '/atesa/data/templates'
         allthreads = main.init_threads(settings)
         jobtype = factory.jobtype_factory(settings.job_type)
         assert jobtype.get_batch_template(allthreads[0], 'prod', settings) == 'amber_slurm.tpl'
@@ -689,7 +689,7 @@ class Tests(object):
     @classmethod
     def teardown_method(self, method):
         "Runs at end of each method"
-        for filename in glob.glob(sys.path[0] + '/atesa_v2/tests/test_temp/*'):
+        for filename in glob.glob(sys.path[0] + '/atesa/tests/test_temp/*'):
             os.remove(filename)
 
 def config_equilibrium_path_sampling():

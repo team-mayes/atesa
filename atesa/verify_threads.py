@@ -11,8 +11,8 @@ import typing
 import warnings
 import operator
 import argparse
-from atesa_v2.main import Thread
-from atesa_v2 import factory
+from atesa.main import Thread
+from atesa import factory
 from pydantic import BaseModel, ValidationError, validator
 
 

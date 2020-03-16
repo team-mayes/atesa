@@ -13,14 +13,14 @@ comment:
   flags: null
   paths: null
 ignore:
-  - "atesa_v2/tests"  # ignore folder and all its contents
-  - "atesa_v2/_version.py"
+  - "atesa/tests"  # ignore folder and all its contents
+  - "atesa/_version.py"
   - "devtools"
-  - "atesa_v2.egg-info"
+  - "atesa.egg-info"
   - "docs"
   - "setup.py"
   - "versioneer.py"
-  - "atesa_v2/input_files"
-  - "atesa_v2/templates"
-  - "atesa_v2/temp.*"
-  - "atesa_v2/.*temp"
+  - "atesa/input_files"
+  - "atesa/templates"
+  - "atesa/temp.*"
+  - "atesa/.*temp"

@@ -8,7 +8,7 @@ import os
 import glob
 import argparse
 import pickle
-from atesa_v2 import utilities
+from atesa import utilities
 
 def main(working_directory, rc_definition):
     """

@@ -3,7 +3,7 @@ This portion of the program is responsible for handling update of the results, c
 implementing the calls to JobType methods to control the value of the thread.coordinates attribute for the next step.
 """
 
-from atesa_v2 import factory
+from atesa import factory
 
 def interpret(thread, allthreads, running, settings):
     """

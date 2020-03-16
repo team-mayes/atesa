@@ -6,7 +6,7 @@ import os
 import shutil
 import sys
 import pickle
-from atesa_v2.main import Thread
+from atesa.main import Thread
 
 os.chdir('/oasis/scratch/comet/tburgin/temp_project/atesa_v2_working/')
 shutil.copy('restart.pkl', 'restart_original.pkl')

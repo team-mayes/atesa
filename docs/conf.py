@@ -18,14 +18,14 @@ import sys
 sys.path.insert(0, os.path.abspath('..'))
 #sys.path.insert(0, '/Users/tburgin/miniconda3/lib/python3.7/site-packages')
 
-#sys.path = ['', '/Users/tburgin/miniconda3/lib/python37.zip', '/Users/tburgin/miniconda3/lib/python3.7', '/Users/tburgin/miniconda3/lib/python3.7/lib-dynload', '/Users/tburgin/miniconda3/lib/python3.7/site-packages', '/Users/tburgin/Documents/PycharmProjects/atesa_v2']
+#sys.path = ['', '/Users/tburgin/miniconda3/lib/python37.zip', '/Users/tburgin/miniconda3/lib/python3.7', '/Users/tburgin/miniconda3/lib/python3.7/lib-dynload', '/Users/tburgin/miniconda3/lib/python3.7/site-packages', '/Users/tburgin/Documents/PycharmProjects/atesa']
 
-import atesa_v2
+import atesa
 
 
 # -- Project information -----------------------------------------------------
 
-project = 'atesa_v2'
+project = 'atesa'
 copyright = ("2019, Tucker Burgin. Project structure based on the "
              "Computational Molecular Science Python Cookiecutter version 1.1")
 author = 'Tucker Burgin'
@@ -120,7 +120,7 @@ html_static_path = ['_static']
 # -- Options for HTMLHelp output ---------------------------------------------
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'atesa_v2doc'
+htmlhelp_basename = 'atesadoc'
 
 
 # -- Options for LaTeX output ------------------------------------------------
@@ -147,8 +147,8 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'atesa_v2.tex', 'atesa_v2 Documentation',
-     'atesa_v2', 'manual'),
+    (master_doc, 'atesa.tex', 'atesa Documentation',
+     'atesa', 'manual'),
 ]
 
 
@@ -157,7 +157,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'atesa_v2', 'atesa_v2 Documentation',
+    (master_doc, 'atesa', 'atesa Documentation',
      [author], 1)
 ]
 
@@ -168,8 +168,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'atesa_v2', 'atesa_v2 Documentation',
-     author, 'atesa_v2', 'Version 2 of Aimless Transition Ensemble Sampling and Analysis refactors the code to make it portable, extensible, and flexible.',
+    (master_doc, 'atesa', 'atesa Documentation',
+     author, 'atesa', 'Python program for automating the "Aimless Transition Ensemble Sampling and Analysis" (ATESA) aimless shooting workflow on PBS/TORQUE or Slurm.',
      'Miscellaneous'),
 ]
 
