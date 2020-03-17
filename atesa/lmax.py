@@ -196,6 +196,9 @@ def two_line_test(results, plots):
                         (numpy.asarray(points1[0]), numpy.asarray(points1[1]), {'legend': '1st slope: ' + '%.3f' % best_closest[1].slope}),
                         (numpy.asarray(points2[0]), numpy.asarray(points2[1]), {'legend': '2nd slope: ' + '%.3f' % best_closest[2].slope}),
                         _with='lines', terminal='dumb 80,40', unset='grid')
+        print('Model scores: ' + str(numpy.asarray([result.fun for result in results])))
+        print('First line values: ' + str(points1[1]))
+        print('Second line values: ' + str(points2[1]))
 
     if not best_closest:    # no pairs of lines whose intersection was closest to their shared point
         return -1
@@ -255,6 +258,7 @@ def main(i, k, f, q, r, o, automagic, plots, quiet, **kwargs):
         running = 0
 
     # Load settings object from .pkl file if present, to check for information criterion override and max_dims
+    information_error_max_dims = -1
     if automagic:
         try:
             settings = pickle.load(open('settings.pkl', 'rb'))

@@ -1,7 +1,7 @@
-atesa_v2
-========
+atesa
+=====
 
 .. toctree::
    :maxdepth: 4
 
-   atesa_v2
+   atesa

@@ -27,7 +27,7 @@ ATESA contains methods to automate initial transition state guessing, flexible l
    :maxdepth: 1
    :caption: API:
    
-   apidoc/atesa_v2.rst
+   apidoc/atesa.rst
 
 
 

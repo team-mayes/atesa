@@ -1,10 +1,10 @@
 """
-atesa_v2
-Version 2 of Aimless Transition Ensemble Sampling and Analysis refactors the code to make it portable, extensible, and flexible.
+atesa
+Python program for automating the "Aimless Transition Ensemble Sampling and Analysis" (ATESA) aimless shooting workflow on PBS/TORQUE or Slurm.
 """
 
 # Add imports here
-#from atesa_v2.main import *
+#from atesa.main import *
 from . import main
 from . import factory
 from . import configure
