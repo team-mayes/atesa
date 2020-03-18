@@ -16,25 +16,28 @@ Likelihood maximization is invoked from the command line as:
 
 ::
 
-	lmax.py -i input_file [-k dimensions [-f fixed_cvs] | -r dimensions | --automagic [--plots]] [-q qdot_setting] [-o output_file] [--quiet]
+	lmax.py -i input_file [-k dimensions [-f fixed_cvs] | -r dimensions | -\-automagic [-\-plots] [-\-two_line_threshold ratio]] [-q qdot_setting] [-o output_file] [-\-quiet]
 	
 `-i input_file`
 	The only strictly required argument for lmax.py, `input_file` should point to the aimless shooting output file of interest. Usually, this should be the longest "decorrelated" aimless shooting output file in the target working directory.
 	
 `-k dimensions`
-	This option mutually exclusive with `-r` and `--automagic`. The `dimensions` argument should be an integer number of dimensions to include in the final reaction coordinate. This options will always return a reaction coordinate with "k" dimensions (assuming there are at least "k" CVs in the input file), and will arrive at that number of dimensions immediately by comparing every k-dimensional combination of CVs.
+	This option mutually exclusive with `-r` and `-\-automagic`. The `dimensions` argument should be an integer number of dimensions to include in the final reaction coordinate. This options will always return a reaction coordinate with "k" dimensions (assuming there are at least "k" CVs in the input file), and will arrive at that number of dimensions immediately by comparing every k-dimensional combination of CVs.
 	
 	`-f fixed_cvs`
 		This option is only applicable when paired with the `-k` option, and specifies one or more CVs that are required in the final RC. For example, `-k 4 -f 12 31` would return the best four-dimensional RC that contains both CV12 and CV31. Obviously, the number of required CVs specified with this option must be less than or equal to the number given for `-k`.
 	
 `-r dimensions`
-	This option mutually exclusive with `-k` and `--automagic`. The `dimensions` argument should be an integer number of dimensions to include in the final reaction coordinate. This options will always return a reaction coordinate with "r" dimensions (assuming there are at least "r" CVs in the input file), but unlike the `-k` setting, arrives at an r-dimensional result incrementally by finding the best 1-dimensional RC, then the best 2-dimensional RC that includes the coordinate from the best 1-dimensional RC, and so on. This procedure is much faster for high-dimensional data but may not result in the absolute best possible RC.
+	This option mutually exclusive with `-k` and `-\-automagic`. The `dimensions` argument should be an integer number of dimensions to include in the final reaction coordinate. This options will always return a reaction coordinate with "r" dimensions (assuming there are at least "r" CVs in the input file), but unlike the `-k` setting, arrives at an r-dimensional result incrementally by finding the best 1-dimensional RC, then the best 2-dimensional RC that includes the coordinate from the best 1-dimensional RC, and so on. This procedure is much faster for high-dimensional data but may not result in the absolute best possible RC.
 	
-`--automagic`
+`-\-automagic`
 	This option mutually exclusive with `-k` and `-r`. If this argument is given, the dimensionality of the result is determined "automagically" by assessing the relative slopes of best-fit lines on different portions of the scoring data for successively higher-dimensional RCs. The exact operation of this algorithm is described in more detail in the :ref:`Automagic` section below.
 	
-	`--plots`
+	`-\-plots`
 		Produces ASCII-style plots in the terminal for each step of automagic above four dimensions, if Python package gnuplot is available. See :ref:`Automagic` for details.
+		
+	`-\-two_line_threshold ratio`
+		Sets the threshold of the ratio of slopes below which the automagic two-line test may pass. See :ref:`Automagic` for details. Default = 0.5
 
 `-q qdot_setting`
 	Specifies the inertial behavior of LMax. Valid options are: `present`, `absent`, and `ignore`. Default is `present`.
@@ -51,7 +54,7 @@ Likelihood maximization is invoked from the command line as:
 `-o output_file`
 	If this option is given, a new file named `output_file` is written containing the results of the optimization. If this option is not given, the results are instead written directly to the terminal. This option will overwrite existing files.
 
-`--quiet`
+`-\-quiet`
 	By default, ``lmax.py`` writes one or more progress bars (one for each optimization step) to the terminal. If this option is given, these progress bars are suppressed. Note that the output will still be written to the terminal if no output file is specified with the `-o` option.
 	
 .. _Automagic:
@@ -61,11 +64,11 @@ The Automagic Option
 
 A common problem when attempting to find a suitable reaction coordinate for a given dataset is that the appropriate dimensionality of the final RC cannot be identified in advance. There are several approaches to comparing the "information content" of various models aimed towards penalizing each successive parameter such that only significant improvements are permitted, such as the Bayesian and Akaike information criteria. However, these methods are designed to find the "best" model for a given process, regardless of how many parameters that model contains, whereas for practical reasons useful RCs are usually low-dimensional. That is, while an RC selected using even a highly selective Bayesian information criterion may contain many (*e.g.*, upwards of ten) parameters, a much simpler model (say, of three or four dimensions) is usually sufficient and more useful. This is the motivation behind the "automagic" algorithm. In short, whether automagic is appropriate for your use-case depends on whether you would rather sacrifice a modicum of model accuracy in exchange for a fast and fully automated approach to obtaining a reaction coordinate.
 
-Automagic attempts to include only the most important parameters in the final RC, as defined by the change in model score for each successive parameter. To accomplish this, the algorithm first uses the `-r` approach to model optimization as described above to obtain one- through five-dimensional RCs; then, it fits two lines onto contiguous subsections of the data [1, M] and [M, N] (where N is the dimensionality of the highest-dimensional model yet derived and 2 <= M <= N - 1). The resulting RC is the one containing M dimensions, if and only if the two lines intersect closer to the M'th point than any other point and the ratio of slopes s[M, N]/s[1, M] is at least 0.55 (that is, the slope of the second line is at most 55% that of the first line). An example meeting these two criteria is shown here:
+Automagic attempts to include only the most important parameters in the final RC, as defined by the change in model score for each successive parameter. To accomplish this, the algorithm first uses the `-r` approach to model optimization as described above to obtain one- through five-dimensional RCs; then, it fits two lines onto contiguous subsections of the data [1, M] and [M, N] (where N is the dimensionality of the highest-dimensional model yet derived and 2 <= M <= N - 1). The resulting RC is the one containing M dimensions, if and only if the two lines intersect closer to the M'th point than any other point and the ratio of slopes s[M, N]/s[1, M] is at least 0.5 (that is, the slope of the second line is at most 50% that of the first line; this threshold can be overridden using the *two_line_threshold* command line argument or by running lmax.py in a directory containing a settings.pkl object (created by ATESA based on the configuration file) that specifies the option "two_line_threshold"). An example meeting these two criteria is shown here:
 
 .. image:: ../../_images/two-line_test.png
 
-This plot (in ASCII form) would be outputted to the terminal at the end of the optimization if the *--plots* option were supplied. If the criteria cannot be met, an additional model of dimensionality N+1 is obtained and the process is repeated. If enough dimensions are available, this algorithm will always converge eventually. This approach is very efficient for arriving at a *good* reaction coordinate (though it is by no means guaranteed to be the "best" possible one), though it suffers from two shortcomings:
+This plot (in ASCII form) would be outputted to the terminal at the end of the optimization if the *-\-plots* option were supplied. If the criteria cannot be met, an additional model of dimensionality N+1 is obtained and the process is repeated. If enough dimensions are available, this algorithm will always converge eventually. This approach is very efficient for arriving at a *good* reaction coordinate (though it is by no means guaranteed to be the "best" possible one), though it suffers from two shortcomings:
 
 1. One-dimensional models can never be selected; and
 2. The cutoff ratio of slopes is arbitrary (that is, it reflects an arbitrary judgement of what constitutes a sufficient drop in the rate of change of model scores)
@@ -75,7 +78,7 @@ This plot (in ASCII form) would be outputted to the terminal at the end of the o
 rc_eval.py: Reaction Coordinate Evaluation 
 ------------------------------------------
 
-ATESA also comes with a separate script for evaluating reaction coordinates for each shooting point coordinate file in a given directory. This script should be given an aimless shooting working directory, where it will produce a new file `rc.out` containing the reaction coordinate values of each point, sorted in descending order by absolute value. The syntax is as follows:
+ATESA also comes with a separate script for evaluating reaction coordinates for each shooting point coordinate file in a given directory. This script should be given an aimless shooting working directory, where it will produce a new file `rc.out` containing the reaction coordinate values of each point, sorted by ascending absolute value (such that points closest to the supposed transition state come first). The syntax is as follows:
 
 ::
 
@@ -106,7 +109,7 @@ boltzmann_weight.py is a utility script that automates this calculation for data
 
 ::
 
-	boltzmann_weight.py -i input_file [-o output_file] [-t temp] [-n nbins] [-c bootstrapCyc] [-b bootstrapN] [--noplot]
+	boltzmann_weight.py -i input_file [-o output_file] [-t temp] [-n nbins] [-c bootstrapCyc] [-b bootstrapN] [-\-noplot]
 	
 `-i input_file`
 	Path to the EPS output file containing the data to analyze. This file should be formatted in three columns separated by whitespace:
@@ -130,7 +133,7 @@ boltzmann_weight.py is a utility script that automates this calculation for data
 `-b bootstrapN`
 	The number of samples to include in each window when bootstrapping. Must be an integer. Default is 25.
 
-`--noplot`
+`-\-noplot`
 	By default, boltzmann_weight.py produces a histogram of the binned data in each window to help assess good overlap between adjacent windows, as well as a plot of the resulting free energy profile using matplotlib, if supported by the interpreter. Providing this option suppresses this behavior.
 	
-Note that if `--noplot` is not provided and a histogram is shown, the plot window must be manually closed before the remainder of the calculation will take place. Similarly, the program will not terminate until the free energy profile plot window is closed.
+Note that if `-\-noplot` is not provided and a histogram is shown, the plot window must be manually closed before the remainder of the calculation will take place. Similarly, the program will not terminate until the free energy profile plot window is closed.

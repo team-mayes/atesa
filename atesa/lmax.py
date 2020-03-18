@@ -128,7 +128,7 @@ def objective_function(params, A_data, B_data):
     return -1 * sum
 
 
-def two_line_test(results, plots):
+def two_line_test(results, plots, two_line_threshold):
     """
     Perform a double linear regression on intersecting subsets of the data in results to determine whether to terminate
     and how many dimensions to return in the RC during automagic.
@@ -142,6 +142,8 @@ def two_line_test(results, plots):
         score for that step
     plots : bool
         If True, plot lines using gnuplot
+    two_line_threshold : float
+        Ratio of second slope to first slope (as a fraction) below which the two-line test can pass
 
     Returns
     -------
@@ -204,7 +206,7 @@ def two_line_test(results, plots):
         return -1
 
     slope_fract = best_closest[2].slope / best_closest[1].slope
-    if slope_fract > 0.55:  # best point does not meet threshold for relative difference in slopes
+    if slope_fract > two_line_threshold:  # best point does not meet threshold for relative difference in slopes
         return -1
     else:                   # DOES meet threshold; return the index of the passing result
         return best_closest[0][0] - 1   # - 1 because of different indexing standards
@@ -247,6 +249,7 @@ def main(i, k, f, q, r, o, automagic, plots, quiet, **kwargs):
     automagic = automagic
     plots = plots
     quiet = quiet
+    two_line_threshold = two_line_threshold[0]
 
     # Ignore arguments as described in documentation
     if running:
@@ -273,8 +276,13 @@ def main(i, k, f, q, r, o, automagic, plots, quiet, **kwargs):
                 information_error_max_dims = settings.information_error_max_dims
                 print('Setting maximum number of automagic dimensions to: ' + str(int(information_error_max_dims)))
             except AttributeError:
-                information_error_max_dims = -1
                 print('information_error_max_dims is not set; defaulting to no limit')
+            if two_line_threshold == 0.5:
+                try:
+                    two_line_threshold = settings.two_line_threshold
+                    print('Setting two-line test threshold to: ' + str(two_line_threshold))
+                except AttributeError:
+                    print('two_line_threshold is not set; defaulting to 0.5')
         except FileNotFoundError:
             pass
 
@@ -372,7 +380,7 @@ def main(i, k, f, q, r, o, automagic, plots, quiet, **kwargs):
                 termination = True
         elif automagic and not termination_2:
             if len(results) >= 5:   # can only confidently check for convergence with at least 5 points
-                two_line_result = two_line_test([result[0] for result in results], plots)
+                two_line_result = two_line_test([result[0] for result in results], plots, two_line_threshold)
                 if two_line_result >= 0:
                     termination = True
                     current_best = results[two_line_result]
@@ -475,6 +483,9 @@ if __name__ == "__main__":
     parser.add_argument('--plots', action='store_true', default=False,
                         help='If this option is given alongside automagic, gnuplot will be used to write plots to the '
                              'terminal during evaluations of the automagic termination criterion (if it is installed)')
+    parser.add_argument('--two_line_threshold', metavar='two_line_threshold', type=float, nargs=1, default=[0.5],
+                        help='If this option is given alongside automgagic, sets the maximum ratio of slopes in the'
+                             'two-line test. See the documentation for automagic for details. Default=0.5')
 
     arguments = vars(parser.parse_args())  # Retrieves arguments as a dictionary object
 
