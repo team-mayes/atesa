@@ -54,19 +54,19 @@ class Tests(object):
 
     def test_main_non_existent_input(self):
         """Tests main using an input file name that does not exist"""
-        kwargs = {'automagic': True, 'i': ['definitely_not_a_real_file_who_would_name_a_file_this.txt'], 'k': [0], 'f': [], 'q': ['absent'], 'r': [0], 'o': ['lmax.out'], 'quiet': True, 'plots': False}
+        kwargs = {'automagic': True, 'i': ['definitely_not_a_real_file_who_would_name_a_file_this.txt'], 'k': [0], 'f': [], 'q': ['absent'], 'r': [0], 'o': ['lmax.out'], 'quiet': True, 'plots': False, 'two_line_threshold': [0.55]}
         with pytest.raises(FileNotFoundError):
             lmax.main(**kwargs)
 
     def test_main_improper_input(self):
         """Tests main using an input file that does exist, but is improperly formatted"""
-        kwargs = {'automagic': True, 'i': ['../test_data/test.rst7'], 'k': [0], 'f': [], 'q': ['absent'], 'r': [0], 'o': ['lmax.out'], 'quiet': True, 'plots': False}
+        kwargs = {'automagic': True, 'i': ['../test_data/test.rst7'], 'k': [0], 'f': [], 'q': ['absent'], 'r': [0], 'o': ['lmax.out'], 'quiet': True, 'plots': False, 'two_line_threshold': [0.55]}
         with pytest.raises(RuntimeError):
             lmax.main(**kwargs)
 
     def test_main_automagic(self):
         """Tests main using automagic"""
-        kwargs = {'automagic': True, 'i': ['../test_data/as.out'], 'k': [0], 'f': [], 'q': ['absent'], 'r': [0], 'o': ['lmax.out'], 'quiet': True, 'plots': False}
+        kwargs = {'automagic': True, 'i': ['../test_data/as.out'], 'k': [0], 'f': [], 'q': ['absent'], 'r': [0], 'o': ['lmax.out'], 'quiet': True, 'plots': False, 'two_line_threshold': [0.55]}
         lmax.main(**kwargs)
         results = open('lmax.out', 'r').readlines()[1].split(' + ')
         assert float(results[0].replace('The optimized reaction coordinate (with CVs indexed from 1) is: ', '')) == pytest.approx(5.47, 1E-2)
@@ -76,7 +76,7 @@ class Tests(object):
 
     def test_main_running(self):
         """Tests main using running"""
-        kwargs = {'automagic': False, 'i': ['../test_data/as.out'], 'k': [0], 'f': [], 'q': ['absent'], 'r': [2], 'o': ['lmax.out'], 'quiet': True, 'plots': False}
+        kwargs = {'automagic': False, 'i': ['../test_data/as.out'], 'k': [0], 'f': [], 'q': ['absent'], 'r': [2], 'o': ['lmax.out'], 'quiet': True, 'plots': False, 'two_line_threshold': [0.55]}
         lmax.main(**kwargs)
         results = open('lmax.out', 'r').readlines()[1].split(' + ')
         assert float(results[0].replace('The optimized reaction coordinate (with CVs indexed from 1) is: ', '')) == pytest.approx(5.47, 1E-2)
@@ -86,7 +86,7 @@ class Tests(object):
 
     def test_main_k(self):
         """Tests main using k and not f"""
-        kwargs = {'automagic': False, 'i': ['../test_data/as.out'], 'k': [2], 'f': [], 'q': ['absent'], 'r': [0], 'o': ['lmax.out'], 'quiet': True, 'plots': False}
+        kwargs = {'automagic': False, 'i': ['../test_data/as.out'], 'k': [2], 'f': [], 'q': ['absent'], 'r': [0], 'o': ['lmax.out'], 'quiet': True, 'plots': False, 'two_line_threshold': [0.55]}
         lmax.main(**kwargs)
         results = open('lmax.out', 'r').readlines()[1].split(' + ')
         assert float(results[0].replace('The optimized reaction coordinate (with CVs indexed from 1) is: ', '')) == pytest.approx(-6.494, 1E-2)
@@ -96,7 +96,7 @@ class Tests(object):
 
     def test_main_k_and_f(self):
         """Tests main using k and f"""
-        kwargs = {'automagic': False, 'i': ['../test_data/as.out'], 'k': [2], 'f': [1, 4], 'q': ['absent'], 'r': [0], 'o': ['lmax.out'], 'quiet': False, 'plots': False}
+        kwargs = {'automagic': False, 'i': ['../test_data/as.out'], 'k': [2], 'f': [1, 4], 'q': ['absent'], 'r': [0], 'o': ['lmax.out'], 'quiet': False, 'plots': False, 'two_line_threshold': [0.55]}
         lmax.main(**kwargs)
         results = open('lmax.out', 'r').readlines()[1].split(' + ')
         assert float(results[0].replace('The optimized reaction coordinate (with CVs indexed from 1) is: ', '')) == pytest.approx(5.47, 1E-2)
@@ -106,10 +106,10 @@ class Tests(object):
 
     def test_main_k_f_and_q(self):
         """Tests main using k, f, and q"""
-        kwargs = {'automagic': False, 'i': ['../test_data/as.out'], 'k': [2], 'f': [1, 4], 'q': ['present'], 'r': [0], 'o': ['lmax.out'], 'quiet': False, 'plots': False}
+        kwargs = {'automagic': False, 'i': ['../test_data/as.out'], 'k': [2], 'f': [1, 4], 'q': ['present'], 'r': [0], 'o': ['lmax.out'], 'quiet': False, 'plots': False, 'two_line_threshold': [0.55]}
         with pytest.raises(RuntimeError):   # this as.out file has an uneven number of CVs
             lmax.main(**kwargs)
-        kwargs = {'automagic': False, 'i': ['as.out'], 'k': [2], 'f': [1, 2], 'q': ['present'], 'r': [0], 'o': ['lmax.out'], 'quiet': True, 'plots': False}
+        kwargs = {'automagic': False, 'i': ['as.out'], 'k': [2], 'f': [1, 2], 'q': ['present'], 'r': [0], 'o': ['lmax.out'], 'quiet': True, 'plots': False, 'two_line_threshold': [0.55]}
         shutil.copy('../test_data/as.out', 'as_temp.out')   # need to make a new as.out file with an even number of CVs
         open('as.out', 'w').close()
         for line in open('as_temp.out', 'r').readlines():

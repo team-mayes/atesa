@@ -128,7 +128,7 @@ def objective_function(params, A_data, B_data):
     return -1 * sum
 
 
-def two_line_test(results, plots, two_line_threshold):
+def two_line_test(results, plots, two_line_threshold=0.5):
     """
     Perform a double linear regression on intersecting subsets of the data in results to determine whether to terminate
     and how many dimensions to return in the RC during automagic.
@@ -212,7 +212,7 @@ def two_line_test(results, plots, two_line_threshold):
         return best_closest[0][0] - 1   # - 1 because of different indexing standards
 
 
-def main(i, k, f, q, r, o, automagic, plots, quiet, **kwargs):
+def main(i, k, f, q, r, o, automagic, plots, quiet, two_line_threshold):
     """
     Main runtime function of lmax.py.
 
@@ -488,6 +488,9 @@ if __name__ == "__main__":
                              'two-line test. See the documentation for automagic for details. Default=0.5')
 
     arguments = vars(parser.parse_args())  # Retrieves arguments as a dictionary object
+    print(arguments['k'])
+    print(arguments['plots'])
+    print(arguments['two_line_threshold'])
 
     # Suppress numpy.log warnings that occur frequently during normal operation
     warnings.filterwarnings('ignore', category=RuntimeWarning, message='divide by zero encountered in log')
