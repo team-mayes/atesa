@@ -30,7 +30,7 @@ setup(
     version=versioneer.get_version(),
     cmdclass=versioneer.get_cmdclass(),
     license='BSD-3-Clause',
-    scripts=['atesa/main.py', 'atesa/lmax.py', 'atesa/rc_eval.py', 'atesa/resample_and_inferr.py'],
+    scripts=['atesa/main.py', 'atesa/lmax.py', 'atesa/rc_eval.py', 'atesa/resample_and_inferr.py', 'atesa/boltzmann_weight.py'],
 
     # Which Python importable modules should be included when your package is installed
     # Handled automatically by setuptools. Use 'exclude' to prevent some specific

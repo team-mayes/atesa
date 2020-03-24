@@ -84,7 +84,7 @@ them from a given product or reactant state structure. In addition to the :ref:`
 	
 In this case, <coord_file_1> should represent a structure in either the "fwd" or "bwd" commitment basin. See :ref:`CommitmentBasinDefinitions` for details on the `commit_fwd` and `commit_bwd` options.
 
-The *find_ts* job type works by applying a modest restraint to the atoms that make up the target commitment basin definition in order to force the reaction to take place. This works better for some systems than others, and depending on the basin definitions may result in a transition state that technically falls along the separatrix but is in fact far from the minimum energy reaction pathway. The user should carefully sanity check the resulting geometries.
+The *find_ts* job type works by applying a modest restraint to the atoms that make up the target commitment basin definition in order to force the reaction to take place. This works better for some systems than others, and depending on the basin definitions may result in a transition state that technically falls along the separatrix but is in fact far from the minimum energy reaction pathway. The user should carefully sanity-check the resulting structure(s).
 
 Committor Analysis
 ~~~~~~~~~~~~~~~~~~

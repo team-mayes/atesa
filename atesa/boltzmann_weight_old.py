@@ -10,7 +10,7 @@ import matplotlib.colors as colors
 import sys
 import os
 
-def main(input_file, output_file, bootstrapCyc=0, bootstrapN=0, nbins=4, temp=300, exclude_fract=0, noplot=False):
+def main(input_file, output_file, bootstrap=True, bootstrapN=0, error=[], nbins=4, temp=300, noplot=False):
     """
     Process equilibrium path sampling output file input_file to obtain free energy profile.
 
@@ -24,31 +24,26 @@ def main(input_file, output_file, bootstrapCyc=0, bootstrapN=0, nbins=4, temp=30
         Name of input file containing raw EPS data
     output_file : str
         Name of output file to write results to; will be overwritten if extant
-    bootstrapCyc : int
-        Number of cycles of bootstrapping to run; if zero, bootstrapping is not performed
+    bootstrap : bool
+        If True, this is a bootstrapping iteration, and the resulting PMF will be returned for averaging instead of
+        being plotted
     bootstrapN : int
         Number of bootstrapping samples to include (used only if bootstrap == True)
+    error : list
+        Error values for each window, generally calculated by bootstrapping (used only if bootstrap == False)
     nbins : int
         Number of bins to divide each EPS window into for constructing the PMF
     temp : float
         Temperature in Kelvin at which to assess the PMF
-    exclude_fract : float
-        Fraction of data from the beginning of each window to exclude from the calculations
     noplot : bool
         If True, suppress output of matplotlib plots; still writes output to output_file
 
     Returns
     -------
-    None
+    partial_pmf : list
+        Calculated PMF energies for each window; returned only if bootstrap == True
 
     """
-
-    if bootstrapCyc > 0:
-        bootstrap = True
-        allpmfs = []    # each PMF calculated during bootstrapping, for evaluating error
-    else:
-        bootstrap = False
-        bootstrapCyc = 0
 
     kT = temp * 0.001987    # kcal/mol-K
 
@@ -57,7 +52,6 @@ def main(input_file, output_file, bootstrapCyc=0, bootstrapN=0, nbins=4, temp=30
 
     windows = []    # nested list of format [[lower0, upper0], [lower1, upper1], ...]
     data = []       # nested list with indices corresponding windows, format [[x00, x01, ...], [x10, x11,...], ...]
-    this_data = []  # object to store subsampled data for bootstrapping
     alldata = []    # simple list [x00, x01, ... x0N, x10, x11, ...]
 
     # Determine the window boundaries
@@ -67,7 +61,6 @@ def main(input_file, output_file, bootstrapCyc=0, bootstrapN=0, nbins=4, temp=30
         if [float('%.3f' % float(split[0])), float('%.3f' % (float(split[1])))] not in windows:
             windows.append([float('%.3f' % (float(split[0]))), float('%.3f' % (float(split[1])))])
             data.append([])
-            this_data.append([])
 
     windows.sort(key=lambda x: x[0])    # need to be sorted for building the PMF
 
@@ -78,100 +71,103 @@ def main(input_file, output_file, bootstrapCyc=0, bootstrapN=0, nbins=4, temp=30
             data[windows.index([float('%.3f' % float(split[0])),float('%.3f' % float(split[1]))])].append(float(split[2]))
             alldata.append(float(split[2]))
 
-    # Exclude fraction of data
     for window_index in range(len(windows)):
-        data[window_index] = data[window_index][int(len(data[window_index])*exclude_fract):]
+        data[window_index] = data[window_index][int(len(data[window_index])*0.8):]
+
+
+    if bootstrap:
+        for i in range(len(windows)):
+            data[i] = np.random.choice(data[i],bootstrapN)
 
     fullPMF = []
     fullRC = []
+    actualRC = []
+    actualPMF = []
+    actualErr = []
 
     # Set up figures outside of loop
-    if not noplot:
+    if not bootstrap and not noplot:
         fig = plt.figure()
         ax0 = fig.add_subplot(111)
         fig = plt.figure()
         ax4 = fig.add_subplot(111)
 
-    for cyc in range(bootstrapCyc + 1):     # last cycle plots PMF
-        # Get a random subsampling of data in each window (with replacement)
-        if cyc < bootstrapCyc:
-            for i in range(len(windows)):
-                this_data[i] = np.random.choice(data[i], bootstrapN)
-        else:
-            this_data = data
+    if not bootstrap:
+        error_index = 0
 
-        for window_index in range(len(windows)):
+    for window_index in range(len(windows)):
 
-            RC_values = np.linspace(windows[window_index][0], windows[window_index][1], nbins)  # list RC value of each bin
+        RC_values = np.linspace(windows[window_index][0], windows[window_index][1], nbins)  # list RC value of each bin
 
-            probs = [0 for null in range(nbins)]    # initialize probabilities by bin
-            thismin = min(this_data[window_index])       # obtain min and max values within the window
-            thismax = max(this_data[window_index])
+        probs = [0 for null in range(nbins)]    # initialize probabilities by bin
+        thismin = min(data[window_index])       # obtain min and max values within the window
+        thismax = max(data[window_index])
 
-            # Experimental
-            # RC_values = [windows[window_index][0] + (windows[window_index][1] - windows[window_index][0]) * np.mean([i / nbins, (i + 1) / nbins]) for i in range(nbins)]
+        # Experimental
+        # RC_values = [windows[window_index][0] + (windows[window_index][1] - windows[window_index][0]) * np.mean([i / nbins, (i + 1) / nbins]) for i in range(nbins)]
 
-            if min(this_data[window_index]) == max(this_data[window_index]):
-                raise RuntimeError('Found a window containing only a single sampled value. The boundaries of the offending '
-                                   'window are: ' + str(windows[window_index]) + '. Sample more in this window or remove '
-                                   'it from the input file.')
+        if min(data[window_index]) == max(data[window_index]):
+            raise RuntimeError('Found a window containing only a single sampled value. The boundaries of the offending '
+                               'window are: ' + str(windows[window_index]) + '. Sample more in this window or remove '
+                               'it from the input file.')
 
-            for value in this_data[window_index]:
-                reduced = (value - thismin)/(thismax - thismin)     # reduce to between 0 and 1
-                local_index = int(np.floor(reduced * nbins))        # sort into bin within window
-                if local_index == nbins:            # this can't handle RC values outside the bounds. Not a problem?
-                    local_index = nbins - 1         # handle case where reduced == 1
-                probs[local_index] += 1     # increment probability count in the appropriate window
+        for value in data[window_index]:
+            reduced = (value - thismin)/(thismax - thismin)     # reduce to between 0 and 1
+            local_index = int(np.floor(reduced * nbins))        # sort into bin within window
+            if local_index == nbins:            # this can't handle RC values outside the bounds. Not a problem?
+                local_index = nbins - 1         # handle case where reduced == 1
+            probs[local_index] += 1     # increment probability count in the appropriate window
 
-            for i in range(len(probs)):
-                probs[i] = probs[i]/len(this_data[window_index])     # scale probability counts to get fractions
+        for i in range(len(probs)):
+            probs[i] = probs[i]/len(data[window_index])     # scale probability counts to get fractions
 
-            local_index = 0                     # initialize index for bins within this window
-            U = [0 for null in range(nbins)]    # initialize energy values for this window
-            offset = 0      # initialize vertical offset of energy to help stitch adjacent windows together
+        local_index = 0                     # initialize index for bins within this window
+        U = [0 for null in range(nbins)]    # initialize energy values for this window
+        offset = 0      # initialize vertical offset of energy to help stitch adjacent windows together
 
-            # Calculate energy corresponding to each probability in this window
-            for prob in probs:
-                if local_index == 0 and not bootstrap:
-                    offset = -1 * kT * np.log(prob)
-                if not prob == 0:
-                    U[local_index] = -1 * kT * np.log(prob) - offset
-                local_index += 1
+        # Calculate energy corresponding to each probability in this window
+        for prob in probs:
+            if local_index == 0 and not bootstrap:
+                offset = -1 * kT * np.log(prob)
+            if not prob == 0:
+                U[local_index] = -1 * kT * np.log(prob) - offset
+            local_index += 1
 
-            # Adjust energy values uniformly up or down to stitch adjacent windows together smoothly
-            if window_index == 0 or bootstrap: # turn off boundary value matching during bootstrapping to avoid propagating errors in this step into PMF error in final step
-                left_boundary = 0
-            else:   # calculate the adjustment
-                f1 = (RC_values[0] - boundary_values[3]) / (boundary_values[2] - boundary_values[3])     # fraction between 0 and 1 corresponding to distance first point of next window falls between last two points of previous window
-                left_boundary1 = ((boundary_values[0] - boundary_values[1]) * f1) + boundary_values[1]   # shift to lower next window to intersect last one
-                f2 = (boundary_values[2] - RC_values[0]) / (RC_values[1] - RC_values[0])
-                left_boundary2 = boundary_values[0] - ((U[1] - U[0]) * f2) + U[0]                       # shift to lower next window so that previous one intersects it
-                left_boundary = np.mean([left_boundary1,left_boundary2])                                # average of shift amounts
-            for Uindex in range(len(U)):    # apply the adjustment
-                U[Uindex] += left_boundary
-            boundary_values = [U[-1], U[-2], RC_values[-1], RC_values[-2]]  # [x2, x1, r2, r1]; store data for this step to calculate left_boundary for next step
+        # Adjust energy values uniformly up or down to stitch adjacent windows together smoothly
+        if window_index == 0 or bootstrap: # turn off boundary value matching during bootstrapping to avoid propagating errors in this step into PMF error in final step
+            left_boundary = 0
+        else:   # calculate the adjustment
+            f1 = (RC_values[0] - boundary_values[3]) / (boundary_values[2] - boundary_values[3])     # fraction between 0 and 1 corresponding to distance first point of next window falls between last two points of previous window
+            left_boundary1 = ((boundary_values[0] - boundary_values[1]) * f1) + boundary_values[1]   # shift to lower next window to intersect last one
+            f2 = (boundary_values[2] - RC_values[0]) / (RC_values[1] - RC_values[0])
+            left_boundary2 = boundary_values[0] - ((U[1] - U[0]) * f2) + U[0]                       # shift to lower next window so that previous one intersects it
+            left_boundary = np.mean([left_boundary1,left_boundary2])                                # average of shift amounts
+        for Uindex in range(len(U)):    # apply the adjustment
+            U[Uindex] += left_boundary
+        boundary_values = [U[-1], U[-2], RC_values[-1], RC_values[-2]]  # [x2, x1, r2, r1]; store data for this step to calculate left_boundary for next step
 
-            fullPMF += U    # append the just-calculated data to the full energy profile
+        fullPMF += U    # append the just-calculated data to the full energy profile
 
-            if cyc < bootstrapCyc:
-                allpmfs.append(fullPMF)
-            else:
-                if bootstrapCyc > 0:
-                    error = # todo: get standard error of each index in allpmfs
-                fullRC += list(RC_values)
+        if not bootstrap:
+            actualRC += list(RC_values[1:-1])
+            actualPMF += list(U[1:-1])
+            actualErr += list(error[error_index + 1:error_index + len(U) - 1])
 
-                # Do the plotting
-                if not noplot:
-                    error_index = 0
-                    ax0.errorbar(RC_values, U, error[error_index:error_index + len(U)])
-                    fig.canvas.draw()
-                    nextcolor = list(colors.to_rgb(next(ax4._get_patches_for_fill.prop_cycler).get('color'))) + [0.75]
-                    ax4.bar(np.linspace(windows[window_index][0],windows[window_index][1],len(probs)),probs,width=0.2,color=nextcolor)
-                    fig.canvas.draw()
-                    error_index += len(U)
+            fullRC += list(RC_values)
 
-    if not noplot:   # in this case, we want to display the result
+        # Do the plotting
+        if not bootstrap and not noplot:
+            ax0.errorbar(RC_values, U, error[error_index:error_index + len(U)])
+            fig.canvas.draw()
+            nextcolor = list(colors.to_rgb(next(ax4._get_patches_for_fill.prop_cycler).get('color'))) + [0.75]
+            ax4.bar(np.linspace(windows[window_index][0],windows[window_index][1],len(probs)),probs,width=0.2,color=nextcolor)
+            fig.canvas.draw()
+            error_index += len(U)
+
+    if not bootstrap and not noplot:   # in this case, we want to display the result
         plt.show()
+    elif bootstrap:
+        return fullPMF  # if bootstrap, we want to return the energy profile for processing rather than plotting it
 
     # For smoothing the PMF into a single continuous line
     smoothPMF = []
@@ -277,9 +273,6 @@ if __name__ == '__main__':
                         help='number of bootstrapping samples to include in each window. Default=25')
     parser.add_argument('-c', metavar='bootstrapCyc', type=int, nargs=1, default=[100],
                         help='number of bootstrapping cycles to average over. Default=100')
-    parser.add_argument('-e', metavar='exclude_fract', type=float, nargs=1, default=[0],
-                        help='fraction of data from each window to exclude from calculations for decorrelation. Must be'
-                             ' between 0 and 1. Default=0')
     parser.add_argument('--noplot', action='store_true', default=False,
                         help='suppress free energy profile and window histogram plots')
 
@@ -290,21 +283,18 @@ if __name__ == '__main__':
     nbins = arguments['n'][0]
     bootstrapN = arguments['b'][0]
     bootstrapCyc = arguments['c'][0]
-    exclude_fract = arguments['e'][0]
     noplot = arguments['noplot']
 
-    main(input_file, output_file, bootstrapCyc=bootstrapCyc, bootstrapN=bootstrapN, nbins=nbins, temp=temp, exclude_fract=exclude_fract, noplot=noplot)
-
     # Implement bootstrapping if needed; I wrote this a long time ago and it's sloppy as hell, but it works
-    # if bootstrapCyc:
-    #     means = []          # initialize list of bootstrapping results
-    #     std = []            # initialize list of standard error values
-    #     for i in range(bootstrapCyc):
-    #         means.append(main(input_file, output_file, bootstrap=True, bootstrapN=bootstrapN, nbins=nbins, temp=temp, noplot=noplot))
-    #         update_progress((i+1)/bootstrapCyc, message='Bootstrapping')
-    #     for j in range(len(means[0])):
-    #         this_window = [u[j] for u in means]                     # j'th value from each bootstrapping iteration
-    #         std.append(np.std(this_window))                         # standard deviation for this window
-    #     main(input_file, output_file, bootstrap=False, error=std, nbins=nbins, temp=temp, noplot=noplot)
-    # else:
-    #     main(input_file, output_file, bootstrap=False, nbins=nbins, temp=temp, noplot=noplot)
+    if bootstrapCyc:
+        means = []          # initialize list of bootstrapping results
+        std = []            # initialize list of standard error values
+        for i in range(bootstrapCyc):
+            means.append(main(input_file, output_file, bootstrap=True, bootstrapN=bootstrapN, nbins=nbins, temp=temp, noplot=noplot))
+            update_progress((i+1)/bootstrapCyc, message='Bootstrapping')
+        for j in range(len(means[0])):
+            this_window = [u[j] for u in means]                     # j'th value from each bootstrapping iteration
+            std.append(np.std(this_window))                         # standard deviation for this window
+        main(input_file, output_file, bootstrap=False, error=std, nbins=nbins, temp=temp, noplot=noplot)
+    else:
+        main(input_file, output_file, bootstrap=False, nbins=nbins, temp=temp, noplot=noplot)
