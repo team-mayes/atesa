@@ -48,8 +48,10 @@ setup(
     # Additional entries you may want simply uncomment the lines you want and fill in the data
     url='https://atesa.readthedocs.io/en/latest/',  # Website
     install_requires=[
+    'cython',
     'pytraj',
     'numpy',
+    'mdtraj',
     'jinja2',
     'statsmodels',
     'pydantic',
