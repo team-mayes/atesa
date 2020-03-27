@@ -3,6 +3,8 @@ atesa
 [//]: # (Badges)
 [![Travis Build Status](https://travis-ci.org/team-mayes/atesa.svg?branch=master)](https://travis-ci.org/team-mayes/atesa)
 [![codecov](https://codecov.io/gh/team-mayes/atesa/branch/master/graph/badge.svg)](https://codecov.io/gh/team-mayes/atesa/branch/master)
+[![Documentation Status](https://readthedocs.org/projects/atesa/badge/?version=latest)](https://atesa.readthedocs.io/en/latest/?badge=latest)
+
 
 A flexible and extensible program for automating transition path sampling with aimless shooting.
 

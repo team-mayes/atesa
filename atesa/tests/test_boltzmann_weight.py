@@ -25,8 +25,17 @@ class Tests(object):
 
     def test_main(self):
         """Tests boltzmann_weight using example EPS output in test_data"""
-        command = 'boltzmann_weight.py -i ../test_data/eps_example.out -o fep_test.out -t 350 -n 4 -b 10 -c 3 --noplot'
-        subprocess.check_call(command, shell=True)
+        kwargs = {'i': '../test_data/eps_example.out', 'o': 'fep_test.out', 't': 350, 'n': 4, 'b': -1, 'c': 1, 'noplot': True, 'e': 0.8}
+        # There's a necessary random component here that can potentially cause a RuntimError to be raised, but the odds
+        # of it failing three times in a row without there actually being something wrong are extremely small, so this
+        # is the best I can think to do...
+        try:
+            boltzmann_weight.main(**kwargs)
+        except RuntimeError:
+            try:
+                boltzmann_weight.main(**kwargs)
+            except RuntimeError:
+                boltzmann_weight.main(**kwargs)
         compare_lines = open('../test_data/fep_example.out', 'r').readlines()
         line_index = 0
         for line in open('fep_test.out', 'r').readlines():
