@@ -11,9 +11,11 @@ import numpy as np  # to support numpy  calls even if called as np
 import sys
 import os
 import shutil
+import pickle
 from jinja2 import Environment, FileSystemLoader
 import typing
 import pydantic
+from atesa import auto_cvs
 
 def configure(input_file, user_working_directory=''):
     """
@@ -65,9 +67,12 @@ def configure(input_file, user_working_directory=''):
         path_to_input_files: str = os.path.dirname(os.path.realpath(__file__)) + '/data/input_files'
         path_to_templates: str = os.path.dirname(os.path.realpath(__file__)) + '/data/templates'
 
-        # Required only for aimless shooting, equilibrium path sampling, and committor analysis
+        # CV options; required only for aimless shooting, equilibrium path sampling, and committor analysis
         cvs: typing.List[str] = ['']
+        auto_cvs_radius: float = 5
+        auto_cvs_exclude_water: bool = False
         include_qdot: bool = True
+        as_settings_file: str = ''
 
         # Required only for aimless shooting and equilibrium path sampling
         initial_coordinates: typing.List[str] = ['']
@@ -178,6 +183,22 @@ def configure(input_file, user_working_directory=''):
             if isinstance(settings.eps_dynamic_seed, int):
                 settings.eps_dynamic_seed = [settings.eps_dynamic_seed for null in settings.eps_bounds]
             settings.eps_empty_windows = settings.eps_dynamic_seed
+
+    # Obtain cvs and commitment definitions from an existing settings file or call auto_cvs as needed
+    if settings.as_settings_file:    # todo: write a test for this behavior
+        try:
+            as_settings = pickle.load(open(settings.as_settings_file, 'rb'))
+        except FileNotFoundError:
+            raise FileNotFoundError('could not find as_settings_file: ' + settings.as_settings_file)
+        except pickle.UnpicklingError:
+            raise RuntimeError('provided as_settings_file: ' + settings.as_settings_file + ' could not be loaded as a '
+                               'pickle file. Are you sure this is the correct file?')
+        settings.cvs = as_settings.cvs
+        settings.commit_fwd = as_settings.commit_fwd
+        settings.commit_bwd = as_settings.commit_bwd
+        settings.include_qdot = as_settings.include_qdot
+    elif settings.auto_cvs_radius > 0:
+        settings.cvs = auto_cvs.main(settings=settings) + settings.cvs
 
     return settings
 

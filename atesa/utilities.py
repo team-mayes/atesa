@@ -151,6 +151,7 @@ def get_cvs(filename, settings, reduce=False):
         return (float(unreduced_value) - this_min) / (this_max - this_min)
 
     traj = pytraj.iterload(filename, settings.topology)
+    mtraj = mdtraj.load(filename, top=settings.topology)
     traj_name = filename
 
     rc_minmax = [[],[]]
@@ -172,11 +173,12 @@ def get_cvs(filename, settings, reduce=False):
         if reduce:    # legacy from original atesa, for reducing values to between 0 and 1
             evaluation = reduce_cv(evaluation, local_index, rc_minmax)
         output += str(evaluation) + ' '
-    if settings.include_qdot:  # if True, then we want to include rate of change for every CV, too
+    if settings.include_qdot and not settings.job_type == 'equilibrium_path_sampling':  # if True, then we want to include rate of change for every CV, too
         # Strategy here is to write a new temporary .rst7 file by incrementing all the coordinate values by their
         # corresponding velocity values, load it as a new iterload object, and then rerun our analysis on that.
         incremented_filename = increment_coords()
         traj = pytraj.iterload(incremented_filename, settings.topology)
+        mtraj = mdtraj.load(incremented_filename, top=settings.topology)
         local_index = -1
         for cv in settings.cvs:
             local_index += 1

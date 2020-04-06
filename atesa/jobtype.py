@@ -1106,8 +1106,10 @@ class EquilibriumPathSampling(JobType):
                                     return running  # return after initializing one thread to encourage sampling diversity
 
                             except AssertionError:  # should be inaccessible but apparently not?
-                                warnings.warn('Error in spawning new EPS thread: expected RC value of rc_value: ' + str(rc_value)
-                                              + ' but got temp_rc: ' + str(temp_rc) +
+                                warnings.warn('Error in spawning new EPS thread: expected RC value of rc_value: ' +
+                                              str(rc_value) + ' but got temp_rc: ' + str(temp_rc) + '\nIf you see this '
+                                              'error message, please copy it along with the debug information below and'
+                                              ' raise an issue on the ATESA GitHub page.'
                                               '\nDEBUG:' +
                                               '\n coord_file: ' + str(coord_file) +
                                               '\n self.history.prod_results[-1]: ' + str(self.history.prod_results[-1]) +
@@ -1161,7 +1163,7 @@ class FindTS(JobType):
         else:  # == 'bwd', the only other valid option
             other_basin = settings.commit_fwd
         mdengine = factory.mdengine_factory(settings.md_engine)
-        input_file = mdengine.write_find_ts_restraint(None, other_basin, settings.path_to_input_files + '/find_ts_' + settings.md_engine + '.in')
+        input_file = mdengine.write_find_ts_restraint(None, other_basin, settings.path_to_input_files + '/find_ts_prod_' + settings.md_engine + '.in')
 
         return input_file
 
@@ -1258,7 +1260,7 @@ class FindTS(JobType):
                                + dir_to_check + ') is unsuitable for some reason. Please check the produced '
                                'trajectory and output file in the working directory (' +
                                settings.working_directory + ') and either modify the basin definition(s) or the find_ts'
-                               ' input file (' + settings.path_to_input_files + '/find_ts_' + settings.md_engine +
+                               ' input file (' + settings.path_to_input_files + '/find_ts_prod_' + settings.md_engine +
                                '.in) accordingly.')
 
         # Now harvest TSs by inspecting values of target-basin-defining bond lengths vs. frame number
@@ -1462,7 +1464,7 @@ class FindTS(JobType):
                                            ' that the transition state region is very narrow and lies between two '
                                            'frames in the barrier crossing simulation. Try increasing the frame output '
                                            'frequency or reducing the step size in ' + settings.path_to_input_files +
-                                           '/find_ts_' + settings.md_engine + '.in. Alternatively, try adjusting the '
+                                           '/find_ts_prod_' + settings.md_engine + '.in. Alternatively, try adjusting the '
                                            'basin definitions in the config file.')
 
                 # This block only reached if there were only commitments in one direction

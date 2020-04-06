@@ -13,47 +13,62 @@ In order to apply simulations to the study of rare events, we must make use of a
 What is Transition Path Sampling?
 ---------------------------------
 
-Transition path sampling refers to any method of rare event sampling that aims to characterize the ensemble of "transition paths" (that is, trajectories through phase space that connect one discrete state to another) as a means of characterizing the rare event as a whole.
+Transition path sampling refers to any method of rare event sampling that aims to characterize the ensemble of "transition paths" (that is, trajectories through phase space that connect one discrete state to another) as a means of characterizing the rare event as a whole. You should look towards transition path sampling methods when you want to characterize *how* a rare event occurs from beginning to end. For instance, you might use transition path sampling methods to discover the key parameters that describe a change in the configuration of a structure, or to determine the chemical mechanism of a reaction.
 
 What is Aimless Shooting?
 -------------------------
 
-Aimless shooting is a transition path sampling method for performing efficient, unbiased sampling of the region of phase space corresponding to a putative transition state. Because by definition the transition state is a local maximum in energy along at least one dimension, this region is difficult to sample using conventional simulations (that is, a transition is a rare event). The aimless shooting approach is to leverage one or more putative or “guess” transition state structures (which are obtained by other methods as a prerequisite to beginning aimless shooting (though ATESA is equipped with a tool to help do so)), which will be “aimlessly” “shot” through phase space using unbiased initial velocities chosen from the appropriate Boltzmann distribution. The resulting trajectory is at the same time also simulated in reverse (using initial velocities of opposite direction and equal magnitude), and if after simulations the two trajectories converge to different pre-defined energetic basins (one "products", one "reactants"), then the reactive trajectory connecting them is considered a success. New starting points are daisy-chained from older successful ones by taking an early frame from the reactive trajectory as the initial coordinates, and in this way it is ensured that sampling remains nearby the transition state separatrix (that is, the surface in phase space that divides the products from the reactants with equal commitment probability in either direction).
+Aimless shooting is a transition path sampling method for performing efficient, unbiased sampling of the region(s) of phase space corresponding to the ensemble of transition states. Because by definition the transition state is a local maximum in energy along at least one dimension, this region is difficult to sample using conventional simulations -- that is, a transition is a rare event. The aimless shooting approach is to leverage one or more putative or “guess” transition state structures (which are obtained by other methods as a prerequisite to beginning aimless shooting, though ATESA is equipped with a tool to help do so), which will be “aimlessly” “shot” through phase space using unbiased initial velocities chosen from the appropriate Boltzmann distribution. The resulting trajectory is at the same time also simulated in reverse (using initial velocities of opposite direction and equal magnitude), and if after simulations the two trajectories converge to different pre-defined energetic basins (*e.g.*, one "products", one "reactants"), then the reactive trajectory connecting them is considered a success. New starting points are daisy-chained from older successful ones by taking an early frame from the reactive trajectory as the initial coordinates, and in this way it is ensured that sampling remains nearby the transition state separatrix (that is, the surface in phase space that divides the products from the reactants with equal commitment probability in either direction).
 
-.. figure:: ../../_images/aimless_shooting.png
+.. figure:: _images/aimless_shooting.png
 
 	An example of three aimless shooting moves in a hypothetical 2-D phase space. Each shooting move consists of an initial coordinate (colored circle) from which two trajectories begin in opposite directions (colored lines). If the two trajectories go to opposite basins ("A" and "B"), then the move is accepted and new initial coordinates for the next step are chosen from an early part of the accepted trajectory (as move 2 (green) begins along the pathway from move 1 (blue)). If a move is not accepted (move 3 (red)), then the next step would begin from a different point and/or with different initial velocities from the previous accepted move (not shown).
+	
+When is Aimless Shooting the Right Tool?
+----------------------------------------
 
-What is ATESA?
---------------
+Of course, aimless shooting is not always to best tool for the job. Efficiency aside, the primary advantage of aimless shooting compared to other path sampling tools is that it is completely unbiased; the only thing you need to get started is a way to distinguish one state from the other, and a guess about what lies in between. If you're unsure whether aimless shooting is the best option for your application, consider the following:
 
-ATESA is a Python program that implements aimless shooting and several related methods, with the intent of making them readily accessible to non-experts. It automates the aimless shooting process with a system of independent “threads” representing one particular path in the search through phase space. A thread has a given set of initial coordinates, which it repeatedly “shoots” until it finds a successful reactive trajectory, at which point it picks a new shooting point on the reactive trajectory and continues. Because threads run entirely in parallel, aimless shooting with ATESA scales perfectly so long as sufficient computational resources are available.
+- Aimless shooting is designed to focus sampling around transition states, rather than at the stable states that they connect. If you are more interested in comparing properties of stable states than in understanding how one transitions to another, aimless shooting is not the right tool.
+
+- Aimless shooting is best used to discover or describe a mechanism when one is unknown. If you have a reaction coordinate or collective variable that describes the transformation already in mind and just want to characterize it, you may look to a pathway free energy method like umbrella sampling or equilibrium path sampling (the latter of which is implemented in ATESA), or a path sampling method that makes use of a known collective variable like transition interface sampling.
+
+- Like all transition path sampling methods, aimless shooting is at its best where the energy barrier is high (and therefore transitions are rare). If your transition occurs quickly enough to reasonably observe many times over the course of an unbiased molecular dynamics or quantum mechanics simulation, aimless shooting may be overkill.
+
+- Aimless shooting is the best tool when you are interested in efficiently arriving at an accurate description of the transition state of a rare event without specifying a mechanism *a priori*.
+
+What is ATESA, and Why Should I Use It?
+---------------------------------------
+
+ATESA is a Python program that implements aimless shooting and several related methods, with the intent of making them readily accessible to non-experts without requiring them to write (or read!) code. It automates the aimless shooting process with a system of independent “threads” representing one particular path in the search through phase space. A thread has a given set of initial coordinates, which it repeatedly “shoots” until it finds a successful reactive trajectory, at which point it picks a new shooting point on the reactive trajectory and continues. Because threads run entirely in parallel, aimless shooting with ATESA scales perfectly so long as sufficient computational resources are available.
 
 ATESA also features a suite of analysis and utility tools that run in much the same fashion. Most importantly, once aimless shooting has been completed (see :ref:`OnTerminationCriteria`), ATESA can be used to automate likelihood maximization to "mine" the data for a reaction coordinate that describes the transition path, committor analysis to verify that reaction coordinate, and equilibrium path sampling to obtain the free energy profile along it.
 
+By design, ATESA is suitable for researchers who are familiar with the basic tenants of molecular simulation, but may not be experts in Python or in rare event sampling. By providing tools and guidance for a ready-made workflow from start to finish, ATESA aims to take the guesswork out of adding transition path sampling to your toolkit. For details on implementing this workflow, see :ref:`BasicWorkflow`.
+
 .. _LikelihoodMaximizationTheory:
 
-Likelihood Maximization
------------------------
+What is Likelihood Maximization?
+--------------------------------
 
-The output of aimless shooting is a large set of combined variable (CV) values paired with corresponding commitment basins (products or reactants). In order to convert this information into a usable form, the method of likelihood maximization can be used to select a model that describes the reaction progress in terms of relatively few parameters. ATESA supports the intertial likelihood maximization procedure first published in `Peters 2012 <https://doi.org/10.1016/j.cplett.2012.10.051>`_, in addition to the original non-inertial procedure. For details on ATESA's implementation of likelihood maximization, see :ref:`LikelihoodMaximization`.
+The output of aimless shooting is a large set of combined variable (CV) values paired with corresponding commitment basins (products or reactants). In order to convert this information into a usable form, the method of likelihood maximization can be used to select a model that describes the reaction progress in terms of relatively few parameters. ATESA supports the inertial likelihood maximization procedure first published in `Peters 2012 <https://doi.org/10.1016/j.cplett.2012.10.051>`_, in addition to the original non-inertial procedure. For details on ATESA's implementation of likelihood maximization, see :ref:`LikelihoodMaximization`.
 
-.. figure:: ../../_images/lmax_sigmoid.png
+.. figure:: _images/lmax_sigmoid.png
 
-	An example depicting the fitting of a reaction coordinate model (yellow line) to aimless shooting data (blue histogram). Good fit between the histogram and the model is a necessary but not sufficient condition for a good reaction coordinate.
+	An example depicting the fitting of a reaction coordinate model (yellow line) to aimless shooting data (blue histogram). Good fit between the histogram and the model is a necessary-but-not-sufficient condition for a good reaction coordinate.
 	
 .. _CommittorAnalysis:
 
-Committor Analysis
-------------------
+What is Committor Analysis?
+---------------------------
 
 Once a reaction coordinate has been obtained, it should be verified using new, unbiased simulations that were not included in the model training dataset. The method of committor analysis is to simply select a large number (hundreds) of initial coordinates with reaction coordinate values very close to zero (the predicted transition state) and run several unbiased simulations starting from each of them to verify that they are as likely on average to proceed towards the reactants as towards the products. The extent to which this likelihood is clustered around 50% probability of either outcome is a measure of the effectiveness of the reaction coordinate in describing the transition state.
 
-.. figure:: ../../_images/committor_analysis.png
+.. figure:: _images/committor_analysis.png
 
 	An pair of examples of committor analysis. At left, a "poor" model misjudges the reaction coordinate (RC) and the resulting committor analysis distribution (at bottom) is bimodal at either end. At right, a much better model closely matches its predicted separatrix (RC = 0) with the "real" separatrix, resulting in a unimodal distribution centered near 1/2.
 
-Equilibrium Path Sampling
--------------------------
+What is Equilibrium Path Sampling?
+----------------------------------
 
-The free energy profile along the reaction coordinate can be determined by several methods, but the most general of them is equilibrium path sampling, wherein the reaction coordinate is divided into bins and the unbiased distribution of reaction coordinate values sampled within those bins is converted directly into free energy. ATESA automates collection of equilibrium path sampling data from an arbitrary array of initial coordinates, filling in gaps automatically using the tails of simulations from adjacent windows. Note that the tradeoff for the generality of this method is that is is highly inefficient, especially for rare events with high activation energies. It is often more appropriate to use a Hamiltonian-biased free energy method, such as umbrella sampling; however, no such method is automated within ATESA.
+The free energy profile along the reaction coordinate can be determined by several methods, but the most general of them is equilibrium path sampling, wherein the reaction coordinate is divided into bins and the unbiased distribution of reaction coordinate values sampled within those bins is converted directly into free energy. ATESA automates collection of equilibrium path sampling data from an arbitrary array of initial coordinates, filling in gaps automatically using the tails of simulations from adjacent windows. Note that the tradeoff for the generality of this method is that is is highly inefficient, especially for rare events with high activation energies. Depending on the specifics of the system and the reaction coordinate, it is often more appropriate to use a Hamiltonian-biased free energy method such as umbrella sampling; however, no such method is (yet) automated within ATESA.

@@ -1,4 +1,4 @@
-QM run to pull initial structure from one basin to the other for find_ts
+Example find_ts input file to pull initial structure from one basin to the other
  &cntrl
   imin=0,
   ioutfm=1,						!netCDF output format
@@ -15,7 +15,7 @@ QM run to pull initial structure from one basin to the other for find_ts
   cut=8.0,
   ntb=2,						! Periodicity. = 2 for ntp > 0
   ntp=1,
-  ntt=2,						! Temperature control sceme. 2 = Anderson, 3 = Langevin
+  ntt=2,						! Temperature control scheme. 2 = Anderson, 3 = Langevin
   vrand=100,					! Steps between redistribution of velocities according to Boltzmann distribution
   ig=-1,
   ifqnt=1,
@@ -23,7 +23,7 @@ QM run to pull initial structure from one basin to the other for find_ts
  &end
  &qmmm
   qmmask='(:492,493) | (:218,219,193,194,195,197,143,220,480,484,485,153,154,223,224,227,478,376,378,490,153,417,427 & !@C,CA,N,HA,H,O) | (:11518,11511,11496,11516,11543,11541,11563)',
-  qmcharge=1, ! 1x HIP, 1x ASP, 1x GLU (and 1x GLH)
+  qmcharge=1,
   qm_theory='DFTB',
   qmshake=0,
   qmcut=8.0,

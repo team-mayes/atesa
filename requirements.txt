@@ -7,3 +7,5 @@ pydantic
 gnuplotlib
 numdifftools
 psutil
+matplotlib
+pytest

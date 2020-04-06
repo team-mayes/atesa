@@ -18,15 +18,20 @@ The contents of the configuration file are read into ATESA as literal python cod
 Core Settings
 -------------
 
-Certain settings should be given regardless of the job type. The following settings do not have valid default values and should be set in every configuration file:
+Certain settings should be given for every job. The following settings do not have valid default values and should be set in every configuration file:
 
 .. code-block:: python
 
+	job_type		# Valid options: 'find_ts', 'aimless_shooting', 'committor_analysis', 'equilibrium_path_sampling'
 	batch_system		# Valid options: 'slurm', 'pbs'
 	restart			# Valid options: True, False
 	overwrite		# Valid options: True, False
 	topology		# Valid options: Absolute or relative path as a string
 	working_directory	# Valid options: Absolute or relative path as a string
+	
+``job_type``
+
+	The type of simulations to perform. Details on each type are given below in the :ref:`BasicWorkflow` section.
 	
 ``batch_system``
 
@@ -47,9 +52,35 @@ Certain settings should be given regardless of the job type. The following setti
 ``working_directory``
 
 	An absolute or relative path given as a string and pointing to the desired working directory (this can be omitted if the working directory is set in the command line). This is the directory in which all of the simulations will be performed. It will be created if it does not exist.
+	
+.. _BasicWorkflow:
 
-Common Use Cases
-----------------
+Basic Workflow
+--------------
+
+The following sections outline the contents of the configuration files for each part of a standard ATESA workflow. Following these steps will allow you to start with only a definition of each stable state and an model of one of them, and end with a validated reaction coordinate and a free energy profile along that coordinate connecting the two basins.
+
+If this is your first time performing simulations with ATESA for this particular molecular model, it would be wise to manually double-check that any output files and resulting trajectories from the first simulations performed by ATESA look like you expect them to. In particular, you should ensure that there are no errors being returned by your molecular dynamics software or batch system that would necessitate a change in the relevant files in the *input_files* or *templates* directories (see :ref:`SettingUpSimulationFiles` and :ref:`FilePathSettings`).
+
+Find Transition State
+~~~~~~~~~~~~~~~~~~~~~
+
+If you want to perform aimless shooting but don't have a candidate transition state structure from which to begin (or just want to obtain more), ATESA can automatically build
+them from a given product or reactant state structure. If you do already have a transition state candidate to begin with, you can skip this step. In addition to the :ref:`CoreSettings`, such a job should be set up as:
+
+.. code-block:: python
+
+	job_type = 'find_ts'
+	initial_coordinates = [<coord_file_1>]
+	commit_fwd = [...]
+	commit_bwd = [...]
+	max_moves = 5
+	
+In this case, <coord_file_1> should represent a structure in either the "fwd" or "bwd" commitment basin. See :ref:`CommitmentBasinDefinitions` for details on the `commit_fwd` and `commit_bwd` options.
+
+The *find_ts* job type works by applying a modest restraint to the atoms that make up the target commitment basin definition in order to force the desired rare event to take place, and then performing a small amount of aimless shooting from structures near the middle to identify suitable transition states. This works better for some systems than others, and depending on the basin definitions may result in a transition state that technically falls along the separatrix, but is in fact far from the minimum energy transition path. The user should carefully sanity-check the resulting structure(s).
+
+If find_ts gives you trouble, one alternative option for obtaining a good initial transition state structure is to run unbiased simulations at a high temperature to accelerate the transition, though this runs the risk of pushing the system into otherwise inaccessible configurations, and is beyond the scope of this documentation.
 
 Aimless Shooting
 ~~~~~~~~~~~~~~~~
@@ -64,72 +95,58 @@ The most central function of ATESA is aimless shooting. If you have one or more 
 	commit_fwd = [...]
 	commit_bwd = [...]
 	
-See :ref:`CommitmentBasinDefinitions` for details on the `commit_fwd` and `commit_bwd` options and :ref:`CVDefinitions` for details on the `cvs` option.
+See :ref:`CommitmentBasinDefinitions` for details on the `commit_fwd` and `commit_bwd` options and :ref:`CVDefinitions` for details on the `cvs` option (the `cvs` option can be omitted if the *auto_cvs_radius* option is sufficient).
 
-These settings will automatically use :ref:`InformationError` as a termination criterion with the default settings. These can be modified as described in :ref:`AimlessShootingSettings`
+These settings will automatically use :ref:`InformationError` as a termination criterion with the default settings. These can be modified as described in :ref:`AimlessShootingSettings`.
 
-Find Transition State
-~~~~~~~~~~~~~~~~~~~~~
-
-If you want to perform aimless shooting but don't have a candidate transition state structure from which to begin (or just want to obtain more), ATESA can automatically build
-them from a given product or reactant state structure. In addition to the :ref:`CoreSettings`, such a job should be set up as:
-
-.. code-block:: python
-
-	job_type = 'find_ts'
-	initial_coordinates = [<coord_file_1>]
-	commit_fwd = [...]
-	commit_bwd = [...]
-	max_moves = 5
-	
-In this case, <coord_file_1> should represent a structure in either the "fwd" or "bwd" commitment basin. See :ref:`CommitmentBasinDefinitions` for details on the `commit_fwd` and `commit_bwd` options.
-
-The *find_ts* job type works by applying a modest restraint to the atoms that make up the target commitment basin definition in order to force the reaction to take place. This works better for some systems than others, and depending on the basin definitions may result in a transition state that technically falls along the separatrix but is in fact far from the minimum energy reaction pathway. The user should carefully sanity-check the resulting structure(s).
+While aimless shooting is running, you can check on its progress using the "status.txt" file found in the working directory. You should look for the average acceptance ratio across all threads to be in the range of at least 10-30%; lower values may indicate a poor initial transition state guess (see :ref:`Troubleshooting`).
 
 Committor Analysis
 ~~~~~~~~~~~~~~~~~~
 
 After completing aimless shooting, the next step is to obtain a reaction coordinate and verify it with committor analysis. Before running committor analysis, the user should call  likelihood maximization with their preferred settings (see :ref:`LikelihoodMaximization`) and then reaction coordinate evaluation using the aimless shooting working directory and the resulting reaction coordinate (see :ref:`RCEval`). 
 
-Then, committor analysis is performed through the main ATESA executable with the following settings:
+Then, committor analysis is performed through the main ATESA executable with the following settings (in addition to the :ref:`CoreSettings` above):
 
 .. code-block:: python
 
 	job_type = 'committor_analysis'
 	path_to_rc_out = <rc_out_file>
 	rc_definition = <rc_definition>
-	cvs = [<cv1>, <cv2>, ...]
-	commit_fwd = [...]
-	commit_bwd = [...]
+	as_settings_file = <as_settings_file>
 	
-See :ref:`CommitmentBasinDefinitions` for details on the `commit_fwd` and `commit_bwd` options, :ref:`CVDefinitions` for details on the `cvs` option, and :ref:`ReactionCoordinateDefinition` for details on the `rc_definition` option.
+The *as_settings_file* should point to the the "settings.pkl" file in the previous aimless shooting working directory; see the last entry in :ref:`CVDefinitions`. See :ref:`ReactionCoordinateDefinition` for details on the `rc_definition` option.
 
-The working directory here should NOT be the same as the aimless shooting directory containing the data to perform committor analysis with. The aimless shooting directory will be identified using the `path_to_rc_out` setting (which should be inside the aimless shooting working directory). The working directory for a committor analysis job should be a new directory, though it can be a subdirectory of the aimless shooting directory it operates on.
+The working directory here should NOT be the same as the aimless shooting directory containing the data to perform committor analysis with. The aimless shooting directory will be identified using the `path_to_rc_out` setting (which should be inside the aimless shooting working directory). The working directory for a committor analysis job should be a new directory, though it can be a subdirectory of the aimless shooting directory if desired.
+
+The results of a committor analysis job are written to the file "committor_analysis.out" in the working directory. Each line in this file gives the ratio of jobs that committed to the "forward" basin to the total number of jobs that committed to either basin. For more details on interpreting these results, see :ref:`CommittorAnalysis`.
 
 Equilibrium Path Sampling
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The final analysis step after a satisfactory committor analysis run is to obtain the free energy profile along the reaction coordinate. ATESA supports equilibrium path sampling (EPS) to obtain this profile through the main executable, using the following settings:
+The final analysis step after a satisfactory committor analysis run is to obtain the free energy profile along the reaction coordinate. ATESA supports equilibrium path sampling (EPS) to obtain this profile through the main executable, using the following settings (in addition to the :ref:`CoreSettings` above):
 
 .. code-block:: python
 
 	job_type = 'equilibrium_path_sampling'
 	rc_definition = <rc_definition>
-	cvs = [<cv1>, <cv2>, ...]
+	as_settings_file = <as_settings_file>
 	
-See  :ref:`CVDefinitions` for details on the `cvs` option and :ref:`ReactionCoordinateDefinition` for details on the `rc_definition` option.
+The *as_settings_file* should point to the the "settings.pkl" file in the previous aimless shooting working directory; see the last entry in :ref:`CVDefinitions`. See :ref:`ReactionCoordinateDefinition` for details on the `rc_definition` option. The same *rc_definition* should be used for both committor analysis and equilibrium path sampling.
 
 EPS is a highly generalized free energy method that does not rely on restraints or biases of any kind. The cost of this benefit is that it is also among the least efficient free energy methods available, requiring a relatively large amount of simulation to acquire comparable sampling coverage to, for example, umbrella sampling. For this reason, EPS is recommended for use only in cases where other methods are unsuitable, such as for example in cases of highly complex reaction coordinates that do not lend themselves to restraints.
 
 CAUTION: Because equilibrium path sampling measures the full energy profile instead of merely assessing the endpoints of simulations (as in aimless shooting and committor analysis), it is very sensitive to errors in the evaluation of the energy of any given state. For this reason, it is completely possible to have obtained reasonable aimless shooting and committor analysis results with a system or simulation parameters that are not suitable for equilibrium path sampling, for example owing to poor SCF convergence in QM calculations along portions of the RC. ATESA can NOT identify such errors on its own, and may produce EPS results that are not correct (but may appear reasonable at first glance)! It is the responsibility of the user to ensure that the EPS simulations are well-behaved and do not suffer from severe energetic errors.
 
-The raw output data from an EPS run is stored in the working directory as 'eps.out'. This data can be converted into an energy profile using boltzmann_weight.py (see :ref:`BoltzmannWeight`), which calculates the relative probabilities of states within each bin and converts these into relative free energies.
+The raw output data from an EPS run is stored in the working directory as "eps.out". This data can be converted into an energy profile using boltzmann_weight.py (see :ref:`BoltzmannWeight`), which calculates the relative probabilities of states within each bin and converts these into relative free energies.
 	
 
 Full Configuration Options
 --------------------------
 
 Here, the full list of valid configuration file options are documented (excluding the :ref:`CoreSettings`, documented above.) **NOTE:** most options below will not need to be touched by most users. Exceptions (*i.e.*, options that basic users may or should be interested to set or change from their defaults) are denoted with a "‡".
+
+.. _BatchTemplateSettings:
 
 Batch Template Settings
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -186,6 +203,8 @@ These settings are used to fill in the template slots in the user-provided templ
 
 	An additional template slot for 'prod' simulations to be used however the user sees fit. This option is provided in case a user has an unforseen need to template something other than the above options. Default = '' (an empty string)
 
+.. _FilePathSettings:
+
 File Path Settings
 ~~~~~~~~~~~~~~~~~~
 
@@ -193,11 +212,11 @@ These settings define the paths where ATESA will search for user-defined input f
 
 ``path_to_input_files``	**‡**
 
-	Path (as a string) to the directory containing the input files. Default = sys.path[0] + '/data/input_files'
+	Path (as a string enclosed in quotes) to the directory containing the input files. The default is the directory 'data/input_files' located inside the ATESA installation directory.
 
 ``path_to_templates``	**‡**
 
-	Path (as a string) to the directory containing the template files. Default = sys.path[0] + '/data/templates'
+	Path (as a string enclosed in quotes) to the directory containing the template files. The default is the directory 'data/templates' located inside the ATESA installation directory.
 
 .. _CVDefinitions:
 
@@ -208,15 +227,17 @@ These settings define the combined variables (CVs) for the job. In aimless shoot
 
 ``cvs`` **‡**
 
-	A list of CV definitions, given as strings, as in: [<cv1>, <cv2>, ... <cvN>] (where the contents of each pair of angled braces is a string). Each item is interpreted as raw python code (caution: unsanitized) that returns the desired CV value (in a format that can cast to a float). In addition to built-in python functions, calls to pytraj, mdtraj, and numpy (as both 'numpy' and 'np') are supported. In support of pytraj and mdtraj calls, the following variables are available for use:
+	A list of CV definitions, given as strings, as in: [<cv1>, <cv2>, ... <cvN>] (where the contents of each pair of angled braces is a string). Each item is interpreted as raw python code (caution: unsanitized) that returns the desired CV value (in a format that can cast to a float). In addition to built-in python functions, calls to pytraj, mdtraj, and numpy (as both 'numpy' and 'np') are supported. In support of pytraj and mdtraj calls, the following variables are available for use in CV definitions:
 	
-		*traj*: the coordinate file being evaluated, as a pytraj.iterload object
+		**traj**: the coordinate file being evaluated, as a pytraj.iterload object (for use with pytraj function calls). Note that pytraj returns units of angstroms and degrees for distances and angles, respectively.
+		
+		**mtraj**: the coordinate file being evaluated, as an mdtraj.load object (for use with mdtraj function calls). Note that mdtraj returns units of nanometers and radians for distances and angles, respectively.
 	
-		*traj_name*: the name of the coordinate file as a string
+		**traj_name**: the name of the coordinate file, as a string
 	
-		*settings.topology*: the name of the topology file, as a string
+		**settings.topology**: the name of the topology file, as a string
 	
-	These CV evaluations are only ever performed on coordinate files with a single frame (not multi-frame trajectories). It is up to the user to ensure that each item in *cvs* returns exactly the desired CV value (and not, for example, a one-length list containing that value). For example, the following value of *cvs* would interpret the interatomic distance between atoms 1 and 2 as CV1, the difference between the distances 3-to-4 and 5-to-6 as CV2, and the angle formed by atoms 7-8-9 as CV3 (all on one line):
+	These CV evaluations are only ever performed on coordinate files with a single frame (not multi-frame trajectories). It is up to the user to ensure that each item in *cvs* returns exactly the desired CV value as a float or integer (and not, for example, a one-length list containing that value). For example, the following value of *cvs* would interpret the interatomic distance between atoms 1 and 2 as CV1, the difference between the distances 3-to-4 and 5-to-6 as CV2, and the angle formed by atoms 7-8-9 as CV3 (all on one line):
 	
         ::
 
@@ -225,6 +246,24 @@ These settings define the combined variables (CVs) for the job. In aimless shoot
 	           'pytraj.angle(traj, \'@7 @8 @9\')[0]']
 
 	Notice in particular the usage of "traj" as the first argument in these pytraj function calls, the escaped single-quote characters within each function call, and the specification of the zero'th indexed item returned by each function call (as these pytraj functions return one-length lists). Default = ['']
+	
+.. _AutoCVs:
+	
+``auto_cvs_radius``	**‡**
+	
+	Alternatively or in addition to defining explicit CVs with the *cvs* option, this option can be used to automatically obtain and use CVs representing every 2nd, 3rd, and 4th order CV (bonds, angles, and dihedrals, respectively) consisting of contiguously bonded atoms within *auto_cvs_radius* angstroms of any of the atoms present in the the *commit_fwd* or *commit_bwd* options (see :ref:`CommitmentBasinDefinitions`). For example, if the following combination of settings is provided::
+	
+		commit_fwd = ([101, 102], [103, 104], [1.5, 2.0], ['lt', 'gt'])
+		commit_bwd = ([101, 102], [103, 104], [2.0, 1.5], ['gt', 'lt'])
+		auto_cvs_radius = 5
+        
+    Then every bond, angle, and dihedral consisting of atoms within at least 5 angstroms of atoms 101, 102, 103, or 104 would be included as a CV. The index, description, and code used to evaluate each CV derived in this manner is printed to the file "cvs.txt" in the working directory. Automatic CVs can be disabled by setting *auto_cvs_radius* to 0. If *auto_cvs_radius* is greater than 0 and CVs are also defined manually using the *cvs* option, then the manually defined CVs are appended to the end of the list of automatically generated CVs (although note that the manually defined CVs will not appear in "cvs.txt").
+    Using *auto_cvs* treats all of the atoms in *commit_fwd* and *commit_bwd* as bonded to one another for the purposes of determining CVs, so there is no need to define these CVs manually. Examples of CVs that *should* be defined manually if desired include differences of distances, or any distances, angles, or dihedrals defined using atoms that are not contiguously bonded to one another (*e.g.*, a distance between nearby charged particles). 		
+    Note that the number of CVs that are created using this option can grow very large very quickly when large radii are chosen, which in extreme cases can cause significant I/O overhead and slow down calls to :ref:`LikelihoodMaximization`. Default = 5
+    
+``auto_cvs_exclude_water``
+	
+	A boolean. By default, the behavior where *auto_cvs_radius* is greater than zero includes any water molecules within the given radius of the commitment-defining atoms. If *auto_cvs_exclude_water* is set to True, water molecules are excluded. They may still be included in CVs defined using the *cvs* option if desired. Default = False
 
 ``include_qdot``
 
@@ -235,6 +274,19 @@ These settings define the combined variables (CVs) for the job. In aimless shoot
 	<basin> <- <CV1> <CV2> ... <CVn> <qdot1> <qdot2> ... <qdotn>
 	
 	Default = True
+
+``as_settings_file`` **‡**
+
+	A string pointing to a previously generated "settings.pkl" file. These files are produced in the working directory whenever ATESA is run. By pointing a new ATESA job to the settings.pkl file of a previous one using this option, the CVs and commitment basin definitions from that run are loaded. The loaded settings take priority, and the following configuration file options will be ignored if an *as_settings_file* is indicated::
+	
+		cvs
+		commit_fwd
+		commit_bwd
+		include_qdot
+		auto_cvs_radius
+		auto_cvs_exclude_water
+	
+	Use of this option is recommended in particular for committor analysis and equilibrium path sampling jobs following an aimless shooting job. In this case, the *as_settings_file* should point to the settings.pkl file from that aimless shooting job. Default = ''
 
 
 Initial Coordinates
