@@ -250,17 +250,19 @@ These settings define the combined variables (CVs) for the job. In aimless shoot
 .. _AutoCVs:
 	
 ``auto_cvs_radius``	**‡**
-	
+
 	Alternatively or in addition to defining explicit CVs with the *cvs* option, this option can be used to automatically obtain and use CVs representing every 2nd, 3rd, and 4th order CV (bonds, angles, and dihedrals, respectively) consisting of contiguously bonded atoms within *auto_cvs_radius* angstroms of any of the atoms present in the the *commit_fwd* or *commit_bwd* options (see :ref:`CommitmentBasinDefinitions`). For example, if the following combination of settings is provided::
+
+				commit_fwd = ([101, 102], [103, 104], [1.5, 2.0], ['lt', 'gt'])
+				commit_bwd = ([101, 102], [103, 104], [2.0, 1.5], ['gt', 'lt'])
+				auto_cvs_radius = 5    
 	
-		commit_fwd = ([101, 102], [103, 104], [1.5, 2.0], ['lt', 'gt'])
-		commit_bwd = ([101, 102], [103, 104], [2.0, 1.5], ['gt', 'lt'])
-		auto_cvs_radius = 5
-        
-    Then every bond, angle, and dihedral consisting of atoms within at least 5 angstroms of atoms 101, 102, 103, or 104 would be included as a CV. The index, description, and code used to evaluate each CV derived in this manner is printed to the file "cvs.txt" in the working directory. Automatic CVs can be disabled by setting *auto_cvs_radius* to 0. If *auto_cvs_radius* is greater than 0 and CVs are also defined manually using the *cvs* option, then the manually defined CVs are appended to the end of the list of automatically generated CVs (although note that the manually defined CVs will not appear in "cvs.txt").
-    Using *auto_cvs* treats all of the atoms in *commit_fwd* and *commit_bwd* as bonded to one another for the purposes of determining CVs, so there is no need to define these CVs manually. Examples of CVs that *should* be defined manually if desired include differences of distances, or any distances, angles, or dihedrals defined using atoms that are not contiguously bonded to one another (*e.g.*, a distance between nearby charged particles). 		
-    Note that the number of CVs that are created using this option can grow very large very quickly when large radii are chosen, which in extreme cases can cause significant I/O overhead and slow down calls to :ref:`LikelihoodMaximization`. Default = 5
+	Then every bond, angle, and dihedral consisting of atoms within at least 5 angstroms of atoms 101, 102, 103, or 104 would be included as a CV. The index, description, and code used to evaluate each CV derived in this manner is printed to the file "cvs.txt" in the working directory. Automatic CVs can be disabled by setting *auto_cvs_radius* to 0. If *auto_cvs_radius* is greater than 0 and CVs are also defined manually using the *cvs* option, then the manually defined CVs are appended to the end of the list of automatically generated CVs (although note that the manually defined CVs will not appear in "cvs.txt").
     
+	Using *auto_cvs* treats all of the atoms in *commit_fwd* and *commit_bwd* as bonded to one another for the purposes of determining CVs, so there is no need to define these CVs manually. Examples of CVs that *should* be defined manually if desired include differences of distances, or any distances, angles, or dihedrals defined using atoms that are not contiguously bonded to one another (*e.g.*, a distance between nearby charged particles). 		
+    
+	Note that the number of CVs that are created using this option can grow very large very quickly when large radii are chosen, which in extreme cases can cause significant I/O overhead and slow down calls to :ref:`LikelihoodMaximization`. Default = 5
+
 ``auto_cvs_exclude_water``
 	
 	A boolean. By default, the behavior where *auto_cvs_radius* is greater than zero includes any water molecules within the given radius of the commitment-defining atoms. If *auto_cvs_exclude_water* is set to True, water molecules are excluded. They may still be included in CVs defined using the *cvs* option if desired. Default = False
@@ -307,13 +309,11 @@ Commitment basin definitions are required in aimless shooting, committor analysi
 
 ``commit_fwd``	**‡**
 
-	The definition of the "forward" basin (usually products). The syntax for this option is as follows:
-	
-		::
-		
-			commit_fwd = ([index_1a, index_1b, ... index_1n], [index_2a, index_2b, ... index_2n],
-			[dist_1, dist_2, ... dist_n], ['gt'/'lt', 'gt'/'lt', ... 'gt'/'lt']
-		              
+	The definition of the "forward" basin (usually products). The syntax for this option is as follows::
+			
+		commit_fwd = ([index_1a, index_1b, ... index_1n], [index_2a, index_2b, ... index_2n],
+		[dist_1, dist_2, ... dist_n], ['gt'/'lt', 'gt'/'lt', ... 'gt'/'lt']
+
 	This is interpreted as: the distance between the atoms with indices *index_1a* and *index_2a* must be either greater than (*'gt'*) or less than (*'lt'*) the distance dist_1 (in Å), and so on. Each item in each list sharing the same subindex (*e.g.*, index_1a, index_2a, dist_1, and the first 'gt'/'lt') is treated as a single criterion for commitment to the basin, and only once ALL the criteria are met simultaneously is the simulation considered committed. No default value.
 	
 ``commit_bwd`` **‡**
@@ -329,12 +329,10 @@ The options define the reaction coordinate (RC) in terms of the CVs in the *cvs*
 
 ``rc_definition`` **‡**
 
-	The RC definition itself as a string. This string is interpreted as raw python code, with each CV term replaced by the appropriate value. For example:
-	
-		::
+	The RC definition itself as a string. This string is interpreted as raw python code, with each CV term replaced by the appropriate value. For example::
 		
-			rc_definition = '-0.52 + CV4*1.23 - CV2/CV25'
-		
+		rc_definition = '-0.52 + CV4*1.23 - CV2/CV25'
+
 	would be interpreted as -0.52 plus the value of CV4 (the fourth item of *cvs*, one-indexed), minus the ratio of the values of CV2 and CV25. No default.
 	
 ``rc_reduced_cvs``
@@ -426,14 +424,11 @@ These options are specific to committor analysis runs only.
 	
 ``path_to_rc_out``
 
-	The path to the RC output file, given as a string. This file should contain the name of each shooting move file (aimless shooting files ending in '*_init_fwd.rst7') followed by a colon, a space, and then the value of the reaction coordinate at that point. For example:
-	
-		::
+	The path to the RC output file, given as a string. This file should contain the name of each shooting move file (aimless shooting files ending in '*_init_fwd.rst7') followed by a colon, a space, and then the value of the reaction coordinate at that point. For example::
 		
-			initial_coords_1_1_init_fwd.rst7: -0.0913
-			initial_coords_1_2_init_fwd.rst7: -0.1125
-		
-		
+		initial_coords_1_1_init_fwd.rst7: -0.0913
+		initial_coords_1_2_init_fwd.rst7: -0.1125
+
 	Files of this sort can be automatically generated using the auxiliary script :ref:`RCEval`. No default.
 	
 ``rc_threshold``
