@@ -28,7 +28,7 @@ class Tests(object):
         assert "atesa" in sys.modules
 
     def test_main(self):
-        """Tests main.main with no initial coordinates given"""
+        """Tests main.main with DEBUG = True to skip actual job submission/monitoring"""
         settings = configure('../../data/atesa.config')
         settings.initial_coordinates = ['../test_data/test.rst7']
         settings.topology = '../test_data/test.prmtop'
@@ -45,7 +45,7 @@ class Tests(object):
 
     def test_configure_directory(self):
         """Tests configure.py behavior in correcting an improperly formatted directory"""
-        shutil.copy('../../data/atesa.config', 'atesa.config')  # todo: before publication, make a dedicated 'test' copy of atesa.config for tests to use.
+        shutil.copy('../../data/atesa.config', 'atesa.config')  # todo: make a dedicated 'test' copy of atesa.config for tests to use.
         config_lines = open('atesa.config', 'r').readlines()
         for line in config_lines:
             if 'working_directory' in line:
@@ -112,6 +112,21 @@ class Tests(object):
         query_traj = pytraj.iterload(test_frame, allthreads[0].topology)
         assert query_traj.n_frames == compare_traj.n_frames
         assert pytraj.center_of_mass(query_traj) == pytest.approx(pytraj.center_of_mass(compare_traj), 1e-3)
+
+    def test_import_cvs(self):
+        """Tests importing CVs and commitment definitions from a given settings.pkl file"""
+        #shutil.copy('../../data/atesa.config', 'temp.config')
+        open('temp.config', 'w').write('job_type = \'committor_analysis\'')
+        open('temp.config', 'a').write('\nbatch_system = \'slurm\'')
+        open('temp.config', 'a').write('\nrestart = False')
+        open('temp.config', 'a').write('\ntopology = \'../test_data/test.prmtop\'')
+        open('temp.config', 'a').write('\nworking_directory = \'./\'')
+        open('temp.config', 'a').write('\noverwrite = False')
+        open('temp.config', 'a').write('\nas_settings_file = \'../test_data/settings.pkl\'')
+        settings = configure('temp.config')
+        assert settings.cvs == ['pytraj.distance(traj, \'@1 @2\')[0]', 'pytraj.angle(traj, \'@2 @3 @4\')[0]']
+        assert settings.commit_fwd == [[1, 2], [3, 4], [1.5, 2.0], ['lt', 'gt']]
+        assert settings.commit_bwd == [[1, 2], [3, 4], [2.0, 1.5], ['gt', 'lt']]
 
     @classmethod
     def teardown_method(self, method):

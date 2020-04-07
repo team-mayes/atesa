@@ -106,7 +106,7 @@ class Tests(object):
 
     def test_main_k_f_and_q(self):
         """Tests main using k, f, and q"""
-        kwargs = {'automagic': False, 'i': ['../test_data/as.out'], 'k': [2], 'f': [1, 4], 'q': ['present'], 'r': [0], 'o': ['lmax.out'], 'quiet': False, 'plots': False, 'two_line_threshold': [0.55]}
+        kwargs = {'automagic': False, 'i': ['../test_data/as.out'], 'k': [2], 'f': [1, 4], 'q': ['present'], 'r': [0], 'o': ['lmax.out'], 'quiet': True, 'plots': False, 'two_line_threshold': [0.55]}
         with pytest.raises(RuntimeError):   # this as.out file has an uneven number of CVs
             lmax.main(**kwargs)
         kwargs = {'automagic': False, 'i': ['as.out'], 'k': [2], 'f': [1, 2], 'q': ['present'], 'r': [0], 'o': ['lmax.out'], 'quiet': True, 'plots': False, 'two_line_threshold': [0.55]}

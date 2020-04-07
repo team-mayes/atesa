@@ -212,6 +212,15 @@ def two_line_test(results, plots, two_line_threshold=0.5):
         return best_closest[0][0] - 1   # - 1 because of different indexing standards
 
 
+def eval_rc(params, obs):
+    # Returns reaction coordinate value for a given set of parameters and an observation
+    params = list(params)
+    rc = params[0]
+    for local_index in range(len(obs)):
+        rc += params[local_index + 1] * obs[local_index]
+    return rc
+
+
 def main(i, k, f, q, r, o, automagic, plots, quiet, two_line_threshold):
     """
     Main runtime function of lmax.py.
@@ -421,15 +430,25 @@ def main(i, k, f, q, r, o, automagic, plots, quiet, two_line_threshold):
     hess = numdifftools.Hessian(l_objective_function)(current_best[0].x)
 
     # jaco has to be a sum of the jacobian transpose times the jacobian over each individual observation in the data
+    if not quiet:
+        count = 0
+        update_progress(0, 'Calculating mean information error')
+    total_len = len(current_best[2]) + len(current_best[3])
     jaco = 0
     for this_A in current_best[2]:
         l_objective_function = lambda x: objective_function(x, [this_A], [])
         this_jaco = numdifftools.Jacobian(l_objective_function)(current_best[0].x)
         jaco += numpy.matmul(numpy.transpose(this_jaco), this_jaco)
+        if not quiet:
+            count += 1
+            update_progress(count/total_len, 'Calculating mean information error')
     for this_B in current_best[3]:
         l_objective_function = lambda x: objective_function(x, [], [this_B])
         this_jaco = numdifftools.Jacobian(l_objective_function)(current_best[0].x)
         jaco += numpy.matmul(numpy.transpose(this_jaco), this_jaco)
+        if not quiet:
+            count += 1
+            update_progress(count/total_len, 'Calculating mean information error')
 
     V = numpy.matmul(numpy.matmul(numpy.linalg.inv(numpy.negative(hess)), jaco), numpy.linalg.inv(numpy.negative(hess)))  # Godambe Information
     weights = [0] + [1 / (len(V[0]) - 1) for null in range(len(V[0]) - 1)]  # weights for mean excluding constant term
@@ -451,6 +470,44 @@ def main(i, k, f, q, r, o, automagic, plots, quiet, two_line_threshold):
     if not os.path.exists('rc_stderr.out'):
         open('rc_stderr.out', 'w').close()
     open('rc_stderr.out', 'a').write(str(input_file) + ' ' + str(mean_std) + '\n')
+
+    if plots:
+        A_results = []
+        for obs in current_best[2]:  # iterate over A observations
+            A_results.append(eval_rc(current_best[0].x, obs))
+        B_results = []
+        for obs in current_best[3]:  # iterate over B observations
+            B_results.append(eval_rc(current_best[0].x, obs))
+        hist_result = numpy.histogram(A_results + B_results, 20)  # this step just to bin, not the final histogram
+        rc_values = []      # initialize results list
+        probs = []          # initialize results list
+        for bin_index in range(len(hist_result[0])):
+            A_count = 0
+            B_count = 0
+            for result in A_results:
+                if hist_result[1][bin_index] <= result < hist_result[1][bin_index + 1]:
+                    A_count += 1
+            for result in B_results:
+                if hist_result[1][bin_index] <= result < hist_result[1][bin_index + 1]:
+                    B_count += 1
+            if A_count or B_count:  # if there is data in this bin
+                count_ratio = B_count / (A_count + B_count)
+            else:
+                raise RuntimeError('attempted to build sigmoid plot, but one or more histogram bins is empty. This '
+                                   'may indicate insufficient data in the input file. All other results from this call '
+                                   'to lmax.py have been written, but proceed with caution.')
+            rc_values.append(numpy.mean([hist_result[1][bin_index + 1], hist_result[1][bin_index]]))
+            probs.append(count_ratio)
+
+        fig = plt.figure()             # initialize matplotlib figure
+        ax = fig.add_subplot(111)       # add axes to the figure
+        plt.ylabel('Probability of Commitment to Forward Basin', weight='bold')
+        plt.xlabel('Reaction Coordinate', weight='bold')
+        ax.bar(rc_values, probs, width=0.9*(rc_values[1] - rc_values[0]), color='#00274C')
+        ax.plot(rc_values, (1 + erf(numpy.array([value for value in rc_values])))/2, color='#FFCB05', linewidth=3)
+        ax.legend(['Theory', 'Model'])
+        fig.canvas.draw()
+        plt.show()
 
 
 if __name__ == "__main__":
@@ -481,18 +538,18 @@ if __name__ == "__main__":
                         help='If this option is given, arguments passed for k, f, and r are ignored, and the best RC is'
                              ' determined based on the two-line method (see documentation).')
     parser.add_argument('--plots', action='store_true', default=False,
-                        help='If this option is given alongside automagic, gnuplot will be used to write plots to the '
-                             'terminal during evaluations of the automagic termination criterion (if it is installed)')
+                        help='If True, plots the final fit between the model and data committor sigmoid.'
+                             'If this option is given alongside automagic, gnuplot will be used to write plots to the '
+                             'terminal during evaluations of the automagic termination criterion (if it is installed).')
     parser.add_argument('--two_line_threshold', metavar='two_line_threshold', type=float, nargs=1, default=[0.5],
                         help='If this option is given alongside automgagic, sets the maximum ratio of slopes in the'
                              'two-line test. See the documentation for automagic for details. Default=0.5')
 
     arguments = vars(parser.parse_args())  # Retrieves arguments as a dictionary object
-    print(arguments['k'])
-    print(arguments['plots'])
-    print(arguments['two_line_threshold'])
 
-    # Suppress numpy.log warnings that occur frequently during normal operation
+    # Suppress numpy.log and numdifftools/limits.py warnings that occur frequently during normal operation
+    warnings.filterwarnings('ignore', category=RuntimeWarning, message='invalid value encountered in less')
+    warnings.filterwarnings('ignore', category=RuntimeWarning, message='invalid value encountered in greater')
     warnings.filterwarnings('ignore', category=RuntimeWarning, message='divide by zero encountered in log')
     warnings.filterwarnings('ignore', category=RuntimeWarning, message='invalid value encountered in double_scalars')
     warnings.filterwarnings('ignore', category=RuntimeWarning, message='divide by zero encountered in double_scalars')

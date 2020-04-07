@@ -39,12 +39,12 @@ def configure(input_file, user_working_directory=''):
         # This class initializes the settings object with type hints. After being built, it gets exported as an
         # argparse.Namelist object, just for convenience.
 
-        # Core settings required for all jobs and lacking defaults
+        # Core settings required for all jobs
         job_type: str
         batch_system: str
         restart: bool
-        md_engine: str
-        task_manager: str
+        md_engine: str = 'amber'
+        task_manager: str = 'simple'
         topology: str
         working_directory: str
         overwrite: bool
