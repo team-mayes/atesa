@@ -3,7 +3,7 @@
 Troubleshooting
 ===============
 
-Although every effort has been made to provide helpful error messages to correspond to every foreseeable issue, unfortunately not every issue is, in fact, foreseeable. This page is designed to help users troubleshoot should they run into issues not accompanied by a sufficiently helpful error message.
+Although every effort has been made to provide helpful error messages to correspond to every foreseeable issue, unfortunately not every issue is, in fact, foreseeable. This page is designed to help users troubleshoot should they run into issues not accompanied by a sufficiently helpful error message. Just because your transition path sampling shooting is aimless, doesn't mean your troubleshooting has to be!
 
 Issues running ATESA will fall into one of three categories, based on where in the pipeline the issue arises:
 

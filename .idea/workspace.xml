@@ -108,7 +108,7 @@
         <entry file="file://$PROJECT_DIR$/../atesa/atesa/boltzmann_weight.py">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="263">
-              <caret line="203" column="34" lean-forward="true" selection-start-line="201" selection-start-column="16" selection-end-line="203" selection-end-column="34" />
+              <caret line="203" column="34" lean-forward="false" selection-start-line="201" selection-start-column="16" selection-end-line="203" selection-end-column="34" />
               <folding>
                 <element signature="e#132#147#0" expanded="true" />
               </folding>
@@ -116,11 +116,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="configure.py" pinned="false" current-in-tab="false">
+      <file leaf-file-name="configure.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/../atesa/atesa/configure.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-1987">
-              <caret line="49" column="23" lean-forward="false" selection-start-line="49" selection-start-column="23" selection-end-line="49" selection-end-column="23" />
+            <state relative-caret-position="263">
+              <caret line="199" column="75" lean-forward="false" selection-start-line="199" selection-start-column="75" selection-end-line="199" selection-end-column="75" />
               <folding>
                 <element signature="e#82#97#0" expanded="true" />
               </folding>
@@ -128,7 +128,7 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="lmax.py" pinned="false" current-in-tab="true">
+      <file leaf-file-name="lmax.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/../atesa/atesa/lmax.py">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="147">
@@ -154,7 +154,7 @@
         <entry file="file://$PROJECT_DIR$/../atesa/atesa/tests/test_lmax.py">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="193">
-              <caret line="101" column="141" lean-forward="true" selection-start-line="101" selection-start-column="141" selection-end-line="101" selection-end-column="141" />
+              <caret line="101" column="141" lean-forward="false" selection-start-line="101" selection-start-column="141" selection-end-line="101" selection-end-column="141" />
               <folding />
             </state>
           </provider>
@@ -333,11 +333,11 @@
         <option value="$PROJECT_DIR$/../atesa/atesa/auto_cvs.py" />
         <option value="$PROJECT_DIR$/../atesa/atesa/tests/test_temp/cvs.txt" />
         <option value="$PROJECT_DIR$/../atesa/atesa/tests/test_auto_cvs.py" />
-        <option value="$PROJECT_DIR$/../atesa/atesa/configure.py" />
         <option value="$PROJECT_DIR$/../atesa/atesa/tests/test_main.py" />
         <option value="$PROJECT_DIR$/../atesa/atesa/information_error.py" />
         <option value="$PROJECT_DIR$/../atesa/atesa/tests/test_lmax.py" />
         <option value="$PROJECT_DIR$/../atesa/atesa/lmax.py" />
+        <option value="$PROJECT_DIR$/../atesa/atesa/configure.py" />
       </list>
     </option>
   </component>
@@ -876,7 +876,7 @@
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32911393" sideWeight="0.49333334" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25316456" sideWeight="0.43416667" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.30379745" sideWeight="0.8775" order="2" side_tool="false" content_ui="tabs" />
-      <window_info id="Coverage" active="true" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.0225" sideWeight="0.5" order="3" side_tool="true" content_ui="tabs" />
+      <window_info id="Coverage" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.0225" sideWeight="0.5" order="3" side_tool="true" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.13" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="Database" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32960597" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
@@ -1298,7 +1298,7 @@
     <entry file="file://$PROJECT_DIR$/../atesa/atesa/tests/test_lmax.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="193">
-          <caret line="101" column="141" lean-forward="true" selection-start-line="101" selection-start-column="141" selection-end-line="101" selection-end-column="141" />
+          <caret line="101" column="141" lean-forward="false" selection-start-line="101" selection-start-column="141" selection-end-line="101" selection-end-column="141" />
           <folding />
         </state>
       </provider>
@@ -1314,19 +1314,9 @@
     <entry file="file://$PROJECT_DIR$/../atesa/atesa/boltzmann_weight.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="263">
-          <caret line="203" column="34" lean-forward="true" selection-start-line="201" selection-start-column="16" selection-end-line="203" selection-end-column="34" />
+          <caret line="203" column="34" lean-forward="false" selection-start-line="201" selection-start-column="16" selection-end-line="203" selection-end-column="34" />
           <folding>
             <element signature="e#132#147#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../atesa/atesa/configure.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-1987">
-          <caret line="49" column="23" lean-forward="false" selection-start-line="49" selection-start-column="23" selection-end-line="49" selection-end-column="23" />
-          <folding>
-            <element signature="e#82#97#0" expanded="true" />
           </folding>
         </state>
       </provider>
@@ -1337,6 +1327,16 @@
           <caret line="505" column="88" lean-forward="false" selection-start-line="505" selection-start-column="88" selection-end-line="505" selection-end-column="88" />
           <folding>
             <element signature="e#319#329#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../atesa/atesa/configure.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="263">
+          <caret line="199" column="75" lean-forward="false" selection-start-line="199" selection-start-column="75" selection-end-line="199" selection-end-column="75" />
+          <folding>
+            <element signature="e#82#97#0" expanded="true" />
           </folding>
         </state>
       </provider>

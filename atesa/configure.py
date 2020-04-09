@@ -185,7 +185,7 @@ def configure(input_file, user_working_directory=''):
             settings.eps_empty_windows = settings.eps_dynamic_seed
 
     # Obtain cvs and commitment definitions from an existing settings file or call auto_cvs as needed
-    if settings.as_settings_file:    # todo: write a test for this behavior
+    if settings.as_settings_file:
         try:
             as_settings = pickle.load(open(settings.as_settings_file, 'rb'))
         except FileNotFoundError:
@@ -197,7 +197,7 @@ def configure(input_file, user_working_directory=''):
         settings.commit_fwd = as_settings.commit_fwd
         settings.commit_bwd = as_settings.commit_bwd
         settings.include_qdot = as_settings.include_qdot
-    elif settings.auto_cvs_radius > 0:
+    elif settings.auto_cvs_radius > 0 and not settings.jobtype == 'find_ts':
         settings.cvs = auto_cvs.main(settings=settings) + settings.cvs
 
     return settings
