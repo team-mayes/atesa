@@ -212,11 +212,11 @@ These settings define the paths where ATESA will search for user-defined input f
 
 ``path_to_input_files``	**‡**
 
-	Path (as a string enclosed in quotes) to the directory containing the input files. The default is the directory 'data/input_files' located inside the ATESA installation directory.
+	Absolute path (as a string enclosed in quotes) to the directory containing the input files. The default is the directory 'data/input_files' located inside the ATESA installation directory.
 
 ``path_to_templates``	**‡**
 
-	Path (as a string enclosed in quotes) to the directory containing the template files. The default is the directory 'data/templates' located inside the ATESA installation directory.
+	Absolute path (as a string enclosed in quotes) to the directory containing the template files. The default is the directory 'data/templates' located inside the ATESA installation directory.
 
 .. _CVDefinitions:
 

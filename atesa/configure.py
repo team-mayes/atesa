@@ -197,7 +197,7 @@ def configure(input_file, user_working_directory=''):
         settings.commit_fwd = as_settings.commit_fwd
         settings.commit_bwd = as_settings.commit_bwd
         settings.include_qdot = as_settings.include_qdot
-    elif settings.auto_cvs_radius > 0 and not settings.jobtype == 'find_ts':
+    elif settings.auto_cvs_radius > 0 and not settings.job_type == 'find_ts':
         settings.cvs = auto_cvs.main(settings=settings) + settings.cvs
 
     return settings
