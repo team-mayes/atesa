@@ -131,6 +131,8 @@ def main(settings):
         descriptions.append('dihedral between atoms ' + str(dihedral))
 
     # Now just create the output text document and return
+    if not os.path.exists(settings.working_directory):
+        os.mkdir(settings.working_directory)
     open(settings.working_directory + '/cvs.txt', 'w').write('CV name: description of CV; code to evaluate CV\n')
     cv_index = 0    # initialize CV index
     with open(settings.working_directory + '/cvs.txt', 'a') as f:

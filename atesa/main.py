@@ -256,8 +256,15 @@ def main(settings, rescue_running=[]):
         # Make working directory if it does not exist, handling overwrite and restart as needed
         if os.path.exists(settings.working_directory):
             if settings.overwrite and not settings.restart:
+                if os.path.exists(settings.working_directory + '/cvs.txt'):     # a kludge to avoid removing cvs.txt
+                    if os.path.exists('ATESA_TEMP_CVS.txt'):
+                        raise RuntimeError('tried to create temporary file ATESA_TEMP_CVS.txt in directory: ' +
+                                           os.getcwd() + ', but it already exists. Please move, delete, or rename it.')
+                    shutil.move(settings.working_directory + '/cvs.txt', 'ATESA_TEMP_CVS.txt')
                 shutil.rmtree(settings.working_directory)
                 os.mkdir(settings.working_directory)
+                if os.path.exists('ATESA_TEMP_CVS.txt'):    # continuation of aforementioned kludge
+                    shutil.mv('ATESA_TEMP_CVS.txt', settings.working_directory + '/cvs.txt')
             elif not settings.restart:
                 raise RuntimeError('Working directory ' + settings.working_directory + ' already exists, but overwrite '
                                    '= False and restart = False. Either change one of these two settings or choose a '
