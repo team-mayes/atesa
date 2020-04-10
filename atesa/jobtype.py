@@ -1256,12 +1256,12 @@ class FindTS(JobType):
 
         if not self.history.prod_result == dir_to_check:
             raise RuntimeError('find TS failed to commit to the opposite basin from its given initial coordinates. The '
-                               'most likely explanation is that the definition of the target basin ('
-                               + dir_to_check + ') is unsuitable for some reason. Please check the produced '
-                               'trajectory and output file in the working directory (' +
-                               settings.working_directory + ') and either modify the basin definition(s) or the find_ts'
-                               ' input file (' + settings.path_to_input_files + '/find_ts_prod_' + settings.md_engine +
-                               '.in) accordingly.')
+                               'simulation may have terminated abnormally for some reason, such as a walltime limit. '
+                               'Otherwise, the most likely explanation is that the definition of the target basin ('
+                               + dir_to_check + ') is somehow unsuitable. Please check the produced trajectory and '
+                               'output file in the working directory (' + settings.working_directory + ') and either '
+                               'modify the basin definition(s) or the input file (' + settings.path_to_input_files +
+                               '/find_ts_prod_' + settings.md_engine + '.in) accordingly.')
 
         # Now harvest TSs by inspecting values of target-basin-defining bond lengths vs. frame number
 
