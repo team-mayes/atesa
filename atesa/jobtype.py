@@ -373,16 +373,17 @@ class AimlessShooting(JobType):
     def check_for_successful_step(self, settings):
         if self.current_type == ['init']:   # requires that self.history.init_coords[-1] exists
             if os.path.exists(self.history.init_coords[-1][0]):
-                self.history.consec_fails = 0
                 return True
-            else:
-                self.history.consec_fails += 1
-        elif self.current_type == ['prod', 'prod']:   # requires that both files in self.history.prod_trajs[-1] exist
+            self.history.consec_fails += 1  # reached iff return statement above is not
+        elif self.current_type == ['prod', 'prod']:   # requires that both files in self.history.prod_trajs[-1] exist and have at least one frame
             if all([os.path.exists(self.history.prod_trajs[-1][i]) for i in range(2)]):
-                self.history.consec_fails = 0
-                return True
-            else:
-                self.history.consec_fails += 1
+                try:
+                    if all([mdtraj.load(self.history.prod_trajs[-1][i], top=settings.topology).n_frames > 0 for i in range(2)]):
+                        self.history.consec_fails = 0
+                        return True
+                except ValueError:  # mdtraj raises a value error when loading an empty trajectory (zero frames)
+                    pass
+            self.history.consec_fails += 1  # reached iff return statement above is not
 
         if self.history.consec_fails > settings.max_consecutive_fails and settings.max_consecutive_fails >= 0:
             raise RuntimeError('number of consecutive failures in ' + self.current_type[0] + ' step of thread ' +
