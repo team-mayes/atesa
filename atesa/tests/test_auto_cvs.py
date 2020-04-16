@@ -46,7 +46,6 @@ class Tests(object):
         assert all([item in [line.split('; ')[1].strip('\n') for line in compare] for item in result])
         assert pytest.approx(eval(compare[0].split('; ')[1]), 1.09, 1E-2)
 
-
     @classmethod
     def teardown_method(self, method):
         "Runs at end of class"

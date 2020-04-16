@@ -10,6 +10,7 @@ import mdtraj
 import copy
 import re
 import numpy
+import collections
 
 import argparse
 
@@ -66,23 +67,33 @@ def main(settings):
         neighbors = copy.deepcopy(temp)
 
     # Establish regex pattern to help get atom index from residue number and atom name
-    resid_pattern = re.compile('[0-9]+')   # first sequence of numbers
+    resid_pattern = re.compile('[0-9]+')   # first sequence of numbers # todo: breaks when a resname is a number (which it shouldn't be, but still)
 
     # Assemble list of each 2nd order term
     bonds = []
+    table, all_bonds = mtraj.topology.to_dataframe()
+    formatted_all_bonds = [[int(item[0]), int(item[1])] for item in all_bonds]
     for atom_index in neighbors:
-        bonds += [item for item in mtraj.topology._bonds if mtraj.topology.atom(atom_index) in item]
-    bonds = list(set(bonds))    # remove duplicates
+        bonds += [item for item in formatted_all_bonds if atom_index in item]
+    unq_lst = collections.OrderedDict()
+    for item in bonds:
+        unq_lst.setdefault(frozenset(item), []).append(item)
+    bonds = list(map(list, unq_lst.keys()))
 
     # Convert from "Bond(<resname1><resid1>-<atomname1>, <resname2><resid2>-<atomname2>)" to [<index1>, <index2>]
-    temp_bonds = []
-    for bond in bonds:
-        this_pair = str(bond).strip('Bond(').strip(')').split(', ')     # ["<resname1><resid1>-<atomname1>", "<resname2><resid2>-<atomname2>"]
-        temp = []
-        for item in this_pair:
-            temp.append(mtraj.topology.select('resid ' + resid_pattern.findall(item)[0] + ' and name ' + item.split('-')[1])[0])
-        temp_bonds.append(temp)
-    bonds = copy.deepcopy(temp_bonds)
+    # temp_bonds = []
+    # for bond in bonds:
+    #     this_pair = str(bond).strip('Bond(').strip(')').split(', ')     # ["<resname1><resid1>-<atomname1>", "<resname2><resid2>-<atomname2>"]
+    #     temp = []
+    #     for item in this_pair:
+    #         resid = resid_pattern.findall(item)[0]
+    #         try:
+    #             temp.append(mtraj.topology.select('resid ' + resid + ' and name ' + item.split('-')[1])[0])
+    #         except IndexError:
+    #             raise RuntimeError('unable to identify atom: ' + item + '. This error can occur when the topology '
+    #                                'contains a residue name ending in a number')
+    #     temp_bonds.append(temp)
+    # bonds = copy.deepcopy(temp_bonds)
 
     # Add every pair of atoms in commit_fwd and/or commit_bwd to the list of "bonds" if not already present
     for first_index in commit_atoms:
