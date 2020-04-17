@@ -5,6 +5,7 @@ Helper file to call utilities.resample and then information_error.main in sequen
 import pickle
 from atesa import utilities
 from atesa import information_error
+from atesa.main import Thread
 
 def main():
     # Read settings from pickle file
