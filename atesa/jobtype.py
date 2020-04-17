@@ -489,7 +489,7 @@ class AimlessShooting(JobType):
                 else:
                     try:
                         proc = psutil.Process(settings.pid).status()
-                        if proc in [psutil.STATUS_RUNNING, psutil.STATUS_SLEEPING]:
+                        if proc in [psutil.STATUS_RUNNING, psutil.STATUS_SLEEPING, psutil.STATUS_DISK_SLEEP]:
                             proc_status = 'running'
                         elif proc in [psutil.STATUS_ZOMBIE, psutil.STATUS_DEAD]:
                             proc_status = 'not_running'
