@@ -16,7 +16,6 @@ import pickle
 import copy
 import subprocess
 import warnings
-from atesa.main import Thread
 from statsmodels.tsa import stattools
 
 def check_commit(filename, settings):
