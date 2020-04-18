@@ -482,6 +482,8 @@ class AimlessShooting(JobType):
 
             # Implement information error global termination criterion
             # proc_status variable is used to prevent multiple calls to information_error from occuring at once
+            if not os.path.exists('info_err.out'):      # initialize info_err.out if it does not yet exist
+                open('info_err.out', 'w').close()
             if settings.information_error_checking:
                 len_data = len(open('as_raw.out', 'r').readlines())     # number of shooting points to date
                 if settings.pid == -1:
