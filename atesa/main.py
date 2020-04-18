@@ -114,7 +114,7 @@ def init_threads(settings):
             for thread in allthreads:
                 thread.terminated = False
         if settings.information_error_checking:
-            if os.path.exists(settings.working_directory + '/info_err.out'):
+            if os.path.exists(settings.working_directory + '/info_err.out') and len(open(settings.working_directory + '/info_err.out', 'r').readlines()) > 0:
                 info_err_lines = open(settings.working_directory + '/info_err.out', 'r').readlines()
 
                 # Resample if info_err.out is improperly formatted
