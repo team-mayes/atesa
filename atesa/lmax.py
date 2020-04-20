@@ -467,9 +467,10 @@ def main(i, k, f, q, r, o, automagic, plots, quiet, two_line_threshold):
     else:
         print(output_string)
 
-    if not os.path.exists('rc_stderr.out'):
-        open('rc_stderr.out', 'w').close()
-    open('rc_stderr.out', 'a').write(str(input_file) + ' ' + str(mean_std) + '\n')
+    ## Deprecated development tool
+    # if not os.path.exists('rc_stderr.out'):
+    #     open('rc_stderr.out', 'w').close()
+    # open('rc_stderr.out', 'a').write(str(input_file) + ' ' + str(mean_std) + '\n')
 
     if plots:
         A_results = []
