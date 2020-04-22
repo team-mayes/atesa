@@ -409,12 +409,13 @@ def resample(settings, partial=False):
                 for dim_index in range(ndims):
                     this_cv = mapped[dim_index]
                     slowest_lag = -1
-                    this_autocorr = stattools.acf(this_cv, nlags=len(this_cv) - 1, fft=True)
-                    for lag in range(len(this_cv) - 1):
-                        corr = this_autocorr[lag]
-                        if corr <= 1.96 / numpy.sqrt(len(this_cv)):
-                            slowest_lag = lag + 1
-                            break
+                    if len(this_cv) > 1:
+                        this_autocorr = stattools.acf(this_cv, nlags=len(this_cv) - 1, fft=True)
+                        for lag in range(len(this_cv) - 1):
+                            corr = this_autocorr[lag]
+                            if abs(corr) <= 1.96 / numpy.sqrt(len(this_cv)):
+                                slowest_lag = lag + 1
+                                break
 
                 if slowest_lag > 0:     # only proceed to writing decorrelated output file if a slowest_lag was found
                     # Write the same way as to as_raw_resample.out above, but starting the range at slowest_lag

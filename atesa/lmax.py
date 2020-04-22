@@ -479,7 +479,7 @@ def main(i, k, f, q, r, o, automagic, plots, quiet, two_line_threshold):
         B_results = []
         for obs in current_best[3]:  # iterate over B observations
             B_results.append(eval_rc(current_best[0].x, obs))
-        hist_result = numpy.histogram(A_results + B_results, 20)  # this step just to bin, not the final histogram
+        hist_result = numpy.histogram(A_results + B_results, 10)  # this step just to bin, not the final histogram
         rc_values = []      # initialize results list
         probs = []          # initialize results list
         for bin_index in range(len(hist_result[0])):
@@ -496,7 +496,9 @@ def main(i, k, f, q, r, o, automagic, plots, quiet, two_line_threshold):
             else:
                 raise RuntimeError('attempted to build sigmoid plot, but one or more histogram bins is empty. This '
                                    'may indicate insufficient data in the input file. All other results from this call '
-                                   'to lmax.py have been written, but proceed with caution.')
+                                   'to lmax.py have been written, but proceed with caution. This error can also occur '
+                                   'when one or more of the CVs making up the final RC takes on discrete values instead'
+                                   ' of continuous ones.')
             rc_values.append(numpy.mean([hist_result[1][bin_index + 1], hist_result[1][bin_index]]))
             probs.append(count_ratio)
 

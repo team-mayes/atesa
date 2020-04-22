@@ -90,7 +90,7 @@ ATESA also comes with a separate script for evaluating reaction coordinates for 
 `rc_definition`
 	Defines the reaction coordinate to evaluate for each shooting point. The format is the same as in the `rc_definition` configuration file setting (see :ref:`ReactionCoordinateDefinition`), except that here there must be no whitespace (' ') characters. The identities of CVs are determined from the settings.pkl object stored in the working directory.
 	
-The produced output file `rc.out` is (optionally) used as input for a committor analysis run (see :ref:`CommittorAnalysis`).
+The produced output file `rc.out` is (optionally) used as input for a committor analysis run (see :ref:`CommittorAnalysis`). Note that running this script can take a very long time if there is a large number of shooting moves in the indicated working directory. The user should prepare for as much as 10 seconds per shooting move (equal to the number of lines in the raw aimless shooting output file), depending on the available hardware.
 
 .. _BoltzmannWeight:
 
