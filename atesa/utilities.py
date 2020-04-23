@@ -407,8 +407,9 @@ def resample(settings, partial=False):
                     ndims = len(thread.this_cvs_list[0])
 
                 for dim_index in range(ndims):
-                    this_cv = mapped[dim_index]
                     slowest_lag = -1
+                    if mapped:
+                        this_cv = mapped[dim_index]
                     if len(this_cv) > 1:
                         this_autocorr = stattools.acf(this_cv, nlags=len(this_cv) - 1, fft=True)
                         for lag in range(len(this_cv) - 1):
