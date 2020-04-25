@@ -347,8 +347,10 @@ def resample(settings, partial=False):
 
                 # Write CVs to as_raw_resample.out
                 f1.write(this_basin + ' <- ' + this_cvs + '\n')
+                f1.flush()
                 if settings.information_error_checking:
                     f2.write(str(thread.history.timestamps[step_index]) + ' ' + this_basin + ' <- ' + this_cvs + '\n')
+                    f2.flush()
 
                 # Append this_cvs to running list for evaluating decorrelation time
                 thread.this_cvs_list.append([[float(item) for item in this_cvs.split(' ')], thread.history.timestamps[step_index]])
@@ -380,9 +382,13 @@ def resample(settings, partial=False):
     else:
         lengths = [len(open(settings.working_directory + '/as_raw_resample.out', 'r').readlines())]
         pattern = None
+    print('TEMPCHECKPOINT1')
+    open('TEMPCHECKPOINT1','w').close()
 
     # Assess decorrelation and write as_decorr.out
     for length in lengths:
+        print('TEMPCHECKPOINT2')
+        open('TEMPCHECKPOINT2', 'w').write(str(lengths))
         if settings.information_error_checking:
             suffix = '_' + str(length)     # only use-case with multiple lengths, so this keeps them from stepping on one another's toes
             cutoff_timestamp = int(pattern.findall(open(settings.working_directory + '/as_raw_timestamped.out', 'r').readlines()[length - 1])[0])

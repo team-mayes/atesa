@@ -503,7 +503,7 @@ class AimlessShooting(JobType):
                         proc_status = 'not_running'
                 if (len_data % settings.information_error_freq == 0 and len_data > 0 and proc_status == 'not_running') or (settings.information_error_overdue and proc_status == 'not_running'):
                     # Start separate process calling resample and then information_error
-                    process = subprocess.Popen(['resample_and_inferr.py'], stdout=sys.stdout, preexec_fn=os.setsid)
+                    process = subprocess.Popen(['resample_and_inferr.py'], stdout=sys.stdout, stderr=sys.stderr, preexec_fn=os.setsid)
                     settings.pid = process.pid  # store process ID in settings
                     settings.information_error_overdue = False
                 elif len_data % settings.information_error_freq == 0 and len_data > 0 and not proc_status == 'not_running':
