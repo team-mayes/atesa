@@ -150,6 +150,8 @@ def get_cvs(filename, settings, reduce=False):
         this_max = rc_minmax[1][local_index]
         return (float(unreduced_value) - this_min) / (this_max - this_min)
 
+    os.chdir(settings.working_directory)    # make sure we're in the working directory
+
     traj = pytraj.iterload(filename, settings.topology)
     mtraj = mdtraj.load(filename, top=settings.topology)
     traj_name = filename

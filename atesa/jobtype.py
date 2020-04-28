@@ -817,15 +817,17 @@ class EquilibriumPathSampling(JobType):
                 temp_settings = copy.deepcopy(settings)     # initialize temporary copy of settings to modify
                 temp_settings.__dict__.pop('env')           # env attribute is not picklable
                 pickle.dump(temp_settings, open(settings.working_directory + '/settings.pkl', 'wb'), protocol=2)
+        list_to_return = []
         for item in settings.initial_coordinates:
             og_item = item
             if '/' in item:
                 item = item[item.rindex('/') + 1:]
+            list_to_return += [item]
             try:
                 shutil.copy(og_item, settings.working_directory + '/' + item)
             except shutil.SameFileError:
                 pass
-        return settings.initial_coordinates
+        return list_to_return
 
     def check_for_successful_step(self, settings):
         if self.current_type == ['init']:   # requires that self.history.init_coords[-1] exists

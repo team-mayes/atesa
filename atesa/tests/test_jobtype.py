@@ -519,7 +519,7 @@ class Tests(object):
         settings = config_equilibrium_path_sampling()
         allthreads = main.init_threads(settings)
         jobtype = factory.jobtype_factory(settings.job_type)
-        assert jobtype.get_initial_coordinates(allthreads[0], settings) == ['../test_data/test.rst7']
+        assert jobtype.get_initial_coordinates(allthreads[0], settings) == ['test.rst7']
 
     def test_gatekeep_equilibrium_path_sampling(self):
         """Tests gatekeep with job_type = 'committor_analysis'"""
