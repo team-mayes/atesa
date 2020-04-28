@@ -19,10 +19,10 @@ Likelihood maximization is invoked from the command line as:
 	lmax.py -i input_file [-k dimensions [-f fixed_cvs] | -r dimensions | --automagic [--plots] [--two_line_threshold ratio]] [-q qdot_setting] [-o output_file] [--quiet]
 	
 `-i input_file`
-	The only strictly required argument for lmax.py, `input_file` should point to the aimless shooting output file of interest. Usually, this should be the longest "decorrelated" aimless shooting output file in the target working directory.
+	The only strictly required argument for lmax.py, `input_file` should point to the aimless shooting output file of interest. Usually, this should be the longest "decorrelated" aimless shooting output file in the target working directory (named as "as_decorr_<length>.out", where <length> is the number of shooting points included before decorrelating). Decorrelated output files are produced automatically when using the information error convergence criterion criterion with aimless shooting, but otherwise they can be produced by running a new aimless shooting job with *resample* = True.
 	
 `-k dimensions`
-	This option mutually exclusive with `-r` and `\\-\\-automagic`. The `dimensions` argument should be an integer number of dimensions to include in the final reaction coordinate. This options will always return a reaction coordinate with "k" dimensions (assuming there are at least "k" CVs in the input file), and will arrive at that number of dimensions by comparing every possible k-dimensional combination of CVs.
+	This option mutually exclusive with `-r` and `\\-\\-automagic`. The `dimensions` argument should be an integer number of dimensions to include in the final reaction coordinate. This options will always return a reaction coordinate with "k" dimensions (assuming there are at least "k" CVs in the input file), and will arrive at that number of dimensions by comparing every possible k-dimensional combination of CVs. Note that this can take a prohibitively long time when there are a large number of CVs to consider, in which case use of either the `-r` or `\\-\\-automagic` option is encouraged instead.
 	
 	`-f fixed_cvs`
 		This option is only applicable when paired with the `-k` option, and specifies one or more CVs that are required in the final RC. For example, `-k 4 -f 12 31` would return the best four-dimensional RC that contains both CV12 and CV31. Obviously, the number of required CVs specified with this option must be less than or equal to the number given for `-k`.

@@ -111,13 +111,13 @@ Then, committor analysis is performed through the main ATESA executable with the
 .. code-block:: python
 
 	job_type = 'committor_analysis'
-	path_to_rc_out = <rc_out_file>
-	rc_definition = <rc_definition>
 	as_settings_file = <as_settings_file>
+	path_to_rc_out = <rc_out_file>
+	rc_threshold = <threshold>
 	
-The *as_settings_file* should point to the the "settings.pkl" file in the previous aimless shooting working directory; see the last entry in :ref:`CVDefinitions`. See :ref:`ReactionCoordinateDefinition` for details on the `rc_definition` option.
+The *as_settings_file* should point to the the "settings.pkl" file in the previous aimless shooting working directory; see the last entry in :ref:`CVDefinitions`. The *path_to_rc_out* option should point the output file of ``rc_eval.py``, which by default is named "rc.out" and located in the aimless shooting working directory. The value of *rc_threshold* should be selected by manually inspecting the file indicated by *path_to_rc_out* and finding the appropriate cutoff value to include the desired number of initial coordinates in committor analysis (a good choice is approximately 200). For example, if the absolute value of the 200th line of rc.out is 0.09, you might choose *rc_threshold* = 0.1. Note that larger values of rc_threshold make the result less powerful, as structures further from the transition state separatrix are included. If you feel you have to choose a large value of *rc_threshold* in order to include enough structures for committor analysis, it may indicate that you need to perform more aimless shooting.
 
-The working directory here should NOT be the same as the aimless shooting directory containing the data to perform committor analysis with. The aimless shooting directory will be identified using the `path_to_rc_out` setting (which should be inside the aimless shooting working directory). The working directory for a committor analysis job should be a new directory, though it can be a subdirectory of the aimless shooting directory if desired.
+The working directory here should NOT be the same as the aimless shooting directory containing the data to perform committor analysis with (although it can be a subdirectory). The aimless shooting directory will be identified as needed using the `path_to_rc_out` setting (which should be inside the aimless shooting working directory). The working directory for a committor analysis job should be a new directory, though it can be a subdirectory of the aimless shooting directory if desired.
 
 The results of a committor analysis job are written to the file "committor_analysis.out" in the working directory. Each line in this file gives the ratio of jobs that committed to the "forward" basin to the total number of jobs that committed to either basin. For more details on interpreting these results, see :ref:`CommittorAnalysis`.
 
@@ -131,12 +131,14 @@ The final analysis step after a satisfactory committor analysis run is to obtain
 	job_type = 'equilibrium_path_sampling'
 	rc_definition = <rc_definition>
 	as_settings_file = <as_settings_file>
+	as_out_file = <as_output_file>
+	initial_coordinates = [<coord_file_1>, <coord_file_2>, ...]
 	
-The *as_settings_file* should point to the the "settings.pkl" file in the previous aimless shooting working directory; see the last entry in :ref:`CVDefinitions`. See :ref:`ReactionCoordinateDefinition` for details on the `rc_definition` option. The same *rc_definition* should be used for both committor analysis and equilibrium path sampling.
+The *as_settings_file* should point to the the "settings.pkl" file in the previous aimless shooting working directory; see the last entry in :ref:`CVDefinitions`. See :ref:`ReactionCoordinateDefinition` for details on the `rc_definition` option. The same *rc_definition* should be used for both committor analysis and equilibrium path sampling (or, if the *path_to_rc_option* was used for committor analysis, then the same for equilibrium path sampling and ``rc_eval.py``). The *as_out_file* option should point to the same file that was used as the input for the ``lmax.py`` run that generated the reaction coordinate being used. Finally, *initial_coordinates* can be used to select any number of coordinate files, usually taken from shooting points (coordinate files whose names end with "_init.rst7") from aimless shooting. By default, EPS windows that have fewer than 20 initial coordinate files are filled up by the endpoints of simulations in adjacent windows, so at minimum only a single coordinate file representing the transition state is necessary and the remainder will be generated automatically.
 
-EPS is a highly generalized free energy method that does not rely on restraints or biases of any kind. The cost of this benefit is that it is also among the least efficient free energy methods available, requiring a relatively large amount of simulation to acquire comparable sampling coverage to, for example, umbrella sampling. For this reason, EPS is recommended for use only in cases where other methods are unsuitable, such as for example in cases of highly complex reaction coordinates that do not lend themselves to restraints.
+EPS is a highly generalized free energy method that does not rely on restraints or biases of any kind. The cost of this benefit is that it is also among the least efficient free energy methods available, requiring a relatively large amount of simulation to acquire comparable sampling coverage to, for example, umbrella sampling. For this reason, EPS is recommended for use only in cases where other methods are unsuitable, such as for example in cases of highly complex reaction coordinates that do not lend themselves to restraints. Future versions of ATESA may include automation of umbrella sampling as an alternative to equilibrium path sampling.
 
-CAUTION: Because equilibrium path sampling measures the full energy profile instead of merely assessing the endpoints of simulations (as in aimless shooting and committor analysis), it is very sensitive to errors in the evaluation of the energy of any given state. For this reason, it is completely possible to have obtained reasonable aimless shooting and committor analysis results with a system or simulation parameters that are not suitable for equilibrium path sampling, for example owing to poor SCF convergence in QM calculations along portions of the RC. ATESA can NOT identify such errors on its own, and may produce EPS results that are not correct (but may appear reasonable at first glance)! It is the responsibility of the user to ensure that the EPS simulations are well-behaved and do not suffer from severe energetic errors.
+CAUTION: Because equilibrium path sampling measures the full energy profile instead of merely assessing the endpoints of simulations (as in aimless shooting and committor analysis), it is very sensitive to errors in the evaluation of the energy of any given state. For this reason, it is completely possible to have obtained reasonable aimless shooting and committor analysis results with a system or simulation parameters that are not suitable for equilibrium path sampling, for example owing to poor SCF convergence in QM calculations along portions of the RC. ATESA can NOT identify such errors on its own, and may produce EPS results that are not correct (but may appear reasonable at first glance)! It is the responsibility of the user to ensure that the EPS simulations are well-behaved and do not suffer from severe energetic or undersampling errors. Please direct any questions to `our GitHub page <https://github.com/team-mayes/atesa>` as an issue with the "question" label.
 
 The raw output data from an EPS run is stored in the working directory as "eps.out". This data can be converted into an energy profile using boltzmann_weight.py (see :ref:`BoltzmannWeight`), which calculates the relative probabilities of states within each bin and converts these into relative free energies.
 	
@@ -296,7 +298,7 @@ Initial Coordinates
 
 ``initial_coordinates`` **‡**
 
-	The initial coordinates for the job, used as appropriate for the given job type, given as a list of strings. All jobs require initial coordinates, and all the coordinate files given here are used to spawn independent threads. The same file can be given more than once to spawn multiple threads with the same initial coordinates. Default = ['']
+	The initial coordinates for the job, used as appropriate for the given job type, given as a list of strings. All jobs require initial coordinates (although in committor analysis they may be identified using the *path_to_rc_out* option instead, if *committor_analysis_use_rc_out* is True). All the coordinate files identified in this list are used to spawn independent threads. The same file can be given more than once to spawn multiple threads with the same initial coordinates. Default = ['']
 
 .. _CommitmentBasinDefinitions:
 
