@@ -139,8 +139,7 @@ def init_threads(settings):
         if '/' in file:
             file = file[file.rindex('/') + 1:]          # drop path to file from filename
 
-        thread = Thread()
-        jobtype.update_history(thread, settings, **{'initialize': True, 'inpcrd': file})
+        thread = Thread()   # initialize the thread object
 
         # Set topology properly even if it's given as a path
         og_prmtop = settings.topology
@@ -151,6 +150,8 @@ def init_threads(settings):
         except shutil.SameFileError:
             pass
         thread.topology = settings.topology
+
+        jobtype.update_history(thread, settings, **{'initialize': True, 'inpcrd': file})    # initialize thread.history
 
         thread.name = file + '_' + str(thread.suffix)
         allthreads.append(thread)
