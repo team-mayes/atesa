@@ -795,7 +795,7 @@ class EquilibriumPathSampling(JobType):
             return settings.path_to_input_files + '/' + settings.job_type + '_' + self.current_type[job_index] + '_' + settings.md_engine + '.in'
         else:
             if job_index == 0:  # have to roll to determine the number of fwd and bwd steps
-                roll = random.randint(0, int(settings.eps_n_steps/settings.eps_out_freq)) * settings.eps_out_freq
+                roll = random.randint(1, int(settings.eps_n_steps/settings.eps_out_freq)) * settings.eps_out_freq
                 self.history.prod_lens.append([roll, settings.eps_n_steps - roll])
 
             input_file_name = 'eps_' + str(self.history.prod_lens[-1][job_index]) + '.in'
@@ -1111,7 +1111,7 @@ class EquilibriumPathSampling(JobType):
                                     return running  # return after initializing one thread to encourage sampling diversity
 
                             except AssertionError:  # should be inaccessible but apparently not?
-                                warnings.warn('Error in spawning new EPS thread: expected RC value of rc_value: ' +
+                                raise RuntimeError('Error in spawning new EPS thread: expected RC value of rc_value: ' +
                                               str(rc_value) + ' but got temp_rc: ' + str(temp_rc) + '\nIf you see this '
                                               'error message, please copy it along with the debug information below and'
                                               ' raise an issue on the ATESA GitHub page.'
@@ -1123,7 +1123,7 @@ class EquilibriumPathSampling(JobType):
                                               '\n self.history.init_coords[-1][0]: ' + str(self.history.init_coords[-1][0]) +
                                               '\n self.history.bounds: ' + str(self.history.bounds) +
                                               '\n n_fwd: ' + str(n_fwd) +
-                                              '\n n_bwd: ' + str(n_bwd), RuntimeWarning)
+                                              '\n n_bwd: ' + str(n_bwd))
 
 
 
