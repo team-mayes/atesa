@@ -1001,7 +1001,7 @@ class EquilibriumPathSampling(JobType):
 
             successful_step = EquilibriumPathSampling.check_for_successful_step(self, settings) # since algorithm runs either way
 
-            # Need these values for non-accepted move behavior and also for dynamic seeding
+            # Need these values for non-accepted move behavior
             if self.history.last_accepted >= 0:
                 traj = pytraj.iterload(self.history.prod_trajs[self.history.last_accepted][0], settings.topology)
                 n_fwd = traj.n_frames
@@ -1050,7 +1050,7 @@ class EquilibriumPathSampling(JobType):
                     self.history.init_inpcrd.append(self.history.init_inpcrd[-1])   # begin next move from same point as last move
 
             # Implement dynamic seeding of EPS windows
-            if settings.eps_dynamic_seed and successful_step and self.history.last_accepted >= 0:
+            if settings.eps_dynamic_seed and True in [self.history.bounds[0] <= rc_value <= self.history.bounds[1] for rc_value in self.history.prod_results[-1]] and successful_step and self.history.last_accepted >= 0:
                 frame_index = -1
                 for rc_value in self.history.prod_results[-1]:  # results are ordered as: [init, fwd, bwd]
                     frame_index += 1
