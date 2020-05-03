@@ -972,11 +972,13 @@ class EquilibriumPathSampling(JobType):
                 self.history.last_accepted = int(len(self.history.prod_trajs) - 1)   # new index of last accepted move
                 self.accept_moves += 1
 
-            # Write RC values of accepted frames to eps.out
-            for rc_value in self.history.prod_results[-1]:
-                if self.history.bounds[0] <= rc_value <= self.history.bounds[1]:
-                    open(settings.working_directory + '/eps.out', 'a').write(str(self.history.bounds[0]) + ' ' + str(self.history.bounds[1]) + ' ' + str(rc_value) + '\n')
-                    open(settings.working_directory + '/eps.out', 'a').close()
+            # Write RC values of accepted frames to eps.out, either from most recent step if it was accepted, or from
+            # last_accepted step if it was not (and there has been an accepted step)
+            if self.history.last_accepted >= 0:     # last_accepted refers to most recent step iff it was accepted
+                for rc_value in self.history.prod_results[self.history.last_accepted]:
+                    if self.history.bounds[0] <= rc_value <= self.history.bounds[1]:
+                        open(settings.working_directory + '/eps.out', 'a').write(str(self.history.bounds[0]) + ' ' + str(self.history.bounds[1]) + ' ' + str(rc_value) + '\n')
+                        open(settings.working_directory + '/eps.out', 'a').close()
 
             with open('status.txt', 'w') as file:
                 for thread in allthreads:

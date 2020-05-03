@@ -3,6 +3,7 @@
   <component name="ChangeListManager">
     <list default="true" id="55679143-7654-431c-aee1-71d5375f0f66" name="Default" comment="">
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/atesa/boltzmann_weight.py" afterPath="$PROJECT_DIR$/atesa/boltzmann_weight.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/atesa/jobtype.py" afterPath="$PROJECT_DIR$/atesa/jobtype.py" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -49,7 +50,7 @@
     <SUITE FILE_PATH="coverage/atesa_v2$py_test_for_atesa_v2_tests_test_atesa_v2_test_thread_get_last_frame_amber.coverage" NAME="py.test for atesa_v2.tests.test_atesa_v2.test_thread_get_last_frame_amber Coverage Results" MODIFIED="1567602465252" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/atesa_v2$py_test_for_atesa_v2_tests_test_atesa_v2_test_gatekeep_aimless_shooting.coverage" NAME="py.test for atesa_v2.tests.test_atesa_v2.test_gatekeep_aimless_shooting Coverage Results" MODIFIED="1567605788834" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/atesa_v2$mbar.coverage" NAME="mbar Coverage Results" MODIFIED="1580486677507" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/../../Globus/greatlakes/glycosynthases/200127_TmAfc_irxncor_us" />
-    <SUITE FILE_PATH="coverage/atesa$py_test_in_tests__1_.coverage" NAME="py.test in tests Coverage Results" MODIFIED="1588173999724" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/atesa/tests/test_temp/" />
+    <SUITE FILE_PATH="coverage/atesa$py_test_in_tests__1_.coverage" NAME="py.test in tests Coverage Results" MODIFIED="1588518509881" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/atesa/tests/test_temp/" />
     <SUITE FILE_PATH="coverage/atesa_v2$test_process.coverage" NAME="test_process Coverage Results" MODIFIED="1576506385941" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/atesa_v2/tests" />
     <SUITE FILE_PATH="coverage/atesa_v2$py_test_for_atesa_v2_tests_test_utilities_Tests_test_get_cvs_with_qdot_broken.coverage" NAME="py.test for atesa_v2.tests.test_utilities.Tests.test_get_cvs_with_qdot_broken Coverage Results" MODIFIED="1568128956862" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/atesa_v2$configure.coverage" NAME="configure Coverage Results" MODIFIED="1576506347941" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/atesa_v2" />
@@ -123,21 +124,19 @@
       <file leaf-file-name="lmax.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/atesa/lmax.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-558">
-              <caret line="500" column="58" lean-forward="false" selection-start-line="500" selection-start-column="58" selection-end-line="500" selection-end-column="58" />
+            <state relative-caret-position="146">
+              <caret line="208" column="96" lean-forward="false" selection-start-line="208" selection-start-column="95" selection-end-line="208" selection-end-column="96" />
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="rc_eval.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/atesa/rc_eval.py">
+      <file leaf-file-name="boltzmann_weight.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/atesa/boltzmann_weight.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="220">
-              <caret line="119" column="23" lean-forward="false" selection-start-line="119" selection-start-column="23" selection-end-line="119" selection-end-column="23" />
-              <folding>
-                <element signature="e#139#149#0" expanded="true" />
-              </folding>
+            <state relative-caret-position="296">
+              <caret line="170" column="81" lean-forward="false" selection-start-line="170" selection-start-column="81" selection-end-line="170" selection-end-column="81" />
+              <folding />
             </state>
           </provider>
         </entry>
@@ -145,8 +144,8 @@
       <file leaf-file-name="jobtype.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/atesa/jobtype.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="232">
-              <caret line="1052" column="166" lean-forward="false" selection-start-line="1052" selection-start-column="166" selection-end-line="1052" selection-end-column="166" />
+            <state relative-caret-position="208">
+              <caret line="976" column="114" lean-forward="false" selection-start-line="976" selection-start-column="114" selection-end-line="976" selection-end-column="114" />
               <folding>
                 <element signature="e#164#174#0" expanded="true" />
               </folding>
@@ -221,7 +220,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>committor_analysis.out</find>
       <find>traj</find>
       <find>sigmoid</find>
       <find>accordingly</find>
@@ -251,6 +249,7 @@
       <find>.write()</find>
       <find>RuntimeWarning</find>
       <find>randint(</find>
+      <find>fewer</find>
     </findStrings>
     <replaceStrings>
       <replace>'../../data/atesa.config'</replace>
@@ -315,7 +314,6 @@
         <option value="$PROJECT_DIR$/atesa/tests/test_data/eps_results.out" />
         <option value="$PROJECT_DIR$/README.md" />
         <option value="$PROJECT_DIR$/atesa/tests/test_boltzmann_weight.py" />
-        <option value="$PROJECT_DIR$/atesa/boltzmann_weight.py" />
         <option value="$PROJECT_DIR$/atesa/boltzmann_weight_old.py" />
         <option value="$PROJECT_DIR$/requirements.txt" />
         <option value="$PROJECT_DIR$/setup.py" />
@@ -341,6 +339,7 @@
         <option value="$PROJECT_DIR$/atesa/main.py" />
         <option value="$PROJECT_DIR$/atesa/utilities.py" />
         <option value="$PROJECT_DIR$/atesa/tests/test_jobtype.py" />
+        <option value="$PROJECT_DIR$/atesa/boltzmann_weight.py" />
         <option value="$PROJECT_DIR$/atesa/jobtype.py" />
       </list>
     </option>
@@ -791,9 +790,6 @@
     <servers />
   </component>
   <component name="TestHistory">
-    <history-entry file="py_test_in_tests - 2020.04.20 at 11h 09m 23s.xml">
-      <configuration name="py.test in tests" configurationId="tests" />
-    </history-entry>
     <history-entry file="py_test_in_tests - 2020.04.22 at 14h 39m 29s.xml">
       <configuration name="py.test in tests" configurationId="tests" />
     </history-entry>
@@ -821,6 +817,9 @@
     <history-entry file="py_test_in_tests - 2020.04.29 at 11h 32m 52s.xml">
       <configuration name="py.test in tests" configurationId="tests" />
     </history-entry>
+    <history-entry file="py_test_in_tests - 2020.05.03 at 11h 14m 53s.xml">
+      <configuration name="py.test in tests" configurationId="tests" />
+    </history-entry>
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -838,9 +837,9 @@
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.16877638" sideWeight="0.4978701" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.36146274" sideWeight="0.1225" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32911393" sideWeight="0.49333334" order="7" side_tool="false" content_ui="tabs" />
-      <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.25316456" sideWeight="0.43416667" order="7" side_tool="false" content_ui="tabs" />
-      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.302391" sideWeight="0.8775" order="2" side_tool="false" content_ui="tabs" />
-      <window_info id="Coverage" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.0225" sideWeight="0.5" order="3" side_tool="true" content_ui="tabs" />
+      <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25316456" sideWeight="0.43416667" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.302391" sideWeight="0.8775" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Coverage" active="true" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.0225" sideWeight="0.5" order="3" side_tool="true" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.13333334" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="Database" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32960597" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
@@ -1091,13 +1090,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/atesa/boltzmann_weight.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="263">
-          <caret line="203" column="34" lean-forward="false" selection-start-line="201" selection-start-column="16" selection-end-line="203" selection-end-column="34" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/atesa/mdengine.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="-960">
@@ -1175,7 +1167,7 @@
         <state relative-caret-position="220">
           <caret line="119" column="23" lean-forward="false" selection-start-line="119" selection-start-column="23" selection-end-line="119" selection-end-column="23" />
           <folding>
-            <element signature="e#139#149#0" expanded="true" />
+            <element signature="e#139#149#0" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -1204,14 +1196,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="119">
           <caret line="70" column="73" lean-forward="false" selection-start-line="70" selection-start-column="73" selection-end-line="70" selection-end-column="73" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/atesa/lmax.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-558">
-          <caret line="500" column="58" lean-forward="false" selection-start-line="500" selection-start-column="58" selection-end-line="500" selection-end-column="58" />
           <folding />
         </state>
       </provider>
@@ -1252,10 +1236,26 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/atesa/lmax.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="146">
+          <caret line="208" column="96" lean-forward="false" selection-start-line="208" selection-start-column="95" selection-end-line="208" selection-end-column="96" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/atesa/boltzmann_weight.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="296">
+          <caret line="170" column="81" lean-forward="false" selection-start-line="170" selection-start-column="81" selection-end-line="170" selection-end-column="81" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/atesa/jobtype.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="232">
-          <caret line="1052" column="166" lean-forward="false" selection-start-line="1052" selection-start-column="166" selection-end-line="1052" selection-end-column="166" />
+        <state relative-caret-position="208">
+          <caret line="976" column="114" lean-forward="false" selection-start-line="976" selection-start-column="114" selection-end-line="976" selection-end-column="114" />
           <folding>
             <element signature="e#164#174#0" expanded="true" />
           </folding>

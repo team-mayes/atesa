@@ -161,10 +161,14 @@ def main(**kwargs):
                                            ' this window or use fewer bins.\n The offending window is: ' +
                                            str(windows[window_index][0]) + ' to ' + str(windows[window_index][1]))
                     else:
-                        raise RuntimeError('bootstrapping encountered a window containing a bin with zero samples. If '
-                                           'you do not encounter a similar error when running without bootstrapping, '
-                                           'then you probably set the number of bootstrapping samples per window too '
-                                           'low. Increase it or set it to -1.')
+                        raise RuntimeError('bootstrapping encountered a window containing a bin with zero samples. This'
+                                           'is most commonly caused by a window that has not been sampled across its '
+                                           'full range of possible values. The offending window is: ' +
+                                           str(windows[window_index][0]) + ' to ' + str(windows[window_index][1]) + '\n'
+                                           'If you do not encounter a similar error when running without bootstrapping,'
+                                           ' then you probably set the number of bootstrapping samples per window too '
+                                           'low; increase it or set it to -1. Otherwise, please remove all of the data '
+                                           'from this window from the input file.')
 
             U = [0 for null in range(kwargs['n'])]    # initialize energy values for this window
 
