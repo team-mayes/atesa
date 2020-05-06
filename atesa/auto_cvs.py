@@ -79,8 +79,8 @@ def main(settings):
     # Add every pair of atoms in commit_fwd and/or commit_bwd to the list of "bonds" if not already present
     for first_index in commit_atoms:
         for second_index in [item for item in commit_atoms if not item == first_index]:
-            if not [first_index, second_index] in bonds and not [second_index, first_index] in bonds:
-                bonds.append([first_index, second_index])
+            if not [first_index - 1, second_index - 1] in bonds and not [second_index - 1, first_index - 1] in bonds:
+                bonds.append([first_index - 1, second_index - 1])
 
     # Append code to obtain each bond length as a string to cvs
     for bond in bonds:
@@ -125,7 +125,7 @@ def main(settings):
     # Now just create the output text document and return
     if not os.path.exists(settings.working_directory):
         os.mkdir(settings.working_directory)
-    open(settings.working_directory + '/cvs.txt', 'w').write('CV name: description of CV; code to evaluate CV\n')
+    open(settings.working_directory + '/cvs.txt', 'w').write('CV name: description of CV (atoms are indexed from 0, unlike in commitment definitions); code to evaluate CV\n')
     cv_index = 0    # initialize CV index
     with open(settings.working_directory + '/cvs.txt', 'a') as f:
         for cv in cvs:
