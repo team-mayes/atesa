@@ -10,6 +10,16 @@ import matplotlib.colors as colors
 import sys
 import os
 import copy
+from scipy import optimize
+
+def objective_function(slope, probs, RC_values, kT):
+    # Determines and returns a score measuring goodness of fit between the expected distribution of data from the given
+    # slope, and the actual data in probs located at the RC_values
+    energies = [slope * rc for rc in RC_values]
+    putative_probs_temp = [float(np.exp(-1 * item / kT)) for item in energies]   # unnormalized
+    putative_probs = [item/sum(putative_probs_temp) for item in putative_probs_temp]
+    score = sum([abs(putative_probs[i] - probs[i]) for i in range(len(probs))])
+    return score
 
 def main(**kwargs):
     """
@@ -135,7 +145,8 @@ def main(**kwargs):
             cycle_index += 1
             update_progress(cycle_index / ((kwargs['c'] + 1) * len(windows)), 'Evaluating PMF')
 
-            RC_values = np.linspace(windows[window_index][0], windows[window_index][1], kwargs['n'])  # list RC value of each bin
+            bin_edges = np.linspace(windows[window_index][0], windows[window_index][1], kwargs['n'] + 1)  # list RC value of each bin
+            RC_values = [np.mean([bin_edges[i], bin_edges[i+1]]) for i in range(len(bin_edges) - 1)]
             probs = [0 for null in range(kwargs['n'])]    # initialize probabilities by bin
 
             # Check that we have at least two data points in this window
@@ -156,30 +167,42 @@ def main(**kwargs):
             for i in range(len(probs)):
                 probs[i] = probs[i]/len(this_data[window_index])
                 if probs[i] == 0:
-                    if cycle == kwargs['c']:
-                        raise RuntimeError('at least one window contains a bin with zero samples. Either sample more in'
-                                           ' this window or use fewer bins.\n The offending window is: ' +
-                                           str(windows[window_index][0]) + ' to ' + str(windows[window_index][1]))
-                    else:
-                        raise RuntimeError('bootstrapping encountered a window containing a bin with zero samples. This'
-                                           'is most commonly caused by a window that has not been sampled across its '
-                                           'full range of possible values. The offending window is: ' +
-                                           str(windows[window_index][0]) + ' to ' + str(windows[window_index][1]) + '\n'
-                                           'If you do not encounter a similar error when running without bootstrapping,'
-                                           ' then you probably set the number of bootstrapping samples per window too '
-                                           'low; increase it or set it to -1. Otherwise, please remove all of the data '
-                                           'from this window from the input file.')
+                    if not kwargs['slope_only']:
+                        if cycle == kwargs['c']:
+                            raise RuntimeError('at least one window contains a bin with zero samples. Either sample more in'
+                                               ' this window or use fewer bins.\n The offending window is: ' +
+                                               str(windows[window_index][0]) + ' to ' + str(windows[window_index][1]))
+                        else:
+                            raise RuntimeError('bootstrapping encountered a window containing a bin with zero samples. This'
+                                               ' is most commonly caused by a window that has not been sampled across its '
+                                               'full range of possible values. The offending window is: ' +
+                                               str(windows[window_index][0]) + ' to ' + str(windows[window_index][1]) + '\n'
+                                               'If you do not encounter a similar error when running without bootstrapping,'
+                                               ' then you probably set the number of bootstrapping samples per window too '
+                                               'low; increase it or set it to -1. Otherwise, please remove all of the data '
+                                               'from this window from the input file.')
 
-            U = [0 for null in range(kwargs['n'])]    # initialize energy values for this window
+
 
             # Calculate energy corresponding to each probability in this window
+            U = [0 for null in range(kwargs['n'])]    # initialize energy values for this window
             local_index = 0
             offset = 0      # offset is used to anchor the first value in each window to zero before adjusting the whole window in the next step
-            for prob in probs:
-                if local_index == 0:
-                    offset = -1 * kT * np.log(prob)
-                U[local_index] = -1 * kT * np.log(prob) - offset
-                local_index += 1
+
+            if not kwargs['slope_only']:
+                for prob in probs:
+                    if local_index == 0:
+                        offset = -1 * kT * np.log(prob)
+                    U[local_index] = -1 * kT * np.log(prob) - offset
+                    local_index += 1
+
+            else:
+                this_result = optimize.minimize(objective_function, 0, (probs, RC_values, kT))
+                for rc in RC_values:
+                    if local_index == 0:
+                        offset = this_result.x[0] * rc
+                    U[local_index] = this_result.x[0] * rc - offset
+                    local_index += 1
 
             # Adjust energy values uniformly up or down to stitch adjacent windows together smoothly
             if window_index == 0 or cycle < kwargs['c']:  # turn off boundary value matching during bootstrapping to avoid propagating errors in this step into PMF error in final step
@@ -283,7 +306,8 @@ def update_progress(progress, message='Progress'):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Perform LMAX on the given input data')
+    parser = argparse.ArgumentParser(description='Evaluate free energy profile from the given equilibrium path sampling'
+                                                 ' data')
     parser.add_argument('-i', metavar='input_file', type=str, nargs=1, default='eps.out',
                         help='input filename (output from equilibrium path sampling). Default=eps.out')
     parser.add_argument('-o', metavar='output_file', type=str, nargs=1, default='fep.out',
@@ -300,6 +324,10 @@ if __name__ == '__main__':
     parser.add_argument('-e', metavar='exclude_fract', type=float, nargs=1, default=0,
                         help='fraction of data from each window to exclude from calculations for decorrelation. Must be'
                              ' between 0 and 1. Default=0')
+    parser.add_argument('--slope_only', action='store_true', default=False,
+                        help='Evaluate energy profile using only a single line of slope that best explains the data '
+                             'in that window (instead of using the Boltzmann equation). This option tolerates bins with'
+                             ' no data in them, but ignores any changes in slope over the course of a window.')
     parser.add_argument('--noplot', action='store_true', default=False,
                         help='suppress free energy profile and window histogram plots')
 

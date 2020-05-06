@@ -113,7 +113,7 @@ def init_threads(settings):
         if settings.restart_terminated_threads:
             for thread in allthreads:
                 thread.terminated = False
-        if settings.information_error_checking:
+        if settings.job_type == 'aimless_shooting' and settings.information_error_checking:
             if os.path.exists(settings.working_directory + '/info_err.out') and len(open(settings.working_directory + '/info_err.out', 'r').readlines()) > 0:
                 info_err_lines = open(settings.working_directory + '/info_err.out', 'r').readlines()
 
@@ -129,6 +129,16 @@ def init_threads(settings):
                 if (last_breakpoint > 0 and not int(last_info_err) == int(last_breakpoint)):
                     utilities.resample(settings, partial=True)
                     information_error.main()
+        if settings.job_type == 'equilibrium_path_sampling' and settings.eps_dynamic_seed:    # handle dynamic seeding restart behavior
+            for thread in allthreads:
+                window_index = 0
+                for bounds in settings.eps_bounds:
+                    if bounds == thread.history.bounds:
+                        settings.eps_empty_windows[window_index] -= 1  # decrement empty window count in this window
+                        if settings.eps_empty_windows[window_index] < 0:  # minimum value 0
+                            settings.eps_empty_windows[window_index] = 0
+                        break
+                    window_index += 1
 
         return allthreads
 

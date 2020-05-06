@@ -25,7 +25,7 @@ class Tests(object):
 
     def test_main(self):
         """Tests boltzmann_weight using example EPS output in test_data"""
-        kwargs = {'i': '../test_data/eps_example.out', 'o': 'fep_test.out', 't': 350, 'n': 4, 'b': -1, 'c': 1, 'noplot': True, 'e': 0.8}
+        kwargs = {'i': '../test_data/eps_example.out', 'o': 'fep_test.out', 't': 350, 'n': 4, 'b': -1, 'c': 1, 'noplot': True, 'e': 0.8, 'slope_only': False}
         # There's a necessary random component here that can potentially cause a RuntimError to be raised, but the odds
         # of it failing three times in a row without there actually being something wrong are extremely small, so this
         # is the best I can think to do...
