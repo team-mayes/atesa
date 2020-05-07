@@ -259,8 +259,14 @@ def main(settings, rescue_running=[]):
     if not rescue_running:
         # Implement resample
         if settings.job_type == 'aimless_shooting' and settings.resample:
+            # Store settings object in the working directory for compatibility with analysis/utility scripts
+            if not settings.dont_dump:
+                temp_settings = copy.deepcopy(settings)  # initialize temporary copy of settings to modify
+                temp_settings.__dict__.pop('env')  # env attribute is not picklable
+                pickle.dump(temp_settings, open(settings.working_directory + '/settings.pkl', 'wb'), protocol=2)
+            # Run resample
             utilities.resample(settings, partial=False)
-            if settings.information_error_checking:
+            if settings.information_error_checking:     # update info_err.out if called for by settings
                 information_error.main()
             sys.exit()
 

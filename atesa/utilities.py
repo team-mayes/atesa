@@ -186,7 +186,15 @@ def get_cvs(filename, settings, reduce=False):
             local_index += 1
             evaluation = eval(cv) - values[local_index]  # Subtract value 1/20.455 ps earlier from value of cv
             if reduce:
-                evaluation = reduce_cv(evaluation, local_index + len(settings.cvs), rc_minmax)
+                try:
+                    evaluation = reduce_cv(evaluation, local_index + len(settings.cvs), rc_minmax)
+                except IndexError:
+                    raise RuntimeError('attempted to obtain a reduced value for the rate-of-change ("qdot") of CV' +
+                                       str(local_index) + ', but the corresponding column appears to be missing from '
+                                       'the aimless shooting output file: ' + settings.as_out_file + '. If this is the '
+                                       'wrong file, please specify the right one with the "as_out_file" option in the '
+                                       'configuration file. If this is the right file but it does not contain qdot '
+                                       'terms, please add "include_qdot = False" to the configuration file.')
             output += str(evaluation) + ' '
         os.remove(incremented_filename)     # clean up temporary file
 
