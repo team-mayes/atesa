@@ -686,6 +686,18 @@ class Tests(object):
         new_file = jobtype.get_input_file(allthreads[0], 1, settings)
         assert os.path.exists(new_file)
 
+    # def test_get_input_file_umbrella_sampling(self):
+    #     """Tests get_input_file with job_type = 'umbrella_sampling'"""
+    #     settings = configure('../../data/atesa.config')
+    #     settings.job_type = 'umbrella_sampling'
+    #     allthreads = main.init_threads(settings)
+    #     allthreads[0].current_type = ['prod']
+    #     allthreads[0].history.window = 0
+    #     allthreads[0].history.index = 0
+    #     jobtype = factory.jobtype_factory(settings.job_type)
+    #     assert jobtype.get_input_file(allthreads[0], 0, settings) == 'umbrella_sampling_0_0.in'
+    #     assert 1 == 2
+
     @classmethod
     def teardown_method(self, method):
         "Runs at end of each method"

@@ -1493,3 +1493,268 @@ class FindTS(JobType):
 
     def verify(self, arg, argtype):
         return True
+
+
+class UmbrellaSampling(JobType):
+    """
+    Adapter class for umbrella sampling
+    """
+
+    def get_input_file(self, job_index, settings):
+        input_file_name = 'umbrella_sampling_' + self.history.window + '_' + self.history.index + '.in'
+        if not os.path.exists(settings.working_directory + '/' + input_file_name):
+            shutil.copy(settings.path_to_input_files + '/umbrella_sampling_prod_' + settings.md_engine + '.in',
+                        settings.working_directory + '/' + input_file_name)
+
+            # In preparation for next step, break down settings.rc_definition into component terms
+            # rc_definition must be a linear combination of terms for US anyway, so our strategy here is to condense it
+            # into just numbers, CV terms, and +/-/* characters, and then split into a list to iterate over.
+            condensed_rc = settings.rc_definition.replace(' ','').replace('--','+').replace('+-','-').replace('-','+-')
+            condensed_rc = [item for item in condensed_rc.split('+') if not item in ['', ' ']]
+            alp0 = sum([float(item) for item in condensed_rc if not 'CV' in item])  # extract constant terms
+            condensed_rc = [item for item in condensed_rc if 'CV' in item]          # remove constant terms
+
+            # Prepare cv_minmax list for evaluating min and max terms later
+            asout_lines = [[float(item) for item in
+                            line.replace('A <- ', '').replace('B <- ', '').replace(' \n', '').replace('\n', '').split(
+                                ' ')] for line in open(settings.as_out_file, 'r').readlines()]
+            open(settings.as_out_file, 'r').close()
+            mapped = list(map(list, zip(*asout_lines)))
+            rc_minmax = [[numpy.min(item) for item in mapped], [numpy.max(item) for item in mapped]]
+
+            # Here, we'll write the &rxncor and &rxncor_order_parameters namelists manually
+            with open(settings.working_directory + '/' + input_file_name, 'a') as file:
+                if not open(settings.working_directory + '/' + input_file_name, 'r').readlines()[-1] == '':    # if not last line of template empty
+                    file.write('\n')
+                file.write(' &rxncor\n')
+                file.write('  rxn_dimension=' + str(settings.rc_definition.count('CV')) + ',\n')
+                file.write('  rxn_kconst=' + str(settings.us_restraint) + ',\n')
+                file.write('  rxn_c0=' + str(self.history.window) + ',\n')
+                file.write('  rxn_out_fname=rcwin_' + str(self.history.window) + '_' + str(self.history.index) + '_us.dat,\n')
+                file.write('  rxn_out_frq=1,\n')
+                file.write(' &end\n')
+                file.write(' &rxncor_order_parameters\n')
+                file.write('  alp0=' + str(alp0) + ',\n')
+                ordinal = 1
+                for term in condensed_rc:
+                    # First, obtain the type of CV (optype) and the number of atoms involved (nat)
+                    cv_index = int(re.findall('CV[0-9]+', term).replace('CV', ''))
+                    this_cv = settings.cvs[cv_index - 1]    # -1 because CVs are 1-indexed
+                    if 'pytraj.dihedral' in this_cv or 'mdtraj.compute_dihedrals' in this_cv:
+                        optype = 'dihedral'
+                        nat = 4
+                    elif 'pytraj.angle' in this_cv or 'mdtraj.compute_angles' in this_cv:
+                        optype = 'angle'
+                        nat = 3
+                    elif 'pytraj.distance' in this_cv or 'mdtraj.compute_distances' in this_cv:
+                        if '-' in this_cv and (this_cv.count('pytraj.distance') == 2 or
+                                               this_cv.count('mdtraj.compute_distances') == 2 or
+                                               ('mdtraj.distance' in this_cv and 'pytraj.distance' in this_cv)):
+                            optype = 'diffdistance'
+                            nat = 4
+                        else:
+                            optype = 'distance'
+                            nat = 2
+                    else:
+                        raise RuntimeError('unable to discern CV type for CV' + str(int(cv_index)) + '\nOnly '
+                                           'distances, angles, dihedrals, and differences of distances (all defined '
+                                           'using either pytraj or mdtraj distance, angle, and/or dihedral functions) '
+                                           'are supported in umbrella sampling. The offending CV is defined as: ' +
+                                           this_cv)
+
+                    # Get atom indices as a comma-separated string without spaces, then convert to list
+                    if not optype == 'diffdistance':
+                        atoms = re.findall('\[[0-9]+,{' + str(nat - 1) + '}[0-9]+\]', this_cv.replace(' ',''))[0]
+                        atoms = atoms.replace('[', '').replace(']','')  # included brackets for safety, but don't want them
+                        atoms = atoms.split(',')
+                    else:
+                        atoms = ','.join([item.replace('[', '').replace(']','') for item in re.findall('\[[0-9]+,{1}[0-9]+\]', this_cv.replace(' ',''))])
+                        atoms = atoms.split(',')
+
+                    # Next, obtain the value of "alp" for this CV (coefficient / (max - min))
+                    coeff = term.replace('CV' + str(cv_index), '').replace('*','')
+                    try:
+                        null = float(coeff)
+                    except ValueError:
+                        raise RuntimeError('unable to cast coefficient of CV' + str(cv_index) + ' to float. It must be '
+                                           'specified in a non-standard way? Offending term is: ' + term)
+                    this_min = rc_minmax[0][cv_index - 1]
+                    this_max = rc_minmax[1][cv_index - 1]
+                    alp = float(coeff)/(this_max - this_min)
+
+                    # Finally, write it out and increment ordinal
+                    file.write('  optype(' + str(ordinal) + ')=\'' + optype + '\',\n')
+                    file.write('  alp(' + str(ordinal) + ')=' + str(alp) + ',\n')
+                    file.write('  factnorm(' + str(ordinal) + ')=1.0,\n')
+                    file.write('  offnorm(' + str(ordinal) + ')=' + str(this_min) + ',\n')
+                    file.write('  nat(' + str(ordinal) + ')=' + str(nat) + ',\n')
+                    if not optype == 'diffdistance':
+                        file.write('  nat1(' + str(ordinal) + ')=' + str(nat) + ',\n')
+                        for nat_index in range(nat):
+                            at = str(atoms[nat_index])
+                            file.write('  at(' + str(nat_index + 1) + ',' + str(ordinal) + ')=' + str(at) + ',\n')
+                    else:
+                        file.write('  nat1(' + str(ordinal) + ')=2,\n')
+                        for nat_index in [0, 1]:
+                            at = str(atoms[nat_index])
+                            file.write('  at(' + str(nat_index + 1) + ',' + str(ordinal) + ')=' + str(at) + ',\n')
+                        file.write('  nat2(' + str(ordinal) + ')=2,\n')
+                        for nat_index in [2, 3]:
+                            at = str(atoms[nat_index])
+                            file.write('  at(' + str(nat_index + 1) + ',' + str(ordinal) + ')=' + str(at) + ',\n')
+
+                    ordinal += 1
+
+                file.write(' &end\n')
+                file.close()
+
+        return input_file_name  # todo: write tests for this very complex function (and all of them, just this one especially)
+
+    def get_initial_coordinates(self, settings):
+        if not settings.md_engine == 'amber':
+            raise RuntimeError('the job_type setting "umbrella_sampling" is only compatible with the md_engine setting '
+                               '"amber". If you need to use a different md_engine for evaluating an energy profile, use'
+                               ' the job_type "equilibrum_path_sampling".')
+
+        # Here, we need to convert the provided trajectory file(s) into single-frame coordinate files to use as the
+        # initial coordinates of each thread.
+        # This line loads more than one trajectory file together if len(settings.initial_coordinates) > 1
+        traj = pytraj.load(settings.initial_coordinates, settings.topology)
+
+        frame_rcs = []
+        for frame in range(traj.n_frames):
+            new_restart_name = settings.working_directory + '/find_ts_frame_' + str(frame) + '.rst7'
+            pytraj.write_traj(new_restart_name, traj, format='rst7', frame_indices=[frame], options='multi',
+                              overwrite=True, velocity=True)
+            os.rename(new_restart_name + '.1', new_restart_name)
+            cvs = utilities.get_cvs(new_restart_name, settings, reduce=True)
+            rc = utilities.evaluate_rc(settings.rc_definition, cvs.split(' '))
+            frame_rcs.append([new_restart_name, rc])
+
+        window_centers = numpy.arange(settings.us_rc_min, settings.us_rc_max, settings.us_rc_step)
+
+        def closest(lst, K):
+            # Return index of closest value to K in list lst
+            return min(range(len(lst)), key=lambda i: abs(lst[i] - K))
+
+        coord_files = []
+        print('Finished producing initial coordinates from input trajector(y/ies). Window centers and the initial RC '
+              'values of the corresponding initial coordinate file:')
+        for window_center in window_centers:
+            closest_index = closest([item[1] for item in frame_rcs], window_center)
+            coord_files.append([frame_rcs[closest_index][0], window_center])
+            print(str(window_center) + ': ' + str(frame_rcs[closest_index][1]))
+
+        # Clean up temporary files
+        for item in [item[0] for item in frame_rcs]:
+            os.remove(item)
+
+        # Assemble list of file names to return
+        list_to_return = []
+        for item in coord_files:
+            if settings.us_degeneracy <= 1:
+                shutil.copy(item[0], settings.working_directory + '/init_' + str(item[1]) + '_0.rst7')
+            list_to_return.append(settings.working_directory + '/init_' + str(item[1]) + '_0.rst7')
+        if settings.us_degeneracy > 1:  # implement us_degeneracy
+            temp = []
+            for item in list_to_return:
+                for this_index in range(settings.us_degeneracy):
+                    new_file_name = item.replace('_0.rst7', '_' + str(this_index) + '.rst7')
+                    temp.append(new_file_name)
+                    shutil.copy(item, new_file_name)
+            list_to_return = temp
+
+        return list_to_return
+
+    def check_for_successful_step(self, settings):
+        return True     # nothing to check for in committor analysis
+
+    def update_history(self, settings, **kwargs):
+        if 'initialize' in kwargs.keys():
+            if kwargs['initialize']:
+                self.history = argparse.Namespace()
+                self.history.prod_inpcrd = []    # one-length list of strings; set by main.init_threads
+                self.history.prod_trajs = []     # list of strings; updated by update_history
+                self.history.prod_results = []   # list of strings, 'fwd'/'bwd'/''; updated by update_results
+            if 'inpcrd' in kwargs.keys():
+                self.history.prod_inpcrd.append(kwargs['inpcrd'])
+                window_index = kwargs['inpcrd'].strip('.rst7').strip(settings.working_directory + '/init_')     # string with format [window]_[index]
+                self.history.window = window_index[:window_index.index('_')]
+                self.history.index = window_index[window_index.index('_') + 1:]
+        else:   # self.history should already exist
+            if 'nc' in kwargs.keys():
+                self.history.prod_trajs.append(kwargs['nc'])
+
+    def get_inpcrd(self):
+        return [self.history.prod_inpcrd[0] for null in range(len(self.current_type))]
+
+    def gatekeeper(self, settings):
+        for job_index in range(len(self.jobids)):
+            if self.get_status(job_index, settings) == 'R':     # if the job in question is running
+                frame_to_check = self.get_frame(self.history.prod_trajs[job_index], -1, settings)
+                if frame_to_check and utilities.check_commit(frame_to_check, settings):  # if it has committed to a basin
+                    self.cancel_job(job_index, settings)        # cancel it
+                    os.remove(frame_to_check)
+
+        # if every job in this thread has status 'C'ompleted/'C'anceled...
+        if all(item == 'C' for item in [self.get_status(job_index, settings) for job_index in range(len(self.jobids))]):
+            return True
+        else:
+            return False
+
+    def get_next_step(self, settings):
+        if settings.us_degeneracy <= 1:
+            settings.us_degeneracy = 1
+        self.current_type = ['prod' for null in range(settings.us_degeneracy)]
+        self.current_name = [str(int(i)) for i in range(settings.us_degeneracy)]
+        return self.current_type, self.current_name
+
+    def get_batch_template(self, type, settings):
+        if type == 'prod':
+            templ = settings.md_engine + '_' + settings.batch_system + '.tpl'
+            if os.path.exists(settings.path_to_templates + '/' + templ):
+                return templ
+            else:
+                raise FileNotFoundError('cannot find required template file: ' + templ)
+        else:
+            raise ValueError('unexpected batch template type for committor_analysis: ' + str(type))
+
+    def check_termination(self, allthreads, settings):
+        self.terminated = True  # committor analysis threads always terminate after one step
+        return False            # no global termination criterion exists for committor analysis
+
+    def update_results(self, allthreads, settings):
+        # Initialize committor_analysis.out if not already extant
+        if not os.path.exists('committor_analysis.out'):
+            with open('committor_analysis.out', 'w') as f:
+                f.write('Committed to Forward Basin / Total Committed to Either Basin\n')
+
+        # Update current_results
+        for job_index in range(len(self.current_type)):
+            frame_to_check = self.get_frame(self.history.prod_trajs[job_index], -1, settings)
+            if frame_to_check:
+                self.history.prod_results.append(utilities.check_commit(frame_to_check, settings))
+                os.remove(frame_to_check)
+
+        # Write results to committor_analysis.out
+        fwds = 0
+        bwds = 0
+        for result in self.history.prod_results:
+            if result == 'fwd':
+                fwds += 1
+            elif result == 'bwd':
+                bwds += 1
+        if int(fwds + bwds) > 0:
+            open('committor_analysis.out', 'a').write(str(int(fwds)) + '/' + str(int(fwds + bwds)) + '\n')
+
+        # Write updated restart.pkl
+        pickle.dump(allthreads, open('restart.pkl', 'wb'), protocol=2)
+
+    def algorithm(self, allthreads, running, settings):
+        return running    # nothing to set because there is no next step
+
+    def cleanup(self, settings):
+        pass
+
+    def verify(self, arg, argtype):
+        return True

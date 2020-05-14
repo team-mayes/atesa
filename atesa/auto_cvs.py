@@ -42,6 +42,8 @@ def main(settings):
     descriptions = []
 
     # Load topology and coordinates as mdtraj "trajectory" object
+    if settings.initial_coordinates[0] == '':
+        raise RuntimeError('it appears that you forgot to provide an initial coordinate file for use with auto_cvs.py.')
     mtraj = mdtraj.load(settings.initial_coordinates[0], top=settings.topology)
 
     # Identify atoms within settings.auto_cvs_radius of each atom in either commitment basin definition
@@ -131,5 +133,9 @@ def main(settings):
         for cv in cvs:
             cv_index += 1
             f.write('CV' + str(cv_index) + ': ' + descriptions[cv_index - 1] + '; ' + cv + '\n')
+        if settings.cvs:
+            for cv in settings.cvs:
+                cv_index += 1
+                f.write('CV' + str(cv_index) + ': user-defined CV; ' + cv + '\n')
 
     return cvs

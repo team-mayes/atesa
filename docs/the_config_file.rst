@@ -43,7 +43,7 @@ Certain settings should be given for every job. The following settings do not ha
 	
 ``overwrite``
 
-	Indicates whether to delete the existing working directory (if one exists) and create a new one *if and only if* restart = False.
+	Indicates whether to delete the existing working directory (if one exists) and create a new one *if and only if* restart = False (has no effect otherwise). If restart = False, overwrite = True will *always* delete the working directory if it exists; conversely, overwrite = False will *never* delete it (regardless of the "restart" setting).
 	
 ``topology``
 
@@ -261,7 +261,7 @@ These settings define the combined variables (CVs) for the job. In aimless shoot
 	
 	Then every bond, angle, and dihedral consisting of atoms within at least 5 angstroms of atoms 101, 102, 103, or 104 (indexed from 1) would be included as a CV. The index, description, and code used to evaluate each CV derived in this manner is printed to the file "cvs.txt" in the working directory. Automatic CVs can be disabled by setting *auto_cvs_radius* to 0. If *auto_cvs_radius* is greater than 0 and CVs are also defined manually using the *cvs* option, then the manually defined CVs are appended to the end of the list of automatically generated CVs (although note that the manually defined CVs will not appear in "cvs.txt").
     
-	Using *auto_cvs* treats all of the atoms in *commit_fwd* and *commit_bwd* as bonded to one another for the purposes of determining CVs, so there is no need to define these CVs manually. Examples of CVs that *should* be defined manually if desired include differences of distances, or any distances, angles, or dihedrals defined using atoms that are not contiguously bonded to one another (*e.g.*, a distance between nearby charged particles). Note that although commitment basin definitions are always 1-indexed, the CV definitions produced automatically with this option are defined using mdtraj and will be 0-indexed. The software handles this distinction without issue, but the user must be careful not to confuse 0-indexed atom indices from "cvs.txt" with 1-indexed atom indices in the commitment basins.
+	Using *auto_cvs* treats all of the atoms in *commit_fwd* and *commit_bwd* as bonded to one another for the purposes of determining CVs, so there is no need to define these CVs manually. Examples of CVs that *should* be defined manually if desired include differences of distances, or any distances, angles, or dihedrals defined using atoms that are not contiguously bonded to one another (*e.g.*, a distance between nearby charged particles). Note that although commitment basin definitions (which are interpreted internally using pytraj) are always 1-indexed, the CV definitions produced automatically with this option are defined using mdtraj and will be 0-indexed. The software handles this distinction without issue, but the user must be careful not to confuse 0-indexed atom indices from "cvs.txt" with 1-indexed atom indices in the commitment basins.
     
 	Note that the number of CVs that are created using this option can grow very large very quickly when large radii are chosen, which in extreme cases can cause significant I/O overhead and slow down calls to :ref:`LikelihoodMaximization`. Default = 5
 
@@ -485,6 +485,33 @@ These options are specific to equilibrium path sampling (EPS) runs only.
 ``samples_per_window``
 
 	A termination criterion for EPS that terminates the sampling in a given EPS window after this number of samples within it have been written to the EPS output file. Negative values mean no limit; sampling will continue indefinitely (until ATESA is terminated by other means). Default = -1
+	
+Umbrella Sampling Settings
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+These options are specific to umbrella sampling (US) runs only. They mostly pertain to defining the restraints. It may be useful to run a test run first with only a few windows along a small subset of the full range of reaction coordinate values to verify these settings before continuing.
+
+Keep in mind that if you perform a large amount of sampling and then discover that there are gaps in your sampling, you can always submit a new umbrella sampling job (in a new working directory) with windows centered in the gaps and then copy the resulting output data files (named with "_us.dat") to the original working directory to include them all in the same analysis.
+
+``us_rc_min`` **‡**
+
+	The minimum value of the reaction coordinate to sample during US. It can be useful to manually evaluate the RC of an equilibrated reactant state structure, and then add some small fraction of that number again (say, 10%) to select the value for this option. Default = -12
+	
+``us_rc_max`` **‡**
+
+	The maximum value of the reaction coordinate to sample during US. It can be useful to manually evaluate the RC of an equilibrated product state structure, and then add some small fraction of that number again (say, 10%) to select the value for this option. Default = 12
+	
+``us_rc_step``
+
+	The step size between the centers of adjacent windows during US. Window boundaries are assigned from the left, such that the first window always begins exactly at *us_rc_min*, and then steps of size *us_rc_step* delineate further windows until the next step would be equal to or greater than *us_rc_max*. Default = 0.25
+	
+``us_restraint``
+
+	The weight of the energetic restraint applied in each US window, measured in kcal/(mol-units^2), where "units" is the dimensionality of the reaction coordinate. Too-low values sample inefficiently, but too-high values necessitate more windows along the RC so as not to leave gaps. In general, you should select a value that produces about 10-to-20% overlap in sampling with neighboring windows on either side, which may require some trial-and-error, as the appropriate values to choose will depend on the underlying free energy profile and the simulation parameters. The default values are a good starting point for most systems (at 300 K -- significantly lower temperatures require weaker restraints and *vice versa*). Default = 50
+	
+``us_degeneracy``
+
+	The number of independent threads to run *for each window* during umbrella sampling. Setting it to 1 or less means only one thread per window. This should usually be a small number greater than one. Default = 5
 
 Other Settings
 ~~~~~~~~~~~~~~

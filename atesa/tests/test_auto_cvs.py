@@ -31,6 +31,7 @@ class Tests(object):
         settings = argparse.Namespace()
         settings.topology = '../test_data/test.prmtop'
         settings.initial_coordinates = ['../test_data/test.rst7']
+        settings.cvs = ['']
         settings.commit_fwd = ([101, 102], [103, 104], [1.5, 2.0], ['lt', 'gt'])
         settings.commit_bwd = ([101, 102], [103, 104], [2.0, 1.5], ['gt', 'lt'])
         settings.working_directory = './'

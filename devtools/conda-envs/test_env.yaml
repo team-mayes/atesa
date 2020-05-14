@@ -1,5 +1,6 @@
 name: test
 channels:
+  - ambermd
 dependencies:
     # Base depends
   - python
@@ -10,6 +11,7 @@ dependencies:
   - mdtraj
   - pydantic
   - matplotlib
+  - pytraj
 
     # Testing
   - pytest
@@ -18,7 +20,6 @@ dependencies:
 
     # Pip-only installs
   - pip:
-    - pytraj
     - gnuplotlib
     - numdifftools
     - psutil

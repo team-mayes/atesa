@@ -117,6 +117,13 @@ def configure(input_file, user_working_directory=''):
         eps_dynamic_seed: typing.Union[int, list] = 20  # int or list (int -> [int for window in eps_windows]; 0 or empty list turns off)
         samples_per_window: int = -1
 
+        # Required only for umbrella sampling
+        us_rc_min: float = -12
+        us_rc_max: float = 12
+        us_rc_step: float = 0.25
+        us_restraint: float = 50
+        us_degeneracy: int = 5
+
         # Required only if restart = True
         restart_terminated_threads: bool = False
 

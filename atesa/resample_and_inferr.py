@@ -17,11 +17,7 @@ def main():
                                 + os.getcwd())
 
     # Call resample and then information_error
-    print('running utilities.resample()')
-    open('this_is_a_debug_file.out', 'w').close()
     utilities.resample(settings, partial=True)
-    print('running information_error.main()')
-    open('this_is_another_debug_file.out', 'w').close()
     information_error.main()
 
 
