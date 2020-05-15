@@ -145,20 +145,22 @@ def init_threads(settings):
     # If not restart:
     allthreads = []
     jobtype = factory.jobtype_factory(settings.job_type)
+
+    # Set topology properly even if it's given as a path
+    og_prmtop = settings.topology
+    if '/' in settings.topology:
+        settings.topology = settings.topology[settings.topology.rindex('/') + 1:]
+    try:
+        shutil.copy(og_prmtop, settings.working_directory + '/' + settings.topology)
+    except shutil.SameFileError:
+        pass
+
     for file in jobtype.get_initial_coordinates(None, settings):
         if '/' in file:
             file = file[file.rindex('/') + 1:]          # drop path to file from filename
 
         thread = Thread()   # initialize the thread object
 
-        # Set topology properly even if it's given as a path
-        og_prmtop = settings.topology
-        if '/' in settings.topology:
-            settings.topology = settings.topology[settings.topology.rindex('/') + 1:]
-        try:
-            shutil.copy(og_prmtop, settings.working_directory + '/' + settings.topology)
-        except shutil.SameFileError:
-            pass
         thread.topology = settings.topology
 
         jobtype.update_history(thread, settings, **{'initialize': True, 'inpcrd': file})    # initialize thread.history
