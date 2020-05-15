@@ -703,6 +703,7 @@ class Tests(object):
         jobtype = factory.jobtype_factory(settings.job_type)
         assert jobtype.get_input_file(allthreads[0], 0, settings) == 'umbrella_sampling_2.5_1.in'
         assert filecmp.cmp('umbrella_sampling_2.5_1.in', '../test_data/umbrella_sampling_2.5_1.in')
+        assert 1 == 2
 
     @classmethod
     def teardown_method(self, method):

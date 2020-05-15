@@ -1699,8 +1699,9 @@ class UmbrellaSampling(JobType):
                         shutil.copy(item, new_file_name)
                     except shutil.SameFileError:
                         pass
-                os.remove(item)
-            list_to_return = temp
+                if not item in temp:
+                    os.remove(item)
+            list_to_return = copy.copy(temp)
 
         # Clean up temporary files
         for item in [item[0] for item in frame_rcs]:
@@ -1721,7 +1722,10 @@ class UmbrellaSampling(JobType):
             if 'inpcrd' in kwargs.keys():
                 self.history.prod_inpcrd.append(kwargs['inpcrd'])
                 window_index = kwargs['inpcrd'].strip('.rst7').strip(settings.working_directory + '/init_')     # string with format [window]_[index]
-                self.history.window = window_index[:window_index.index('_')]
+                try:
+                    self.history.window = window_index[:window_index.index('_')]
+                except ValueError:
+                    raise RuntimeError('importperly formatted inpcrd filename: ' + kwargs['inpcrd'])
                 self.history.index = window_index[window_index.index('_') + 1:]
         else:   # self.history should already exist
             if 'nc' in kwargs.keys():
