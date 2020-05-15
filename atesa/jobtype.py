@@ -1501,7 +1501,7 @@ class UmbrellaSampling(JobType):
     """
 
     def get_input_file(self, job_index, settings):
-        input_file_name = 'umbrella_sampling_' + self.history.window + '_' + self.history.index + '.in'
+        input_file_name = 'umbrella_sampling_' + str(self.history.window) + '_' + str(self.history.index) + '.in'
         if not os.path.exists(settings.working_directory + '/' + input_file_name):
             shutil.copy(settings.path_to_input_files + '/umbrella_sampling_prod_' + settings.md_engine + '.in',
                         settings.working_directory + '/' + input_file_name)
@@ -1513,6 +1513,10 @@ class UmbrellaSampling(JobType):
             condensed_rc = [item for item in condensed_rc.split('+') if not item in ['', ' ']]
             alp0 = sum([float(item) for item in condensed_rc if not 'CV' in item])  # extract constant terms
             condensed_rc = [item for item in condensed_rc if 'CV' in item]          # remove constant terms
+            if len(condensed_rc) == 0:
+                raise RuntimeError('it appears that the provided reaction coordinate contains no CVs or it otherwise '
+                                   'improperly formatted. Only linear combinations of constant terms and CVs (with '
+                                   'coefficients) are permitted. The offending RC definition is: ' + settings.rc_definition)
 
             # Prepare cv_minmax list for evaluating min and max terms later
             asout_lines = [[float(item) for item in
@@ -1524,8 +1528,8 @@ class UmbrellaSampling(JobType):
 
             # Here, we'll write the &rxncor and &rxncor_order_parameters namelists manually
             with open(settings.working_directory + '/' + input_file_name, 'a') as file:
-                if not open(settings.working_directory + '/' + input_file_name, 'r').readlines()[-1] == '':    # if not last line of template empty
-                    file.write('\n')
+                # if not open(settings.working_directory + '/' + input_file_name, 'r').readlines()[-1] == '':    # if not last line of template empty
+                #     file.write('\n')
                 file.write(' &rxncor\n')
                 file.write('  rxn_dimension=' + str(settings.rc_definition.count('CV')) + ',\n')
                 file.write('  rxn_kconst=' + str(settings.us_restraint) + ',\n')
@@ -1538,7 +1542,7 @@ class UmbrellaSampling(JobType):
                 ordinal = 1
                 for term in condensed_rc:
                     # First, obtain the type of CV (optype) and the number of atoms involved (nat)
-                    cv_index = int(re.findall('CV[0-9]+', term).replace('CV', ''))
+                    cv_index = int(re.findall('CV[0-9]+', term)[0].replace('CV', ''))
                     this_cv = settings.cvs[cv_index - 1]    # -1 because CVs are 1-indexed
                     if 'pytraj.dihedral' in this_cv or 'mdtraj.compute_dihedrals' in this_cv:
                         optype = 'dihedral'
@@ -1562,14 +1566,47 @@ class UmbrellaSampling(JobType):
                                            'are supported in umbrella sampling. The offending CV is defined as: ' +
                                            this_cv)
 
-                    # Get atom indices as a comma-separated string without spaces, then convert to list
+                    # Get atom indices as a string, then convert to list
+                    atoms = ''
                     if not optype == 'diffdistance':
-                        atoms = re.findall('\[[0-9]+,{' + str(nat - 1) + '}[0-9]+\]', this_cv.replace(' ',''))[0]
-                        atoms = atoms.replace('[', '').replace(']','')  # included brackets for safety, but don't want them
-                        atoms = atoms.split(',')
+                        count = 0
+                        for match in re.finditer('[\[\\\']([@0-9]+[,\ ]){' + str(nat - 1) + '}[@0-9]+[\]\\\']', this_cv.replace(', ',',')):
+                            atoms += this_cv.replace(', ',',')[match.start():match.end()]    # should be only one match
+                            count += 1
+                        if not count == 1:
+                            raise RuntimeError('failed to identify atoms constituting CV definition: ' + this_cv +
+                                               '\nInterpreted as a ' + optype + ' but found ' + str(count) +
+                                               ' blocks of atom indices with length ' + str(nat) + '(should be one). Is'
+                                               ' this CV formatted in an unusual way?')
+                        if not atoms:
+                            raise RuntimeError('unable to identify atoms constituting CV definition: ' + this_cv +
+                                               '\nIs it formatted in an unusual way?')
+                        atoms = atoms.replace('[', '').replace(']',',').replace('\'','')  # included delimeters for safety, but don't want them
+                        if '@' in atoms:
+                            atoms = [item.replace('@','') for item in atoms.split(' @')]
+                        else:
+                            atoms = atoms.split(',')
                     else:
-                        atoms = ','.join([item.replace('[', '').replace(']','') for item in re.findall('\[[0-9]+,{1}[0-9]+\]', this_cv.replace(' ',''))])
-                        atoms = atoms.split(',')
+                        count = 0
+                        for match in re.finditer('[\[\\\']([@0-9]+[,\ ]){1}[@0-9]+[\]\\\']', this_cv.replace(', ',',')):
+                            atoms += this_cv.replace(', ',',')[match.start():match.end()]    # should be two matches
+                            count += 1
+                        if not count == 2:
+                            raise RuntimeError('failed to identify atoms constituting CV definition: ' + this_cv +
+                                               '\nInterpreted as a difference of distances but found ' + str(count) +
+                                               ' blocks of atom indices with length 2 (should be two). Is this CV '
+                                               'formatted in an unusual way?')
+                        if not atoms:
+                            raise RuntimeError('unable to identify atoms constituting CV definition: ' + this_cv +
+                                               '\nIs it formatted in an unusual way?')
+                        atoms = atoms.replace('[', '').replace(']',',').replace('\'','')  # included delimeters for safety, but don't want them
+                        if '@' in atoms:
+                            atoms = [item.replace('@','') for item in atoms.split(' @')]
+                        else:
+                            atoms = atoms.split(',')
+
+                    while '' in atoms:
+                        atoms.remove('')    # remove empty list elements if present
 
                     # Next, obtain the value of "alp" for this CV (coefficient / (max - min))
                     coeff = term.replace('CV' + str(cv_index), '').replace('*','')
@@ -1583,7 +1620,7 @@ class UmbrellaSampling(JobType):
                     alp = float(coeff)/(this_max - this_min)
 
                     # Finally, write it out and increment ordinal
-                    file.write('  optype(' + str(ordinal) + ')=\'' + optype + '\',\n')
+                    file.write('\n  optype(' + str(ordinal) + ')=\'' + optype + '\',\n')
                     file.write('  alp(' + str(ordinal) + ')=' + str(alp) + ',\n')
                     file.write('  factnorm(' + str(ordinal) + ')=1.0,\n')
                     file.write('  offnorm(' + str(ordinal) + ')=' + str(this_min) + ',\n')
@@ -1608,7 +1645,7 @@ class UmbrellaSampling(JobType):
                 file.write(' &end\n')
                 file.close()
 
-        return input_file_name  # todo: write tests for this very complex function (and all of them, just this one especially)
+        return input_file_name
 
     def get_initial_coordinates(self, settings):
         if not settings.md_engine == 'amber':
@@ -1623,7 +1660,7 @@ class UmbrellaSampling(JobType):
 
         frame_rcs = []
         for frame in range(traj.n_frames):
-            new_restart_name = settings.working_directory + '/find_ts_frame_' + str(frame) + '.rst7'
+            new_restart_name = settings.working_directory + '/input_trajectory_frame_' + str(frame) + '.rst7'
             pytraj.write_traj(new_restart_name, traj, format='rst7', frame_indices=[frame], options='multi',
                               overwrite=True, velocity=True)
             os.rename(new_restart_name + '.1', new_restart_name)
@@ -1645,15 +1682,10 @@ class UmbrellaSampling(JobType):
             coord_files.append([frame_rcs[closest_index][0], window_center])
             print(str(window_center) + ': ' + str(frame_rcs[closest_index][1]))
 
-        # Clean up temporary files
-        for item in [item[0] for item in frame_rcs]:
-            os.remove(item)
-
         # Assemble list of file names to return
         list_to_return = []
         for item in coord_files:
-            if settings.us_degeneracy <= 1:
-                shutil.copy(item[0], settings.working_directory + '/init_' + str(item[1]) + '_0.rst7')
+            shutil.copy(item[0], settings.working_directory + '/init_' + str(item[1]) + '_0.rst7')
             list_to_return.append(settings.working_directory + '/init_' + str(item[1]) + '_0.rst7')
         if settings.us_degeneracy > 1:  # implement us_degeneracy
             temp = []
@@ -1661,13 +1693,21 @@ class UmbrellaSampling(JobType):
                 for this_index in range(settings.us_degeneracy):
                     new_file_name = item.replace('_0.rst7', '_' + str(this_index) + '.rst7')
                     temp.append(new_file_name)
-                    shutil.copy(item, new_file_name)
+                    try:
+                        shutil.copy(item, new_file_name)
+                    except shutil.SameFileError:
+                        pass
+                os.remove(item)
             list_to_return = temp
+
+        # Clean up temporary files
+        for item in [item[0] for item in frame_rcs]:
+            os.remove(item)
 
         return list_to_return
 
     def check_for_successful_step(self, settings):
-        return True     # nothing to check for in committor analysis
+        return True     # nothing to check for in umbrella sampling
 
     def update_history(self, settings, **kwargs):
         if 'initialize' in kwargs.keys():
@@ -1675,7 +1715,7 @@ class UmbrellaSampling(JobType):
                 self.history = argparse.Namespace()
                 self.history.prod_inpcrd = []    # one-length list of strings; set by main.init_threads
                 self.history.prod_trajs = []     # list of strings; updated by update_history
-                self.history.prod_results = []   # list of strings, 'fwd'/'bwd'/''; updated by update_results
+                self.history.prod_results = []   # list of sampled RC values as floats; updated by update_results
             if 'inpcrd' in kwargs.keys():
                 self.history.prod_inpcrd.append(kwargs['inpcrd'])
                 window_index = kwargs['inpcrd'].strip('.rst7').strip(settings.working_directory + '/init_')     # string with format [window]_[index]
@@ -1689,24 +1729,16 @@ class UmbrellaSampling(JobType):
         return [self.history.prod_inpcrd[0] for null in range(len(self.current_type))]
 
     def gatekeeper(self, settings):
-        for job_index in range(len(self.jobids)):
-            if self.get_status(job_index, settings) == 'R':     # if the job in question is running
-                frame_to_check = self.get_frame(self.history.prod_trajs[job_index], -1, settings)
-                if frame_to_check and utilities.check_commit(frame_to_check, settings):  # if it has committed to a basin
-                    self.cancel_job(job_index, settings)        # cancel it
-                    os.remove(frame_to_check)
-
-        # if every job in this thread has status 'C'ompleted/'C'anceled...
+        # If every job in this thread has status 'C'ompleted/'C'anceled...
         if all(item == 'C' for item in [self.get_status(job_index, settings) for job_index in range(len(self.jobids))]):
             return True
         else:
             return False
 
     def get_next_step(self, settings):
-        if settings.us_degeneracy <= 1:
-            settings.us_degeneracy = 1
-        self.current_type = ['prod' for null in range(settings.us_degeneracy)]
-        self.current_name = [str(int(i)) for i in range(settings.us_degeneracy)]
+        # Each step in umbrella sampling is simply the only prod step
+        self.current_type = ['prod']
+        self.current_name = ['us']
         return self.current_type, self.current_name
 
     def get_batch_template(self, type, settings):
@@ -1717,35 +1749,17 @@ class UmbrellaSampling(JobType):
             else:
                 raise FileNotFoundError('cannot find required template file: ' + templ)
         else:
-            raise ValueError('unexpected batch template type for committor_analysis: ' + str(type))
+            raise ValueError('unexpected batch template type for umbrella sampling: ' + str(type))
 
     def check_termination(self, allthreads, settings):
-        self.terminated = True  # committor analysis threads always terminate after one step
-        return False            # no global termination criterion exists for committor analysis
+        self.terminated = True  # umbrella sampling threads always terminate after one step
+        return False            # no global termination criterion exists for umbrella sampling
 
     def update_results(self, allthreads, settings):
-        # Initialize committor_analysis.out if not already extant
-        if not os.path.exists('committor_analysis.out'):
-            with open('committor_analysis.out', 'w') as f:
-                f.write('Committed to Forward Basin / Total Committed to Either Basin\n')
-
-        # Update current_results
-        for job_index in range(len(self.current_type)):
-            frame_to_check = self.get_frame(self.history.prod_trajs[job_index], -1, settings)
-            if frame_to_check:
-                self.history.prod_results.append(utilities.check_commit(frame_to_check, settings))
-                os.remove(frame_to_check)
-
-        # Write results to committor_analysis.out
-        fwds = 0
-        bwds = 0
-        for result in self.history.prod_results:
-            if result == 'fwd':
-                fwds += 1
-            elif result == 'bwd':
-                bwds += 1
-        if int(fwds + bwds) > 0:
-            open('committor_analysis.out', 'a').write(str(int(fwds)) + '/' + str(int(fwds + bwds)) + '\n')
+        # Update rc value results for this thread
+        self.history.prod_results += [float(item.split()[1]) for item in
+                                      open('rcwin_' + str(self.history.window) + '_' + str(self.history.index) +
+                                           '_us.dat', 'r').readlines()[len(self.history.prod_results):]]
 
         # Write updated restart.pkl
         pickle.dump(allthreads, open('restart.pkl', 'wb'), protocol=2)
