@@ -1664,8 +1664,10 @@ class UmbrellaSampling(JobType):
             pytraj.write_traj(new_restart_name, traj, format='rst7', frame_indices=[frame], options='multi',
                               overwrite=True, velocity=True)
             os.rename(new_restart_name + '.1', new_restart_name)
-            cvs = utilities.get_cvs(new_restart_name, settings, reduce=True)
-            rc = utilities.evaluate_rc(settings.rc_definition, cvs.split(' '))
+            temp_settings = copy.deepcopy(settings)     # always exclude qdot here (not supported by US anyway)
+            temp_settings.include_qdot = False
+            cvs = utilities.get_cvs(new_restart_name, temp_settings, reduce=True)
+            rc = utilities.evaluate_rc(temp_settings.rc_definition, cvs.split(' '))
             frame_rcs.append([new_restart_name, rc])
 
         window_centers = numpy.arange(settings.us_rc_min, settings.us_rc_max, settings.us_rc_step)
