@@ -1721,11 +1721,11 @@ class UmbrellaSampling(JobType):
                 self.history.prod_results = []   # list of sampled RC values as floats; updated by update_results
             if 'inpcrd' in kwargs.keys():
                 self.history.prod_inpcrd.append(kwargs['inpcrd'])
-                window_index = kwargs['inpcrd'].strip('.rst7').strip(settings.working_directory + '/init_')     # string with format [window]_[index]
+                window_index = kwargs['inpcrd'].replace('.rst7', '').replace(settings.working_directory + '/init_', '').replace('init_', '')     # string with format [window]_[index]
                 try:
                     self.history.window = window_index[:window_index.index('_')]
                 except ValueError:
-                    raise RuntimeError('importperly formatted inpcrd filename: ' + kwargs['inpcrd'])
+                    raise RuntimeError('improperly formatted inpcrd filename: ' + kwargs['inpcrd'])
                 self.history.index = window_index[window_index.index('_') + 1:]
         else:   # self.history should already exist
             if 'nc' in kwargs.keys():
