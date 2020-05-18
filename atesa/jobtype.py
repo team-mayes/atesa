@@ -1607,7 +1607,7 @@ class UmbrellaSampling(JobType):
                                                '\nIs it formatted in an unusual way?')
                         atoms = atoms.replace('[', '').replace(']',',').replace('\'','')  # included delimeters for safety, but don't want them
                         if '@' in atoms:
-                            atoms = [item.replace('@','') for item in atoms.split(' @')]
+                            atoms = [item.replace('@','') for item in atoms.split(' @') if not item == '']
                         else:
                             atoms = atoms.split(',')
 
