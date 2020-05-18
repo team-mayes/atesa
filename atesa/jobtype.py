@@ -1534,7 +1534,7 @@ class UmbrellaSampling(JobType):
                 file.write('  rxn_dimension=' + str(settings.rc_definition.count('CV')) + ',\n')
                 file.write('  rxn_kconst=' + str(settings.us_restraint) + ',\n')
                 file.write('  rxn_c0=' + str(self.history.window) + ',\n')
-                file.write('  rxn_out_fname=rcwin_' + str(self.history.window) + '_' + str(self.history.index) + '_us.dat,\n')
+                file.write('  rxn_out_fname=\'rcwin_' + str(self.history.window) + '_' + str(self.history.index) + '_us.dat\',\n')
                 file.write('  rxn_out_frq=1,\n')
                 file.write(' &end\n')
                 file.write(' &rxncor_order_parameters\n')

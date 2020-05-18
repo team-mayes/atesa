@@ -31,7 +31,7 @@ Example of aimless shooting prod input file
   rxn_dimension=2,
   rxn_kconst=50,
   rxn_c0=2.5,
-  rxn_out_fname=rcwin_2.5_1_us.dat,
+  rxn_out_fname='rcwin_2.5_1_us.dat',
   rxn_out_frq=1,
  &end
  &rxncor_order_parameters
