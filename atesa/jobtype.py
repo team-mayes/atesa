@@ -1591,7 +1591,7 @@ class UmbrellaSampling(JobType):
                             atoms = [item.replace('@','') for item in atoms.split(' @')]    # pytraj style atom indices
                         else:
                             atoms = atoms.split(',')                        # mdtraj style atom indices
-                            atoms = [float(item) + 1 for item in atoms]     # fix zero-indexing in mdtraj
+                            atoms = [float(item) + 1 for item in atoms if not item == '']     # fix zero-indexing in mdtraj
                     else:
                         count = 0
                         for match in re.finditer('[\[\\\']([@0-9]+[,\ ]){1}[@0-9]+[\]\\\']', this_cv.replace(', ',',')):
@@ -1607,7 +1607,7 @@ class UmbrellaSampling(JobType):
                                                '\nIs it formatted in an unusual way?')
                         atoms = atoms.replace('[', '').replace(']',',').replace('\'','')  # included delimeters for safety, but don't want them
                         if '@' in atoms:
-                            atoms = [item.replace('@','') for item in atoms.split(' @') if not item == '']
+                            atoms = [item.replace('@','') for item in atoms.split(' @')]
                         else:
                             atoms = atoms.split(',')
 
