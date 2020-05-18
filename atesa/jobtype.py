@@ -1591,7 +1591,7 @@ class UmbrellaSampling(JobType):
                             atoms = [item.replace('@','') for item in atoms.split(' @')]    # pytraj style atom indices
                         else:
                             atoms = atoms.split(',')                        # mdtraj style atom indices
-                            atoms = [float(item) + 1 for item in atoms if not item == '']     # fix zero-indexing in mdtraj
+                            atoms = [int(item) + 1 for item in atoms if not item == '']     # fix zero-indexing in mdtraj
                     else:
                         count = 0
                         for match in re.finditer('[\[\\\']([@0-9]+[,\ ]){1}[@0-9]+[\]\\\']', this_cv.replace(', ',',')):
