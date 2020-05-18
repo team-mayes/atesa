@@ -19,6 +19,7 @@ Example of aimless shooting prod input file
   vrand=100,					! Steps between redistribution of velocities according to Boltzmann distribution
   ig=-1,                        ! Psuedorandom seed (-1 = different each time)
   ifqnt=1,                      ! turn on qmmm namelist
+  irxncor=1,                    ! turn on irxncor umbrella sampling
  &end
  &qmmm
   qmmask='(:492,493) | (:218,219,193,194,195,197,143,220,480,484,485,153,154,223,224,227,478,376,378,490,153,417,427 & !@C,CA,N,HA,H,O) | (:11518,11511,11496,11516,11543,11541,11563)',

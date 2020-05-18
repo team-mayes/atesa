@@ -1503,6 +1503,11 @@ class UmbrellaSampling(JobType):
     def get_input_file(self, job_index, settings):
         input_file_name = 'umbrella_sampling_' + str(self.history.window) + '_' + str(self.history.index) + '.in'
         if not os.path.exists(settings.working_directory + '/' + input_file_name):
+            # Make sure template input file includes 'irxncor=1'
+            if not True in ['irxncor=1' in line for line in open(settings.path_to_input_files + '/umbrella_sampling_prod_' + settings.md_engine + '.in', 'r').readlines()]:
+                raise RuntimeError('did not find \'irxncor=1\' in input file: ' + settings.path_to_input_files +
+                                   '/umbrella_sampling_prod_' + settings.md_engine + '.in. Make sure that exactly that '
+                                   'string is present.')
             shutil.copy(settings.path_to_input_files + '/umbrella_sampling_prod_' + settings.md_engine + '.in',
                         settings.working_directory + '/' + input_file_name)
 
@@ -1583,9 +1588,10 @@ class UmbrellaSampling(JobType):
                                                '\nIs it formatted in an unusual way?')
                         atoms = atoms.replace('[', '').replace(']',',').replace('\'','')  # included delimeters for safety, but don't want them
                         if '@' in atoms:
-                            atoms = [item.replace('@','') for item in atoms.split(' @')]
+                            atoms = [item.replace('@','') for item in atoms.split(' @')]    # pytraj style atom indices
                         else:
-                            atoms = atoms.split(',')
+                            atoms = atoms.split(',')                        # mdtraj style atom indices
+                            atoms = [float(item) + 1 for item in atoms]     # fix zero-indexing in mdtraj
                     else:
                         count = 0
                         for match in re.finditer('[\[\\\']([@0-9]+[,\ ]){1}[@0-9]+[\]\\\']', this_cv.replace(', ',',')):
