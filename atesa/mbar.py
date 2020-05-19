@@ -179,6 +179,17 @@ def main(**kwargs):
     plt.show()
 
 if __name__ == '__main__':
+
+    def str2bool(v):
+        if isinstance(v, bool):
+            return v
+        if v.lower() in ('yes', 'true', 't', 'y', '1'):
+            return True
+        elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+            return False
+        else:
+            raise argparse.ArgumentTypeError('Boolean value expected.')
+
     parser = argparse.ArgumentParser(description='Evaluate free energy profile from the given umbrella sampling data')
 
     parser.add_argument('-t', metavar='temp', type=int, nargs=1, default=[300],
@@ -193,7 +204,7 @@ if __name__ == '__main__':
                         help='Number of samples from beginning of each data file to ignore in the analysis, as time to '
                              'decorrelate from initial coordinates. Generally should be used in a mutually exclusive '
                              'manner with the --decorr option. Default=1')
-    parser.add_argument('--decorr', metavar='decorr', type=bool, nargs=1, default=[True],
+    parser.add_argument('--decorr', metavar='decorr', type=str2bool, nargs=1, default=[True],
                         help='if True, use pymbar.timeseries.detectEquilibration and '
                              'pymbar.timeseries.subsampleCorrelatedData to attempt to automatically use only '
                              'equilibrated and decorrelated data in the analysis. Default=True')

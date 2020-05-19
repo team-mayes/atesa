@@ -1623,6 +1623,11 @@ class UmbrellaSampling(JobType):
                                            'specified in a non-standard way? Offending term is: ' + term)
                     this_min = rc_minmax[0][cv_index - 1]
                     this_max = rc_minmax[1][cv_index - 1]
+
+                    if optype in ['angle', 'dihedral']:     # convert from angles to radians for irxncor
+                        this_min = this_min * numpy.pi / 180
+                        this_max = this_max * numpy.pi / 180
+
                     alp = float(coeff)/(this_max - this_min)
 
                     # Finally, write it out and increment ordinal

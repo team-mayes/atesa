@@ -3,6 +3,7 @@
   <component name="ChangeListManager">
     <list default="true" id="55679143-7654-431c-aee1-71d5375f0f66" name="Default" comment="">
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/atesa/jobtype.py" afterPath="$PROJECT_DIR$/atesa/jobtype.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/atesa/mbar.py" afterPath="$PROJECT_DIR$/atesa/mbar.py" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -157,8 +158,8 @@
       <file leaf-file-name="jobtype.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/atesa/jobtype.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="260">
-              <caret line="1594" column="25" lean-forward="true" selection-start-line="1594" selection-start-column="25" selection-end-line="1594" selection-end-column="25" />
+            <state relative-caret-position="179">
+              <caret line="1628" column="60" lean-forward="false" selection-start-line="1628" selection-start-column="60" selection-end-line="1628" selection-end-column="60" />
               <folding>
                 <element signature="e#164#174#0" expanded="true" />
               </folding>
@@ -179,8 +180,8 @@
       <file leaf-file-name="mbar.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/atesa/mbar.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="118">
-              <caret line="118" column="37" lean-forward="false" selection-start-line="118" selection-start-column="37" selection-end-line="118" selection-end-column="37" />
+            <state relative-caret-position="-1312">
+              <caret line="73" column="0" lean-forward="true" selection-start-line="73" selection-start-column="0" selection-end-line="73" selection-end-column="0" />
               <folding>
                 <element signature="e#110#119#0" expanded="true" />
               </folding>
@@ -227,8 +228,8 @@
       <find>def get_next</find>
       <find>shutil</find>
       <find>set</find>
-      <find>window_index</find>
       <find>settings.</find>
+      <find>window_index</find>
     </findStrings>
     <replaceStrings>
       <replace>'../../data/atesa.config'</replace>
@@ -316,9 +317,9 @@
         <option value="$PROJECT_DIR$/atesa/data/atesa.config" />
         <option value="$PROJECT_DIR$/atesa/main.py" />
         <option value="$PROJECT_DIR$/atesa/tests/test_jobtype.py" />
-        <option value="$PROJECT_DIR$/atesa/mbar.py" />
         <option value="$PROJECT_DIR$/atesa/data/input_files/umbrella_sampling_prod_amber.in" />
         <option value="$PROJECT_DIR$/atesa/tests/test_data/umbrella_sampling_2.5_1.in" />
+        <option value="$PROJECT_DIR$/atesa/mbar.py" />
         <option value="$PROJECT_DIR$/atesa/jobtype.py" />
       </list>
     </option>
@@ -1240,16 +1241,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/atesa/mbar.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="118">
-          <caret line="118" column="37" lean-forward="false" selection-start-line="118" selection-start-column="37" selection-end-line="118" selection-end-column="37" />
-          <folding>
-            <element signature="e#110#119#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/atesa/interpret.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="317">
@@ -1266,10 +1257,20 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/atesa/mbar.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-1312">
+          <caret line="73" column="0" lean-forward="true" selection-start-line="73" selection-start-column="0" selection-end-line="73" selection-end-column="0" />
+          <folding>
+            <element signature="e#110#119#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/atesa/jobtype.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="260">
-          <caret line="1594" column="25" lean-forward="true" selection-start-line="1594" selection-start-column="25" selection-end-line="1594" selection-end-column="25" />
+        <state relative-caret-position="179">
+          <caret line="1628" column="60" lean-forward="false" selection-start-line="1628" selection-start-column="60" selection-end-line="1628" selection-end-column="60" />
           <folding>
             <element signature="e#164#174#0" expanded="true" />
           </folding>
