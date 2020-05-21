@@ -198,9 +198,11 @@ def two_line_test(results, plots, two_line_threshold=0.5):
                         (numpy.asarray(points1[0]), numpy.asarray(points1[1]), {'legend': '1st slope: ' + '%.3f' % best_closest[1].slope}),
                         (numpy.asarray(points2[0]), numpy.asarray(points2[1]), {'legend': '2nd slope: ' + '%.3f' % best_closest[2].slope}),
                         _with='lines', terminal='dumb 80,40', unset='grid')
-        print('Model scores: ' + str(numpy.asarray([result.fun for result in results])))
-        print('First line values: ' + str(points1[1]))
-        print('Second line values: ' + str(points2[1]))
+    if plots:
+        print('Automagic plot data:')
+        print(' Model scores: ' + str(numpy.asarray([result.fun for result in results])))
+        print(' First line values: ' + str(points1[1]))
+        print(' Second line values: ' + str(points2[1]))
 
     if not best_closest:    # no pairs of lines whose intersection was closest to their shared point
         return -1
@@ -265,7 +267,7 @@ def main(i, k, f, q, r, o, automagic, plots, quiet, two_line_threshold):
         fixed = []
         dims = running
     if automagic:
-        fixed = []
+        #fixed = []
         dims = -1
         running = 0
 
@@ -508,7 +510,13 @@ def main(i, k, f, q, r, o, automagic, plots, quiet, two_line_threshold):
         plt.xlabel('Reaction Coordinate', weight='bold')
         ax.bar(rc_values, probs, width=0.9*(rc_values[1] - rc_values[0]), color='#00274C')
         ax.plot(rc_values, (1 + erf(numpy.array([value for value in rc_values])))/2, color='#FFCB05', linewidth=3)
-        ax.legend(['Theory', 'Model'])
+        ax.legend(['Ideal', 'Observed'])
+
+        print('Committor sigmoid histogram data:')
+        print(' RC values: ' + str(rc_values))
+        print(' Observed probabilities of commitment to the forward basin: ' + str(probs))
+        print(' Ideal committor sigmoid: ' + str((1 + erf(numpy.array([value for value in rc_values])))/2))
+
         fig.canvas.draw()
         plt.show()
 
@@ -543,7 +551,8 @@ if __name__ == "__main__":
     parser.add_argument('--plots', action='store_true', default=False,
                         help='If True, plots the final fit between the model and data committor sigmoid.'
                              'If this option is given alongside automagic, gnuplot will be used to write plots to the '
-                             'terminal during evaluations of the automagic termination criterion (if it is installed).')
+                             'terminal during evaluations of the automagic termination criterion (if it is installed). '
+                             'The sigmoid data is also printed to the terminal.')
     parser.add_argument('--two_line_threshold', metavar='two_line_threshold', type=float, nargs=1, default=[0.5],
                         help='If this option is given alongside automgagic, sets the maximum ratio of slopes in the'
                              'two-line test. See the documentation for automagic for details. Default=0.5')

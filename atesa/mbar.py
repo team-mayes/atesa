@@ -14,6 +14,46 @@ import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 
+
+def update_progress(progress, message='Progress'):
+    """
+    Print a dynamic progress bar to stdout.
+
+    Credit to Brian Khuu from stackoverflow, https://stackoverflow.com/questions/3160699/python-progress-bar
+
+    Parameters
+    ----------
+    progress : float
+        A number between 0 and 1 indicating the fractional completeness of the bar. A value under 0 represents a 'halt'.
+        A value at 1 or bigger represents 100%.
+    message : str
+        The string to precede the progress bar (so as to indicate what is progressing)
+
+    Returns
+    -------
+    None
+
+    """
+    barLength = 10  # Modify this to change the length of the progress bar
+    status = ""
+    if isinstance(progress, int):
+        progress = float(progress)
+    if not isinstance(progress, float):
+        progress = 0
+        status = "error: progress var must be float\r\n"
+    if progress < 0:
+        progress = 0
+        status = "Halt...\r\n"
+    if progress >= 1:
+        progress = 1
+        status = "Done!\r\n"
+    block = int(round(barLength * progress))
+    text = "\r" + message + ": [{0}] {1}% {2}".format(
+        "#" * block + "-" * (barLength - block), round(progress * 100, 2), status)
+    sys.stdout.write(text)
+    sys.stdout.flush()
+
+
 def main(**kwargs):
     """
     Main function for mbar.py. Collect all files in the present directory whose names begin with "rcwin_" and end with
@@ -65,9 +105,12 @@ def main(**kwargs):
     rc0_k = []  # window centers
 
     # pymbar wants data in the form of a np.ndarray u_kn of shape [k, n] where there are k states and n samples
-    # nb that u_kn has every sample in every row, regardless of the "source" window
+    # n.b. that u_kn has every sample in every row, regardless of the "source" window
     centers = []
     alldata = []
+    if not kwargs['quiet']:
+        count = 0
+        update_progress(0, 'Collecting data')
     for k in range(K):
         lines = open(data_files[k], 'r').readlines()
         data = np.asarray([float(line.split()[1]) for line in lines][:])[kwargs['ignore'][0]:]
@@ -95,17 +138,36 @@ def main(**kwargs):
         for n in range(len(A_n)):
             rc_kn[k,n] = A_n[n]        # list of all decorrelated samples in this window
 
+        if not kwargs['quiet']:
+            count += 1
+            update_progress(count / K, 'Collecting data')
+
     # print([rc0_k[k] for k in range(K)])
     # print([numpy.mean([item for item in rc_kn[k,:] if not item == 0]) - rc0_k[k] for k in range(K)])
     # print([scipy.stats.sem([item for item in rc_kn[k,:] if not item == 0]) for k in range(K)])
 
-    fig, ax = plt.subplots()
-    ax.errorbar([rc0_k[k] for k in range(K)], [numpy.mean([item for item in rc_kn[k,:] if not item == 0]) - rc0_k[k] for k in range(K)], yerr=[scipy.stats.sem([item for item in rc_kn[k,:] if not item == 0]) for k in range(K)], color='#0072BD', lw=1)
-    plt.ylabel('Mean Value', weight='bold')
-    plt.xlabel('Reaction Coordinate', weight='bold')
-    plt.title('THIS IS NOT YOUR FREE ENERGY PROFILE\nThis plot should be smooth. If it is not, you may have some '
-              'sampling abnormalities at the unsmooth regions. See ATESA\'s documentation for further information.')
-    plt.show()
+    print('checkpoint 0')
+
+    # todo: figure out how to clean this particular plot up
+    if not kwargs['quiet']:
+        fig, ax = plt.subplots()
+        ax.errorbar([rc0_k[k] for k in range(K)], [numpy.mean([item for item in rc_kn[k,:] if not item == 0]) - rc0_k[k] for k in range(K)], yerr=[scipy.stats.sem([item for item in rc_kn[k,:] if not item == 0]) for k in range(K)], color='#0072BD', lw=1)
+        plt.ylabel('Mean Value', weight='bold')
+        plt.xlabel('Reaction Coordinate', weight='bold')
+        plt.title('THIS IS NOT YOUR FREE ENERGY PROFILE\nThis plot should probably be smooth.\nOtherwise, you may have some'
+                  ' sampling abnormalities.')
+        plt.show()
+
+    open(kwargs['o'][0], 'w').close()   # initialize output file (and overwrite it if it exists)
+    with open(kwargs['o'][0], 'a') as f:
+        f.write('ATESA mbar.py output file. Skip to the end for the free energy profile if desired.\n')
+        f.write('\n~~Mean Value Plot~~\n')
+        f.write('THIS IS NOT YOUR FREE ENERGY PROFILE\nThis plot should probably be smooth.'
+                '\nOtherwise, you may have some sampling abnormalities.\nSee ATESA\'s documentation for further '
+                'information.\n')
+        f.write('Reaction coordinate    Mean value\n')
+        for k in range(K):
+            f.write(str(rc0_k[k]) + '   ' + str(numpy.mean([item for item in rc_kn[k,:] if not item == 0])) + '\n')
 
     # Deprecated first-value plot
     # fig, ax = plt.subplots()
@@ -121,17 +183,28 @@ def main(**kwargs):
     # n, bins, patches = ax.hist([item for item in np.reshape([rc_kn[k,:] for k in range(K)],-1) if not item == 0], int(10 * nbins))
     # plt.show()
 
-    fig = plt.figure()
-    ax = fig.add_subplot(111)
+    print('checkpoint 1')
 
-    for this_data in alldata:
-        nextcolor = list(colors.to_rgb(next(ax._get_patches_for_fill.prop_cycler).get('color'))) + [0.75]
-        ax.hist(this_data, list(numpy.arange(min(this_data), max(this_data) + 0.05, 0.05)), color=nextcolor)
-        fig.canvas.draw()
+    with open(kwargs['o'][0], 'a') as f:
+        #f.write('\n~~Sampling Histogram~~\nEach line represents the samples in a single window\n')
 
-    plt.xlabel('Reaction Coordinate', weight='bold')
-    plt.ylabel('Number of Samples', weight='bold')
-    plt.show()
+        if not kwargs['quiet']:
+            fig = plt.figure()
+            ax = fig.add_subplot(111)
+
+        for this_data in alldata:
+            if not kwargs['quiet']:
+                nextcolor = list(colors.to_rgb(next(ax._get_patches_for_fill.prop_cycler).get('color'))) + [0.75]
+                ax.hist(this_data, list(numpy.arange(min(this_data), max(this_data) + 0.05, 0.05)), color=nextcolor)
+                fig.canvas.draw()
+            #f.write(str(this_data) + '\n')
+
+        if not kwargs['quiet']:
+            plt.xlabel('Reaction Coordinate', weight='bold')
+            plt.ylabel('Number of Samples', weight='bold')
+            plt.show()
+
+    print('checkpoint 2')
 
     N_max = numpy.max(N_k)  # largest amount of data in a single simulation
     u_kn = numpy.zeros([K,N_max], numpy.float64)
@@ -147,7 +220,11 @@ def main(**kwargs):
         for n in range(N_k[k]):
             bin_kn[k,n] = int((rc_kn[k][n] - rc_min) / delta)   # compute bin assignment
 
+    print('checkpoint 3')
+
     # Evaluate reduced energies in all umbrellas
+    count = 0
+    update_progress(0, 'Processing data')
     for k in range(K):
         for n in range(N_max):
             for l in range(K):
@@ -157,26 +234,44 @@ def main(**kwargs):
                 # Compute energy of point n interpreted as from window k with umbrella restraint l
                 u_kln[k,l,n] = u_kn[k,n] + beta * K_k[k] * drc**2
 
-    mbar = pymbar.mbar.MBAR(u_kln, N_k, verbose=True, maximum_iterations=1000)
+        if not kwargs['quiet']:
+            count += 1
+            update_progress(count / K, 'Processing data')
+
+    print('checkpoint 4')
+
+    if not kwargs['quiet']:
+        verbose = True
+    else:
+        verbose = False
+    mbar = pymbar.mbar.MBAR(u_kln, N_k, verbose=verbose, maximum_iterations=1000)
     (f_i, df_i) = mbar.computePMF(u_kn, bin_kn, nbins)
 
-    # Normalize by beta to convert from kT's of energy to [whatever units beta is in] of energy
+    # Normalize by beta to convert from kT's of energy to kcal/mol of energy
     f_i /= beta
     df_i /= beta
 
-    print("PMF (in the same units as kT)")
-    print("%8s %8s %8s" % ('bin', 'f', 'df'))
-    for i in range(nbins):
-        print("%8.2f %8.3f %8.3f" % (bin_center_i[i], f_i[i], df_i[i]))
+    print('checkpoint 5')
 
-    fig, ax = plt.subplots()
-    ax.plot([bin_center_i[i] for i in range(nbins)], [f_i[i] for i in range(nbins)], color='#0072BD', lw=2)
-    plt.fill_between([bin_center_i[i] for i in range(nbins)], np.asarray([f_i[i] for i in range(nbins)]) - np.asarray([df_i[i] for i in range(nbins)]),
-                     np.asarray([f_i[i] for i in range(nbins)]) + np.asarray([df_i[i] for i in range(nbins)]),
-                     alpha=0.5, facecolor='#0072BD')
-    plt.ylabel('Free Energy (kcal/mol)', weight='bold')
-    plt.xlabel('Reaction Coordinate', weight='bold')
-    plt.show()
+    if not kwargs['quiet']:
+        print("PMF (kcal/mol)")
+        print("%8s %8s %8s" % ('bin', 'f', 'df'))
+        for i in range(nbins):
+            print("%8.2f %8.3f %8.3f" % (bin_center_i[i], f_i[i], df_i[i]))
+
+        fig, ax = plt.subplots()
+        ax.plot([bin_center_i[i] for i in range(nbins)], [f_i[i] for i in range(nbins)], color='#0072BD', lw=2)
+        plt.fill_between([bin_center_i[i] for i in range(nbins)], np.asarray([f_i[i] for i in range(nbins)]) - np.asarray([df_i[i] for i in range(nbins)]),
+                         np.asarray([f_i[i] for i in range(nbins)]) + np.asarray([df_i[i] for i in range(nbins)]),
+                         alpha=0.5, facecolor='#0072BD')
+        plt.ylabel('Free Energy (kcal/mol)', weight='bold')
+        plt.xlabel('Reaction Coordinate', weight='bold')
+        plt.show()
+    with open(kwargs['o'][0], 'a') as f:
+        f.write('\n~~Free Energy Profile~~\nReaction coordinate bin center    Free energy (kcal/mol)    Error (kcal/mol)')
+        for i in range(nbins):
+            f.write(str(bin_center_i[i]) + '    ' + str(f_i[i]) + '    ' + str(df_i[i]) + '\n')
+
 
 if __name__ == '__main__':
 
@@ -197,6 +292,9 @@ if __name__ == '__main__':
     parser.add_argument('-k', metavar='kconst', type=float, nargs=1, default=[50.0],
                         help='restraint weight in each window. The default matches the default value for umbrella '
                              'sampling in ATESA. Default=50.0')
+    parser.add_argument('-o', metavar='output', type=str, nargs=1, default=['mbar.out'],
+                        help='the name of the output file containing the data for the histogram, mean value, and free '
+                             'energy plots. This file will be overwritten if it exists. Default=mbar.out')
     parser.add_argument('--min_data', metavar='min_data', type=int, nargs=1, default=[0],
                         help='minimum number of lines in a given data file for it to be eligible for inclusion in mbar.'
                              ' Default=0')
@@ -216,6 +314,8 @@ if __name__ == '__main__':
                         help='upper bound for range of RC values to include in the energy profile. The default setting '
                              'automatically uses the largest window center value available, so only set this option if'
                              ' the default isn\'t working or if you want less than the full profile.')
+    parser.add_argument('--quiet', action='store_true', default=False,
+                        help='suppress all plots and progress bars. The only output will be the output file.')
 
     arguments = vars(parser.parse_args())  # Retrieves arguments as a dictionary object
 
