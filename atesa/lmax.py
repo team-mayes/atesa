@@ -189,11 +189,16 @@ def two_line_test(results, plots, two_line_threshold=0.5):
                 best_closest = [closest, opt1, opt2]
 
     if gnuplot and plots:
-        points1 = [[i + 1 for i in range(len(results))],
+        if len(results[0].x) + 2 == len(results[1].x):  # if this is True, results include rate-of-change terms
+            min_dims = (len(results[0].x) - 1) / 2      # smallest model dimensionality to be plotted (-1 for constant)
+        else:   # no rate-of-change terms
+            min_dims = len(results[0].x) - 1
+
+        points1 = [[i + min_dims for i in range(len(results))],
                    [best_closest[1].slope * (i + 1) + best_closest[1].intercept for i in range(len(results))]]
-        points2 = [[i + 1 for i in range(len(results))],
+        points2 = [[i + min_dims for i in range(len(results))],
                    [best_closest[2].slope * (i + 1) + best_closest[2].intercept for i in range(len(results))]]
-        gnuplotlib.plot((numpy.asarray([item + 1 for item in range(len(results))]),
+        gnuplotlib.plot((numpy.asarray([item + min_dims for item in range(len(results))]),
                         numpy.asarray([result.fun for result in results])),
                         (numpy.asarray(points1[0]), numpy.asarray(points1[1]), {'legend': '1st slope: ' + '%.3f' % best_closest[1].slope}),
                         (numpy.asarray(points2[0]), numpy.asarray(points2[1]), {'legend': '2nd slope: ' + '%.3f' % best_closest[2].slope}),
@@ -380,7 +385,7 @@ def main(i, k, f, q, r, o, automagic, plots, quiet, two_line_threshold):
             fixed = current_best[1]
             if qdot == 'present':
                 for item in fixed:
-                    if item > num_cvs:
+                    if item > num_cvs:  # remove qdot terms from fixed
                         fixed.remove(item)
 
         # Check termination criteria
@@ -406,7 +411,7 @@ def main(i, k, f, q, r, o, automagic, plots, quiet, two_line_threshold):
             termination_2 = True
             fixed = current_best[1]
             for item in fixed:
-                if item > num_cvs:
+                if item > num_cvs:  # remove qdot terms from fixed
                     fixed.remove(item)
             dims = len(fixed)
 
