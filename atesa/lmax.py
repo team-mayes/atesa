@@ -269,10 +269,12 @@ def main(i, k, f, q, r, o, automagic, plots, quiet, two_line_threshold):
 
     # Ignore arguments as described in documentation
     if running:
-        fixed = []
+        if fixed == [None]:
+            fixed = []
         dims = running
     if automagic:
-        #fixed = []
+        if fixed == [None]:
+            fixed = []
         dims = -1
         running = 0
 
@@ -364,7 +366,12 @@ def main(i, k, f, q, r, o, automagic, plots, quiet, two_line_threshold):
             this_A = []
             this_B = []
             for index in comb:  # produce k-by-len(A_data) matrices (list of lists) for the selected CVs
-                this_A.append([obs[index - 1] for obs in reduced_A])
+                try:
+                    this_A.append([obs[index - 1] for obs in reduced_A])
+                except TypeError:
+                    print(comb)
+                    print(index)
+                    raise RuntimeError('user-defined')
                 this_B.append([obs[index - 1] for obs in reduced_B])
             this_A = list(map(list, zip(*this_A)))  # transpose the matrices to get desired format
             this_B = list(map(list, zip(*this_B)))

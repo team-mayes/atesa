@@ -16,16 +16,13 @@ Likelihood maximization is invoked from the command line as:
 
 ::
 
-	lmax.py -i input_file [-k dimensions [-f fixed_cvs] | -r dimensions | --automagic [--plots] [--two_line_threshold ratio]] [-q qdot_setting] [-o output_file] [--quiet]
+	lmax.py -i input_file [-k dimensions | -r dimensions | --automagic [--two_line_threshold ratio]] [-f fixed_cvs] [-q qdot_setting] [-o output_file] [--plots] [--quiet]
 	
 `-i input_file`
 	The only strictly required argument for lmax.py, `input_file` should point to the aimless shooting output file of interest. Usually, this should be the longest "decorrelated" aimless shooting output file in the target working directory (named as "as_decorr_<length>.out", where <length> is the number of shooting points included before decorrelating). Decorrelated output files are produced automatically when using the information error convergence criterion criterion with aimless shooting, but otherwise they can be produced by running a new aimless shooting job with *resample* = True.
 	
 `-k dimensions`
 	This option mutually exclusive with `-r` and `\\-\\-automagic`. The `dimensions` argument should be an integer number of dimensions to include in the final reaction coordinate. This options will always return a reaction coordinate with "k" dimensions (assuming there are at least "k" CVs in the input file), and will arrive at that number of dimensions by comparing every possible k-dimensional combination of CVs. Note that this can take a prohibitively long time when there are a large number of CVs and/or shooting moves to consider, in which case use of either the `-r` or `\\-\\-automagic` option is encouraged instead. When using this option, the order that the CVs appear in the final RC is arbitrary.
-	
-	`-f fixed_cvs`
-		This option is only applicable when paired with the `-k` option, and specifies one or more CVs that are required in the final RC. For example, `-k 4 -f 12 31` would return the best four-dimensional RC that contains both CV12 and CV31. Obviously, the number of required CVs specified with this option must be less than or equal to the number given for `-k`.
 	
 `-r dimensions`
 	This option mutually exclusive with `-k` and `\\-\\-automagic`. The `dimensions` argument should be an integer number of dimensions to include in the final reaction coordinate. This options will always return a reaction coordinate with "r" dimensions (assuming there are at least "r" CVs in the input file), but unlike the `-k` setting, arrives at an r-dimensional result incrementally by finding the best 1-dimensional RC, then the best 2-dimensional RC that includes the coordinate from the best 1-dimensional RC, and so on. This procedure is much faster for high-dimensional data but may not result in the best possible RC, especially in cases where some particular *combination* of CVs is highly predictive of the simulation outcome while the individual CVs are not. The order that the CVs appear in the final RC is indicative of the order in which they were added (leftward terms first).
@@ -35,6 +32,9 @@ Likelihood maximization is invoked from the command line as:
 		
 	`\\-\\-two_line_threshold ratio`
 		Sets the threshold of the ratio of slopes below which the automagic two-line test may pass. See :ref:`Automagic` for details. Default = 0.5
+		
+`-f fixed_cvs`
+	This option specifies one or more CVs that are required in the final RC. For example, `-k 4 -f 12 31` would return the best four-dimensional RC that contains both CV12 and CV31. The number of required CVs specified with this option must be less than or equal to the number given for `-k` or `-r` if those options are given.
 
 `-q qdot_setting`
 	Specifies the inertial behavior of LMax. Valid options are: `present`, `absent`, and `ignore`. Default is `present`.
