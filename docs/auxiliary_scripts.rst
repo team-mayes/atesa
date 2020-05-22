@@ -92,6 +92,59 @@ ATESA also comes with a separate script for evaluating reaction coordinates for 
 	
 The produced output file `rc.out` is (optionally) used as input for a committor analysis run (see :ref:`CommittorAnalysis`). Note that running this script can take a very long time if there is a large number of shooting moves in the indicated working directory. The user should prepare for as much as 10 seconds per shooting move (equal to the number of lines in the raw aimless shooting output file), depending on the available hardware.
 
+.. _MBAR:
+
+mbar.py: Energy Profiles from US
+--------------------------------
+
+The output files from an umbrella sampling (US) run can be converted into a free energy profile by any number of methods, but one of the most ideal is the Multistate Bennett Acceptance Ratio", or "MBAR". ATESA comes with a suitable implementation of MBAR using the `pymbar <https://github.com/choderalab/pymbar>`_ package available from the Chodera lab.
+
+The basic task in interpreting umbrella sampling data is to "subtract" the effect of the known harmonic restraints on the sampling, leaving only the underlying free energy profile. For a discussion of the exact workings of MBAR, the reader is directed to `Shirts and Chodera, J Chem Phys. 2008; 129(12): 124105 <https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2671659/>`_.
+
+If supported by the local python environment, mbar.py produces several plots: first, a "mean value" plot that shows the derivation from the window center in each data file. This is a diagnostic tool to help identify any problematic regions; if there is no issue, the plot should be a smooth waveform passing through 0 near the middle. Then, it produces a histogram to show the coverage of sampling over the range of the reaction coordinate. There should be no gaps in this plot, or else additional data must be collected to cover the gaps. Finally, it plots the free energy profile itself. All of the data for these plots is also printed the the output file (see the `-o` option below) regardless of whether the plots are shown.
+
+mbar.py looks for and uses all data files in the present directory whose name begins with "rcwin_" and ends with "_us.dat". This matches the output files produced by umbrella sampling with ATESA. The script is called directly in the command line from within the desired working directory as follows:
+
+::
+
+	mbar.py [-k kconst] [-t temp] [-o output] [--min_data min] [--ignore threshold] [--decorr] [--rc_min min] [--rc_max max] [--quiet]
+	
+`-k kconst`
+
+	The harmonic restraint weight used during umbrella sampling in kcal/mol. This implementation of MBAR requires that all of the restraints be identical. The default is equal to the default setting during an ATESA umbrella sampling job. Default = 50
+	
+`-t temp`
+
+	The temperature at which the simulations were performed, in K. This implementation of MBAR requires that all of the temperatures be identical. The default is equal to the default setting during an ATESA umbrella sampling job. Default = 300
+	
+`-o output`
+
+	The name of the output file produced by the script. It will be overwritten if it exists. Default = mbar.out
+	
+`--min_data min`
+
+	The minimum number of samples that must be present in a given data file for it to be included in the analysis. This can be useful to exclude results from simulations that did not finish for some reason, but should be used with care. Default = 0
+	
+`--ignore threshold`
+
+	The number of samples from the beginning of each data file to ignore during analysis. This is useful for manually specifying a decorrelation time from the initial coordinates in each window, if desired. Probably should not be used in combination with `--decorr`. Default = 1
+	
+`--decorr`
+
+	If this option is given, then the built-in pymbar.timeseries.detectEquilibration and pymbar.timeseries.subsampleCorrelatedData functions are used to attempt to automatically pare the data in each data file down to equilibrated and decorrelated samples. If you don't know what this means, you probably *should* use it.
+	
+`--rc_min min`
+
+	The smallest value of the reaction coordinate to include in the final energy profile. If this option isn't specified, then the smallest window center is used instead (which is usually safe).
+	
+`--rc_max max`
+
+	The largest value of the reaction coordinate to include in the final energy profile. If this option isn't specified, then the largest window center is used instead (which is usually safe).
+	
+`--quiet`
+
+	If this option is given, all the output to the terminal and the display of plots is suppressed, and the only result is the output file.
+
 .. _BoltzmannWeight:
 
 boltzmann_weight.py: Energy Profiles from EPS

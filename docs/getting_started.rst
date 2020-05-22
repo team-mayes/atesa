@@ -46,12 +46,12 @@ Every input file must be appropriate for your specific molecular model, and also
 
 ``aimless_shooting``
 
-Aimless shooting input files for the following step types are required for jobs with job_type "aimless_shooting" or "find_ts".
+Aimless shooting input files for the following step types are required for jobs with job_type "aimless_shooting" or "find_ts":
 
 * **init**: Aimless shooting "init" steps are extremely short simulations whose only purpose is to obtain a fresh set of initial velocities for the following "prod" step. To this end, the "init" input file should be configured to generate new initial velocities from the Boltzmann distribution (as opposed to using velocities from the input coordinate file), and to only perform a single simulation step with an extremely small time step. In Amber, the following settings should be specified in the &cntrl namelist, in addition to any other model-specific settings ("!" denotes a comment in Amber)::
 		
 	ntx=1,		! read coordinates but not velocities from input coordinate file
-  	ntxo=1,		! ASCII-formatted restart file
+  	ntxo=1,		! ASCII-formatted restart file (required for ATESA)
   	nstlim=1,	! one simulation step total
 	dt=0.0000001,	! extremely short time step
   	tempi=300.0,	! or whatever temperature (same as temp0)
@@ -60,15 +60,15 @@ Aimless shooting input files for the following step types are required for jobs 
 * **prod**: Aimless shooting "prod" steps are the primary simulation steps for each shooting move. They take the initial coordinates and velocities from an "init" step (with velocities reversed in the case of backward trajectories) and run until the model commits to one of the stable states defined in the configuration file. Therefore, the time step and number of simulation steps should be much larger than in an "init" simulation. In Amber, the following settings should be specified in the &cntrl namelist, instead of the above "init" settings and in addition to any other model-specific settings::
 
 	ntx=5,		! read coordinates AND velocities from input coordinate file
-  	ntxo=1,		! ASCII-formatted restart file
-  	nstlim=5000,	! a large maximum number of steps; will be terminated early
+  	ntxo=1,		! ASCII-formatted restart file (required for ATESA)
+  	nstlim=5000,	! a large maximum number of steps; will probably be terminated early
   	dt=0.001,	! or whatever desired simulation time step
   	irest=1,	! restart simulation from preceding "init" step
   	temp0=300.0,	! or whatever temperature
   	
 ``committor_analysis``
 
-A committor analysis input file for the following step type is required for jobs with job_type "committor_analysis" only.
+Only a "prod" committor analysis input file is required for jobs with job_type "committor_analysis":
 
 * **prod**: Committor analysis only consists of "prod" steps. These jobs can use exactly the same settings as aimless shooting "prod" steps, except that each simulation should obtain new velocities, as in an aimless shooting "init" steps. In Amber, that means that these three options should be set as follows::
 
@@ -76,9 +76,17 @@ A committor analysis input file for the following step type is required for jobs
 	tempi=300.0,	! or whatever temperature (same as temp0)
 	irest=0,	! do not restart, use new velocities (this is the default)
 	
+``umbrella_sampling``
+
+Only a "prod" umbrella sampling input file is required for jobs with job_type "umbrella_sampling":
+
+* **prod**: Umbrella sampling only consists of "prod" steps. As this type of umbrella sampling is built on unique Amber functionality, only Amber is supported. Umbrella sampling simulations are a little different in that the user-supplied input file is used as the foundation for additional data that ATESA appends in new lines at the end. This file can be almost identical to the aimless shooting "prod" file, and the only required setting in the base fire is that "irxncor" is turned on::
+
+	irxncor=1,		! enable irxncor umbrella sampling
+	
 ``equilibrium_path_sampling``
 
-Equilibrium path sampling input files for the following step types are required for jobs with job_type "equilibrium_path_sampling" only.
+Equilibrium path sampling input files for the following step types are required for jobs with job_type "equilibrium_path_sampling":
 
 * **init**: Equilibrium path sampling "init" steps are functionally identical to aimless shooting "init" steps and can use an identical input file.
 
@@ -96,9 +104,9 @@ Equilibrium path sampling input files for the following step types are required 
 		
 ``find_ts``
 
-A find_ts input file for the following step type is required for jobs with job_type "find_ts" only.
+Only a "prod" find_ts input file for the following step type is required for jobs with job_type "find_ts":
 
-* **prod** "find_ts" jobs consist only of "prod" steps. This file can be mostly identical to the "aimless_shooting" prod input file, with two key additions: there must be a restraint specified using the file "find_ts_restraints.disang", and the weight of the restraint must be set to steadily increase over time (beginning from zero). An example of a working implementation of this in Amber is as follows (options in the &cntrl namelist that can be the same as in aimless shooting are here replaced by an elipse (...) for brevity, but they must still be explicitly specified in the input file)::
+* **prod** "find_ts" jobs consist only of "prod" steps. This file can be mostly identical to the "aimless_shooting" prod input file, with two key additions: there must be a restraint specified using the file "find_ts_restraints.disang", and the weight of the restraint must be set to steadily increase over time (beginning from zero). An example of a working implementation of this in Amber is as follows. Options in the &cntrl namelist that can be the same as in aimless shooting are here replaced by an elipse (...) for brevity, but they must still be explicitly specified in the input file. Other than that, it should be quite safe to copy the rest of this exactly into your Amber "find_ts" input file::
 
 	 &cntrl
 	  ...

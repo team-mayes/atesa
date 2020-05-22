@@ -72,7 +72,7 @@ def main(**kwargs):
     """
 
     # Compile and sort data files
-    data_files = [name for name in glob.glob('rcwin_*.dat') if len(open(name, 'r').readlines()) > kwargs['min_data'][0]]
+    data_files = [name for name in glob.glob('rcwin_*_us.dat') if len(open(name, 'r').readlines()) > kwargs['min_data'][0]]
     pattern = re.compile('[-0-9.]+')
     data_files = sorted(data_files, key=lambda x: float(pattern.findall(x)[0]))
 
@@ -115,7 +115,7 @@ def main(**kwargs):
         lines = open(data_files[k], 'r').readlines()
         data = np.asarray([float(line.split()[1]) for line in lines][:])[kwargs['ignore'][0]:]
 
-        if not kwargs['decorr'][0]:
+        if not kwargs['decorr']:
             A_n = data
         else:
             # Use pymbar.timeseries to cut out pre-equilibrated data and decorrelate
@@ -145,8 +145,6 @@ def main(**kwargs):
     # print([rc0_k[k] for k in range(K)])
     # print([numpy.mean([item for item in rc_kn[k,:] if not item == 0]) - rc0_k[k] for k in range(K)])
     # print([scipy.stats.sem([item for item in rc_kn[k,:] if not item == 0]) for k in range(K)])
-
-    print('checkpoint 0')
 
     # todo: figure out how to clean this particular plot up
     if not kwargs['quiet']:
@@ -183,8 +181,8 @@ def main(**kwargs):
     # n, bins, patches = ax.hist([item for item in np.reshape([rc_kn[k,:] for k in range(K)],-1) if not item == 0], int(10 * nbins))
     # plt.show()
 
-    print('checkpoint 1')
-
+    # todo: find a better way to write histogram data to the output file without just writing every single point out.
+    # todo: like, just figure out the bin boundaries and heights of the bars in those windows.
     with open(kwargs['o'][0], 'a') as f:
         #f.write('\n~~Sampling Histogram~~\nEach line represents the samples in a single window\n')
 
@@ -204,8 +202,6 @@ def main(**kwargs):
             plt.ylabel('Number of Samples', weight='bold')
             plt.show()
 
-    print('checkpoint 2')
-
     N_max = numpy.max(N_k)  # largest amount of data in a single simulation
     u_kn = numpy.zeros([K,N_max], numpy.float64)
     u_kln = numpy.zeros([K,K,N_max], numpy.float64) # u_kln[k,l,n] is the reduced potential energy of snapshot n from umbrella simulation k evaluated at umbrella l
@@ -219,8 +215,6 @@ def main(**kwargs):
     for k in range(K):
         for n in range(N_k[k]):
             bin_kn[k,n] = int((rc_kn[k][n] - rc_min) / delta)   # compute bin assignment
-
-    print('checkpoint 3')
 
     # Evaluate reduced energies in all umbrellas
     count = 0
@@ -238,8 +232,6 @@ def main(**kwargs):
             count += 1
             update_progress(count / K, 'Processing data')
 
-    print('checkpoint 4')
-
     if not kwargs['quiet']:
         verbose = True
     else:
@@ -250,8 +242,6 @@ def main(**kwargs):
     # Normalize by beta to convert from kT's of energy to kcal/mol of energy
     f_i /= beta
     df_i /= beta
-
-    print('checkpoint 5')
 
     if not kwargs['quiet']:
         print("PMF (kcal/mol)")
@@ -274,17 +264,6 @@ def main(**kwargs):
 
 
 if __name__ == '__main__':
-
-    def str2bool(v):
-        if isinstance(v, bool):
-            return v
-        if v.lower() in ('yes', 'true', 't', 'y', '1'):
-            return True
-        elif v.lower() in ('no', 'false', 'f', 'n', '0'):
-            return False
-        else:
-            raise argparse.ArgumentTypeError('Boolean value expected.')
-
     parser = argparse.ArgumentParser(description='Evaluate free energy profile from the given umbrella sampling data')
 
     parser.add_argument('-t', metavar='temp', type=int, nargs=1, default=[300],
@@ -302,10 +281,9 @@ if __name__ == '__main__':
                         help='Number of samples from beginning of each data file to ignore in the analysis, as time to '
                              'decorrelate from initial coordinates. Generally should be used in a mutually exclusive '
                              'manner with the --decorr option. Default=1')
-    parser.add_argument('--decorr', metavar='decorr', type=str2bool, nargs=1, default=[True],
-                        help='if True, use pymbar.timeseries.detectEquilibration and '
-                             'pymbar.timeseries.subsampleCorrelatedData to attempt to automatically use only '
-                             'equilibrated and decorrelated data in the analysis. Default=True')
+    parser.add_argument('--decorr', action='store_true', default=False,
+                        help='use pymbar.timeseries.detectEquilibration and pymbar.timeseries.subsampleCorrelatedData '
+                             'to attempt to automatically use only equilibrated and decorrelated data in the analysis.')
     parser.add_argument('--rc_min', metavar='rc_min', nargs=1, default=[''],
                         help='lower bound for range of RC values to include in the energy profile. The default setting '
                              'automatically uses the smallest window center value available, so only set this option if'

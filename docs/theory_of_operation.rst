@@ -67,8 +67,19 @@ Once a reaction coordinate has been obtained, it should be verified using new, u
 .. figure:: _images/committor_analysis.png
 
 	An pair of examples of committor analysis. At left, a "poor" model misjudges the reaction coordinate (RC) and the resulting committor analysis distribution (at bottom) is bimodal at either end. At right, a much better model closely matches its predicted separatrix (RC = 0) with the "real" separatrix, resulting in a unimodal distribution centered near 1/2.
+	
+What is Umbrella Sampling?
+--------------------------
+
+ATESA's preferred method for obtaining a free energy profile along a determined reaction coordinate is umbrella sampling. This is a fairly simple method where many simulations beginning along different portions of the reaction coordinate are restrained to that portion using a harmonic bias. The shape of the resulting distribution of reaction coordinate values sampled over the course of the simulations can be interpreted to measure the underlying free energy profile by "subtracting" the influence of the known harmonic restraints using any of a number of algorithms (one of which, the Multistate Bennett Acceptance Ratio, or "MBAR", is automated in ATESA using the `pymbar <https://github.com/choderalab/pymbar>`_ package).
+
+.. figure:: _images/umbrella_sampling.png
+
+	An example of the raw sampling data from an umbrella sampling job. Colors alternate to help distinguish different simulations, with adjacent simulations overlapping in sampling to avoid gaps. This data can be directly interpreted using MBAR to obtain a free energy profile.
+
+Umbrella sampling is a very efficient free energy method, but its primary limitation is the requirement that a restraint can be defined along the desired reaction coordinate. Recent developments in the Amber simulations package make it possible to define restraints along coordinates consisting of linear combinations of distance, angle, dihedral, and difference-of-distance terms, which suits the standard behavior of ATESA perfectly.
 
 What is Equilibrium Path Sampling?
 ----------------------------------
 
-The free energy profile along the reaction coordinate can be determined by several methods, but the most general of them is equilibrium path sampling, wherein the reaction coordinate is divided into bins and the unbiased distribution of reaction coordinate values sampled within those bins is converted directly into free energy. ATESA automates collection of equilibrium path sampling data from an arbitrary array of initial coordinates, filling in gaps automatically using the tails of simulations from adjacent windows. Note that the tradeoff for the generality of this method is that is is highly inefficient, especially for rare events with high activation energies. Depending on the specifics of the system and the reaction coordinate, it is often more appropriate to use a Hamiltonian-biased free energy method such as umbrella sampling; however, no such method is (yet) automated within ATESA.
+Although it is efficient, umbrella sampling is not always suitable for every reaction coordinate. The most general pathway free energy method is equilibrium path sampling, wherein the reaction coordinate is divided into bins and the unbiased distribution of reaction coordinate values sampled within those bins is converted directly into free energy. This method requires no restraints and so supports arbitrary reaction coordinates. ATESA automates collection of equilibrium path sampling data from an arbitrary array of initial coordinates, filling in gaps automatically using the tails of simulations from adjacent windows. Note that the tradeoff for the generality of this method is that it can be highly inefficient, especially for rare events with high activation energies.

@@ -121,10 +121,37 @@ The working directory here should NOT be the same as the aimless shooting direct
 
 The results of a committor analysis job are written to the file "committor_analysis.out" in the working directory. Each line in this file gives the ratio of jobs that committed to the "forward" basin to the total number of jobs that committed to either basin. For more details on interpreting these results, see :ref:`CommittorAnalysis`.
 
+Umbrella Sampling
+~~~~~~~~~~~~~~~~~
+
+The final analysis step after a satisfactory committor analysis run is to obtain the free energy profile along the reaction coordinate. The preferred method for this is umbrella sampling, which is automated in ATESA for users with access to a build of Amber that supports the "irxncor=1" option (not yet publicly available as of May 2020; contact Mike Crowley at the National Renewable Energy Laboratory in Golden, CO if interested).
+
+The conditions under which equilibrium path sampling should be used instead are as follows:
+
+	* A version of Amber that supports umbrella sampling is not available; or
+
+	* The desired reaction coordinate contains unusual CV types. The supported CV types are: distances, angles, dihedrals, and differences of distances. ATESA's automatically generated CVs are only ever of the first three types.
+
+Umbrella Sampling can be called in ATESA through the main executable using the following settings (in addition to the :ref:`CoreSettings` above):
+
+.. code-block:: python
+
+	job_type = 'umbrella_sampling'
+	rc_definition = <rc_definition>
+	as_settings_file = <as_settings_file>
+	as_out_file = <as_output_file>
+	initial_coordinates = [<traj_file_1>, <traj_file_2>, ...]
+	
+The *as_settings_file* should point to the the "settings.pkl" file in the previous aimless shooting working directory; see the last entry in :ref:`CVDefinitions`. See :ref:`ReactionCoordinateDefinition` for details on the `rc_definition` option. The same *rc_definition* should be used for both committor analysis and umbrella sampling (or, if the *path_to_rc_option* was used for committor analysis, then the same for umbrella sampling and ``rc_eval.py``). The *as_out_file* option should point to the same file that was used as the input for the ``lmax.py`` run that generated the reaction coordinate being used.
+	
+The only unusual setting here is that the files pointed to in the *initial_coordinates* option can (and probably should) be *trajectories*, not single-frame coordinate files. These trajectories should represent at least one full transition path, from one basin to another. The easiest choice is to take the most recent accepted aimless shooting move and provide both its 'fwd' and 'bwd' trajectory files. ATESA will look through each frame of these trajectories to find the best initial coordinates for each sampling window.
+
+Beyond these settings, the user will probably want to set the lower and upper bounds of the reaction coordinate to sample over. See :ref:`UmbrellaSamplingSettings` for details. After an umbrella sampling run, the data can be converted into a free energy profile using :ref:`MBAR`.
+
 Equilibrium Path Sampling
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The final analysis step after a satisfactory committor analysis run is to obtain the free energy profile along the reaction coordinate. ATESA supports equilibrium path sampling (EPS) to obtain this profile through the main executable, using the following settings (in addition to the :ref:`CoreSettings` above):
+As a more generalized but less efficient alternative to umbrella sampling, ATESA supports equilibrium path sampling (EPS) to obtain this profile through the main executable, using the following settings (in addition to the :ref:`CoreSettings` above):
 
 .. code-block:: python
 
@@ -136,7 +163,9 @@ The final analysis step after a satisfactory committor analysis run is to obtain
 	
 The *as_settings_file* should point to the the "settings.pkl" file in the previous aimless shooting working directory; see the last entry in :ref:`CVDefinitions`. See :ref:`ReactionCoordinateDefinition` for details on the `rc_definition` option. The same *rc_definition* should be used for both committor analysis and equilibrium path sampling (or, if the *path_to_rc_option* was used for committor analysis, then the same for equilibrium path sampling and ``rc_eval.py``). The *as_out_file* option should point to the same file that was used as the input for the ``lmax.py`` run that generated the reaction coordinate being used. Finally, *initial_coordinates* can be used to select any number of coordinate files, usually taken from shooting points (coordinate files whose names end with "_init.rst7") from aimless shooting. By default, EPS windows that have fewer than 20 initial coordinate files are filled up by the endpoints of simulations in adjacent windows, but it is still advisable to provide at least a handful of unique starting structures.
 
-EPS is a highly generalized free energy method that does not rely on restraints or biases of any kind. The cost of this benefit is that it is also among the least efficient free energy methods available, requiring a relatively large amount of simulation to acquire comparable sampling coverage to, for example, umbrella sampling. For this reason, EPS is recommended for use only in cases where other methods are unsuitable, such as for example in cases of highly complex reaction coordinates that do not lend themselves to restraints. Future versions of ATESA may include automation of umbrella sampling as an alternative to equilibrium path sampling.
+Beyond these settings, the user will probably want to set the lower and upper bounds of the reaction coordinate to sample over. See :ref:`EquilibriumPathSamplingSettings` for details.
+
+EPS is a highly generalized free energy method that does not rely on restraints or biases of any kind. The cost of this benefit is that it is also among the least efficient free energy methods available, requiring a relatively large amount of simulation to acquire comparable sampling coverage to, for example, umbrella sampling. For this reason, EPS is recommended for use only in cases where other methods are unsuitable or unavailable.
 
 CAUTION: Because equilibrium path sampling measures the full energy profile instead of merely assessing the endpoints of simulations (as in aimless shooting and committor analysis), it is very sensitive to errors in the evaluation of the energy of any given state. For this reason, it is completely possible to have obtained reasonable aimless shooting and committor analysis results with a system or simulation parameters that are not suitable for equilibrium path sampling, for example owing to poor SCF convergence in QM calculations along portions of the RC. ATESA can NOT identify such errors on its own, and may produce EPS results that are not correct (but may appear reasonable at first glance)! It is the responsibility of the user to ensure that the EPS simulations are well-behaved and do not suffer from severe energetic or undersampling errors. Please direct any questions to `our GitHub page <https://github.com/team-mayes/atesa>` as an issue with the "question" label.
 
@@ -437,6 +466,8 @@ These options are specific to committor analysis runs only.
 
 	The threshold of *absolute value* of reaction coordinate below which shooting moves in the indicated *path_to_rc_out* file will be included in committor analysis. For example, if the above example contents of such a file were used and *rc_threshold* were set to 0.1, only the first of the two files (initial_coords_1_1_init_fwd.rst7) would be used for committor analysis. The user is encouraged to check the RC output file manually before using this option to ensure that they will have enough unique initial coordinate files to produce a useful committor analysis result (200 files is a good target). Default = 0.05
 
+.. _EquilibriumPathSamplingSettings:
+
 Equilibrium Path Sampling Settings
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -486,12 +517,14 @@ These options are specific to equilibrium path sampling (EPS) runs only.
 
 	A termination criterion for EPS that terminates the sampling in a given EPS window after this number of samples within it have been written to the EPS output file. Negative values mean no limit; sampling will continue indefinitely (until ATESA is terminated by other means). Default = -1
 	
+.. _UmbrellaSamplingSettings:	
+	
 Umbrella Sampling Settings
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 These options are specific to umbrella sampling (US) runs only. They mostly pertain to defining the restraints. It may be useful to run a test run first with only a few windows along a small subset of the full range of reaction coordinate values to verify these settings before continuing.
 
-Keep in mind that if you perform a large amount of sampling and then discover that there are gaps in your sampling, you can always submit a new umbrella sampling job (in a new working directory) with windows centered in the gaps and then copy the resulting output data files (named with "_us.dat") to the original working directory to include them all in the same analysis.
+Keep in mind that if you perform a large amount of sampling and then discover that there are gaps in your sampling, you can always submit a new umbrella sampling job (in a new working directory) with the same settings but with windows centered in the gaps, and then copy the resulting output data files (named with "_us.dat") to the original working directory to include them all in the same analysis.
 
 ``us_rc_min`` **‡**
 
