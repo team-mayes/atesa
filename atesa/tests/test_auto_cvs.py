@@ -31,9 +31,9 @@ class Tests(object):
         settings = argparse.Namespace()
         settings.topology = '../test_data/test.prmtop'
         settings.initial_coordinates = ['../test_data/test.rst7']
-        settings.cvs = ['']
-        settings.commit_fwd = ([101, 102], [103, 104], [1.5, 2.0], ['lt', 'gt'])
-        settings.commit_bwd = ([101, 102], [103, 104], [2.0, 1.5], ['gt', 'lt'])
+        settings.cvs = ['pytraj.distance(traj, \'@1 @2\')[0]', 'pytraj.angle(traj, \'@2 @3 @4\')[0]']
+        settings.commit_fwd = ([101, 102, 102], [103, 104, 105], [1.5, 2.0, 1.0], ['lt', 'gt', 'lt'])
+        settings.commit_bwd = ([101, 102, 102], [103, 104, 105], [2.0, 1.5, 1.8], ['gt', 'lt', 'gt'])
         settings.working_directory = './'
         settings.auto_cvs_radius = 5
         settings.auto_cvs_exclude_water = True

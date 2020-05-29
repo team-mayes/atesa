@@ -95,7 +95,12 @@ def main(**kwargs):
     except ValueError:      # default; use largest window center
         rc_max = float(pattern.findall(data_files[-1])[0])
 
-    K = len(data_files)             # number of umbrellas   # todo: is there a use-case for making this user-defined?
+    # Refresh data files to reflect new min and max, if necessary   # todo: could clean this up...
+    if not rc_max == float(pattern.findall(data_files[-1])[0]) or not rc_min == float(pattern.findall(data_files[0])[0]):
+        data_files = [name for name in glob.glob('rcwin_*_us.dat') if rc_min <= float(pattern.findall(name)[0]) <= rc_max and len(open(name, 'r').readlines()) > kwargs['min_data'][0]]
+        data_files = sorted(data_files, key=lambda x: float(pattern.findall(x)[0]))
+
+    K = len(data_files)             # number of umbrellas
     N_max = max(len(open(data_files[k], 'r').readlines()) for k in range(K))    # maximum number of snapshots/simulation
 
     rc_kn = numpy.zeros([K,N_max])  # rc_kn[k,n] is the RC for snapshot n from umbrella simulation k
@@ -112,35 +117,37 @@ def main(**kwargs):
         count = 0
         update_progress(0, 'Collecting data')
     for k in range(K):
-        lines = open(data_files[k], 'r').readlines()
-        data = np.asarray([float(line.split()[1]) for line in lines][:])[kwargs['ignore'][0]:]
-
-        if not kwargs['decorr']:
-            A_n = data
-        else:
-            # Use pymbar.timeseries to cut out pre-equilibrated data and decorrelate
-            [t0, g, Neff_max] = pymbar.timeseries.detectEquilibration(data)  # compute indices of uncorrelated timeseries
-            data_equil = data[t0:]
-            indices = pymbar.timeseries.subsampleCorrelatedData(data_equil, g=g)
-            A_n = data[indices]
-
         center = float(pattern.findall(data_files[k])[0])
-        if not center in centers:
-            centers.append(center)
-            alldata.append(list(data))
-        else:
-            center_index = centers.index(center)
-            alldata[center_index] += list(data)
 
-        N_k.append(len(A_n))        # number of decorrelated samples in this window
-        K_k.append(kconst)          # constant 20 kcal/mol spring constant
-        rc0_k.append(float(pattern.findall(data_files[k])[0]))  # window center from file name
-        for n in range(len(A_n)):
-            rc_kn[k,n] = A_n[n]        # list of all decorrelated samples in this window
+        if rc_min <= center <= rc_max:
+            lines = open(data_files[k], 'r').readlines()
+            data = np.asarray([float(line.split()[1]) for line in lines][:])[kwargs['ignore'][0]:]
 
-        if not kwargs['quiet']:
-            count += 1
-            update_progress(count / K, 'Collecting data')
+            if not kwargs['decorr']:
+                A_n = data
+            else:
+                # Use pymbar.timeseries to cut out pre-equilibrated data and decorrelate
+                [t0, g, Neff_max] = pymbar.timeseries.detectEquilibration(data)  # compute indices of uncorrelated timeseries
+                data_equil = data[t0:]
+                indices = pymbar.timeseries.subsampleCorrelatedData(data_equil, g=g)
+                A_n = data[indices]
+
+            if not center in centers:
+                centers.append(center)
+                alldata.append(list(A_n))
+            else:
+                center_index = centers.index(center)
+                alldata[center_index] += list(A_n)
+
+            N_k.append(len(A_n))        # number of decorrelated samples in this window
+            K_k.append(kconst)          # constant 20 kcal/mol spring constant
+            rc0_k.append(float(pattern.findall(data_files[k])[0]))  # window center from file name
+            for n in range(len(A_n)):
+                rc_kn[k,n] = A_n[n]        # list of all decorrelated samples in this window
+
+            if not kwargs['quiet']:
+                count += 1
+                update_progress(count / K, 'Collecting data')
 
     # print([rc0_k[k] for k in range(K)])
     # print([numpy.mean([item for item in rc_kn[k,:] if not item == 0]) - rc0_k[k] for k in range(K)])
@@ -165,7 +172,7 @@ def main(**kwargs):
                 'information.\n')
         f.write('Reaction coordinate    Mean value\n')
         for k in range(K):
-            f.write(str(rc0_k[k]) + '   ' + str(numpy.mean([item for item in rc_kn[k,:] if not item == 0])) + '\n')
+            f.write(str(rc0_k[k]) + '   ' + '%.3f' % numpy.mean([item for item in rc_kn[k,:] if not item == 0]) + '\n')
 
     # Deprecated first-value plot
     # fig, ax = plt.subplots()
@@ -181,21 +188,19 @@ def main(**kwargs):
     # n, bins, patches = ax.hist([item for item in np.reshape([rc_kn[k,:] for k in range(K)],-1) if not item == 0], int(10 * nbins))
     # plt.show()
 
-    # todo: find a better way to write histogram data to the output file without just writing every single point out.
-    # todo: like, just figure out the bin boundaries and heights of the bars in those windows.
     with open(kwargs['o'][0], 'a') as f:
-        #f.write('\n~~Sampling Histogram~~\nEach line represents the samples in a single window\n')
+        f.write('\n~~Sampling Histogram~~\nEach pair of lines is bin edges followed by bin heights\n')
 
-        if not kwargs['quiet']:
-            fig = plt.figure()
-            ax = fig.add_subplot(111)
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
 
         for this_data in alldata:
+            nextcolor = list(colors.to_rgb(next(ax._get_patches_for_fill.prop_cycler).get('color'))) + [0.75]
+            n, bins, null = ax.hist(this_data, list(numpy.arange(min(this_data), max(this_data) + 0.05, 0.05)), color=nextcolor)
             if not kwargs['quiet']:
-                nextcolor = list(colors.to_rgb(next(ax._get_patches_for_fill.prop_cycler).get('color'))) + [0.75]
-                ax.hist(this_data, list(numpy.arange(min(this_data), max(this_data) + 0.05, 0.05)), color=nextcolor)
                 fig.canvas.draw()
-            #f.write(str(this_data) + '\n')
+            f.write(' '.join(['%.3f' % item for item in bins]) + '\n')
+            f.write(' '.join([str(int(item)) for item in n]) + '\n\n')
 
         if not kwargs['quiet']:
             plt.xlabel('Reaction Coordinate', weight='bold')
@@ -258,9 +263,9 @@ def main(**kwargs):
         plt.xlabel('Reaction Coordinate', weight='bold')
         plt.show()
     with open(kwargs['o'][0], 'a') as f:
-        f.write('\n~~Free Energy Profile~~\nReaction coordinate bin center    Free energy (kcal/mol)    Error (kcal/mol)')
+        f.write('~~Free Energy Profile~~\nReaction coordinate    Free energy (kcal/mol)    Error (kcal/mol)\n')
         for i in range(nbins):
-            f.write(str(bin_center_i[i]) + '    ' + str(f_i[i]) + '    ' + str(df_i[i]) + '\n')
+            f.write('%.3f' % bin_center_i[i] + '    ' + '%.3f' % f_i[i] + '    ' + '%.3f' % df_i[i] + '\n')
 
 
 if __name__ == '__main__':

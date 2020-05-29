@@ -58,7 +58,9 @@ Certain settings should be given for every job. The following settings do not ha
 Basic Workflow
 --------------
 
-The following sections outline the contents of the configuration files for each part of a standard ATESA workflow. Following these steps will allow you to start with only a definition of each stable state and an model of one of them, and end with a validated reaction coordinate and a free energy profile along that coordinate connecting the two basins.
+The following sections outline the contents of the configuration files for each part of a standard ATESA workflow. Following these steps will allow you to start with only a definition of each stable state and an model of one of them (or with a hypothesized transition state model, if preferred), and end with a validated reaction coordinate and a free energy profile along that coordinate connecting the two basins. The workflow of a complete transition path sampling workflow with ATESA is outlined graphically here.
+
+.. figure:: _images/ATESA_workflow.png
 
 If this is your first time performing simulations with ATESA for this particular molecular model, it would be wise to manually double-check that any output files and resulting trajectories from the first simulations performed by ATESA look like you expect them to. In particular, you should ensure that there are no errors being returned by your molecular dynamics software or batch system that would necessitate a change in the relevant files in the *input_files* or *templates* directories (see :ref:`SettingUpSimulationFiles` and :ref:`FilePathSettings`).
 
@@ -124,7 +126,7 @@ The results of a committor analysis job are written to the file "committor_analy
 Umbrella Sampling
 ~~~~~~~~~~~~~~~~~
 
-The final analysis step after a satisfactory committor analysis run is to obtain the free energy profile along the reaction coordinate. The preferred method for this is umbrella sampling, which is automated in ATESA for users with access to a build of Amber that supports the "irxncor=1" option (not yet publicly available as of May 2020; contact Mike Crowley at the National Renewable Energy Laboratory in Golden, CO if interested).
+The final analysis step after a satisfactory committor analysis run is to obtain the free energy profile along the reaction coordinate. The preferred method for this is umbrella sampling, which is automated in ATESA for users with access to a build of Amber that supports the "irxncor=1" option (not yet publicly available as of May 2020; contact Michael F. Crowley at the National Renewable Energy Laboratory in Golden, CO if interested).
 
 The conditions under which equilibrium path sampling should be used instead are as follows:
 

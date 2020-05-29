@@ -10,6 +10,7 @@ import mdtraj
 import copy
 import numpy
 import collections
+import itertools
 
 import argparse
 
@@ -90,7 +91,7 @@ def main(settings):
         descriptions.append('distance between atoms ' + str(bond))
 
     # Repeat previous process for angles; only difference is added logic to find bonded triplets since there is no
-    # equivalent to topology._bonds for angles.
+    # equivalent to topology._bonds for angles
     angles = []
     for first_index in neighbors:
         for second_index in [item for item in neighbors if not item == first_index]:
@@ -104,7 +105,7 @@ def main(settings):
         cvs.append('mdtraj.compute_angles(mtraj, numpy.array([' + str(angle) + ']))[0][0] * 180 / numpy.pi')
         descriptions.append('angle between atoms ' + str(angle))
 
-    # And finally, dihedrals.
+    # Repeat for dihedrals
     dihedrals = []
     for angle in angles:
         for bond in bonds:
@@ -121,8 +122,37 @@ def main(settings):
 
     # Append code to obtain each dihedral as a string to cvs
     for dihedral in dihedrals:
-        cvs.append('mdtraj.compute_dihedrals(mtraj, numpy.array([' + str(dihedral) + ']))[0][0] * 180 / numpy.pi')
+        cvs.append(
+            'mdtraj.compute_dihedrals(mtraj, numpy.array([' + str(dihedral) + ']))[0][0] * 180 / numpy.pi')
         descriptions.append('dihedral between atoms ' + str(dihedral))
+
+    # And finally, difference-of-distance terms for atoms that appear in bonds with at least two other atoms in the
+    # commitment definitions
+    partners = []
+    for atom_index in commit_atoms:
+        this_partners = []
+        for local_index in range(len(settings.commit_fwd[0])):
+            if settings.commit_fwd[0][local_index] == atom_index and not settings.commit_fwd[1][local_index] in this_partners:
+                this_partners += [settings.commit_fwd[1][local_index]]
+        for local_index in range(len(settings.commit_fwd[1])):
+            if settings.commit_fwd[1][local_index] == atom_index and not settings.commit_fwd[0][local_index] in this_partners:
+                this_partners += [settings.commit_fwd[0][local_index]]
+        for local_index in range(len(settings.commit_bwd[0])):
+            if settings.commit_bwd[0][local_index] == atom_index and not settings.commit_bwd[1][local_index] in this_partners:
+                this_partners += [settings.commit_bwd[1][local_index]]
+        for local_index in range(len(settings.commit_bwd[1])):
+            if settings.commit_bwd[1][local_index] == atom_index and not settings.commit_bwd[0][local_index] in this_partners:
+                this_partners += [settings.commit_bwd[0][local_index]]
+        partners.append(this_partners)
+    for partners_index in range(len(partners)):
+        if len(partners[partners_index]) < 1:   # just a quick fail-safe
+            raise RuntimeError('Internal error in auto_cvs.py: commit_atom ' + str(commit_atoms[partners_index]) + ' is'
+                               ' without a partner.')
+        if len(partners[partners_index]) > 1:   # add difference-of-distance terms for this atom
+            for combination in itertools.combinations(partners[partners_index], 2):
+                cvs.append('(mdtraj.compute_distances(mtraj, numpy.array([' + str(commit_atoms[partners_index]) + ', ' + str(combination[0]) + ']))[0][0] * 10) - '
+                            + '(mdtraj.compute_distances(mtraj, numpy.array([' + str(commit_atoms[partners_index]) + ', ' + str(combination[1]) + ']))[0][0] * 10)')
+                descriptions.append('difference of distances between atoms [' + str(commit_atoms[partners_index]) + ', ' + str(combination[0]) + '] and [' + str(commit_atoms[partners_index]) + ', ' + str(combination[1]) + ']')
 
     # Now just create the output text document and return
     if not os.path.exists(settings.working_directory):
@@ -135,7 +165,9 @@ def main(settings):
             f.write('CV' + str(cv_index) + ': ' + descriptions[cv_index - 1] + '; ' + cv + '\n')
         if settings.cvs:
             for cv in settings.cvs:
-                cv_index += 1
-                f.write('CV' + str(cv_index) + ': user-defined CV; ' + cv + '\n')
+                if not cv == '':    # this is, if this CV is actually defined
+                    cv_index += 1
+                    cvs.append(cv)
+                    f.write('CV' + str(cv_index) + ': user-defined CV; ' + cv + '\n')
 
     return cvs

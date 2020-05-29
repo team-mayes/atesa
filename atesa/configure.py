@@ -205,10 +205,7 @@ def configure(input_file, user_working_directory=''):
         settings.commit_bwd = as_settings.commit_bwd
         settings.include_qdot = as_settings.include_qdot
     elif settings.auto_cvs_radius > 0 and not settings.job_type == 'find_ts':
-        if not settings.cvs == ['']:    # only append extant cvs list if it's not empty
-            settings.cvs = auto_cvs.main(settings=settings) + settings.cvs
-        else:
-            settings.cvs = auto_cvs.main(settings=settings)
+        settings.cvs = auto_cvs.main(settings=settings)
 
     return settings
 
