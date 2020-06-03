@@ -150,8 +150,8 @@ def main(settings):
                                ' without a partner.')
         if len(partners[partners_index]) > 1:   # add difference-of-distance terms for this atom
             for combination in itertools.combinations(partners[partners_index], 2):
-                cvs.append('(mdtraj.compute_distances(mtraj, numpy.array([' + str(commit_atoms[partners_index]) + ', ' + str(combination[0]) + ']))[0][0] * 10) - '
-                            + '(mdtraj.compute_distances(mtraj, numpy.array([' + str(commit_atoms[partners_index]) + ', ' + str(combination[1]) + ']))[0][0] * 10)')
+                cvs.append('(mdtraj.compute_distances(mtraj, numpy.array([[' + str(commit_atoms[partners_index]) + ', ' + str(combination[0]) + ']]))[0][0] * 10) - '
+                            + '(mdtraj.compute_distances(mtraj, numpy.array([[' + str(commit_atoms[partners_index]) + ', ' + str(combination[1]) + ']]))[0][0] * 10)')
                 descriptions.append('difference of distances between atoms [' + str(commit_atoms[partners_index]) + ', ' + str(combination[0]) + '] and [' + str(commit_atoms[partners_index]) + ', ' + str(combination[1]) + ']')
 
     # Now just create the output text document and return
