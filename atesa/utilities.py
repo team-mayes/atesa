@@ -459,7 +459,8 @@ def resample(settings, partial=False, full_cvs=False):
                 for step_index in range(len(thread.history.prod_results)):
                     if thread.history.prod_results[step_index] in [['fwd', 'bwd'], ['bwd', 'fwd']]:     # if step accepted
                         for job_index in range(2):
-                            for frame_index in range(pytraj.iterload(thread.history.prod_trajs[step_index][job_index], settings.topology).n_frames):
-                                frame_to_check = thread.get_frame(thread.history.prod_trajs[step_index][job_index], frame_index + 1, settings)
-                                f.write(get_cvs(frame_to_check, settings) + '\n')
-                                os.remove(frame_to_check)
+                            if os.path.exists(thread.history.prod_trajs[step_index][job_index]):
+                                for frame_index in range(pytraj.iterload(thread.history.prod_trajs[step_index][job_index], settings.topology).n_frames):
+                                    frame_to_check = thread.get_frame(thread.history.prod_trajs[step_index][job_index], frame_index + 1, settings)
+                                    f.write(get_cvs(frame_to_check, settings) + '\n')
+                                    os.remove(frame_to_check)
