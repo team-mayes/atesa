@@ -132,7 +132,7 @@ The conditions under which equilibrium path sampling should be used instead are 
 
 	* A version of Amber that supports umbrella sampling is not available; or
 
-	* The desired reaction coordinate contains unusual CV types. The supported CV types are: distances, angles, dihedrals, and differences of distances. ATESA's automatically generated CVs are only ever of the first three types.
+	* The desired reaction coordinate contains unusual CV types. The supported CV types are: distances, angles, dihedrals, and differences of distances. ATESA's automatically generated CVs are only ever of these types.
 
 Umbrella Sampling can be called in ATESA through the main executable using the following settings (in addition to the :ref:`CoreSettings` above):
 
@@ -169,7 +169,7 @@ Beyond these settings, the user will probably want to set the lower and upper bo
 
 EPS is a highly generalized free energy method that does not rely on restraints or biases of any kind. The cost of this benefit is that it is also among the least efficient free energy methods available, requiring a relatively large amount of simulation to acquire comparable sampling coverage to, for example, umbrella sampling. For this reason, EPS is recommended for use only in cases where other methods are unsuitable or unavailable.
 
-CAUTION: Because equilibrium path sampling measures the full energy profile instead of merely assessing the endpoints of simulations (as in aimless shooting and committor analysis), it is very sensitive to errors in the evaluation of the energy of any given state. For this reason, it is completely possible to have obtained reasonable aimless shooting and committor analysis results with a system or simulation parameters that are not suitable for equilibrium path sampling, for example owing to poor SCF convergence in QM calculations along portions of the RC. ATESA can NOT identify such errors on its own, and may produce EPS results that are not correct (but may appear reasonable at first glance)! It is the responsibility of the user to ensure that the EPS simulations are well-behaved and do not suffer from severe energetic or undersampling errors. Please direct any questions to `our GitHub page <https://github.com/team-mayes/atesa>` as an issue with the "question" label.
+CAUTION: Because equilibrium path sampling measures the full energy profile instead of merely assessing the endpoints of simulations (as in aimless shooting and committor analysis), it is very sensitive to errors in the evaluation of the energy of any given state. For this reason, it is completely possible to have obtained reasonable aimless shooting and committor analysis results with a system or simulation parameters that are not suitable for equilibrium path sampling, for example owing to poor SCF convergence in QM calculations along portions of the RC. ATESA can NOT identify such errors on its own, and may produce EPS results that are not correct (but may appear reasonable at first glance)! It is the responsibility of the user to ensure that the EPS simulations are well-behaved and do not suffer from severe energetic or undersampling errors. Please direct any questions to `our GitHub page <https://github.com/team-mayes/atesa>`_ as an issue with the "question" label.
 
 The raw output data from an EPS run is stored in the working directory as "eps.out". This data can be converted into an energy profile using boltzmann_weight.py (see :ref:`BoltzmannWeight`), which calculates the relative probabilities of states within each bin and converts these into relative free energies.
 	
@@ -284,17 +284,17 @@ These settings define the combined variables (CVs) for the job. In aimless shoot
 	
 ``auto_cvs_radius``	**‡**
 
-	Alternatively or in addition to defining explicit CVs with the *cvs* option, this option can be used to automatically obtain and use CVs representing every 2nd, 3rd, and 4th order CV (bonds, angles, and dihedrals, respectively) consisting of contiguously bonded atoms within *auto_cvs_radius* angstroms of any of the atoms present in the the *commit_fwd* or *commit_bwd* options (see :ref:`CommitmentBasinDefinitions`). For example, if the following combination of settings is provided::
+	Alternatively or in addition to defining explicit CVs with the *cvs* option, this option can be used to automatically obtain and use CVs representing every 2nd, 3rd, and 4th order CV (bonds, angles, and dihedrals, respectively) consisting of contiguously bonded atoms within *auto_cvs_radius* angstroms of any of the atoms present in the the *commit_fwd* or *commit_bwd* options (see :ref:`CommitmentBasinDefinitions`). In addition, difference-of-distance CVs are produced wherever an atom appears in two or more elements in the commitment definitions. For example, if the following combination of settings is provided::
 
-				commit_fwd = ([101, 102], [103, 104], [1.5, 2.0], ['lt', 'gt'])
-				commit_bwd = ([101, 102], [103, 104], [2.0, 1.5], ['gt', 'lt'])
+				commit_fwd = ([101, 102, 102], [103, 104, 105], [1.5, 2.0, 1.7], ['lt', 'gt', 'lt'])
+				commit_bwd = ([101, 102, 102], [103, 104, 105], [2.0, 1.5, 2.5], ['gt', 'lt', 'gt'])
 				auto_cvs_radius = 5    
 	
-	Then every bond, angle, and dihedral consisting of atoms within at least 5 angstroms of atoms 101, 102, 103, or 104 (indexed from 1) would be included as a CV. The index, description, and code used to evaluate each CV derived in this manner is printed to the file "cvs.txt" in the working directory. Automatic CVs can be disabled by setting *auto_cvs_radius* to 0. If *auto_cvs_radius* is greater than 0 and CVs are also defined manually using the *cvs* option, then the manually defined CVs are appended to the end of the list of automatically generated CVs (although note that the manually defined CVs will not appear in "cvs.txt").
+	Then every bond, angle, and dihedral consisting of atoms within at least 5 angstroms of atoms 101, 102, 103, 104, or 105 (indexed from 1) would be included as a CV, in addition to the difference of distances 102-to-104 and 102-to-105. The index, description, and code used to evaluate each CV derived in this manner is printed to the file "cvs.txt" in the working directory. Automatic CVs can be disabled by setting *auto_cvs_radius* to 0. If *auto_cvs_radius* is greater than 0 and CVs are also defined manually using the *cvs* option, then the manually defined CVs are appended to the end of the list of automatically generated CVs.
     
-	Using *auto_cvs* treats all of the atoms in *commit_fwd* and *commit_bwd* as bonded to one another for the purposes of determining CVs, so there is no need to define these CVs manually. Examples of CVs that *should* be defined manually if desired include differences of distances, or any distances, angles, or dihedrals defined using atoms that are not contiguously bonded to one another (*e.g.*, a distance between nearby charged particles). Note that although commitment basin definitions (which are interpreted internally using pytraj) are always 1-indexed, the CV definitions produced automatically with this option are defined using mdtraj and will be 0-indexed. The software handles this distinction without issue, but the user must be careful not to confuse 0-indexed atom indices from "cvs.txt" with 1-indexed atom indices in the commitment basins.
+	Using *auto_cvs* treats all of the atoms in *commit_fwd* and *commit_bwd* as bonded to one another for the purposes of determining CVs, so there is no need to define these CVs manually. Examples of CVs that *should* be defined manually if desired include any distances, angles, or dihedrals defined using atoms that are not contiguously bonded to one another (*e.g.*, a distance between nearby charged particles) and also do not appear in the commitment definitions, or any other custom CVs of unique relevance to the rare event of interest. Note that although commitment basin definitions (which are interpreted internally using pytraj) are always 1-indexed, the CV definitions produced automatically with this option are defined using mdtraj and will be 0-indexed. The software handles this distinction without issue, but the user must be careful not to confuse 0-indexed atom indices from "cvs.txt" with 1-indexed atom indices in the commitment basins.
     
-	Note that the number of CVs that are created using this option can grow very large very quickly when large radii are chosen, which in extreme cases can cause significant I/O overhead and slow down calls to :ref:`LikelihoodMaximization`. Default = 5
+	The number of CVs that are created using this option can grow very large very quickly when large radii are chosen, which in extreme cases can cause significant I/O overhead and slow down calls to :ref:`LikelihoodMaximization`. Default = 5
 
 ``auto_cvs_exclude_water``
 	
@@ -321,7 +321,7 @@ These settings define the combined variables (CVs) for the job. In aimless shoot
 		auto_cvs_radius
 		auto_cvs_exclude_water
 	
-	Use of this option is recommended in particular for committor analysis and equilibrium path sampling jobs following an aimless shooting job. In this case, the *as_settings_file* should point to the settings.pkl file from that aimless shooting job. Default = ''
+	Use of this option is recommended in particular for committor analysis, umbrella sampling, and equilibrium path sampling jobs following an aimless shooting job. In this case, the *as_settings_file* should point to the settings.pkl file from that aimless shooting job. Default = ''
 
 
 Initial Coordinates
@@ -329,7 +329,7 @@ Initial Coordinates
 
 ``initial_coordinates`` **‡**
 
-	The initial coordinates for the job, used as appropriate for the given job type, given as a list of strings. All jobs require initial coordinates (although in committor analysis they may be identified using the *path_to_rc_out* option instead, if *committor_analysis_use_rc_out* is True). All the coordinate files identified in this list are used to spawn independent threads. The same file can be given more than once to spawn multiple threads with the same initial coordinates. Default = ['']
+	The initial coordinates for the job, used as appropriate for the given job type, given as a list of strings. All jobs require initial coordinates (although in committor analysis they may be identified using the *path_to_rc_out* option instead, if *committor_analysis_use_rc_out* is True (which is not the default), and in umbrella sampling they may be identified automatically if *us_auto_coords_directory* is set). All the coordinate files identified in this list are used to spawn independent threads. The same file can be given more than once to spawn multiple threads with the same initial coordinates. Default = ['']
 
 .. _CommitmentBasinDefinitions:
 
@@ -397,7 +397,7 @@ These settings are specific to aimless shooting runs only.
 	
 ``resample``
 
-	A boolean. If True, aimless shooting will NOT be performed, and instead the existing aimless shooting data found in *working_directory* are used to produce a new output file based on the settings of the current ATESA job. The primary usage of this option is to add additional CVs to the output file without needing to repeat any sampling. Default = False
+	A boolean. If True, aimless shooting will NOT be performed, and instead the existing aimless shooting data found in *working_directory* are used to produce new output files based on the settings of the current ATESA job. The primary usage of this option is to add additional CVs to the output files without needing to repeat any simulations. Default = False
 	
 ``degeneracy`` **‡**
 
@@ -405,7 +405,7 @@ These settings are specific to aimless shooting runs only.
 	
 ``cleanup``
 
-	A boolean. If True, trajectory files for each shooting move are deleted after they no longer represent the last accepted trajectory in a thread. The initial coordinate files from each shooting move are always retained for resampling. This option is useful to reduce the amount of storage space consumed in the course of aimless shooting. Default = True
+	A boolean. If True, trajectory files for each shooting move are deleted after they no longer represent the last accepted trajectory in a thread. The initial coordinate files from each shooting move are always retained for resampling. This option is useful to reduce the amount of storage space consumed in the course of aimless shooting; however, note that when this option is used, you will not be able to completely resample the output file "as_full_cvs.out" if you later want to add additional CVs. This file is only used for an optional setting in umbrella sampling, so if you don't plan to use umbrella sampling you can safely set this to True. Default = False
 	
 ``max_moves``
 
@@ -468,6 +468,43 @@ These options are specific to committor analysis runs only.
 
 	The threshold of *absolute value* of reaction coordinate below which shooting moves in the indicated *path_to_rc_out* file will be included in committor analysis. For example, if the above example contents of such a file were used and *rc_threshold* were set to 0.1, only the first of the two files (initial_coords_1_1_init_fwd.rst7) would be used for committor analysis. The user is encouraged to check the RC output file manually before using this option to ensure that they will have enough unique initial coordinate files to produce a useful committor analysis result (200 files is a good target). Default = 0.05
 
+.. _UmbrellaSamplingSettings:	
+	
+Umbrella Sampling Settings
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+These options are specific to umbrella sampling (US) runs only. They mostly pertain to defining the restraints. It may be useful to run a test run first with only a few windows along a small subset of the full range of reaction coordinate values to verify these settings before continuing.
+
+Keep in mind that if you perform a large amount of sampling and then discover that there are gaps in your sampling, you can always submit a new umbrella sampling job (in a new working directory) with the same settings but with windows centered in the gaps, and then copy the resulting output data files (named with "_us.dat") to the original working directory to include them all in the same analysis.
+
+``us_rc_min`` **‡**
+
+	The minimum value of the reaction coordinate to sample during US. It can be useful to manually evaluate the RC of an equilibrated reactant state structure, and then add some small fraction of that number again (say, 10%) to select the value for this option. Default = -12
+	
+``us_rc_max`` **‡**
+
+	The maximum value of the reaction coordinate to sample during US. It can be useful to manually evaluate the RC of an equilibrated product state structure, and then add some small fraction of that number again (say, 10%) to select the value for this option. Default = 12
+	
+``us_rc_step``
+
+	The step size between the centers of adjacent windows during US. Window boundaries are assigned from the left, such that the first window always begins exactly at *us_rc_min*, and then steps of size *us_rc_step* delineate further windows until the next step would be equal to or greater than *us_rc_max*. Default = 0.25
+	
+``us_restraint``
+
+	The weight of the energetic restraint applied in each US window, measured in kcal/(mol-units^2), where "units" is the dimensionality of the reaction coordinate. Too-low values sample inefficiently, but too-high values necessitate more windows along the RC so as not to leave gaps. In general, you should select a value that produces about 10-to-20% overlap in sampling with neighboring windows on either side, which may require some trial-and-error, as the appropriate values to choose will depend on the underlying free energy profile and the simulation parameters. The default values are a good starting point for most systems (at 300 K -- significantly lower temperatures require weaker restraints and *vice versa*). Default = 50
+	
+``us_degeneracy``
+
+	The number of independent threads to run *for each window* during umbrella sampling. Setting it to 1 or less means only one thread per window. This should usually be a small number greater than one. If this option is combined with *us_auto_coords_directory*, each of the independent threads will correspond to initial coordinates taken from a different accepted aimless shooting trajectory; otherwise, they will all start from the same coordinates. Default = 5
+	
+``us_auto_coords_directory`` **‡**
+
+	By default, umbrella sampling uses initial coordinates generated from the files designated in the *initial_coordinates* option. Alternatively, and more conveniently, this option can be used to specify an aimless shooting working directory from which to automatically identify suitable initial coordinates using *n* of the most recent "accepted" trajectories from the aimless shooting threads, where *n* is the value of *us_degeneracy*. If this option is used, the contents of *initial_coordinates* will be ignored. Default = ''
+	
+``us_cv_restraints_file``
+
+	A string giving the path to the full CVs output file (default name "as_full_cvs.out") in the desired aimless shooting working directory. By default, the restraints applied during umbrella sampling are only along the reaction coordinate, with all other degrees of freedom left unrestrained. In some cases, this can result in errant sampling of regions of state space that technically have the desired reaction coordinate value, but do not actually fall within the transition path ensemble. Such errors are usually visible in umbrella sampling output data as discontinuities in the mean value plot produced by the mbar.py analysis script; see the :ref:`UmbrellaSamplingTroubleshooting` section of the :ref:`Troubleshooting` page for more information. One possible way to fix this is by rerunning umbrella sampling with this option set, which will apply restraints to every CV included in the aimless shooting output files. These restraints are flat and equal to zero within the range of values observed during any accepted aimless shooting trajectory, and then increase in energy steeply outside this range. In this way, and to the extent that aimless shooting explored the relevant phase space of each CV and that the included CVs cover the relevant dimensions, this option requires the umbrella sampling simulations to remain within the reaction pathway ensemble, producing much better results. However, because of the risk that important regions of state space are errantly gated off, this option should only be used as necessary, not as a first-resort. Default = ''
+
 .. _EquilibriumPathSamplingSettings:
 
 Equilibrium Path Sampling Settings
@@ -518,35 +555,6 @@ These options are specific to equilibrium path sampling (EPS) runs only.
 ``samples_per_window``
 
 	A termination criterion for EPS that terminates the sampling in a given EPS window after this number of samples within it have been written to the EPS output file. Negative values mean no limit; sampling will continue indefinitely (until ATESA is terminated by other means). Default = -1
-	
-.. _UmbrellaSamplingSettings:	
-	
-Umbrella Sampling Settings
-~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-These options are specific to umbrella sampling (US) runs only. They mostly pertain to defining the restraints. It may be useful to run a test run first with only a few windows along a small subset of the full range of reaction coordinate values to verify these settings before continuing.
-
-Keep in mind that if you perform a large amount of sampling and then discover that there are gaps in your sampling, you can always submit a new umbrella sampling job (in a new working directory) with the same settings but with windows centered in the gaps, and then copy the resulting output data files (named with "_us.dat") to the original working directory to include them all in the same analysis.
-
-``us_rc_min`` **‡**
-
-	The minimum value of the reaction coordinate to sample during US. It can be useful to manually evaluate the RC of an equilibrated reactant state structure, and then add some small fraction of that number again (say, 10%) to select the value for this option. Default = -12
-	
-``us_rc_max`` **‡**
-
-	The maximum value of the reaction coordinate to sample during US. It can be useful to manually evaluate the RC of an equilibrated product state structure, and then add some small fraction of that number again (say, 10%) to select the value for this option. Default = 12
-	
-``us_rc_step``
-
-	The step size between the centers of adjacent windows during US. Window boundaries are assigned from the left, such that the first window always begins exactly at *us_rc_min*, and then steps of size *us_rc_step* delineate further windows until the next step would be equal to or greater than *us_rc_max*. Default = 0.25
-	
-``us_restraint``
-
-	The weight of the energetic restraint applied in each US window, measured in kcal/(mol-units^2), where "units" is the dimensionality of the reaction coordinate. Too-low values sample inefficiently, but too-high values necessitate more windows along the RC so as not to leave gaps. In general, you should select a value that produces about 10-to-20% overlap in sampling with neighboring windows on either side, which may require some trial-and-error, as the appropriate values to choose will depend on the underlying free energy profile and the simulation parameters. The default values are a good starting point for most systems (at 300 K -- significantly lower temperatures require weaker restraints and *vice versa*). Default = 50
-	
-``us_degeneracy``
-
-	The number of independent threads to run *for each window* during umbrella sampling. Setting it to 1 or less means only one thread per window. This should usually be a small number greater than one. Default = 5
 
 Other Settings
 ~~~~~~~~~~~~~~

@@ -9,7 +9,7 @@ Installation
 Usage
 -----
 
-ATESA is designed to dynamically handle jobs on a PBS/Torque or Slurm batch system. It is invoked as:
+ATESA is designed to dynamically handle jobs on a PBS/Torque or Slurm batch system on a high-performance computing cluster. It is invoked as:
 
 .. code-block:: bash
 
@@ -17,7 +17,9 @@ ATESA is designed to dynamically handle jobs on a PBS/Torque or Slurm batch syst
    
 The config_file parameter is required and supports absolute or relative paths. The working_directory parameter is optional, but if it is provided it overrides the value in the configuration file. This option is made available for use on systems that only allocate working space for jobs after they have been initialized. For details on the contents of the configuration file, see :ref:`TheConfigFile`.
 
-Although ATESA can be run directly from the command line, because its process continues for the entirety of the job it is usually recommended to submit it as its own batch job. A single core and a modest allocation of memory should be sufficient to run ATESA on most platforms (it is neither memory- nor processor-intensive, although certain features involve a significant amount of I/O, and more memory may be necessary when using the information error termination criterion).
+Although ATESA can be run directly from the command line, because its process continues for the entirety of the job it is usually recommended to submit it as its own batch job. A single core and a modest allocation of memory should be sufficient to run ATESA on most platforms (it is neither memory- nor processor-intensive, although many features involve a significant amount of I/O, and more memory may be necessary when using the information error termination criterion).
+
+Note that almost all ATESA jobs will produce a large amount of data, at least transiently. For this reason, the working directory should probably be set to a path inside the "scratch" filesystem or equivalent on your HPC cluster. If you aren't sure what this means, consult the documentation or support staff for your cluster.
 
 .. _SettingUpSimulationFiles:
 
@@ -65,6 +67,7 @@ Aimless shooting input files for the following step types are required for jobs 
   	dt=0.001,	! or whatever desired simulation time step
   	irest=1,	! restart simulation from preceding "init" step
   	temp0=300.0,	! or whatever temperature
+  	ntwx=1,		! or whatever trajectory write frequency, but smaller is better
   	
 ``committor_analysis``
 

@@ -551,7 +551,7 @@ class AimlessShooting(JobType):
                 self.history.last_accepted = int(len(self.history.prod_trajs) - 1)   # new index of last accepted move
                 self.accept_moves += 1
 
-            # Write CVs to as_raw.out
+            # Write CVs to as_raw.out and as_full_cvs.out
             if self.history.prod_results[-1][0] in ['fwd', 'bwd']:
                 if self.history.prod_results[-1][0] == 'fwd':
                     this_basin = 'B'
@@ -560,6 +560,16 @@ class AimlessShooting(JobType):
                 open(settings.working_directory + '/as_raw.out', 'a').write(this_basin + ' <- ')
                 open(settings.working_directory + '/as_raw.out', 'a').write(utilities.get_cvs(self.history.init_coords[-1][0], settings) + '\n')
                 open(settings.working_directory + '/as_raw.out', 'a').close()
+
+                # Implement writing to full CVs output file, 'as_full_cvs.out'
+                if not os.path.exists(settings.working_directory + '/as_full_cvs.out'):
+                    open(settings.working_directory + '/as_full_cvs.out', 'w').write()
+                with open(settings.working_directory + '/as_full_cvs.out', 'a') as f:
+                    for job_index in range(len(self.current_type)):
+                        for frame_index in range(pytraj.iterload(self.history.prod_trajs[-1][job_index], settings.topology).n_frames):
+                            frame_to_check = self.get_frame(self.history.prod_trajs[-1][job_index], frame_index + 1, settings)
+                            f.write(utilities.get_cvs(frame_to_check, settings) + '\n')
+                            os.remove(frame_to_check)
 
             with open('status.txt', 'w') as file:
                 for thread in allthreads:
@@ -1378,6 +1388,7 @@ class FindTS(JobType):
         as_settings.resample = False    # just to be safe
         as_settings.information_error_checking = False
         as_settings.dont_dump = True
+        as_settings.cleanup = True
         if as_settings.max_moves <= 0:   # the default is -1; in other words, sets new default to 10 for this run
             as_settings.max_moves = 10
 
@@ -1510,6 +1521,51 @@ class UmbrellaSampling(JobType):
                                    'string is present.')
             shutil.copy(settings.path_to_input_files + '/umbrella_sampling_prod_' + settings.md_engine + '.in',
                         settings.working_directory + '/' + input_file_name)
+
+            # Build restraint file that implements us_cv_restraints, if applicable
+            if settings.us_cv_restraints_file:
+                if not os.path.exists(settings.working_directory + '/us_cv_restraints_' + str(self.history.window) + '.DISANG'):
+                    if not os.path.exists(settings.us_cv_restraints_file):
+                        raise FileNotFoundError('Attempted to implement us_cv_restraints for umbrella sampling, but '
+                                                'could not find the indicated file: ' + settings.us_cv_restraints_file)
+
+                    # Build min_max.pkl file if it doesn't already exist
+                    if not os.path.exists('min_max.pkl'):
+                        # Define a helper function
+                        def closest(lst, K):
+                            # Return index of closest value to K in list lst
+                            return min(range(len(lst)), key=lambda i: abs(lst[i] - K))
+
+                        # Define function to clean up some floating point precision issues;
+                        # e.g.,  numpy.arange(-6,12,0.1)[-1] = 11.899999999999935,
+                        # whereas safe_arange(-6,12,0.1)[-1] = 11.9
+                        def safe_arange(start, stop, step):
+                            return step * numpy.arange(start / step, stop / step)
+
+                        window_centers = safe_arange(settings.us_rc_min, settings.us_rc_max, settings.us_rc_step)
+
+                        # Partition each line in as_full_cvs.out into the nearest US window
+                        as_full_cvs_lines = open(settings.us_cv_restraints_file, 'r').readlines()
+                        open(settings.us_cv_restraints_file, 'r').close()
+
+                        # Initialize results list; first index is window, second index is CV, third index is 0 for min and 1 for max
+                        # E.g., min_max[12][5][1] is the max value of CV6 in the 13th window
+                        min_max = [[[None, None] for null in range(len(as_full_cvs_lines[0].split()))] for null in range(len(window_centers))]
+
+                        for line in as_full_cvs_lines:
+                            rc = utilities.evaluate_rc(settings.rc_definition, line.split())
+                            window_index = closest(window_centers, rc)
+
+                            # Add min and max as appropriate
+                            for cv_index in range(len(line.split())):
+                                if min_max[window_index][cv_index][0] is None or float(min_max[window_index][cv_index][0]) > float(line.split()[cv_index]):
+                                    min_max[window_index][cv_index][0] = line.split()[cv_index]     # set new min
+                                if min_max[window_index][cv_index][0] is None or float(min_max[window_index][cv_index][1]) < float(line.split()[cv_index]):
+                                    min_max[window_index][cv_index][1] = line.split()[cv_index]     # set new max
+
+                        pickle.dump(min_max, open('min_max.pkl', 'wb'), protocol=2)
+
+                min_max = pickle.load(open('min_max.pkl', 'rb'))
 
             # In preparation for next step, break down settings.rc_definition into component terms
             # rc_definition must be a linear combination of terms for US anyway, so our strategy here is to condense it
@@ -1664,6 +1720,58 @@ class UmbrellaSampling(JobType):
                                '"amber". If you need to use a different md_engine for evaluating an energy profile, use'
                                ' the job_type "equilibrum_path_sampling".')
 
+        # First, implement settings.us_auto_coords_directory
+        if settings.us_auto_coords_directory:
+            if not os.path.isdir(settings.us_auto_coords_directory):
+                raise NotADirectoryError('attempted to use the provided us_auto_coords_directory setting to build '
+                                         'initial coordinates for umbrella sampling, but it does not appear to be '
+                                         'a directory. The provided value is: ' + settings.us_auto_coords_directory)
+            if not os.path.exists(settings.us_auto_coords_directory + '/restart.pkl'):
+                raise FileNotFoundError('attempted to use the provided us_auto_coords_directory setting to build '
+                                        'initial coordinates for umbrella sampling, but it does not appear to contain '
+                                        'a restart.pkl file. Are you sure that this is an ATESA aimless shooting '
+                                        'working directory?')
+            as_threads = pickle.load(open(settings.us_auto_coords_directory + '/restart.pkl', 'rb'))
+            as_threads = [thread for thread in as_threads if len([result for result in thread.history.prod_results if 'bwd' in result and 'fwd' in result]) >= settings.us_degeneracy]    # exclude threads with not enough moves
+            if as_threads == []:
+                raise RuntimeError('no threads in the indicated aimless shooting directory (' +
+                                   settings.us_auto_coords_directory + ') have enough accepted moves to be used for '
+                                   'us_auto_coords. This shouldn\'t happen if you ran aimless shooting for more than a '
+                                   'tiny number of steps and chose a reasonable value for us_degeneracy (should only be'
+                                   ' like 10 at most; you chose ' + str(us_degeneracy))
+            used_indices = []
+            temp_init_coords = []   # initialize list of initial coordinate trajectories to pass forward later
+            for i in range(settings.us_degeneracy):
+                if not len(used_indices) == len(as_threads):    # if not every index has been used yet
+                    thread_index = -1
+                    while_count = 0
+                    while thread_index not in used_indices:     # don't reuse indices
+                        thread_index = random.randint(len(as_threads))  # pick a random thread
+                        while_count += 1
+                        if while_count >= 100000 * len(as_threads):
+                            raise RuntimeError('Taking far too long to find unused thread index while building umbrella'
+                                               ' sampling initial coordinates. If you see this error, please report it '
+                                               'on our GitHub page along with the following debug information:\n'
+                                               ' len(as_threads) = ' + str(len(as_threads)) + '\n'
+                                               ' while_count = ' + str(while_count) + '\n'
+                                               ' used_indices = ' + str(used_indices) + '\n')
+                    used_indices.append(thread_index)
+                else:   # if every index has been used already
+                    used_indices = []   # reset used_indices
+                    thread_index = random.randint(len(as_threads))      # pick a random thread
+                    used_indices.append(thread_index)
+
+                this_thread = as_threads[thread_index]
+                traj_index = -1
+                while this_thread.prod_trajs[traj_index] in temp_init_coords:
+                    traj_index -= 1
+                temp_init_coords.append(this_thread.prod_trajs[traj_index])
+
+            settings.initial_coordinates = copy.deepcopy(temp_init_coords)  # overwrite initial_coordinates
+            # todo: as written, this is just going to load all the settings.initial_coordinates trajectories together
+            # todo: and take from them only the best individual frames cloest to the window centers. Will take quite
+            # todo: some rewriting to spawn different threads for each pair of trajectories...
+
         # Here, we need to convert the provided trajectory file(s) into single-frame coordinate files to use as the
         # initial coordinates of each thread.
         # This line loads more than one trajectory file together if len(settings.initial_coordinates) > 1
@@ -1681,7 +1789,13 @@ class UmbrellaSampling(JobType):
             rc = utilities.evaluate_rc(temp_settings.rc_definition, cvs.split(' '))
             frame_rcs.append([new_restart_name, rc])
 
-        window_centers = numpy.arange(settings.us_rc_min, settings.us_rc_max, settings.us_rc_step)
+        # Define function to clean up some floating point precision issues;
+        # e.g.,  numpy.arange(-6,12,0.1)[-1] = 11.899999999999935,
+        # whereas safe_arange(-6,12,0.1)[-1] = 11.9
+        def safe_arange(start, stop, step):
+            return step * numpy.arange(start / step, stop / step)
+
+        window_centers = safe_arange(settings.us_rc_min, settings.us_rc_max, settings.us_rc_step)
 
         def closest(lst, K):
             # Return index of closest value to K in list lst

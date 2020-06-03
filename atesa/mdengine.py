@@ -26,7 +26,7 @@ class MDEngine(abc.ABC):
         trajectory : str
             Name of trajectory file to obtain last frame from
         frame : int
-            Index of frame to return; -1 gives last frame, 0 is invalid
+            Index of frame to return; 1-indexed, -1 gives last frame, 0 is invalid
         settings : argparse.Namespace
             Settings namespace object
 

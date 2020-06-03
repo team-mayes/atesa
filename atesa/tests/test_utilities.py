@@ -138,18 +138,21 @@ class Tests(object):
         allthreads[0].history.init_coords = [['../test_data/test_velocities_init.rst7', '../test_data/test_velocities_init_bwd.rst7'],
                                              ['../test_data/test_two_init.rst7', '../test_data/test_two_init_bwd.rst7']]
         allthreads[0].history.prod_results = [['fwd', 'bwd'], ['bwd', 'bwd']]
+        allthreads[0].history.prod_trajs = [['../test_data/test.nc', '../test_data/test.nc'], ['../test_data/test.nc', '../test_data/test.nc']]
         allthreads[1].history.init_coords = [['../test_data/test_velocities_init.rst7', '../test_data/test_velocities_init_bwd.rst7'],
                                              ['../test_data/test_two_init.rst7', '../test_data/test_two_init_bwd.rst7']]
-        allthreads[1].history.prod_results = [['bwd', 'bwd'], ['fwd', 'bwd']]
+        allthreads[1].history.prod_results = [['fwd', 'fwd'], ['bwd', 'fwd']]
+        allthreads[1].history.prod_trajs = [['../test_data/test.nc', '../test_data/test.nc'], ['../test_data/test.nc', '../test_data/test.nc']]
         allthreads[0].history.timestamps = [1, 3]
         allthreads[1].history.timestamps = [2, 4]
         pickle.dump(allthreads, open('restart.pkl', 'wb'), protocol=2)  # file now exists
-        utilities.resample(settings)
+        utilities.resample(settings, full_cvs=True)
         assert os.path.exists('as_raw.out')
-        # assert os.path.exists('as_decorr.out')    # todo: reinstitute this test once I have a good restart.pkl file to test with
+        # assert os.path.exists('as_decorr.out')    # todo: reinstitute this test once I have a good restart.pkl file to test with; todo: figure out what I meant by this
         raw_lines = open('as_raw.out', 'r').readlines()
         assert len(raw_lines) == 4
-        assert not False in [raw_lines[0][0] == 'B', raw_lines[1][0] == 'A', raw_lines[2][0] == 'A', raw_lines[3][0] == 'B']
+        assert not False in [raw_lines[0][0] == 'B', raw_lines[1][0] == 'A', raw_lines[2][0] == 'B', raw_lines[3][0] == 'A']
+        assert filecmp.cmp('as_full_cvs.out', '../test_data/as_full_cvs.out')
 
     @classmethod
     def teardown_method(self, method):

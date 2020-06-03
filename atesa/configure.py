@@ -92,7 +92,7 @@ def configure(input_file, user_working_directory=''):
         always_new: bool = True
         resample: bool = False
         degeneracy: int = 1
-        cleanup: bool = True
+        cleanup: bool = False
         information_error_checking: bool = True
         information_error_threshold: float = 0.1
         information_error_freq: int = 250
@@ -123,6 +123,8 @@ def configure(input_file, user_working_directory=''):
         us_rc_step: float = 0.25
         us_restraint: float = 50
         us_degeneracy: int = 5
+        us_auto_coords_directory: str = ''
+        us_cv_restraints_file: str = ''
 
         # Required only if restart = True
         restart_terminated_threads: bool = False
@@ -167,10 +169,12 @@ def configure(input_file, user_working_directory=''):
         settings.path_to_input_files = settings.path_to_input_files[:-1]
     if settings.path_to_templates[-1] == '/':
         settings.path_to_templates = settings.path_to_templates[:-1]
-    try:    # this setting is optional
-        if settings.path_to_rc_out[-1] == '/':
-            settings.path_to_rc_out = settings.path_to_rc_out[:-1]
-    except AttributeError:
+    if settings.path_to_rc_out[-1] == '/':
+        settings.path_to_rc_out = settings.path_to_rc_out[:-1]
+    try:
+        if settings.us_auto_coords_directory[-1] == '/':
+            settings.us_auto_coords_directory = settings.us_auto_coords_directory[:-1]
+    except IndexError:  # no directory given, not a problem
         pass
 
     # Set Jinja2 environment

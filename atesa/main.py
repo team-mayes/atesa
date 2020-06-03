@@ -267,7 +267,7 @@ def main(settings, rescue_running=[]):
                 temp_settings.__dict__.pop('env')  # env attribute is not picklable
                 pickle.dump(temp_settings, open(settings.working_directory + '/settings.pkl', 'wb'), protocol=2)
             # Run resample
-            utilities.resample(settings, partial=False)
+            utilities.resample(settings, partial=False, full_cvs=True)
             if settings.information_error_checking:     # update info_err.out if called for by settings
                 information_error.main()
             sys.exit()

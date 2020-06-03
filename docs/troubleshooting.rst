@@ -13,7 +13,7 @@ Issues running ATESA will fall into one of three categories, based on where in t
 
 #. ATESA itself
 
-A description of how to identify the category of error being encountered, and suggestions to resolve the issue, are provided. If this page does not help you resolve your issue, please raise it on `our GitHub page <https://github.com/team-mayes/atesa>`_.
+A description of how to identify the category of error being encountered, and suggestions to resolve the issue, are provided. Further sections are provided for selected job types to facilitate troubleshooting in cases where the software appears to be functioning correctly, but the result is undesirable. If this page does not help you resolve your issue, please raise it on `our GitHub page <https://github.com/team-mayes/atesa>`_.
 
 Issues with the local shell or the batch system
 -----------------------------------------------
@@ -44,3 +44,10 @@ One final type of issue is the case where the software has functioned as intende
 If acceptance ratios are good but ``lmax.py`` is struggling to identify a strong reaction coordinate (even when including a large number of CVs in the RC), consider resampling your existing simulation files (using the *resample* option) with more candidate values included; it’s possible that you left something important out. Remember that it is impossible to include too many candidate CVs (insofar as the size of the resulting aimless shooting output file is not prohibitive in terms of I/O or the speed of ``lmax.py``), but it is easy to include too few.
 
 If you have good ``lmax.py`` results (an apparently good fit to the committor probability sigmoid) but a poor committor analysis histogram (peaked near forward commitment probabilities of 1, 0, or both) in spite of including an ample number of committor analysis shooting points (100-200 with 10 simulations per point is appropriate), this likely indicates either that you have underfitted or overfitted your reaction coordinate (too few or too many CVs included), or that you have not performed enough sampling with aimless shooting (your sample of shooting points is not representative of the underlying population). If you suspect the latter issue, try setting the information error threshold lower (see :ref:`AimlessShootingSettings`) and resubmitting the aimless shooting job with *restart = True*.
+
+.. _UmbrellaSamplingTroubleshooting
+
+Umbrella Sampling
+-----------------
+
+[Placeholder]

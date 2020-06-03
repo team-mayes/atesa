@@ -281,7 +281,7 @@ def evaluate_rc(rc_definition, cv_list):
     return eval(rc_definition)
 
 
-def resample(settings, partial=False):
+def resample(settings, partial=False, full_cvs=False):
     """
     Resample each shooting point in each thread with different CV definitions to produce new output files with extant
     aimless shooting data.
@@ -299,6 +299,8 @@ def resample(settings, partial=False):
         If True, reads the info_err.out file and only builds new decorrelated output files where the corresponding lines
         are missing from that file. If partial == False, decorrelation is assessed for every valid data length. Has no
         effect if not settings.information_error_checking.
+    full_cvs : bool
+        If True, also resamples as_full_cvs.out using every prod trajectory in the working directory.
 
     Returns
     -------
@@ -392,13 +394,9 @@ def resample(settings, partial=False):
     else:
         lengths = [len(open(settings.working_directory + '/as_raw_resample.out', 'r').readlines())]
         pattern = None
-    print('TEMPCHECKPOINT1')
-    open('TEMPCHECKPOINT1','w').close()
 
     # Assess decorrelation and write as_decorr.out
     for length in lengths:
-        print('TEMPCHECKPOINT2')
-        open('TEMPCHECKPOINT2', 'w').write(str(lengths))
         if settings.information_error_checking:
             suffix = '_' + str(length)     # only use-case with multiple lengths, so this keeps them from stepping on one another's toes
             cutoff_timestamp = int(pattern.findall(open(settings.working_directory + '/as_raw_timestamped.out', 'r').readlines()[length - 1])[0])
@@ -452,3 +450,16 @@ def resample(settings, partial=False):
 
     # Move resample raw output file to take its place as the only raw output file
     shutil.move(settings.working_directory + '/as_raw_resample.out', settings.working_directory + '/as_raw.out')
+
+    # Implement full_cvs
+    if full_cvs:
+        open(settings.working_directory + '/as_full_cvs.out', 'w').close()
+        with open(settings.working_directory + '/as_full_cvs.out', 'a') as f:
+            for thread in allthreads:
+                for step_index in range(len(thread.history.prod_results)):
+                    if thread.history.prod_results[step_index] in [['fwd', 'bwd'], ['bwd', 'fwd']]:     # if step accepted
+                        for job_index in range(2):
+                            for frame_index in range(pytraj.iterload(thread.history.prod_trajs[step_index][job_index], settings.topology).n_frames):
+                                frame_to_check = thread.get_frame(thread.history.prod_trajs[step_index][job_index], frame_index + 1, settings)
+                                f.write(get_cvs(frame_to_check, settings) + '\n')
+                                os.remove(frame_to_check)
