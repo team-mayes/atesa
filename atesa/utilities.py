@@ -454,6 +454,8 @@ def resample(settings, partial=False, full_cvs=False):
     # Implement full_cvs
     if full_cvs:
         open(settings.working_directory + '/as_full_cvs.out', 'w').close()
+        temp_settings = copy.deepcopy(settings)
+        temp_settings.include_qdot = False  # never want to include_qdot in this upcoming call to get_cvs
         with open(settings.working_directory + '/as_full_cvs.out', 'a') as f:
             for thread in allthreads:
                 for step_index in range(len(thread.history.prod_results)):
@@ -461,6 +463,6 @@ def resample(settings, partial=False, full_cvs=False):
                         for job_index in range(2):
                             if os.path.exists(thread.history.prod_trajs[step_index][job_index]):
                                 for frame_index in range(pytraj.iterload(thread.history.prod_trajs[step_index][job_index], settings.topology).n_frames):
-                                    frame_to_check = thread.get_frame(thread.history.prod_trajs[step_index][job_index], frame_index + 1, settings)
-                                    f.write(get_cvs(frame_to_check, settings) + '\n')
+                                    frame_to_check = thread.get_frame(thread.history.prod_trajs[step_index][job_index], frame_index + 1, temp_settings)
+                                    f.write(get_cvs(frame_to_check, temp_settings) + '\n')
                                     os.remove(frame_to_check)
