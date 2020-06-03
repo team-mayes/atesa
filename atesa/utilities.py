@@ -458,7 +458,7 @@ def resample(settings, partial=False, full_cvs=False):
         temp_settings.include_qdot = False  # never want to include_qdot in this upcoming call to get_cvs
         with open(settings.working_directory + '/as_full_cvs.out', 'a') as f:
             for thread in allthreads:
-                for step_index in range(len(thread.history.prod_results)):
+                for step_index in range(min(len(thread.history.prod_results), len(thread.history.prod_trajss))):    # just in case one got an extra write in over the other
                     if thread.history.prod_results[step_index] in [['fwd', 'bwd'], ['bwd', 'fwd']]:     # if step accepted
                         for job_index in range(2):
                             if os.path.exists(thread.history.prod_trajs[step_index][job_index]):
