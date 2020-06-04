@@ -92,7 +92,8 @@ def configure(input_file, user_working_directory=''):
         always_new: bool = True
         resample: bool = False
         degeneracy: int = 1
-        cleanup: bool = False
+        cleanup: bool = False   # todo: implement asking the user what they want this to be at install time; OR make it a required option (no default); OR add a warning when it's set to False about what that entails for resampling
+        # todo: make a script that implements cleanup and that can be called separately so users can cleanup manually whenever desired
         information_error_checking: bool = True
         information_error_threshold: float = 0.1
         information_error_freq: int = 250

@@ -932,6 +932,6 @@ CV930: dihedral between atoms [4122, 4116, 4118, 4121]; mdtraj.compute_dihedrals
 CV931: dihedral between atoms [4117, 4116, 4118, 4119]; mdtraj.compute_dihedrals(mtraj, numpy.array([[4117, 4116, 4118, 4119]]))[0][0] * 180 / numpy.pi
 CV932: dihedral between atoms [4117, 4116, 4118, 4120]; mdtraj.compute_dihedrals(mtraj, numpy.array([[4117, 4116, 4118, 4120]]))[0][0] * 180 / numpy.pi
 CV933: dihedral between atoms [4117, 4116, 4118, 4121]; mdtraj.compute_dihedrals(mtraj, numpy.array([[4117, 4116, 4118, 4121]]))[0][0] * 180 / numpy.pi
-CV934: difference of distances between atoms [102, 104] and [102, 105]; (mdtraj.compute_distances(mtraj, numpy.array([102, 104]))[0][0] * 10) - (mdtraj.compute_distances(mtraj, numpy.array([102, 105]))[0][0] * 10)
+CV934: difference of distances between atoms [102, 104] and [102, 105]; (mdtraj.compute_distances(mtraj, numpy.array([[102, 104]]))[0][0] * 10) - (mdtraj.compute_distances(mtraj, numpy.array([[102, 105]]))[0][0] * 10)
 CV935: user-defined CV; pytraj.distance(traj, '@1 @2')[0]
 CV936: user-defined CV; pytraj.angle(traj, '@2 @3 @4')[0]

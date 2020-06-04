@@ -458,7 +458,7 @@ def resample(settings, partial=False, full_cvs=False):
         temp_settings.include_qdot = False  # never want to include_qdot in this upcoming call to get_cvs
         with open(settings.working_directory + '/as_full_cvs.out', 'a') as f:
             for thread in allthreads:
-                for step_index in range(min(len(thread.history.prod_results), len(thread.history.prod_trajss))):    # just in case one got an extra write in over the other
+                for step_index in range(min([len(thread.history.prod_results), len(thread.history.prod_trajs)])):    # just in case one got an extra write in over the other
                     if thread.history.prod_results[step_index] in [['fwd', 'bwd'], ['bwd', 'fwd']]:     # if step accepted
                         for job_index in range(2):
                             if os.path.exists(thread.history.prod_trajs[step_index][job_index]):
@@ -466,3 +466,103 @@ def resample(settings, partial=False, full_cvs=False):
                                     frame_to_check = thread.get_frame(thread.history.prod_trajs[step_index][job_index], frame_index + 1, temp_settings)
                                     f.write(get_cvs(frame_to_check, temp_settings) + '\n')
                                     os.remove(frame_to_check)
+
+
+def interpret_cv(cv_index, settings):
+    """
+    Read the cv_index'th CV from settings.cvs, identify its type (distance, angle, dihedral, or differance-of-distances)
+    and the atom indices the define it (one-indexed) and return these.
+
+    This function is designed for use in the umbrella_sampling jobtype only. For this reason, it only supports the
+    aforementioned CV types. If none of these types appears to fit, this function raises a RuntimeError.
+
+    Parameters
+    ----------
+    cv_index : int
+        The index for the CV to use; e.g., 6 corresponds to CV6. Must be in the range [1, len(settings.cvs)].
+    settings : argparse.Namespace
+        Settings namespace object
+
+    Returns
+    -------
+    atoms : list
+        A list of 1-indexed atom indices as integers that define the given CV
+    optype : str
+        A string (either 'distance', 'angle', 'dihedral', or 'diffdistance') corresponding to the type for this CV.
+    nat : int
+        The number of atoms constituting the given CV
+
+    """
+    if not 1 <= cv_index <= len(settings.cvs):
+        raise RuntimeError('called interpret_cv with an index outside the range [1, len(settings.cvs)].\n'
+                           'len(settings.cvs) = ' + str(len(settings.cvs)) + ' and cv_index = ' + str(cv_index))
+
+    this_cv = settings.cvs[cv_index - 1]  # -1 because CVs are 1-indexed
+    if 'pytraj.dihedral' in this_cv or 'mdtraj.compute_dihedrals' in this_cv:
+        optype = 'dihedral'
+        nat = 4
+    elif 'pytraj.angle' in this_cv or 'mdtraj.compute_angles' in this_cv:
+        optype = 'angle'
+        nat = 3
+    elif 'pytraj.distance' in this_cv or 'mdtraj.compute_distances' in this_cv:
+        if '-' in this_cv and (this_cv.count('pytraj.distance') == 2 or
+                                       this_cv.count('mdtraj.compute_distances') == 2 or
+                                   ('mdtraj.distance' in this_cv and 'pytraj.distance' in this_cv)):
+            optype = 'diffdistance'
+            nat = 4
+        else:
+            optype = 'distance'
+            nat = 2
+    else:
+        raise RuntimeError('unable to discern CV type for CV' + str(int(cv_index)) + '\nOnly '
+                           'distances, angles, dihedrals, and differences of distances (all defined '
+                           'using either pytraj or mdtraj distance, angle, and/or dihedral functions) '
+                           'are supported in umbrella sampling. The offending CV is defined as: ' +
+                           this_cv)
+
+    # Get atom indices as a string, then convert to list
+    atoms = ''
+    if not optype == 'diffdistance':
+        count = 0
+        for match in re.finditer('[\[\\\']([@0-9]+[,\ ]){' + str(nat - 1) + '}[@0-9]+[\]\\\']',
+                                 this_cv.replace(', ', ',')):
+            atoms += this_cv.replace(', ', ',')[match.start():match.end()]  # should be only one match
+            count += 1
+        if not count == 1:
+            raise RuntimeError('failed to identify atoms constituting CV definition: ' + this_cv +
+                               '\nInterpreted as a ' + optype + ' but found ' + str(count) +
+                               ' blocks of atom indices with length ' + str(nat) + '(should be one). Is'
+                                                                                   ' this CV formatted in an unusual way?')
+        if not atoms:
+            raise RuntimeError('unable to identify atoms constituting CV definition: ' + this_cv +
+                               '\nIs it formatted in an unusual way?')
+        atoms = atoms.replace('[', '').replace(']', ',').replace('\'',
+                                                                 '')  # included delimeters for safety, but don't want them
+        if '@' in atoms:
+            atoms = [item.replace('@', '') for item in atoms.split(' @')]  # pytraj style atom indices
+        else:
+            atoms = atoms.split(',')  # mdtraj style atom indices
+            atoms = [int(item) + 1 for item in atoms if not item == '']  # fix zero-indexing in mdtraj
+    else:
+        count = 0
+        for match in re.finditer('[\[\\\']([@0-9]+[,\ ]){1}[@0-9]+[\]\\\']', this_cv.replace(', ', ',')):
+            atoms += this_cv.replace(', ', ',')[match.start():match.end()]  # should be two matches
+            count += 1
+        if not count == 2:
+            raise RuntimeError('failed to identify atoms constituting CV definition: ' + this_cv +
+                               '\nInterpreted as a difference of distances but found ' + str(count) +
+                               ' blocks of atom indices with length 2 (should be two). Is this CV '
+                               'formatted in an unusual way?')
+        if not atoms:
+            raise RuntimeError('unable to identify atoms constituting CV definition: ' + this_cv +
+                               '\nIs it formatted in an unusual way?')
+        atoms = atoms.replace('[', '').replace(']', ',').replace('\'', '')  # included delimeters for safety, but don't want them
+        if '@' in atoms:
+            atoms = [item.replace('@', '') for item in atoms.split(' @')]
+        else:
+            atoms = atoms.split(',')
+
+    while '' in atoms:
+        atoms.remove('')  # remove empty list elements if present
+
+    return atoms, optype, nat

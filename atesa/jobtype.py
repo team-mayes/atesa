@@ -1524,26 +1524,31 @@ class UmbrellaSampling(JobType):
 
             # Build restraint file that implements us_cv_restraints, if applicable
             if settings.us_cv_restraints_file:
+                if not True in ['nmropt=1' in line for line in open(settings.path_to_input_files + '/umbrella_sampling_prod_' + settings.md_engine + '.in', 'r').readlines()]:
+                    raise RuntimeError('did not find \'nmropt=1\' in input file: ' + settings.path_to_input_files +
+                                       '/umbrella_sampling_prod_' + settings.md_engine + '.in, which is required when a'
+                                       ' us_cv_restraints_file is specified in the config file. Make sure that exactly '
+                                       'that string is present.')
                 if not os.path.exists(settings.working_directory + '/us_cv_restraints_' + str(self.history.window) + '.DISANG'):
                     if not os.path.exists(settings.us_cv_restraints_file):
                         raise FileNotFoundError('Attempted to implement us_cv_restraints for umbrella sampling, but '
                                                 'could not find the indicated file: ' + settings.us_cv_restraints_file)
 
+                    # Define a helper function
+                    def closest(lst, K):
+                        # Return index of closest value to K in list lst
+                        return min(range(len(lst)), key=lambda i: abs(lst[i] - K))
+
+                    # Define function to clean up some floating point precision issues;
+                    # e.g.,  numpy.arange(-6,12,0.1)[-1] = 11.899999999999935,
+                    # whereas safe_arange(-6,12,0.1)[-1] = 11.9
+                    def safe_arange(start, stop, step):
+                        return step * numpy.arange(start / step, stop / step)
+
+                    window_centers = safe_arange(settings.us_rc_min, settings.us_rc_max, settings.us_rc_step)
+
                     # Build min_max.pkl file if it doesn't already exist
                     if not os.path.exists('min_max.pkl'):
-                        # Define a helper function
-                        def closest(lst, K):
-                            # Return index of closest value to K in list lst
-                            return min(range(len(lst)), key=lambda i: abs(lst[i] - K))
-
-                        # Define function to clean up some floating point precision issues;
-                        # e.g.,  numpy.arange(-6,12,0.1)[-1] = 11.899999999999935,
-                        # whereas safe_arange(-6,12,0.1)[-1] = 11.9
-                        def safe_arange(start, stop, step):
-                            return step * numpy.arange(start / step, stop / step)
-
-                        window_centers = safe_arange(settings.us_rc_min, settings.us_rc_max, settings.us_rc_step)
-
                         # Partition each line in as_full_cvs.out into the nearest US window
                         as_full_cvs_lines = open(settings.us_cv_restraints_file, 'r').readlines()
                         open(settings.us_cv_restraints_file, 'r').close()
@@ -1565,7 +1570,18 @@ class UmbrellaSampling(JobType):
 
                         pickle.dump(min_max, open('min_max.pkl', 'wb'), protocol=2)
 
-                min_max = pickle.load(open('min_max.pkl', 'rb'))
+                    # Now build the actual DISANG file.
+                    min_max = pickle.load(open('min_max.pkl', 'rb'))                # load the min_max pickle file
+                    window_index = closest(window_centers, self.history.window)     # identify the appropriate window_index
+                    open(settings.working_directory + '/us_cv_restraints_' + str(self.history.window) + '.DISANG', 'w').close()
+                    with open(settings.working_directory + '/us_cv_restraints_' + str(self.history.window) + '.DISANG', 'a') as f:
+                        f.write('ATESA automatically generated restraint file implementing us_cv_restraints option\n')
+                        for cv_index in range(len(min_max[window_index])):
+                            atoms, optype, nat = utilities.interpret_cv(cv_index, settings)  # get atom indices and type for this CV
+                            f.write(' &rst iat=' + ', '.join(atoms) + ', r1=' + str(min_max[window_index][cv_index][0])
+                                    + ', r2=' + str(min_max[window_index][cv_index][0]) + ', r3=' +
+                                    str(min_max[window_index][cv_index][1]) + ', r4=' +
+                                    str(min_max[window_index][cv_index][1]) + ', rk2=100, rk3=100, /\n')
 
             # In preparation for next step, break down settings.rc_definition into component terms
             # rc_definition must be a linear combination of terms for US anyway, so our strategy here is to condense it
@@ -1604,71 +1620,7 @@ class UmbrellaSampling(JobType):
                 for term in condensed_rc:
                     # First, obtain the type of CV (optype) and the number of atoms involved (nat)
                     cv_index = int(re.findall('CV[0-9]+', term)[0].replace('CV', ''))
-                    this_cv = settings.cvs[cv_index - 1]    # -1 because CVs are 1-indexed
-                    if 'pytraj.dihedral' in this_cv or 'mdtraj.compute_dihedrals' in this_cv:
-                        optype = 'dihedral'
-                        nat = 4
-                    elif 'pytraj.angle' in this_cv or 'mdtraj.compute_angles' in this_cv:
-                        optype = 'angle'
-                        nat = 3
-                    elif 'pytraj.distance' in this_cv or 'mdtraj.compute_distances' in this_cv:
-                        if '-' in this_cv and (this_cv.count('pytraj.distance') == 2 or
-                                               this_cv.count('mdtraj.compute_distances') == 2 or
-                                               ('mdtraj.distance' in this_cv and 'pytraj.distance' in this_cv)):
-                            optype = 'diffdistance'
-                            nat = 4
-                        else:
-                            optype = 'distance'
-                            nat = 2
-                    else:
-                        raise RuntimeError('unable to discern CV type for CV' + str(int(cv_index)) + '\nOnly '
-                                           'distances, angles, dihedrals, and differences of distances (all defined '
-                                           'using either pytraj or mdtraj distance, angle, and/or dihedral functions) '
-                                           'are supported in umbrella sampling. The offending CV is defined as: ' +
-                                           this_cv)
-
-                    # Get atom indices as a string, then convert to list
-                    atoms = ''
-                    if not optype == 'diffdistance':
-                        count = 0
-                        for match in re.finditer('[\[\\\']([@0-9]+[,\ ]){' + str(nat - 1) + '}[@0-9]+[\]\\\']', this_cv.replace(', ',',')):
-                            atoms += this_cv.replace(', ',',')[match.start():match.end()]    # should be only one match
-                            count += 1
-                        if not count == 1:
-                            raise RuntimeError('failed to identify atoms constituting CV definition: ' + this_cv +
-                                               '\nInterpreted as a ' + optype + ' but found ' + str(count) +
-                                               ' blocks of atom indices with length ' + str(nat) + '(should be one). Is'
-                                               ' this CV formatted in an unusual way?')
-                        if not atoms:
-                            raise RuntimeError('unable to identify atoms constituting CV definition: ' + this_cv +
-                                               '\nIs it formatted in an unusual way?')
-                        atoms = atoms.replace('[', '').replace(']',',').replace('\'','')  # included delimeters for safety, but don't want them
-                        if '@' in atoms:
-                            atoms = [item.replace('@','') for item in atoms.split(' @')]    # pytraj style atom indices
-                        else:
-                            atoms = atoms.split(',')                        # mdtraj style atom indices
-                            atoms = [int(item) + 1 for item in atoms if not item == '']     # fix zero-indexing in mdtraj
-                    else:
-                        count = 0
-                        for match in re.finditer('[\[\\\']([@0-9]+[,\ ]){1}[@0-9]+[\]\\\']', this_cv.replace(', ',',')):
-                            atoms += this_cv.replace(', ',',')[match.start():match.end()]    # should be two matches
-                            count += 1
-                        if not count == 2:
-                            raise RuntimeError('failed to identify atoms constituting CV definition: ' + this_cv +
-                                               '\nInterpreted as a difference of distances but found ' + str(count) +
-                                               ' blocks of atom indices with length 2 (should be two). Is this CV '
-                                               'formatted in an unusual way?')
-                        if not atoms:
-                            raise RuntimeError('unable to identify atoms constituting CV definition: ' + this_cv +
-                                               '\nIs it formatted in an unusual way?')
-                        atoms = atoms.replace('[', '').replace(']',',').replace('\'','')  # included delimeters for safety, but don't want them
-                        if '@' in atoms:
-                            atoms = [item.replace('@','') for item in atoms.split(' @')]
-                        else:
-                            atoms = atoms.split(',')
-
-                    while '' in atoms:
-                        atoms.remove('')    # remove empty list elements if present
+                    atoms, optype, nat = utilities.interpret_cv(cv_index, settings)  # get atom indices and type for this CV
 
                     # Next, obtain the value of "alp" for this CV (coefficient / (max - min))
                     coeff = term.replace('CV' + str(cv_index), '').replace('*','')
@@ -1710,6 +1662,10 @@ class UmbrellaSampling(JobType):
                     ordinal += 1
 
                 file.write(' &end\n')
+
+                if settings.us_cv_restraints_file:
+                    file.write('DISANG=us_cv_restraints_' + str(self.history.window) + '.DISANG')
+
                 file.close()
 
         return input_file_name
