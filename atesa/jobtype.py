@@ -1537,7 +1537,7 @@ class UmbrellaSampling(JobType):
                     # Define a helper function
                     def closest(lst, K):
                         # Return index of closest value to K in list lst
-                        return min(range(len(lst)), key=lambda i: abs(lst[i] - K))
+                        return min(range(len(lst)), key=lambda i: abs(lst[i] - float(K)))
 
                     # Define function to clean up some floating point precision issues;
                     # e.g.,  numpy.arange(-6,12,0.1)[-1] = 11.899999999999935,
@@ -1565,7 +1565,7 @@ class UmbrellaSampling(JobType):
                             for cv_index in range(len(line.split())):
                                 if min_max[window_index][cv_index][0] is None or float(min_max[window_index][cv_index][0]) > float(line.split()[cv_index]):
                                     min_max[window_index][cv_index][0] = line.split()[cv_index]     # set new min
-                                if min_max[window_index][cv_index][0] is None or float(min_max[window_index][cv_index][1]) < float(line.split()[cv_index]):
+                                if min_max[window_index][cv_index][1] is None or float(min_max[window_index][cv_index][1]) < float(line.split()[cv_index]):
                                     min_max[window_index][cv_index][1] = line.split()[cv_index]     # set new max
 
                         pickle.dump(min_max, open('min_max.pkl', 'wb'), protocol=2)
@@ -1577,8 +1577,8 @@ class UmbrellaSampling(JobType):
                     with open(settings.working_directory + '/us_cv_restraints_' + str(self.history.window) + '.DISANG', 'a') as f:
                         f.write('ATESA automatically generated restraint file implementing us_cv_restraints option\n')
                         for cv_index in range(len(min_max[window_index])):
-                            atoms, optype, nat = utilities.interpret_cv(cv_index, settings)  # get atom indices and type for this CV
-                            f.write(' &rst iat=' + ', '.join(atoms) + ', r1=' + str(min_max[window_index][cv_index][0])
+                            atoms, optype, nat = utilities.interpret_cv(cv_index + 1, settings)  # get atom indices and type for this CV
+                            f.write(' &rst iat=' + ', '.join([str(atom) for atom in atoms]) + ', r1=' + str(min_max[window_index][cv_index][0])
                                     + ', r2=' + str(min_max[window_index][cv_index][0]) + ', r3=' +
                                     str(min_max[window_index][cv_index][1]) + ', r4=' +
                                     str(min_max[window_index][cv_index][1]) + ', rk2=100, rk3=100, /\n')
