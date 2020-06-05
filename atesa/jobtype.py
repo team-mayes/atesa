@@ -1599,10 +1599,12 @@ class UmbrellaSampling(JobType):
                         f.write('ATESA automatically generated restraint file implementing us_cv_restraints option\n')
                         for cv_index in range(len(min_max[window_index])):
                             atoms, optype, nat = utilities.interpret_cv(cv_index + 1, settings)  # get atom indices and type for this CV
-                            f.write(' &rst iat=' + ', '.join([str(atom) for atom in atoms]) + ', r1=' + str(min_max[window_index][cv_index][0])
-                                    + ', r2=' + str(min_max[window_index][cv_index][0]) + ', r3=' +
-                                    str(min_max[window_index][cv_index][1]) + ', r4=' +
-                                    str(min_max[window_index][cv_index][1]) + ', rk2=100, rk3=100, /\n')
+                            this_min = min_max[window_index][cv_index][0]
+                            this_max = min_max[window_index][cv_index][1]
+                            f.write(' &rst iat=' + ', '.join([str(atom) for atom in atoms]) + ', r1=' +
+                                    str(this_min - (this_max - this_min)) + ', r2=' + str(this_min) + ', r3=' +
+                                    str(this_max) + ', r4=' + str(this_max + (this_max - this_min)) + ', rk2=100, '
+                                    'rk3=100, /\n')
 
             # In preparation for next step, break down settings.rc_definition into component terms
             # rc_definition must be a linear combination of terms for US anyway, so our strategy here is to condense it
@@ -1685,6 +1687,11 @@ class UmbrellaSampling(JobType):
                 file.write(' &end\n')
 
                 if settings.us_cv_restraints_file:
+                    if True in ['type="END"' in line for line in open(settings.path_to_input_files + '/umbrella_sampling_prod_' + settings.md_engine + '.in', 'r').readlines()]:
+                        raise RuntimeError('The umbrella sampling input file appears to contain an &wt namelist'
+                                           ' with \'type="END"\', which must be added by ATESA when using the '
+                                           'us_cv_restraints_file option. Please remove it and try again.')
+                    file.write(' &wt\n  type="END",\n &end\n')
                     file.write('DISANG=us_cv_restraints_' + str(self.history.window) + '.DISANG')
 
                 file.close()
@@ -1718,7 +1725,7 @@ class UmbrellaSampling(JobType):
                                    ' like 10 at most; you chose ' + str(us_degeneracy))
             used_indices = []
             temp_init_coords = []   # initialize list of initial coordinate trajectories to pass forward later
-            for i in range(settings.us_degeneracy):
+            for i in range(settings.us_degeneracy):     # todo: consider simplifying by removing reference to us_degeneracy and this whole loop
                 if not len(used_indices) == len(as_threads):    # if not every index has been used yet
                     thread_index = -1
                     while_count = 0
@@ -1742,7 +1749,8 @@ class UmbrellaSampling(JobType):
                 traj_index = -1
                 while this_thread.prod_trajs[traj_index] in temp_init_coords:
                     traj_index -= 1
-                temp_init_coords.append(this_thread.prod_trajs[traj_index])
+                if os.path.exists(this_thread.prod_trajs[traj_index]):  # todo: this is necessary, but ruins it... Need to rewrite this section
+                    temp_init_coords.append(this_thread.prod_trajs[traj_index])
 
             settings.initial_coordinates = copy.deepcopy(temp_init_coords)  # overwrite initial_coordinates
             # todo: as written, this is just going to load all the settings.initial_coordinates trajectories together
