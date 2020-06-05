@@ -1557,8 +1557,29 @@ class UmbrellaSampling(JobType):
                         # E.g., min_max[12][5][1] is the max value of CV6 in the 13th window
                         min_max = [[[None, None] for null in range(len(as_full_cvs_lines[0].split()))] for null in range(len(window_centers))]
 
+                        rc_minmax = [[], []]    # this minmax is for passing to utilities.get_cvs.reduce_cv
+                        if settings.rc_reduced_cvs:
+                            # Prepare cv_minmax list
+                            asout_lines = [[float(item) for item in line.replace('A <- ', '').replace('B <- ', '').replace(' \n', '').replace('\n', '').split(' ')] for line in
+                                           open(settings.as_out_file, 'r').readlines()]
+                            open(settings.as_out_file, 'r').close()
+                            mapped = list(map(list, zip(*asout_lines)))
+                            rc_minmax = [[numpy.min(item) for item in mapped], [numpy.max(item) for item in mapped]]
+
+                            def reduce_cv(unreduced_value, local_index, rc_minmax):
+                                # Returns a reduced value for a CV given an unreduced value and the index within as.out corresponding to that CV
+                                this_min = rc_minmax[0][local_index]
+                                this_max = rc_minmax[1][local_index]
+                                return (float(unreduced_value) - this_min) / (this_max - this_min)
+
                         for line in as_full_cvs_lines:
-                            rc = utilities.evaluate_rc(settings.rc_definition, line.split())
+                            this_line = line.split()
+                            if settings.rc_reduced_cvs:
+                                this_line_temp = []
+                                for cv_index in range(len(this_line)):
+                                    this_line_temp.append(reduce_cv(this_line[cv_index], cv_index, rc_minmax))
+                                this_line = copy.copy(this_line_temp)
+                            rc = utilities.evaluate_rc(settings.rc_definition, this_line)
                             window_index = closest(window_centers, rc)
 
                             # Add min and max as appropriate
