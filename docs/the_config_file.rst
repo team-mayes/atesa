@@ -405,7 +405,7 @@ These settings are specific to aimless shooting runs only.
 	
 ``cleanup``
 
-	A boolean. If True, trajectory files for each shooting move are deleted after they no longer represent the last accepted trajectory in a thread. The initial coordinate files from each shooting move are always retained for resampling. This option is useful to reduce the amount of storage space consumed in the course of aimless shooting; however, note that when this option is used, you will not be able to completely resample the output file "as_full_cvs.out" if you later want to add additional CVs. This file is only used for an optional setting in umbrella sampling, so if you don't plan to use umbrella sampling you can safely set this to True. Default = False
+	A boolean. If True, trajectory files for each shooting move are deleted after they no longer represent the last accepted trajectory in a thread. The initial coordinate files from each shooting move are always retained for resampling. This option is useful to reduce the amount of storage space consumed in the course of aimless shooting; however, note that when this option is used, you will not be able to completely resample the output file "as_full_cvs.out" if you later want to add additional CVs. This file is only used for an optional setting in umbrella sampling, so if you don't plan to use umbrella sampling or if you're sure you don't need that option, you can safely leave this on True. Default = True
 	
 ``max_moves``
 

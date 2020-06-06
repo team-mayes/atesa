@@ -224,14 +224,14 @@ def handle_loop_exception(attempted_rescue, running, settings):
     #             return None
 
     # This code reached if return statement above is not
-    print('Rescue failed. Cancelling currently running batch jobs belonging to this process in order to '
+    print('\nRescue failed. Cancelling currently running batch jobs belonging to this process in order to '
           'preserve resources.')
     for thread in running:
         try:
             for job_index in range(len(thread.jobids)):
                 thread.cancel_job(job_index, settings)
         except Exception as little_e:
-            print('Encountered exception while attempting to cancel a job: ' + str(little_e) +
+            print('\nEncountered exception while attempting to cancel a job: ' + str(little_e) +
                   '\nIgnoring and continuing...')
 
     raise UnableToRescueException('Job cancellation complete, ATESA is now shutting down.')

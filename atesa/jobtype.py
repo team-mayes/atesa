@@ -563,7 +563,7 @@ class AimlessShooting(JobType):
 
                 # Implement writing to full CVs output file, 'as_full_cvs.out'
                 if not os.path.exists(settings.working_directory + '/as_full_cvs.out'):
-                    open(settings.working_directory + '/as_full_cvs.out', 'w').write()
+                    open(settings.working_directory + '/as_full_cvs.out', 'w').close()
                 with open(settings.working_directory + '/as_full_cvs.out', 'a') as f:
                     for job_index in range(len(self.current_type)):
                         for frame_index in range(pytraj.iterload(self.history.prod_trajs[-1][job_index], settings.topology).n_frames):
@@ -1314,7 +1314,7 @@ class FindTS(JobType):
             ts_guesses = []  # initialize list of transition state guesses to test
             for frame_index in frame_indices:
                 pytraj.write_traj(self.name + '_ts_guess_' + str(frame_index) + '.rst7', traj,
-                                  frame_indices=[frame_index], options='multi', overwrite=True)
+                                  frame_indices=[frame_index], options='multi', overwrite=True, velocity=True)
                 try:
                     os.rename(self.name + '_ts_guess_' + str(frame_index) + '.rst7.1',
                               self.name + '_ts_guess_' + str(frame_index) + '.rst7')
@@ -1389,6 +1389,7 @@ class FindTS(JobType):
         as_settings.information_error_checking = False
         as_settings.dont_dump = True
         as_settings.cleanup = True
+        as_settings.include_qdot = False    # not necessary for these purposes and just opens up room for error
         if as_settings.max_moves <= 0:   # the default is -1; in other words, sets new default to 10 for this run
             as_settings.max_moves = 10
 
@@ -1599,8 +1600,8 @@ class UmbrellaSampling(JobType):
                         f.write('ATESA automatically generated restraint file implementing us_cv_restraints option\n')
                         for cv_index in range(len(min_max[window_index])):
                             atoms, optype, nat = utilities.interpret_cv(cv_index + 1, settings)  # get atom indices and type for this CV
-                            this_min = min_max[window_index][cv_index][0]
-                            this_max = min_max[window_index][cv_index][1]
+                            this_min = float(min_max[window_index][cv_index][0])
+                            this_max = float(min_max[window_index][cv_index][1])
                             f.write(' &rst iat=' + ', '.join([str(atom) for atom in atoms]) + ', r1=' +
                                     str(this_min - (this_max - this_min)) + ', r2=' + str(this_min) + ', r3=' +
                                     str(this_max) + ', r4=' + str(this_max + (this_max - this_min)) + ', rk2=100, '
