@@ -1314,7 +1314,7 @@ class FindTS(JobType):
             ts_guesses = []  # initialize list of transition state guesses to test
             for frame_index in frame_indices:
                 pytraj.write_traj(self.name + '_ts_guess_' + str(frame_index) + '.rst7', traj,
-                                  frame_indices=[frame_index], options='multi', overwrite=True, velocity=True)
+                                  frame_indices=[frame_index - 1], options='multi', overwrite=True, velocity=True)
                 try:
                     os.rename(self.name + '_ts_guess_' + str(frame_index) + '.rst7.1',
                               self.name + '_ts_guess_' + str(frame_index) + '.rst7')
@@ -1388,7 +1388,6 @@ class FindTS(JobType):
         as_settings.resample = False    # just to be safe
         as_settings.information_error_checking = False
         as_settings.dont_dump = True
-        as_settings.cleanup = True
         as_settings.include_qdot = False    # not necessary for these purposes and just opens up room for error
         if as_settings.max_moves <= 0:   # the default is -1; in other words, sets new default to 10 for this run
             as_settings.max_moves = 10
@@ -1441,7 +1440,7 @@ class FindTS(JobType):
                 if final_names:
                     print('Found working transition state guess(es):\n' + '\n'.join(final_names) + '\nSee ' +
                           as_settings.working_directory + '/status.txt for more information (acceptance probabilities '
-                          'very low; consider trying again with revised basin definitions for better results)')
+                          'may be very low; consider trying again with revised basin definitions for better results)')
                     not_finished = False
                     continue
 
@@ -1472,19 +1471,50 @@ class FindTS(JobType):
                 # Final option: two possibilities remain here...
                 else:
                     if not 'fwd' in reformatted_results and not 'bwd' in reformatted_results:   # no commitment at all
-                        raise RuntimeError('no commitments to either basin were observed during aimless shooting.\n'
+                        raise RuntimeError('No commitments to either basin were observed during aimless shooting.\n'
                                            'The restraint in the barrier crossing simulation appears to have broken the'
                                            ' system in some way, so either try changing your target commitment basin '
                                            'definition and restarting, or you’ll have to use another method to obtain '
                                            'an initial transition state.')
                     else:   # 'fwd' and 'bwd' were both found, but not within a single thread
-                        raise RuntimeError('commitments to both the forward and backward basins were observed, but not '
+                        # Two sub-possibilities here: either there was a 'fwd' and a 'bwd' starting from adjacent
+                        # frames, in which case we can't continue and raise an error; or the frames were non-adjacent,
+                        # in which case we want to focus in on the space between them. First case first:
+                        pattern = re.compile(r"ts_guess_[0-9]+(?!.*ts_guess_[0-9]+)")   # for identifying frame
+                        sorted_allthreads = sorted(allthreads, key=lambda thread: float(pattern.findall(thread.history.prod_trajs[0][0])[0].replace('ts_guess_', '')))
+                        current_result = ''
+                        previous_index = -1
+                        current_index = -1
+                        this_index = -1
+                        for thread in sorted_allthreads:
+                            this_index += 1
+                            reformatted_results = ' '.join([res[0] + ' ' + res[1] for res in thread.history.prod_results])
+                            if 'fwd' in reformatted_results and not 'bwd' in reformatted_results:
+                                previous_result = current_result
+                                current_result = 'fwd'
+                            elif 'bwd' in reformatted_results and not 'fwd' in reformatted_results:
+                                previous_result = current_result
+                                current_result = 'bwd'
+                            else:
+                                continue
+                            if previous_result == current_result:   # found the threads between which to focus
+                                previous_index = float(pattern.findall(allthreads[this_index - 1].history.prod_trajs[0][0])[0].replace('ts_guess_', ''))
+                                current_index = float(pattern.findall(allthreads[this_index].history.prod_trajs[0][0])[0].replace('ts_guess_', ''))
+                        if previous_index == -1:
+                            raise RuntimeError('failed to find frames between which commitment changes during find_ts; '
+                                               'this message should not be accessible.')
+                        frame_indices = numpy.arange(previous_index, current_index)
+                        ts_guesses = write_ts_guess_frames(traj, frame_indices)
+                        raise RuntimeError('Commitments to both the forward and backward basins were observed, but not '
                                            'from any single transition state candidate.\nThe most likely explanation is'
                                            ' that the transition state region is very narrow and lies between two '
                                            'frames in the barrier crossing simulation. Try increasing the frame output '
                                            'frequency or reducing the step size in ' + settings.path_to_input_files +
-                                           '/find_ts_prod_' + settings.md_engine + '.in. Alternatively, try adjusting the '
-                                           'basin definitions in the config file.')
+                                           '/find_ts_prod_' + settings.md_engine + '.in. Alternatively, try adjusting '
+                                           'the basin definitions in the config file. Finally, it could just be bad '
+                                           'luck, and re-running this find_ts job might fix it (the likelihood of this '
+                                           'result coming from bad luck is inversely proportional to the value of the '
+                                           'max_moves option.)')
 
                 # This block only reached if there were only commitments in one direction
                 as_settings.initial_coordinates = ts_guesses
