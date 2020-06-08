@@ -1370,7 +1370,7 @@ class FindTS(JobType):
             frame_indices = [int(ii) for ii in range(opt_result.best_bounds[0], opt_result.best_bounds[1]+1)]
 
         print('First attempt. Testing the following frames from the forced trajectory ' + self.history.prod_trajs[0] +
-              ': ' + ', '.join(frame_indices))
+              ': ' + ', '.join([str(item) for item in frame_indices]))
         ts_guesses = write_ts_guess_frames(traj, frame_indices)
 
         ### Here, we do something pretty weird. We want to test the transition state guesses in the ts_guesses list
@@ -1461,7 +1461,7 @@ class FindTS(JobType):
 
                     print('Previous attempt failed: trajectories went to \'fwd\' basin only. Now testing the following'
                           ' frames from the forced trajectory ' + self.history.prod_trajs[0] + ': ' +
-                          ', '.join(frame_indices))
+                          ', '.join([str(item) for item in frame_indices]))
                     ts_guesses = write_ts_guess_frames(traj, frame_indices)
 
                 elif 'bwd' in reformatted_results and not 'fwd' in reformatted_results:     # went to 'bwd' only
@@ -1473,7 +1473,7 @@ class FindTS(JobType):
 
                     print('Previous attempt failed: trajectories went to \'bwd\' basin only. Now testing the following'
                           ' frames from the forced trajectory ' + self.history.prod_trajs[0] + ': ' +
-                          ', '.join(frame_indices))
+                          ', '.join([str(item) for item in frame_indices]))
                     ts_guesses = write_ts_guess_frames(traj, frame_indices)
 
                 # Final option: two possibilities remain here...

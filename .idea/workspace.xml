@@ -125,8 +125,8 @@
       <file leaf-file-name="jobtype.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/atesa/jobtype.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="261">
-              <caret line="1495" column="42" lean-forward="true" selection-start-line="1495" selection-start-column="42" selection-end-line="1495" selection-end-column="42" />
+            <state relative-caret-position="421">
+              <caret line="1475" column="75" lean-forward="true" selection-start-line="1475" selection-start-column="75" selection-end-line="1475" selection-end-column="75" />
               <folding>
                 <element signature="e#164#174#0" expanded="true" />
               </folding>
@@ -1223,8 +1223,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/atesa/jobtype.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="261">
-          <caret line="1495" column="42" lean-forward="true" selection-start-line="1495" selection-start-column="42" selection-end-line="1495" selection-end-column="42" />
+        <state relative-caret-position="421">
+          <caret line="1475" column="75" lean-forward="true" selection-start-line="1475" selection-start-column="75" selection-end-line="1475" selection-end-column="75" />
           <folding>
             <element signature="e#164#174#0" expanded="true" />
           </folding>
