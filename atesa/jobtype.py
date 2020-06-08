@@ -1369,6 +1369,8 @@ class FindTS(JobType):
         else:   # number of frames in bounds <= 50, so we'll take all of them
             frame_indices = [int(ii) for ii in range(opt_result.best_bounds[0], opt_result.best_bounds[1]+1)]
 
+        print('First attempt. Testing the following frames from the forced trajectory ' + self.history.prod_trajs[0] +
+              ': ' + ', '.join(frame_indices))
         ts_guesses = write_ts_guess_frames(traj, frame_indices)
 
         ### Here, we do something pretty weird. We want to test the transition state guesses in the ts_guesses list
@@ -1457,6 +1459,9 @@ class FindTS(JobType):
                     if dir_to_check == 'bwd':   # restraint target was 'bwd' so shift to the right (later frames)
                         frame_indices = [frame_index + (max(frame_indices) - min(frame_indices)) + 1 for frame_index in frame_indices if frame_index + (max(frame_indices) - min(frame_indices)) + 1 < traj.n_frames]
 
+                    print('Previous attempt failed: trajectories went to \'fwd\' basin only. Now testing the following'
+                          ' frames from the forced trajectory ' + self.history.prod_trajs[0] + ': ' +
+                          ', '.join(frame_indices))
                     ts_guesses = write_ts_guess_frames(traj, frame_indices)
 
                 elif 'bwd' in reformatted_results and not 'fwd' in reformatted_results:     # went to 'bwd' only
@@ -1466,6 +1471,9 @@ class FindTS(JobType):
                     if dir_to_check == 'fwd':   # restraint target was 'fwd' so shift to the right (later frames)
                         frame_indices = [frame_index + (max(frame_indices) - min(frame_indices)) + 1 for frame_index in frame_indices if frame_index + (max(frame_indices) - min(frame_indices)) + 1 < traj.n_frames]
 
+                    print('Previous attempt failed: trajectories went to \'bwd\' basin only. Now testing the following'
+                          ' frames from the forced trajectory ' + self.history.prod_trajs[0] + ': ' +
+                          ', '.join(frame_indices))
                     ts_guesses = write_ts_guess_frames(traj, frame_indices)
 
                 # Final option: two possibilities remain here...
@@ -1480,8 +1488,9 @@ class FindTS(JobType):
                         # Two sub-possibilities here: either there was a 'fwd' and a 'bwd' starting from adjacent
                         # frames, in which case we can't continue and raise an error; or the frames were non-adjacent,
                         # in which case we want to focus in on the space between them. First case first:
+                        as_allthreads = pickle.load(open(as_settings.working_directory + '/restart.pkl', 'rb'))
                         pattern = re.compile(r"ts_guess_[0-9]+(?!.*ts_guess_[0-9]+)")   # for identifying frame
-                        sorted_allthreads = sorted(allthreads, key=lambda thread: float(pattern.findall(thread.history.prod_trajs[0][0])[0].replace('ts_guess_', '')))
+                        sorted_allthreads = sorted(as_allthreads, key=lambda thread: float(pattern.findall(thread.history.prod_trajs[0][0])[0].replace('ts_guess_', '')))
                         current_result = ''
                         previous_index = -1
                         current_index = -1
@@ -1498,14 +1507,21 @@ class FindTS(JobType):
                             else:
                                 continue
                             if previous_result == current_result:   # found the threads between which to focus
-                                previous_index = float(pattern.findall(allthreads[this_index - 1].history.prod_trajs[0][0])[0].replace('ts_guess_', ''))
-                                current_index = float(pattern.findall(allthreads[this_index].history.prod_trajs[0][0])[0].replace('ts_guess_', ''))
+                                previous_index = float(pattern.findall(as_allthreads[this_index - 1].history.prod_trajs[0][0])[0].replace('ts_guess_', ''))
+                                current_index = float(pattern.findall(as_allthreads[this_index].history.prod_trajs[0][0])[0].replace('ts_guess_', ''))
                         if previous_index == -1:
                             raise RuntimeError('failed to find frames between which commitment changes during find_ts; '
                                                'this message should not be accessible.')
-                        frame_indices = numpy.arange(previous_index, current_index)
-                        ts_guesses = write_ts_guess_frames(traj, frame_indices)
-                        raise RuntimeError('Commitments to both the forward and backward basins were observed, but not '
+                        if not previous_index == -1 and not current_index == -1 and abs(previous_index - current_index) == 1:    # if these aren't adjacent frames
+                            frame_indices = numpy.arange(previous_index, current_index)
+                            print('Previous attempt failed: trajectories starting from non-consecutive frames ' +
+                                  str(previous_index) + ' and ' + str(current_index) + 'from the forced trajectory went'
+                                  ' to only \'' + previous_result + '\' and only \'' + current_result + '\' basins, '
+                                  'respectively. Now testing the following frames from the forced trajectory ' +
+                                  self.history.prod_trajs[0] + ': ' + ', '.join(frame_indices))
+                            ts_guesses = write_ts_guess_frames(traj, frame_indices)
+                        else:
+                            raise RuntimeError('Commitments to both the forward and backward basins were observed, but not '
                                            'from any single transition state candidate.\nThe most likely explanation is'
                                            ' that the transition state region is very narrow and lies between two '
                                            'frames in the barrier crossing simulation. Try increasing the frame output '
