@@ -1473,7 +1473,7 @@ class FindTS(JobType):
 
                     print('Previous attempt failed: trajectories went to \'bwd\' basin only. Now testing the following'
                           ' frames from the forced trajectory ' + self.history.prod_trajs[0] + ': ' +
-                          ', '.join([str(item) for item in frame_indices]))
+                          ', '.join([str(int(item)) for item in frame_indices]))
                     ts_guesses = write_ts_guess_frames(traj, frame_indices)
 
                 # Final option: two possibilities remain here...
@@ -1499,26 +1499,29 @@ class FindTS(JobType):
                             this_index += 1
                             reformatted_results = ' '.join([res[0] + ' ' + res[1] for res in thread.history.prod_results])
                             if 'fwd' in reformatted_results and not 'bwd' in reformatted_results:
+                                print('fwd')
                                 previous_result = current_result
                                 current_result = 'fwd'
                             elif 'bwd' in reformatted_results and not 'fwd' in reformatted_results:
+                                print('bwd')
                                 previous_result = current_result
                                 current_result = 'bwd'
                             else:
                                 continue
-                            if previous_result == current_result:   # found the threads between which to focus
+                            if not previous_result == '' and not current_index == '' and not previous_result == current_result:   # found the threads between which to focus
                                 previous_index = float(pattern.findall(as_allthreads[this_index - 1].history.prod_trajs[0][0])[0].replace('ts_guess_', ''))
                                 current_index = float(pattern.findall(as_allthreads[this_index].history.prod_trajs[0][0])[0].replace('ts_guess_', ''))
+                                break
                         if previous_index == -1:
                             raise RuntimeError('failed to find frames between which commitment changes during find_ts; '
                                                'this message should not be accessible.')
-                        if not previous_index == -1 and not current_index == -1 and abs(previous_index - current_index) == 1:    # if these aren't adjacent frames
+                        if not previous_index == -1 and not current_index == -1 and not abs(previous_index - current_index) == 1:    # if these aren't adjacent frames
                             frame_indices = numpy.arange(previous_index, current_index)
                             print('Previous attempt failed: trajectories starting from non-consecutive frames ' +
-                                  str(previous_index) + ' and ' + str(current_index) + 'from the forced trajectory went'
-                                  ' to only \'' + previous_result + '\' and only \'' + current_result + '\' basins, '
-                                  'respectively. Now testing the following frames from the forced trajectory ' +
-                                  self.history.prod_trajs[0] + ': ' + ', '.join(frame_indices))
+                                  str(previous_index) + ' and ' + str(current_index) + ' from the forced trajectory '
+                                  'went to only \'' + previous_result + '\' and only \'' + current_result + '\' basins,'
+                                  ' respectively. Now testing the following frames from the forced trajectory' +
+                                  self.history.prod_trajs[0] + ': ' + ', '.join([str(int(item)) for item in frame_indices]))
                             ts_guesses = write_ts_guess_frames(traj, frame_indices)
                         else:
                             raise RuntimeError('Commitments to both the forward and backward basins were observed, but not '
