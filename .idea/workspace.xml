@@ -125,8 +125,8 @@
       <file leaf-file-name="jobtype.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/atesa/jobtype.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="255">
-              <caret line="1528" column="96" lean-forward="false" selection-start-line="1528" selection-start-column="96" selection-end-line="1528" selection-end-column="96" />
+            <state relative-caret-position="-1351">
+              <caret line="1428" column="34" lean-forward="false" selection-start-line="1428" selection-start-column="34" selection-end-line="1428" selection-end-column="34" />
               <folding>
                 <element signature="e#164#174#0" expanded="true" />
               </folding>
@@ -167,8 +167,8 @@
       <file leaf-file-name="auto_cvs.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/atesa/auto_cvs.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="77">
-              <caret line="153" column="150" lean-forward="false" selection-start-line="153" selection-start-column="150" selection-end-line="153" selection-end-column="150" />
+            <state relative-caret-position="510">
+              <caret line="154" column="40" lean-forward="false" selection-start-line="154" selection-start-column="40" selection-end-line="154" selection-end-column="40" />
               <folding>
                 <element signature="e#175#185#0" expanded="true" />
               </folding>
@@ -187,7 +187,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>fewer</find>
       <find>slope_only</find>
       <find>randint(</find>
       <find>settings.eps_emp</find>
@@ -217,6 +216,7 @@
       <find>iterload</find>
       <find>DISANG=</find>
       <find>allthreads</find>
+      <find>flush</find>
     </findStrings>
     <replaceStrings>
       <replace>'../../data/atesa.config'</replace>
@@ -1058,13 +1058,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/atesa/lmax.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1221">
-          <caret line="348" column="45" lean-forward="false" selection-start-line="348" selection-start-column="45" selection-end-line="348" selection-end-column="45" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/atesa/boltzmann_weight.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="252">
@@ -1169,16 +1162,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/atesa/auto_cvs.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="77">
-          <caret line="153" column="150" lean-forward="false" selection-start-line="153" selection-start-column="150" selection-end-line="153" selection-end-column="150" />
-          <folding>
-            <element signature="e#175#185#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/atesa/tests/test_utilities.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="302">
@@ -1221,10 +1204,28 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/atesa/lmax.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="146">
+          <caret line="83" column="4" lean-forward="false" selection-start-line="83" selection-start-column="4" selection-end-line="83" selection-end-column="22" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/atesa/auto_cvs.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="510">
+          <caret line="154" column="40" lean-forward="false" selection-start-line="154" selection-start-column="40" selection-end-line="154" selection-end-column="40" />
+          <folding>
+            <element signature="e#175#185#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/atesa/jobtype.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="255">
-          <caret line="1528" column="96" lean-forward="false" selection-start-line="1528" selection-start-column="96" selection-end-line="1528" selection-end-column="96" />
+        <state relative-caret-position="-1351">
+          <caret line="1428" column="34" lean-forward="false" selection-start-line="1428" selection-start-column="34" selection-end-line="1428" selection-end-column="34" />
           <folding>
             <element signature="e#164#174#0" expanded="true" />
           </folding>

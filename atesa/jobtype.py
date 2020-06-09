@@ -1426,6 +1426,7 @@ class FindTS(JobType):
                         final_names.append(names[line_index])
                 print('Found working transition state guess(es):\n' + '\n'.join(final_names) + '\nSee ' +
                       as_settings.working_directory + '/status.txt for more information')
+                sys.stdout.flush()
                 not_finished = False
                 continue
             else:       # not so straightforward; this case requires diagnosis
@@ -1443,6 +1444,7 @@ class FindTS(JobType):
                     print('Found working transition state guess(es):\n' + '\n'.join(final_names) + '\nSee ' +
                           as_settings.working_directory + '/status.txt for more information (acceptance probabilities '
                           'may be very low; consider trying again with revised basin definitions for better results)')
+                    sys.stdout.flush()
                     not_finished = False
                     continue
 
@@ -1462,6 +1464,7 @@ class FindTS(JobType):
                     print('Previous attempt failed: trajectories went to \'fwd\' basin only. Now testing the following'
                           ' frames from the forced trajectory ' + self.history.prod_trajs[0] + ': ' +
                           ', '.join([str(item) for item in frame_indices]))
+                    sys.stdout.flush()
                     ts_guesses = write_ts_guess_frames(traj, frame_indices)
 
                 elif 'bwd' in reformatted_results and not 'fwd' in reformatted_results:     # went to 'bwd' only
@@ -1474,6 +1477,7 @@ class FindTS(JobType):
                     print('Previous attempt failed: trajectories went to \'bwd\' basin only. Now testing the following'
                           ' frames from the forced trajectory ' + self.history.prod_trajs[0] + ': ' +
                           ', '.join([str(int(item)) for item in frame_indices]))
+                    sys.stdout.flush()
                     ts_guesses = write_ts_guess_frames(traj, frame_indices)
 
                 # Final option: two possibilities remain here...
@@ -1522,6 +1526,7 @@ class FindTS(JobType):
                                   'went to only \'' + previous_result + '\' and only \'' + current_result + '\' basins,'
                                   ' respectively. Now testing the following frames from the forced trajectory' +
                                   self.history.prod_trajs[0] + ': ' + ', '.join([str(int(item)) for item in frame_indices]))
+                            sys.stdout.flush()
                             ts_guesses = write_ts_guess_frames(traj, frame_indices)
                         else:
                             raise RuntimeError('Commitments to both the forward and backward basins were observed, but not '
