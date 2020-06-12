@@ -561,15 +561,16 @@ class AimlessShooting(JobType):
                 open(settings.working_directory + '/as_raw.out', 'a').write(utilities.get_cvs(self.history.init_coords[-1][0], settings) + '\n')
                 open(settings.working_directory + '/as_raw.out', 'a').close()
 
-                # Implement writing to full CVs output file, 'as_full_cvs.out'
-                if not os.path.exists(settings.working_directory + '/as_full_cvs.out'):
-                    open(settings.working_directory + '/as_full_cvs.out', 'w').close()
-                with open(settings.working_directory + '/as_full_cvs.out', 'a') as f:
-                    for job_index in range(len(self.current_type)):
-                        for frame_index in range(pytraj.iterload(self.history.prod_trajs[-1][job_index], settings.topology).n_frames):
-                            frame_to_check = self.get_frame(self.history.prod_trajs[-1][job_index], frame_index + 1, settings)
-                            f.write(utilities.get_cvs(frame_to_check, settings) + '\n')
-                            os.remove(frame_to_check)
+                ## Turns out this really slows things down; better left to resampling as needed
+                # # Implement writing to full CVs output file, 'as_full_cvs.out'
+                # if not os.path.exists(settings.working_directory + '/as_full_cvs.out'):
+                #     open(settings.working_directory + '/as_full_cvs.out', 'w').close()
+                # with open(settings.working_directory + '/as_full_cvs.out', 'a') as f:
+                #     for job_index in range(len(self.current_type)):
+                #         for frame_index in range(pytraj.iterload(self.history.prod_trajs[-1][job_index], settings.topology).n_frames):
+                #             frame_to_check = self.get_frame(self.history.prod_trajs[-1][job_index], frame_index + 1, settings)
+                #             f.write(utilities.get_cvs(frame_to_check, settings) + '\n')
+                #             os.remove(frame_to_check)
 
             with open('status.txt', 'w') as file:
                 for thread in allthreads:
@@ -1503,11 +1504,9 @@ class FindTS(JobType):
                             this_index += 1
                             reformatted_results = ' '.join([res[0] + ' ' + res[1] for res in thread.history.prod_results])
                             if 'fwd' in reformatted_results and not 'bwd' in reformatted_results:
-                                print('fwd')
                                 previous_result = current_result
                                 current_result = 'fwd'
                             elif 'bwd' in reformatted_results and not 'fwd' in reformatted_results:
-                                print('bwd')
                                 previous_result = current_result
                                 current_result = 'bwd'
                             else:
@@ -1522,7 +1521,7 @@ class FindTS(JobType):
                         if not previous_index == -1 and not current_index == -1 and not abs(previous_index - current_index) == 1:    # if these aren't adjacent frames
                             frame_indices = numpy.arange(previous_index, current_index)
                             print('Previous attempt failed: trajectories starting from non-consecutive frames ' +
-                                  str(previous_index) + ' and ' + str(current_index) + ' from the forced trajectory '
+                                  str(int(previous_index)) + ' and ' + str(int(current_index)) + ' from the forced trajectory '
                                   'went to only \'' + previous_result + '\' and only \'' + current_result + '\' basins,'
                                   ' respectively. Now testing the following frames from the forced trajectory' +
                                   self.history.prod_trajs[0] + ': ' + ', '.join([str(int(item)) for item in frame_indices]))

@@ -5,7 +5,7 @@ The Configuration File
 
 The configuration file is the primary means of controlling the behavior of ATESA. In order to support the wide array of functionality that any given user may need, the configuration file supports many options and can be quite long; however, in most cases a relatively short configuration file will be sufficient. This page provides some recommendations for building the configuration file for a handful of common use cases, and provides detailed documentation for each setting.
 
-The contents of the configuration file are read into ATESA as literal python code, which enables invocation of python built-in functions as well as methods of pytraj and numpy. **Warning**: This input is not sanitized in any way. For this reason among others, "shutil.rmtree('/')" makes for a poor reaction coordinate!
+The contents of the configuration file are read line-by-line into ATESA as literal python code, which enables invocation of python built-in functions as well as methods of pytraj and numpy (and anything else you may wish to import). This means comments can be included in-line or on their own lines preceded by a '#' character, and blank lines are simply ignored. **Warning**: This input is not sanitized in any way. For this reason among others, "shutil.rmtree('/')" makes for a poor working directory!!
 
 .. toctree::
    :maxdepth: 3
@@ -58,7 +58,7 @@ Certain settings should be given for every job. The following settings do not ha
 Basic Workflow
 --------------
 
-The following sections outline the contents of the configuration files for each part of a standard ATESA workflow. Following these steps will allow you to start with only a definition of each stable state and an model of one of them (or with a hypothesized transition state model, if preferred), and end with a validated reaction coordinate and a free energy profile along that coordinate connecting the two basins. The workflow of a complete transition path sampling workflow with ATESA is outlined graphically here.
+The following sections outline the contents of the configuration files for each part of a standard ATESA workflow. Following these steps will allow you to start with only a definition of each stable state and a model of one of them (or with a hypothesized transition state model, if preferred), and end with a validated reaction coordinate and a free energy profile along that coordinate connecting the two basins. The workflow of a complete transition path sampling workflow with ATESA is outlined graphically here.
 
 .. figure:: _images/ATESA_workflow.png
 
@@ -73,14 +73,14 @@ them from a given product or reactant state structure. If you do already have a 
 .. code-block:: python
 
 	job_type = 'find_ts'
-	initial_coordinates = [<coord_file_1>]
+	initial_coordinates = [<coord_file>]
 	commit_fwd = [...]
 	commit_bwd = [...]
 	max_moves = 5
 	
-In this case, <coord_file_1> should represent a structure in either the "fwd" or "bwd" commitment basin. See :ref:`CommitmentBasinDefinitions` for details on the `commit_fwd` and `commit_bwd` options.
+In this case, <coord_file> should represent a structure in either the "fwd" or "bwd" commitment basin. See :ref:`CommitmentBasinDefinitions` for details on the `commit_fwd` and `commit_bwd` options.
 
-The *find_ts* job type works by applying a modest restraint to the atoms that make up the target commitment basin definition in order to force the desired rare event to take place, and then automatically performing a small amount of aimless shooting from structures near the middle to identify suitable transition states. Working transition state structures are identified in the file "status.txt" in the subdirectory "as_test" created in the find_ts working directory. The aimless shooting portion can be safely interrupted if a suitable transition state (*i.e.*, one with a non-zero acceptance ratio) has been identified. This works better for some systems than others, and depending on the basin definitions may result in a transition state that technically falls along the separatrix, but is in fact far from the minimum energy transition path. The user should carefully sanity-check the resulting structure(s).
+The *find_ts* job type works by applying a modest and steadily increasing restraint to the atoms that make up the target commitment basin definition in order to force the desired rare event to take place, and then automatically performing a small amount of aimless shooting from structures near the middle to identify suitable transition states. Working transition state structures are identified in the file "status.txt" in the subdirectory "as_test" created in the find_ts working directory. The aimless shooting portion can be safely interrupted if a suitable transition state (*i.e.*, one with a non-zero acceptance ratio) has been identified. This works better for some systems than others, and depending on the basin definitions may result in a transition state that technically falls along the separatrix, but is in fact far from the minimum energy transition path. The user should carefully sanity-check the resulting structure(s).
 
 If find_ts gives you trouble, one alternative option for obtaining a good initial transition state structure is to run unbiased simulations at a high temperature to accelerate the transition, though this runs the risk of pushing the system into otherwise inaccessible configurations, and is beyond the scope of this documentation.
 
@@ -397,7 +397,7 @@ These settings are specific to aimless shooting runs only.
 	
 ``resample``
 
-	A boolean. If True, aimless shooting will NOT be performed, and instead the existing aimless shooting data found in *working_directory* are used to produce new output files based on the settings of the current ATESA job. The primary usage of this option is to add additional CVs to the output files without needing to repeat any simulations. Default = False
+	A boolean. If True, aimless shooting will NOT be performed, and instead the existing aimless shooting data found in *working_directory* are used to produce new output files based on the settings of the current ATESA job. The primary usage of this option is to add additional CVs to the output files without needing to repeat any simulations. It also produces the output file "as_full_cvs.out", which is used as an input for the umbrella sampling option "us_cv_restraints_file". Default = False
 	
 ``degeneracy`` **‡**
 
@@ -405,7 +405,7 @@ These settings are specific to aimless shooting runs only.
 	
 ``cleanup``
 
-	A boolean. If True, trajectory files for each shooting move are deleted after they no longer represent the last accepted trajectory in a thread. The initial coordinate files from each shooting move are always retained for resampling. This option is useful to reduce the amount of storage space consumed in the course of aimless shooting; however, note that when this option is used, you will not be able to completely resample the output file "as_full_cvs.out" if you later want to add additional CVs. This file is only used for an optional setting in umbrella sampling, so if you don't plan to use umbrella sampling or if you're sure you don't need that option, you can safely leave this on True. Default = True
+	A boolean. If True, trajectory files for each shooting move are deleted after they no longer represent the last accepted trajectory in a thread. The initial coordinate files from each shooting move are always retained for resampling. This option is useful to reduce the amount of storage space consumed in the course of aimless shooting; however, note that when this option is used, you will not be able to produce as complete an output file "as_full_cvs.out" (produced only when *resample = True*). This file is only used for an optional setting in umbrella sampling, so if you don't plan to use umbrella sampling or if you're sure you don't need that option, you can safely leave this on True. Default = True
 	
 ``max_moves``
 
@@ -503,7 +503,7 @@ Keep in mind that if you perform a large amount of sampling and then discover th
 	
 ``us_cv_restraints_file``
 
-	A string giving the path to the full CVs output file (default name "as_full_cvs.out") in the desired aimless shooting working directory. By default, the restraints applied during umbrella sampling are only along the reaction coordinate, with all other degrees of freedom left unrestrained. In some cases, this can result in errant sampling of regions of state space that technically have the desired reaction coordinate value, but do not actually fall within the transition path ensemble. Such errors are usually visible in umbrella sampling output data as discontinuities in the mean value plot produced by the mbar.py analysis script; see the :ref:`UmbrellaSamplingTroubleshooting` section of the :ref:`Troubleshooting` page for more information. One possible way to fix this is by rerunning umbrella sampling with this option set, which will apply restraints to every CV included in the aimless shooting output files. These restraints are flat and equal to zero within the range of values observed during any accepted aimless shooting trajectory, and then increase in energy steeply outside this range. In this way, and to the extent that aimless shooting explored the relevant phase space of each CV and that the included CVs cover the relevant dimensions, this option requires the umbrella sampling simulations to remain within the reaction pathway ensemble, producing much better results. However, because of the risk that important regions of state space are errantly gated off, this option should only be used as necessary, not as a first-resort. **Important:** If this option is set, you must include 'nmropt=1,' in the &cntrl namelist of the 'umbrella_sampling_prod_amber.in' file in the input_files directory, along with an &wt namelist with 'type="END",'. Default = ''
+	A string giving the path to the full CVs output file (default name "as_full_cvs.out", produced only when *resample = True*) in the desired aimless shooting working directory. By default, the restraints applied during umbrella sampling are only along the reaction coordinate, with all other degrees of freedom left unrestrained. In some cases, this can result in errant sampling of regions of state space that technically have the desired reaction coordinate value, but do not actually fall within the transition path ensemble. Such errors are usually visible in umbrella sampling output data as discontinuities in the mean value plot produced by the mbar.py analysis script; see the :ref:`UmbrellaSamplingTroubleshooting` section of the :ref:`Troubleshooting` page for more information. One possible way to fix this is by rerunning umbrella sampling with this option set, which will apply restraints to every CV included in the aimless shooting output files. These restraints are flat and equal to zero within the range of values observed during any accepted aimless shooting trajectory, and then increase in energy steeply outside this range. In this way, and to the extent that aimless shooting explored the relevant phase space of each CV and that the included CVs cover the relevant dimensions, this option requires the umbrella sampling simulations to remain within the reaction pathway ensemble, producing much better results. However, because of the risk that important regions of state space are errantly gated off, this option should only be used as necessary, not as a first-resort. **Important:** If this option is set, you must include 'nmropt=1,' in the &cntrl namelist of the 'umbrella_sampling_prod_amber.in' file in the input_files directory, along with an &wt namelist with 'type="END",'. Default = ''
 
 .. _EquilibriumPathSamplingSettings:
 

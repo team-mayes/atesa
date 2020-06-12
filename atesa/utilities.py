@@ -127,7 +127,10 @@ def get_cvs(filename, settings, reduce=False):
                     raise IndexError('get_cvs.increment_coords() encountered an IndexError. This is caused '
                              'by attempting to read qdot values from a coordinate file lacking velocity information, or'
                              ' else by that file being truncated. Ensure that the relevant simulation input file is set'
-                             ' to write velocities to output trajectories, as this may not be default behavior.\n'
+                             ' to write velocities to output trajectories, as this may not be default behavior. In '
+                             'Amber, this is accomplished by setting ntwv=-1 in the MD input file. Alternatively, if '
+                             'you don\'t want to include velocity terms in the output file, you can set include_qdot = '
+                             'False in the ATESA config file.\n'
                              'The offending file is: ' + filename)
 
                 # Sometimes items in coords or vels 'stick together' at a negative sign (e.g., '-1.8091748-112.6420521')

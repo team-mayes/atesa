@@ -324,9 +324,9 @@ def main(settings, rescue_running=[]):
                 running = thread.process(running, settings)
     except Exception as e:
         if settings.restart:
-            print('The following error occurred while attempting to initialize threads from restart.pkl. If you '
-                  'haven\'t already done so, consider running verify_threads.py to remove corrupted threads from this '
-                  'file.')
+            print('The following error occurred while attempting to initialize threads from restart.pkl. It may be '
+                  'corrupted.')
+                  #'If you haven\'t already done so, consider running verify_threads.py to remove corrupted threads from this file.'
         raise e
 
     # Begin main loop
@@ -346,7 +346,7 @@ def main(settings, rescue_running=[]):
                         break
                     running = thread.process(running, settings)
                 else:
-                    time.sleep(30)
+                    time.sleep(30)  # to prevent too-frequent calls to batch system by thread.gatekeeper
 
             if all([thread in interpreted for thread in running]):
                 attempted_rescue = False    # every thread has passed at an interpret step, so rescue was successful!

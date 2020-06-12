@@ -68,6 +68,7 @@ Aimless shooting input files for the following step types are required for jobs 
   	irest=1,	! restart simulation from preceding "init" step
   	temp0=300.0,	! or whatever temperature
   	ntwx=1,		! or whatever trajectory write frequency, but smaller is better
+  	ntwv=-1,	! include velocities in trajectory files (required if the option "include_qdot" is True (which is default)
   	
 ``committor_analysis``
 
