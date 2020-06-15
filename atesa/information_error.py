@@ -76,8 +76,7 @@ def main():
         q_str = 'present'
     else:
         q_str = 'absent'
-    path_to_script = os.path.dirname(os.path.realpath(__file__)) + '/lmax.py'
-    command = sys.executable + ' ' + path_to_script + ' -i as_decorr_' + str(length) + '.out -q ' + q_str + ' --automagic -o ' + str(length) + '_lmax.out --quiet'
+    command = 'lmax.py -i as_decorr_' + str(length) + '.out -q ' + q_str + ' --automagic -o ' + str(length) + '_lmax.out --quiet'
     subprocess.check_call(command.split(' '))     # check_call waits for completion
     if not os.path.exists(str(length) + '_lmax.out'):
         raise FileNotFoundError('Likelihood maximization did not produce output file:' + str(length) + '_lmax.out')
