@@ -78,7 +78,7 @@ def main():
         q_str = 'absent'
     path_to_script = os.path.dirname(os.path.realpath(__file__)) + '/lmax.py'
     command = sys.executable + ' ' + path_to_script + ' -i as_decorr_' + str(length) + '.out -q ' + q_str + ' --automagic -o ' + str(length) + '_lmax.out --quiet'
-    subprocess.check_call(command.split(' '), stdout=sys.stdout, preexec_fn=os.setsid)     # check_call waits for completion
+    subprocess.check_call(command.split(' '))     # check_call waits for completion
     if not os.path.exists(str(length) + '_lmax.out'):
         raise FileNotFoundError('Likelihood maximization did not produce output file:' + str(length) + '_lmax.out')
 
@@ -98,13 +98,15 @@ def main():
     # Call lmax for each further dataset and write new info_err output file
     for datalength in datalengths:
         command = 'lmax.py -i as_decorr_' + str(datalength) + '.out -q ' + q_str + ' -f ' + dims + ' -k ' + str(int(len(dims.split(' ')))) + ' -o ' + str(datalength) + '_lmax.out --quiet'
-        subprocess.check_call(command.split(' '), stdout=sys.stdout, preexec_fn=os.setsid)
+        subprocess.check_call(command.split(' '))
         inf_err = float(pattern.findall(open(str(datalength) + '_lmax.out', 'r').readlines()[-1])[0])
         open('info_err_temp.out', 'a').write(str(datalength) + ' ' + str(inf_err) + '\n')
+        open('info_err_temp.out', 'a').close()
 
     # Add information error from previously completed lmax for this length
     inf_err = float(pattern.findall(open(str(length) + '_lmax.out', 'r').readlines()[-1])[0])
     open('info_err_temp.out', 'a').write(str(length) + ' ' + str(inf_err) + '\n')
+    open('info_err_temp.out', 'a').close()
 
     # Move info_err_temp.out to info_err.out
     shutil.move('info_err_temp.out', 'info_err.out')
