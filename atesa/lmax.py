@@ -331,6 +331,7 @@ def main(i, k, f, q, r, o, automagic, plots, quiet, two_line_threshold):
     # Prepare for and then enter optimization loop
     termination = False     # initialize primary termination criterion flag
     termination_2 = False   # additional termination flag for use with qdot = 'present', to perform final optimization
+    reached_maximum = False # indicates whether the maximum number of allowed dimensions has been reached by automagic
     two_line_result = -1    # initialize current model dimensionality for automagic
     cv_combs = [[]]         # initialize list of CV combinations to iterate through
     results = []  # initialize for automagic
@@ -407,10 +408,10 @@ def main(i, k, f, q, r, o, automagic, plots, quiet, two_line_threshold):
                 if two_line_result >= 0:
                     termination = True
                     current_best = results[two_line_result]
-        elif len(cv_combs[0]) == information_error_max_dims and not termination_2:
+        if automagic and len(cv_combs[0]) == information_error_max_dims and not termination_2:
             termination = True
-            if automagic:
-                current_best = results[-1]
+            reached_maximum = True
+            current_best = results[-1]
         if termination_2:
             termination = True
         if qdot == 'present' and termination and not termination_2:
@@ -422,7 +423,7 @@ def main(i, k, f, q, r, o, automagic, plots, quiet, two_line_threshold):
                     fixed.remove(item)
             dims = len(fixed)
 
-    if automagic and two_line_result < 0:   # ran out of CVs to append and two_line_test never passed
+    if automagic and (two_line_result < 0 and not reached_maximum):   # ran out of CVs to append and two_line_test never passed
         err = RuntimeError('The automagic convergence criterion was never satisfied even after including every '
                            'candidate CV in the model reaction coordinate.\nThis almost certainly indicates that either'
                            ' one or more key CVs are absent from the aimless shooting output file supplied, or that not'
