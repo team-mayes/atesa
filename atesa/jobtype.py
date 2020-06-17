@@ -1779,7 +1779,8 @@ class UmbrellaSampling(JobType):
                                    ' like 10 at most; you chose ' + str(us_degeneracy))
             used_indices = []
             temp_init_coords = []   # initialize list of initial coordinate trajectories to pass forward later
-            for i in range(settings.us_degeneracy):     # todo: consider simplifying by removing reference to us_degeneracy and this whole loop
+            count = 0
+            while count < settings.us_degeneracy:   # todo: consider simplifying by removing reference to us_degeneracy and this whole loop
                 if not len(used_indices) == len(as_threads):    # if not every index has been used yet
                     thread_index = -1
                     while_count = 0
@@ -1805,6 +1806,7 @@ class UmbrellaSampling(JobType):
                     traj_index -= 1
                 if os.path.exists(this_thread.history.prod_trajs[traj_index][0]) and os.path.exists(this_thread.history.prod_trajs[traj_index][1]):  # todo: this is necessary, but ruins it... Need to rewrite this section
                     temp_init_coords += this_thread.history.prod_trajs[traj_index]
+                    count += 1
 
             settings.initial_coordinates = copy.deepcopy(temp_init_coords)  # overwrite initial_coordinates
             # todo: as written, this is just going to load all the settings.initial_coordinates trajectories together
