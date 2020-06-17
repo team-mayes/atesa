@@ -1784,7 +1784,7 @@ class UmbrellaSampling(JobType):
                     thread_index = -1
                     while_count = 0
                     while thread_index not in used_indices:     # don't reuse indices
-                        thread_index = random.randint(len(as_threads))  # pick a random thread
+                        thread_index = random.randint(0, len(as_threads))  # pick a random thread
                         while_count += 1
                         if while_count >= 100000 * len(as_threads):
                             raise RuntimeError('Taking far too long to find unused thread index while building umbrella'
@@ -1793,7 +1793,7 @@ class UmbrellaSampling(JobType):
                                                ' len(as_threads) = ' + str(len(as_threads)) + '\n'
                                                ' while_count = ' + str(while_count) + '\n'
                                                ' used_indices = ' + str(used_indices) + '\n')
-                    used_indices.append(thread_index)
+                        used_indices.append(thread_index)
                 else:   # if every index has been used already
                     used_indices = []   # reset used_indices
                     thread_index = random.randint(len(as_threads))      # pick a random thread
@@ -1801,10 +1801,10 @@ class UmbrellaSampling(JobType):
 
                 this_thread = as_threads[thread_index]
                 traj_index = -1
-                while this_thread.prod_trajs[traj_index] in temp_init_coords:
+                while this_thread.history.prod_trajs[traj_index][0] in temp_init_coords:
                     traj_index -= 1
-                if os.path.exists(this_thread.prod_trajs[traj_index]):  # todo: this is necessary, but ruins it... Need to rewrite this section
-                    temp_init_coords.append(this_thread.prod_trajs[traj_index])
+                if os.path.exists(this_thread.history.prod_trajs[traj_index][0]) and os.path.exists(this_thread.history.prod_trajs[traj_index][1]):  # todo: this is necessary, but ruins it... Need to rewrite this section
+                    temp_init_coords += this_thread.history.prod_trajs[traj_index]
 
             settings.initial_coordinates = copy.deepcopy(temp_init_coords)  # overwrite initial_coordinates
             # todo: as written, this is just going to load all the settings.initial_coordinates trajectories together
