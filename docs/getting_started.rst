@@ -84,9 +84,11 @@ Only a "prod" committor analysis input file is required for jobs with job_type "
 
 Only a "prod" umbrella sampling input file is required for jobs with job_type "umbrella_sampling":
 
-* **prod**: Umbrella sampling only consists of "prod" steps. As this type of umbrella sampling is built on unique Amber functionality, only Amber is supported. Umbrella sampling simulations are a little different in that the user-supplied input file is used as the foundation for additional data that ATESA appends in new lines at the end. This file can be almost identical to the aimless shooting "prod" file, and the only required setting in the base fire is that "irxncor" is turned on::
+* 	**prod**: Umbrella sampling only consists of "prod" steps. As this type of umbrella sampling is built on unique Amber functionality, only Amber is supported. Umbrella sampling simulations are a little different in that the user-supplied input file is used as the foundation for additional data that ATESA appends in new lines at the end. This file can be almost identical to the aimless shooting "prod" file, and the only required setting in the base fire is that "irxncor" is turned on (and that a version of Amber that supports this option is available, of course)::
 
-	irxncor=1,		! enable irxncor umbrella sampling
+		irxncor=1,		! enable irxncor umbrella sampling
+		
+	In addition, this file should *not* include an "&wt" namelist with type="END", because it's necessary for ATESA to specify this option itself.
 	
 ``equilibrium_path_sampling``
 

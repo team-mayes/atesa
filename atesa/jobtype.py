@@ -1741,12 +1741,19 @@ class UmbrellaSampling(JobType):
                 file.write(' &end\n')
 
                 if settings.us_cv_restraints_file:
-                    if True in ['type="END"' in line for line in open(settings.path_to_input_files + '/umbrella_sampling_prod_' + settings.md_engine + '.in', 'r').readlines()]:
-                        raise RuntimeError('The umbrella sampling input file appears to contain an &wt namelist'
-                                           ' with \'type="END"\', which must be added by ATESA when using the '
-                                           'us_cv_restraints_file option. Please remove it and try again.')
+                    if True in ['type="end"' in line.lower() for line in open(settings.path_to_input_files + '/umbrella_sampling_prod_' + settings.md_engine + '.in', 'r').readlines()]:
+                        raise RuntimeError('The umbrella sampling input file ' + settings.path_to_input_files +
+                                           '/umbrella_sampling_prod_' + settings.md_engine + '.in appears to contain an'
+                                           ' &wt namelist with \'type="END"\', which must be added by ATESA when using '
+                                           'the us_cv_restraints_file option. Please remove it and try again.')
                     file.write(' &wt\n  type="END",\n &end\n')
                     file.write('DISANG=us_cv_restraints_' + str(self.history.window) + '.DISANG')
+                else:
+                    if not True in ['type="end"' in line.lower() for line in open(settings.path_to_input_files + '/umbrella_sampling_prod_' + settings.md_engine + '.in', 'r').readlines()]:
+                        file.write(' &wt\n  type="END",\n &end\n')
+                        print('Did not find an &wt namelist with \'type="END"\' in the umbrella sampling input file' +
+                              settings.path_to_input_files + '/umbrella_sampling_prod_' + settings.md_engine + '.in, so'
+                              ' ATESA added it automatically.')
 
                 file.close()
 
@@ -1785,7 +1792,7 @@ class UmbrellaSampling(JobType):
                     thread_index = -1
                     while_count = 0
                     while thread_index not in used_indices:     # don't reuse indices
-                        thread_index = random.randint(0, len(as_threads))  # pick a random thread
+                        thread_index = random.randint(0, len(as_threads) - 1)  # pick a random thread
                         while_count += 1
                         if while_count >= 100000 * len(as_threads):
                             raise RuntimeError('Taking far too long to find unused thread index while building umbrella'
@@ -1797,7 +1804,7 @@ class UmbrellaSampling(JobType):
                         used_indices.append(thread_index)
                 else:   # if every index has been used already
                     used_indices = []   # reset used_indices
-                    thread_index = random.randint(len(as_threads))      # pick a random thread
+                    thread_index = random.randint(0, len(as_threads) - 1)      # pick a random thread
                     used_indices.append(thread_index)
 
                 this_thread = as_threads[thread_index]
