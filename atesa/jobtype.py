@@ -1576,17 +1576,18 @@ class UmbrellaSampling(JobType):
             shutil.copy(settings.path_to_input_files + '/umbrella_sampling_prod_' + settings.md_engine + '.in',
                         settings.working_directory + '/' + input_file_name)
 
-            # Build restraint file that implements us_cv_restraints, if applicable
-            if settings.us_cv_restraints_file:
+            # Build restraint file that implements us_pathway_restraints_file, if applicable
+            if settings.us_pathway_restraints_file:
                 if not True in ['nmropt=1' in line for line in open(settings.path_to_input_files + '/umbrella_sampling_prod_' + settings.md_engine + '.in', 'r').readlines()]:
                     raise RuntimeError('did not find \'nmropt=1\' in input file: ' + settings.path_to_input_files +
                                        '/umbrella_sampling_prod_' + settings.md_engine + '.in, which is required when a'
-                                       ' us_cv_restraints_file is specified in the config file. Make sure that exactly '
-                                       'that string is present.')
-                if not os.path.exists(settings.working_directory + '/us_cv_restraints_' + str(self.history.window) + '.DISANG'):
-                    if not os.path.exists(settings.us_cv_restraints_file):
-                        raise FileNotFoundError('Attempted to implement us_cv_restraints for umbrella sampling, but '
-                                                'could not find the indicated file: ' + settings.us_cv_restraints_file)
+                                       ' us_pathway_restraints_file is specified in the config file. Make sure that '
+                                       'exactly that string is present.')
+                if not os.path.exists(settings.working_directory + '/us_pathway_restraints_' + str(self.history.window) + '.DISANG'):
+                    if not os.path.exists(settings.us_pathway_restraints_file):
+                        raise FileNotFoundError('Attempted to implement us_pathway_restraints for umbrella sampling, but '
+                                                'could not find the indicated file: ' +
+                                                settings.us_pathway_restraints_file)
 
                     # Define a helper function
                     def closest(lst, K):
@@ -1604,8 +1605,8 @@ class UmbrellaSampling(JobType):
                     # Build min_max.pkl file if it doesn't already exist
                     if not os.path.exists('min_max.pkl'):
                         # Partition each line in as_full_cvs.out into the nearest US window
-                        as_full_cvs_lines = open(settings.us_cv_restraints_file, 'r').readlines()
-                        open(settings.us_cv_restraints_file, 'r').close()
+                        as_full_cvs_lines = open(settings.us_pathway_restraints_file, 'r').readlines()
+                        open(settings.us_pathway_restraints_file, 'r').close()
 
                         # Initialize results list; first index is window, second index is CV, third index is 0 for min and 1 for max
                         # E.g., min_max[12][5][1] is the max value of CV6 in the 13th window
@@ -1648,13 +1649,16 @@ class UmbrellaSampling(JobType):
                     # Now build the actual DISANG file.
                     min_max = pickle.load(open('min_max.pkl', 'rb'))                # load the min_max pickle file
                     window_index = closest(window_centers, self.history.window)     # identify the appropriate window_index
-                    open(settings.working_directory + '/us_cv_restraints_' + str(self.history.window) + '.DISANG', 'w').close()
-                    with open(settings.working_directory + '/us_cv_restraints_' + str(self.history.window) + '.DISANG', 'a') as f:
-                        f.write('ATESA automatically generated restraint file implementing us_cv_restraints option\n')
+                    open(settings.working_directory + '/us_pathway_restraints_' + str(self.history.window) + '.DISANG', 'w').close()
+                    with open(settings.working_directory + '/us_pathway_restraints_' + str(self.history.window) + '.DISANG', 'a') as f:
+                        f.write('ATESA automatically generated restraint file implementing us_pathway_restraints_file option\n')
                         for cv_index in range(len(min_max[window_index])):
                             atoms, optype, nat = utilities.interpret_cv(cv_index + 1, settings)  # get atom indices and type for this CV
-                            this_min = float(min_max[window_index][cv_index][0])
-                            this_max = float(min_max[window_index][cv_index][1])
+                            try:
+                                this_min = float(min_max[window_index][cv_index][0])
+                                this_max = float(min_max[window_index][cv_index][1])
+                            except TypeError:   # no min and/or max for this window_index, so skip it
+                                continue
                             f.write(' &rst iat=' + ', '.join([str(atom) for atom in atoms]) + ', r1=' +
                                     str(this_min - (this_max - this_min)) + ', r2=' + str(this_min) + ', r3=' +
                                     str(this_max) + ', r4=' + str(this_max + (this_max - this_min)) + ', rk2=100, '
@@ -1740,14 +1744,14 @@ class UmbrellaSampling(JobType):
 
                 file.write(' &end\n')
 
-                if settings.us_cv_restraints_file:
+                if settings.us_pathway_restraints_file:
                     if True in ['type="end"' in line.lower() for line in open(settings.path_to_input_files + '/umbrella_sampling_prod_' + settings.md_engine + '.in', 'r').readlines()]:
                         raise RuntimeError('The umbrella sampling input file ' + settings.path_to_input_files +
                                            '/umbrella_sampling_prod_' + settings.md_engine + '.in appears to contain an'
                                            ' &wt namelist with \'type="END"\', which must be added by ATESA when using '
-                                           'the us_cv_restraints_file option. Please remove it and try again.')
+                                           'the us_pathway_restraints_file option. Please remove it and try again.')
                     file.write(' &wt\n  type="END",\n &end\n')
-                    file.write('DISANG=us_cv_restraints_' + str(self.history.window) + '.DISANG')
+                    file.write('DISANG=us_pathway_restraints_' + str(self.history.window) + '.DISANG')
                 else:
                     if not True in ['type="end"' in line.lower() for line in open(settings.path_to_input_files + '/umbrella_sampling_prod_' + settings.md_engine + '.in', 'r').readlines()]:
                         file.write(' &wt\n  type="END",\n &end\n')
@@ -1833,7 +1837,7 @@ class UmbrellaSampling(JobType):
             os.rename(new_restart_name + '.1', new_restart_name)
             temp_settings = copy.deepcopy(settings)     # always exclude qdot here (not supported by US anyway)
             temp_settings.include_qdot = False
-            cvs = utilities.get_cvs(new_restart_name, temp_settings, reduce=True)
+            cvs = utilities.get_cvs(new_restart_name, temp_settings, reduce=settings.rc_reduced_cvs)
             rc = utilities.evaluate_rc(temp_settings.rc_definition, cvs.split(' '))
             frame_rcs.append([new_restart_name, rc])
 

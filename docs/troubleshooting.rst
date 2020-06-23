@@ -32,7 +32,11 @@ Issues with ATESA
 
 Errors encountered by ATESA itself will be outputted into the command line in the event that the program has been called directly, or else into the batch output file in the event that it has been called in a batch job. Hopefully, most errors of this type will be self-explanatory. There may, however, be unforeseen errors that are not handled in a useful way. Errors of this sort could have to do with improperly installed dependencies, especially pytraj. One possible troubleshooting option is to retry the job with as many default settings as possible to see if the error persists — if it does not, add on custom settings one-by-one (starting with those you are least confident in) until the culprit is found.
 
-If ATESA outputs an error message that confuses you, especially if it happens very early on in the job, double-check that the simulations that have been run so far (if there are any) appear to have behaved properly.
+If ATESA outputs an error message that confuses you, especially if it happens very early on in the job, double-check that the simulations that have been run so far (if there are any) appear to have behaved properly. For example, the error::
+
+	ValueError: must provie a filename or list of filenames or file pattern
+	
+is often the result of a failed simulation, usually because of a systemic issue in the way the model is set up. It may also arise when a necessary file has been errantly deleted.
 
 Although the user is of course permitted under the license to attempt to debug the code themselves (and to use the modified code in whatever manner they see fit), no one finds it easy to read someone else’s code. If you encounter an issue with ATESA that you cannot resolve, I encourage you to raise an issue on `our GitHub page <https://github.com/team-mayes/atesa>`_. And if you encounter an error that you did resolve by modifying the code, please submit a pull request so that everyone can benefit!
 
@@ -43,11 +47,35 @@ One final type of issue is the case where the software has functioned as intende
 
 If acceptance ratios are good but ``lmax.py`` is struggling to identify a strong reaction coordinate (even when including a large number of CVs in the RC), consider resampling your existing simulation files (using the *resample* option) with more candidate values included; it’s possible that you left something important out. Remember that it is impossible to include too many candidate CVs (insofar as the size of the resulting aimless shooting output file is not prohibitive in terms of I/O or the speed of ``lmax.py``), but it is easy to include too few.
 
-If you have good ``lmax.py`` results (an apparently good fit to the committor probability sigmoid) but a poor committor analysis histogram (peaked near forward commitment probabilities of 1, 0, or both) in spite of including an ample number of committor analysis shooting points (100-200 with 10 simulations per point is appropriate), this likely indicates either that you have underfitted or overfitted your reaction coordinate (too few or too many CVs included), or that you have not performed enough sampling with aimless shooting (your sample of shooting points is not representative of the underlying population). If you suspect the latter issue, try setting the information error threshold lower (see :ref:`AimlessShootingSettings`) and resubmitting the aimless shooting job with *restart = True*.
+If you have good ``lmax.py`` results (an apparently good fit to the committor probability sigmoid) but a poor committor analysis histogram (peaked near forward commitment probabilities of 1, 0, or both) in spite of including an ample number of committor analysis shooting points (150-250 with 10-20 simulations per point is appropriate), this likely indicates either that you have underfitted or overfitted your reaction coordinate (too few or too many CVs included), or that you have not performed enough sampling with aimless shooting (your sample of shooting points is not representative of the underlying population). If you suspect the latter issue, try setting the information error threshold lower (see :ref:`AimlessShootingSettings`) and resubmitting the aimless shooting job with *restart = True*.
 
 .. _UmbrellaSamplingTroubleshooting
 
 Umbrella Sampling
 -----------------
 
-[Placeholder]
+Umbrella sampling is a powerful tool for efficiently evaluating the free energy profile along a chosen reaction coordinate. However, as with all restrained simulations methods the simulations may not behave as expected, leading to errant results. In this section we will describe a few types of errors commonly encountered during aimless shooting and suggest solutions. Note that this section assumes that the simulations and code are running without error, and that the issue is instead with the data itself.
+
+The standard workflow when analyzing umbrella sampling data with ATESA is to run ``mbar.py`` in the umbrella sampling working directory. Before analyzing the data, this script returns two "diagnostic" plots to help the user ensure that the data is sound. The first is a histogram and the second is a "mean value" plot.
+
+* The Histogram
+
+	The histogram is actually composed of many individual histogram plots, one for each unique window center in the data. The purpose of the histogram is to visually ensure that there are no gaps in the data (that is, that there are no large regions between histograms where no sampling has occurred) and that the sampling is roughly even (that is, that all of the peaks are roughly at the same height, though there will be some natural variation).
+	
+	If there are gaps, the solution is simply to run additional simulations with the same restraint weight centered in the under-sampled region(s). Keep in mind that there is no need for the sampling windows to be evenly spaced.
+	
+	If there are under-sampled regions, you should investigate the root cause by looking to the simulations in those regions themselves. One common source of this issue in reaction models is poor quantum mechanical convergence. Resolving this issue is highly system-specific and lies outside the scope of this document, but note that in some cases it may be alleviated by adding a small electronic temperature to the simulations.
+	
+* The Mean Value Plot
+
+	The second plot is a line plot depicting the difference between the mean value of the sampling data in each window and that window's restraint center, versus the window center value. If there are multiple simulations located at the same window center (and there really should be), these will appear at the same value on the horizontal axis, with the line passing through them in the order they were read in (that is, arbitrarily).
+	
+	The ideal mean value plot should be a smooth sinusoid passing through the value of zero on the vertical axis at three points: near the leftward extreme, near the middle, and near the rightward extreme. These correspond to the regions of the free energy profile with zero slope at one stable state, the transition state, and the other stable state, respectively. If either of the extrema do not pass through zero, further umbrella sampling windows should be added on the corresponding end until zero (and ideally, a little bit beyond) is reached.
+	
+	The other issue visible on this plot is unsmoothness, which itself takes two forms: within a single window, and between windows. Unsmoothness between windows (visualized as an apparent discontinuity between adjacent points on the plot) indicates a sudden change in the free energy at that point that has not been sufficiently resolved. This can be solved by adding additional sampling windows between the discontinuous windows.
+	
+	Unsmoothness within a single window manifests as a wide range of mean values located at a single value on the horizontal axis and is caused by sampling of significantly different regions of state space with similar reaction coordinate values. Depending on the underlying cause of this issue, it may be solvable using ATESA's pathway-restrained umbrella sampling feature (see the :ref:`USPathwayRestraintsFileConfig` config file option for implementation details).
+	
+	.. figure:: _images/pathway_restrained.png
+
+	An example of the sort of error that can necessitate pathway-restrained umbrella sampling. (a) Two energetically distinct structures with identical reaction coordinate values for the example system (see :ref:`ExampleStudy`). This is the sort of error that causes unsmoothness within a single window. (b) Examples of mean value plots and (inset) resulting free energy profiles with theoretical transition state energy in orange. The mean value plot on the left is unsmooth, but application of pathway restraints results in the much-improved plot on the right.

@@ -125,7 +125,7 @@ def configure(input_file, user_working_directory=''):
         us_restraint: float = 50
         us_degeneracy: int = 5
         us_auto_coords_directory: str = ''
-        us_cv_restraints_file: str = ''
+        us_pathway_restraints_file: str = ''
 
         # Required only if restart = True
         restart_terminated_threads: bool = False

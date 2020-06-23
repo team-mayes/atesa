@@ -54,6 +54,7 @@ def main(settings):
     commit_atoms += settings.commit_bwd[0]
     commit_atoms += settings.commit_bwd[1]
     commit_atoms = list(set(commit_atoms))    # remove duplicates
+    # todo: do I need to decrement each commit atom by one to correct for indexing differences?
 
     # Compute neighbors with handy mdtraj function; divide radius by 10 to convert nm to Å
     neighbors = list(mdtraj.compute_neighbors(mtraj, settings.auto_cvs_radius / 10, query_indices=commit_atoms)[0])
