@@ -86,7 +86,7 @@ Only a "prod" committor analysis input file is required for jobs with job_type "
 
 Only a "prod" umbrella sampling input file is required for jobs with job_type "umbrella_sampling":
 
-* 	**prod**: Umbrella sampling only consists of "prod" steps. As this type of umbrella sampling is built on unique Amber functionality, only Amber is supported. Umbrella sampling simulations are a little different in that the user-supplied input file is used as the foundation for additional data that ATESA appends in new lines at the end. This file can be almost identical to the aimless shooting "prod" file, and the only required settings in the base file are that "nmropt" and "irxncor" are turned on (and that a version of Amber that supports the latter option is available, of course)::
+* 	**prod**: Umbrella sampling only consists of "prod" steps. As this type of umbrella sampling is built on unique Amber functionality, only Amber is supported. Umbrella sampling simulations are a little different in that the user-supplied input file is used as the foundation for additional data that ATESA appends in new lines at the end. This file can be almost identical to a committor analysis "prod" file, and the only required settings in the base file are that "nmropt" and "irxncor" are turned on (and that a version of Amber that supports the latter option is available, of course)::
 
 		irxncor=1,		! enable irxncor umbrella sampling
 		nmropt=1,		! enable energy restraints

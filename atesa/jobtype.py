@@ -1676,13 +1676,14 @@ class UmbrellaSampling(JobType):
                                    'improperly formatted. Only linear combinations of constant terms and CVs (with '
                                    'coefficients) are permitted. The offending RC definition is: ' + settings.rc_definition)
 
-            # Prepare cv_minmax list for evaluating min and max terms later
-            asout_lines = [[float(item) for item in
-                            line.replace('A <- ', '').replace('B <- ', '').replace(' \n', '').replace('\n', '').split(
-                                ' ')] for line in open(settings.as_out_file, 'r').readlines()]
-            open(settings.as_out_file, 'r').close()
-            mapped = list(map(list, zip(*asout_lines)))
-            rc_minmax = [[numpy.min(item) for item in mapped], [numpy.max(item) for item in mapped]]
+            # Prepare cv_minmax list for evaluating min and max terms later, if appropriate
+            if settings.rc_reduced_cvs:
+                asout_lines = [[float(item) for item in
+                                line.replace('A <- ', '').replace('B <- ', '').replace(' \n', '').replace('\n', '').split(
+                                    ' ')] for line in open(settings.as_out_file, 'r').readlines()]
+                open(settings.as_out_file, 'r').close()
+                mapped = list(map(list, zip(*asout_lines)))
+                rc_minmax = [[numpy.min(item) for item in mapped], [numpy.max(item) for item in mapped]]
 
             # Here, we'll write the &rxncor and &rxncor_order_parameters namelists manually
             with open(settings.working_directory + '/' + input_file_name, 'a') as file:
@@ -1710,12 +1711,16 @@ class UmbrellaSampling(JobType):
                     except ValueError:
                         raise RuntimeError('unable to cast coefficient of CV' + str(cv_index) + ' to float. It must be '
                                            'specified in a non-standard way? Offending term is: ' + term)
-                    this_min = rc_minmax[0][cv_index - 1]
-                    this_max = rc_minmax[1][cv_index - 1]
+                    if settings.rc_reduced_cvs:
+                        this_min = rc_minmax[0][cv_index - 1]
+                        this_max = rc_minmax[1][cv_index - 1]
 
-                    if optype in ['angle', 'dihedral']:     # convert from angles to radians for irxncor
-                        this_min = this_min * numpy.pi / 180
-                        this_max = this_max * numpy.pi / 180
+                        if optype in ['angle', 'dihedral']:     # convert from angles to radians for irxncor
+                            this_min = this_min * numpy.pi / 180
+                            this_max = this_max * numpy.pi / 180
+                    else:   # to effectively turn off reduction of variables, we set...
+                        this_min = 0
+                        this_max = 1
 
                     alp = float(coeff)/(this_max - this_min)
 

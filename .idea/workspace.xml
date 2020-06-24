@@ -3,13 +3,8 @@
   <component name="ChangeListManager">
     <list default="true" id="55679143-7654-431c-aee1-71d5375f0f66" name="Default" comment="">
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/atesa/auto_cvs.py" afterPath="$PROJECT_DIR$/atesa/auto_cvs.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/atesa/configure.py" afterPath="$PROJECT_DIR$/atesa/configure.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/atesa/jobtype.py" afterPath="$PROJECT_DIR$/atesa/jobtype.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/docs/getting_started.rst" afterPath="$PROJECT_DIR$/docs/getting_started.rst" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/docs/index.rst" afterPath="$PROJECT_DIR$/docs/index.rst" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/docs/the_config_file.rst" afterPath="$PROJECT_DIR$/docs/the_config_file.rst" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/docs/troubleshooting.rst" afterPath="$PROJECT_DIR$/docs/troubleshooting.rst" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -142,8 +137,8 @@
       <file leaf-file-name="jobtype.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/atesa/jobtype.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="305">
-              <caret line="1659" column="101" lean-forward="false" selection-start-line="1659" selection-start-column="101" selection-end-line="1659" selection-end-column="101" />
+            <state relative-caret-position="-1035">
+              <caret line="1678" column="91" lean-forward="false" selection-start-line="1678" selection-start-column="91" selection-end-line="1678" selection-end-column="91" />
               <folding>
                 <element signature="e#164#174#0" expanded="true" />
               </folding>
@@ -188,6 +183,9 @@
               <caret line="47" column="0" lean-forward="false" selection-start-line="47" selection-start-column="0" selection-end-line="47" selection-end-column="102" />
               <folding>
                 <element signature="e#239#261#0" expanded="true" />
+                <marker date="1593006077734" expanded="true" signature="2234:2831" ph="..." />
+                <marker date="1593006077734" expanded="true" signature="2337:2831" ph="..." />
+                <marker date="1593006077734" expanded="true" signature="2411:2831" ph="..." />
               </folding>
             </state>
           </provider>
@@ -1186,6 +1184,9 @@
           <caret line="47" column="0" lean-forward="false" selection-start-line="47" selection-start-column="0" selection-end-line="47" selection-end-column="102" />
           <folding>
             <element signature="e#239#261#0" expanded="true" />
+            <marker date="1593006077734" expanded="true" signature="2234:2831" ph="..." />
+            <marker date="1593006077734" expanded="true" signature="2337:2831" ph="..." />
+            <marker date="1593006077734" expanded="true" signature="2411:2831" ph="..." />
           </folding>
         </state>
       </provider>
@@ -1218,8 +1219,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/atesa/jobtype.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="305">
-          <caret line="1659" column="101" lean-forward="false" selection-start-line="1659" selection-start-column="101" selection-end-line="1659" selection-end-column="101" />
+        <state relative-caret-position="-1035">
+          <caret line="1678" column="91" lean-forward="false" selection-start-line="1678" selection-start-column="91" selection-end-line="1678" selection-end-column="91" />
           <folding>
             <element signature="e#164#174#0" expanded="true" />
           </folding>
