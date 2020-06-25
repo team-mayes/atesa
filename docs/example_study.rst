@@ -12,7 +12,7 @@ Initial Setup and the Model
 
 We assume here that ATESA has already been installed on your system. If that is not the case, you should instead start at the :ref:`Installation` page.
 
-The model we will be working with here is the gas-phase decomposition of ethyl chlorosulfite into chloroethane and sulfur dioxide. The mechanism via S\ :sub:`N`\ i reconfiguration has been studied by `Schreiner *et al.* 1995 <https://pubs.acs.org/doi/pdf/10.1021/jo00086a041>`_.
+The model we will be working with here is the gas-phase decomposition of ethyl chlorosulfite into chloroethane and sulfur dioxide. The mechanism via S\ :sub:`N`\ i reconfiguration has been studied by `Schreiner et al. 1995 <https://pubs.acs.org/doi/pdf/10.1021/jo00086a041>`_. We chose this reaction because the small number of atoms involved facilitate quick simulations and easy visualizations, but ATESA has also been successfully applied for much larger systems, such as enzyme reaction modeling.
 
 	.. figure:: _images/reaction_pathway.png
 
@@ -22,6 +22,12 @@ Setup of ATESA for a new system begins with .......
 
 Finding a Transition State
 --------------------------
+
+ATESA automates the discovery of suitable initial transition state models using gentle restraints to force reactions to take place, and then identifying the transition state along that forced pathway. The restraints are based only on user-defined definitions of the two stable states that the transition state connects. As shown below, this algorithm automatically finds a transition state very close to that proposed by Schreiner* et al. [3]
+
+	.. figure:: _images/find_ts.png
+
+	Definitions of stable states and initial and final structures from the example transition state search. The stable state definitions are read by inner index; for example, the first element of the definition of the “bwd” state is read as “the distance between atom 3 and atom 5 is less than (‘lt’) 1.5 Å”. Based on these definitions, the initial coordinates (at left) occupy the “bwd” state, and restraints are automatically constructed to build a transition state (at right) that has roughly equal probabilities of relaxing to either state. The narrow, transparent bonds in the transition state structure show the original topology of the model, for comparison.
 
 Aimless Shooting
 ----------------

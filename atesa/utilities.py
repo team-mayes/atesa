@@ -508,8 +508,7 @@ def interpret_cv(cv_index, settings):
         optype = 'angle'
         nat = 3
     elif 'pytraj.distance' in this_cv or 'mdtraj.compute_distances' in this_cv:
-        if '-' in this_cv and (this_cv.count('pytraj.distance') == 2 or
-                                       this_cv.count('mdtraj.compute_distances') == 2 or
+        if '-' in this_cv and (this_cv.count('pytraj.distance') == 2 or this_cv.count('mdtraj.compute_distances') == 2 or
                                    ('mdtraj.distance' in this_cv and 'pytraj.distance' in this_cv)):
             optype = 'diffdistance'
             nat = 4
@@ -561,7 +560,7 @@ def interpret_cv(cv_index, settings):
                                '\nIs it formatted in an unusual way?')
         atoms = atoms.replace('[', '').replace(']', ',').replace('\'', '')  # included delimeters for safety, but don't want them
         if '@' in atoms:
-            atoms = [item.replace('@', '') for item in atoms.split(' @')]
+            atoms = [item.replace('@', '') for item in atoms.replace('\'', ' ').replace('@', ' @').split()]
         else:
             atoms = atoms.split(',')
 
