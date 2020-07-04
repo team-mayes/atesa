@@ -1,3 +1,5 @@
+.. _TheoryAndDefinitions:
+
 Theory and Definitions
 ======================
 
@@ -22,7 +24,7 @@ Aimless shooting is a transition path sampling method for performing efficient, 
 
 .. figure:: _images/aimless_shooting.png
 
-	An example of three aimless shooting moves in a hypothetical 2-D phase space. Each shooting move consists of an initial coordinate (colored circle) from which two trajectories begin in opposite directions (colored lines). If the two trajectories go to opposite basins ("A" and "B"), then the move is accepted and new initial coordinates for the next step are chosen from an early part of the accepted trajectory (as move 2 (green) begins along the pathway from move 1 (blue)). If a move is not accepted (move 3 (red)), then the next step would begin from a different point and/or with different initial velocities from the previous accepted move (not shown).
+	An example of three aimless shooting moves in a hypothetical 2-D state space. Each shooting move consists of an initial coordinate (colored circle) from which two trajectories begin in opposite directions (colored lines). If the two trajectories go to opposite basins ("A" and "B"), then the move is accepted and new initial coordinates for the next step are chosen from an early part of the accepted trajectory (as move 2 (green) begins along the pathway from move 1 (blue)). If a move is not accepted (move 3 (red)), then the next step would begin from a different point and/or with different initial velocities from the previous accepted move (not shown).
 	
 When is Aimless Shooting the Right Tool?
 ----------------------------------------

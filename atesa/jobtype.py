@@ -1760,9 +1760,11 @@ class UmbrellaSampling(JobType):
                 else:
                     if not True in ['type="end"' in line.lower() for line in open(settings.path_to_input_files + '/umbrella_sampling_prod_' + settings.md_engine + '.in', 'r').readlines()]:
                         file.write(' &wt\n  type="END",\n &end\n')
-                        print('Did not find an &wt namelist with \'type="END"\' in the umbrella sampling input file' +
-                              settings.path_to_input_files + '/umbrella_sampling_prod_' + settings.md_engine + '.in, so'
-                              ' ATESA added it automatically.')
+                        if not settings.suppress_us_warning:
+                            print('Did not find an &wt namelist with \'type="END"\' in the umbrella sampling input file' +
+                                  settings.path_to_input_files + '/umbrella_sampling_prod_' + settings.md_engine + '.in, so'
+                                  ' ATESA added it automatically.')
+                            settings.suppress_us_warning = True     # so that this is only printed once
 
                 file.close()
 

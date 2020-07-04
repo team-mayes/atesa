@@ -135,6 +135,7 @@ def configure(input_file, user_working_directory=''):
         pid: int = -1           # Process ID of information_error call used in aimless shooting
         information_error_overdue: bool = False    # Used for handling information_error calls cleanly
         dont_dump: bool = False     # When True, prevents dumping settings to settings.pkl
+        suppress_us_warning = False     # Used to prevent repeatedly issuing the same warning during some US runs
 
     # Import config file line-by-line using exec()
     try:
