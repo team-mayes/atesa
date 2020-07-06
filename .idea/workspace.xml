@@ -3,11 +3,7 @@
   <component name="ChangeListManager">
     <list default="true" id="55679143-7654-431c-aee1-71d5375f0f66" name="Default" comment="">
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/atesa/configure.py" afterPath="$PROJECT_DIR$/atesa/configure.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/atesa/main.py" afterPath="$PROJECT_DIR$/atesa/main.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/atesa/mdengine.py" afterPath="$PROJECT_DIR$/atesa/mdengine.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/docs/example_study.rst" afterPath="$PROJECT_DIR$/docs/example_study.rst" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/docs/troubleshooting.rst" afterPath="$PROJECT_DIR$/docs/troubleshooting.rst" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -105,11 +101,18 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="main.py" pinned="false" current-in-tab="false">
+      <file leaf-file-name="main.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/atesa/main.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="308">
-              <caret line="129" column="99" lean-forward="true" selection-start-line="129" selection-start-column="99" selection-end-line="129" selection-end-column="99" />
+            <state relative-caret-position="245">
+              <caret line="120" column="36" lean-forward="false" selection-start-line="120" selection-start-column="16" selection-end-line="120" selection-end-column="36" />
+              <caret line="121" column="85" lean-forward="false" selection-start-line="121" selection-start-column="16" selection-end-line="121" selection-end-column="85" />
+              <caret line="122" column="124" lean-forward="false" selection-start-line="122" selection-start-column="16" selection-end-line="122" selection-end-column="124" />
+              <caret line="123" column="95" lean-forward="false" selection-start-line="123" selection-start-column="16" selection-end-line="123" selection-end-column="95" />
+              <caret line="124" column="45" lean-forward="false" selection-start-line="124" selection-start-column="16" selection-end-line="124" selection-end-column="45" />
+              <caret line="125" column="45" lean-forward="false" selection-start-line="125" selection-start-column="16" selection-end-line="125" selection-end-column="45" />
+              <caret line="126" column="56" lean-forward="false" selection-start-line="126" selection-start-column="16" selection-end-line="126" selection-end-column="56" />
+              <caret line="127" column="43" lean-forward="false" selection-start-line="127" selection-start-column="16" selection-end-line="127" selection-end-column="43" />
               <folding />
             </state>
           </provider>
@@ -179,10 +182,10 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="utilities.py" pinned="false" current-in-tab="true">
+      <file leaf-file-name="utilities.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/atesa/utilities.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-173">
+            <state relative-caret-position="64">
               <caret line="410" column="16" lean-forward="false" selection-start-line="410" selection-start-column="16" selection-end-line="410" selection-end-column="16" />
               <folding />
             </state>
@@ -1207,18 +1210,25 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/atesa/main.py">
+    <entry file="file://$PROJECT_DIR$/atesa/utilities.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="308">
-          <caret line="129" column="99" lean-forward="true" selection-start-line="129" selection-start-column="99" selection-end-line="129" selection-end-column="99" />
+        <state relative-caret-position="64">
+          <caret line="410" column="16" lean-forward="false" selection-start-line="410" selection-start-column="16" selection-end-line="410" selection-end-column="16" />
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/atesa/utilities.py">
+    <entry file="file://$PROJECT_DIR$/atesa/main.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-173">
-          <caret line="410" column="16" lean-forward="false" selection-start-line="410" selection-start-column="16" selection-end-line="410" selection-end-column="16" />
+        <state relative-caret-position="245">
+          <caret line="120" column="36" lean-forward="false" selection-start-line="120" selection-start-column="16" selection-end-line="120" selection-end-column="36" />
+          <caret line="121" column="85" lean-forward="false" selection-start-line="121" selection-start-column="16" selection-end-line="121" selection-end-column="85" />
+          <caret line="122" column="124" lean-forward="false" selection-start-line="122" selection-start-column="16" selection-end-line="122" selection-end-column="124" />
+          <caret line="123" column="95" lean-forward="false" selection-start-line="123" selection-start-column="16" selection-end-line="123" selection-end-column="95" />
+          <caret line="124" column="45" lean-forward="false" selection-start-line="124" selection-start-column="16" selection-end-line="124" selection-end-column="45" />
+          <caret line="125" column="45" lean-forward="false" selection-start-line="125" selection-start-column="16" selection-end-line="125" selection-end-column="45" />
+          <caret line="126" column="56" lean-forward="false" selection-start-line="126" selection-start-column="16" selection-end-line="126" selection-end-column="56" />
+          <caret line="127" column="43" lean-forward="false" selection-start-line="127" selection-start-column="16" selection-end-line="127" selection-end-column="43" />
           <folding />
         </state>
       </provider>

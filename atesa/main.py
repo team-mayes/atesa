@@ -117,8 +117,16 @@ def init_threads(settings):
             if os.path.exists(settings.working_directory + '/info_err.out') and len(open(settings.working_directory + '/info_err.out', 'r').readlines()) > 0:
                 info_err_lines = open(settings.working_directory + '/info_err.out', 'r').readlines()
 
-                # Resample completely if there's been a change in the number of CVs
-                if settings.previous_cvs and not settings.previous_cvs == settings.cvs:
+                # Resample completely if there's been a change in the number of definitions of CVs
+                wrong_length = False
+                for data_length in [str(line.split()[0]) for line in info_err_lines]:
+                    first_line = open(settings.working_directory + '/as_decorr_' + data_length + '.out', 'r').readlines()[0]
+                    num_cvs = len(first_line.replace('A <- ', '').replace('B <- ', '').split())
+                    if settings.include_qdot:
+                        num_cvs = num_cvs / 2
+                    if not num_cvs == len(settings.cvs):
+                        wrong_length = True
+                if settings.previous_cvs and not settings.previous_cvs == settings.cvs or wrong_length:
                     utilities.resample(settings, partial=False)
                     information_error.main()
 
