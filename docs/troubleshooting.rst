@@ -76,7 +76,7 @@ The standard workflow when analyzing umbrella sampling data with ATESA is to run
 	
 	The other issue visible on this plot is unsmoothness, which itself takes two forms: within a single window, and between windows. Unsmoothness between windows (visualized as an apparent discontinuity between adjacent points on the plot) indicates a sudden change in the free energy at that point that has not been sufficiently resolved. This can be solved by adding additional sampling windows between the discontinuous windows.
 	
-	Unsmoothness within a single window manifests as a wide range of mean values located at a single value on the horizontal axis and is caused by sampling of significantly different regions of state space with similar reaction coordinate values. Depending on the underlying cause of this issue, it may be solvable using ATESA's pathway-restrained umbrella sampling feature (see the :ref:`USPathwayRestraintsFileConfig` config file option for implementation details).
+	Unsmoothness within a single window manifests as a wide range of mean values located at a single value on the horizontal axis and is caused by sampling of significantly different regions of state space with similar reaction coordinate values. Depending on the underlying cause of this issue, it may be solvable using ATESA's pathway-restrained umbrella sampling feature (see the :ref:`USPathwayRestraintsFileConfig` config file option for implementation details). It can also be improved in many cases by using a higher-dimensional reaction coordinate, especially if any further dimensions are largely orthogonal to those already included.
 	
 	.. figure:: _images/pathway_restrained.png
 

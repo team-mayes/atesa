@@ -3,7 +3,7 @@
 Example Study
 ============
 
-This page will detail a complete workflow in ATESA for an example chemical reaction. Not every setting or option applied in this workflow will be appropriate for every application of ATESA; rather than being prescriptive, the purpose of this page is to illustrate a particular application of the software to help readers better grasp what running ATESA ia actually like.
+This page will detail a complete workflow in ATESA for an example chemical reaction. Not every setting or option applied in this workflow will be appropriate for every application of ATESA; rather than being prescriptive, the purpose of this page is to illustrate a particular application of the software to help readers better grasp what running ATESA ia actually like. If you're instead looking for an introduction to the theory underlying any of these steps, check out the :ref:`TheoryAndDefinitions` page.
 
 Where appropriate, this page will include complete examples of input, template, and configuration files. **Not all of the contents of these files will be appropriate for your application**. Therefore, we strongly discourage you from copying-and-pasting content from this page unless you know what you're doing. The complete files are provided only for illustrative purposes.
 
@@ -18,7 +18,7 @@ The model we will be working with here is the gas-phase decomposition of ethyl c
 
 	The reaction pathway via S\ :sub:`N`\ i reconfiguration for gas phase ethyl chlorosulfite, per Schreiner *et al.* 1995, who demonstrated that this “frontside” attack (where the chlorine bonds to the same side of the carbon as the oxygen departs from) is energetically favorable compared to attacking from the opposite side. Teal: carbon; white: hydrogen; red: oxygen; yellow: sulfur; green: chlorine.
 
-Setup of ATESA for a new system begins with obtaining initial coordinates through whatever means, such as download from a repository like the Protein Databank, or created bespoke using appropriate software. In either case, as with most molecular simulations, the system should first be minimized, heated to the desired temperature, and equilibrated in the desired relaxed state. Excellent tutorials for these steps (among others) using Amber are available at: https://ambermd.org/tutorials/
+Setup of ATESA for a new system begins with obtaining initial coordinates through whatever means, such as download from a repository like the Protein Databank, or created bespoke using appropriate software. In either case, as with most molecular simulations, the system should first be minimized, heated to the desired temperature, and equilibrated in the desired relaxed state. Excellent tutorials for these steps (among others) using Amber are available `here <https://ambermd.org/tutorials/basic/tutorial0/index.htm>`_. Fluency in basic molecular simulations is assumed of users of ATESA, so be sure you're comfortable before moving forward!
 
 In this case, we produced initial coordinates using `Open Babel <http://www.cheminfo.org/Chemistry/Cheminformatics/FormatConverter/index.html>`_ with the SMILES string "CCOS(=O)Cl", and then minimized, heated to 300 K, and briefly equilibrated the system in Amber.
 
@@ -47,7 +47,7 @@ ATESA automates the discovery of suitable initial transition state models using 
 	prod_walltime = '04:00:00'
 	prod_ppn = 1
 
-As shown below, this job automatically finds a transition state very close to that proposed by Schreiner* et al. [3]
+As shown below, this job automatically finds a transition state very close to that proposed by Schreiner *et al.* [3]
 
 	.. figure:: _images/find_ts.png
 
@@ -137,3 +137,38 @@ Plotting the contents of the output file produced by this job (``/scratch/tburgi
 
 Pathway-restrained Umbrella Sampling
 ------------------------------------
+
+Finally, we're ready to evaluate the energy profile along our reaction coordinate. ATESA features two separate job types for this purpose: equilibrium path sampling, and umbrella sampling. If you have access to it, the latter is usually strongly preferable, so we'll focus on that here.
+
+Our first attempt will be using basic settings::
+
+	job_type = 'umbrella_sampling'
+	topology = 'ethyl_chlorosulfite.prmtop'
+	batch_system = 'slurm'
+	restart = False
+	working_directory = '/scratch/tburgin/ethyl_chlorosulfite_as/umbrella_sampling'
+	overwrite = True
+
+	initial_coordinates = ['fwd.nc','bwd.nc']
+
+	rc_definition = '-1.677 - 2.522*CV12 + 2.456*CV22 + 3.120*CV4 + 1.309*CV35'
+
+	as_out_file = '/scratch/hbmayes_root/hbmayes1/tburgin/200415_ethyl_chlorosulfite_as/as_decorr_13000.out'
+	as_settings_file = '/scratch/hbmayes_root/hbmayes1/tburgin/200415_ethyl_chlorosulfite_as/settings.pkl'
+
+	us_rc_step = 0.25
+	us_restraint = 50
+	us_rc_min = -6
+	us_rc_max = 12
+
+	path_to_input_files = '/home/tburgin/ethyl_chlorosulfite/input_files'
+	path_to_templates = '/home/tburgin/ethyl_chlorosulfite/templates'
+
+	prod_walltime = '04:00:00'
+	prod_ppn = 1
+	
+	
+so on and so forth... ::
+	
+	
+	us_cv_restraints_file = '/scratch/hbmayes_root/hbmayes1/tburgin/200415_ethyl_chlorosulfite_as/as_full_cvs.out'

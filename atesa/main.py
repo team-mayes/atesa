@@ -117,12 +117,17 @@ def init_threads(settings):
             if os.path.exists(settings.working_directory + '/info_err.out') and len(open(settings.working_directory + '/info_err.out', 'r').readlines()) > 0:
                 info_err_lines = open(settings.working_directory + '/info_err.out', 'r').readlines()
 
-                # Resample if info_err.out is improperly formatted
-                if False in [len(info_err_lines[i].split(' ')) == 3 for i in range(1, len(info_err_lines))] or not len(info_err_lines[0].split(' ')) == 2:
+                # Resample completely if there's been a change in the number of CVs
+                if settings.previous_cvs and not settings.previous_cvs == settings.cvs:
+                    utilities.resample(settings, partial=False)
+                    information_error.main()
+
+                # Resample if info_err.out is improperly formatted (will not run if resample called above)
+                if False in [len(info_err_lines[i].split(' ')) == 2 for i in range(0, len(info_err_lines))]:
                     utilities.resample(settings, partial=True)
                     information_error.main()
 
-                # Resample if info_err.out is missing lines (will not run if resample called just above)
+                # Resample if info_err.out is missing lines (will not run if resample called above)
                 len_data = len(open(settings.working_directory + '/as_raw.out', 'r').readlines())
                 last_info_err = info_err_lines[-1].split(' ')[0]
                 last_breakpoint = len_data - (len_data % settings.information_error_freq)
@@ -296,6 +301,9 @@ def main(settings, rescue_running=[]):
                                    'restart = True.')
 
         # Store settings object in the working directory for compatibility with analysis/utility scripts
+        if os.path.exists(settings.working_directory + '/settings.pkl'):
+            previous_settings = pickle.load(open(settings.working_directory + '/settings.pkl', 'rb'))
+            settings.previous_cvs = previous_settings.cvs
         if not settings.dont_dump:
             temp_settings = copy.deepcopy(settings)  # initialize temporary copy of settings to modify
             temp_settings.__dict__.pop('env')  # env attribute is not picklable
