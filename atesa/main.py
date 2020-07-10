@@ -117,7 +117,8 @@ def init_threads(settings):
             if os.path.exists(settings.working_directory + '/info_err.out') and len(open(settings.working_directory + '/info_err.out', 'r').readlines()) > 0:
                 info_err_lines = open(settings.working_directory + '/info_err.out', 'r').readlines()
 
-                # Resample completely if there's been a change in the number of definitions of CVs
+                # Resample completely if there's been a change in the number of definitions of CVs, or in the settings
+                # for two_line_threshold or information_error_max_dims
                 wrong_length = False
                 for data_length in [str(line.split()[0]) for line in info_err_lines]:
                     first_line = open(settings.working_directory + '/as_decorr_' + data_length + '.out', 'r').readlines()[0]
@@ -126,7 +127,10 @@ def init_threads(settings):
                         num_cvs = num_cvs / 2
                     if not num_cvs == len(settings.cvs):
                         wrong_length = True
-                if settings.previous_cvs and not settings.previous_cvs == settings.cvs or wrong_length:
+                if (settings.previous_cvs and not settings.previous_cvs == settings.cvs) or \
+                        (not settings.previous_two_line_threshold == settings.two_line_threshold) or \
+                        (not settings.previous_information_error_max_dims == settings.information_error_max_dims) or \
+                        wrong_length:
                     utilities.resample(settings, partial=False)
                     information_error.main()
 
@@ -309,9 +313,17 @@ def main(settings, rescue_running=[]):
                                    'restart = True.')
 
         # Store settings object in the working directory for compatibility with analysis/utility scripts
-        if os.path.exists(settings.working_directory + '/settings.pkl'):
+        if os.path.exists(settings.working_directory + '/settings.pkl'):    # for checking for need for resample later
             previous_settings = pickle.load(open(settings.working_directory + '/settings.pkl', 'rb'))
             settings.previous_cvs = previous_settings.cvs
+            try:
+                settings.previous_two_line_threshold = previous_settings.two_line_threshold
+            except AttributeError:
+                pass
+            try:
+                settings.previous_information_error_max_dims = previous_settings.information_error_max_dims
+            except AttributeError:
+                pass
         if not settings.dont_dump:
             temp_settings = copy.deepcopy(settings)  # initialize temporary copy of settings to modify
             temp_settings.__dict__.pop('env')  # env attribute is not picklable

@@ -101,6 +101,7 @@ def configure(input_file, user_working_directory=''):
         information_error_max_dims: int = 6
         max_moves: int = -1     # also used by find_ts
         max_consecutive_fails: int = -1
+        two_line_threshold: float = 0.5
 
         # Required only for committor analysis
         committor_analysis_n: int = 10
@@ -132,11 +133,13 @@ def configure(input_file, user_working_directory=''):
 
         # Not expected to be set by user
         DEBUG: bool = False     # True causes some functions to return dummy values for testing purposes
-        pid: int = -1           # Process ID of information_error call used in aimless shooting
-        information_error_overdue: bool = False    # Used for handling information_error calls cleanly
-        dont_dump: bool = False     # When True, prevents dumping settings to settings.pkl
-        suppress_us_warning = False     # Used to prevent repeatedly issuing the same warning during some US runs
-        previous_cvs = ''       # For checking whether a full resample is required when restarting
+        pid: int = -1           # process ID of information_error call used in aimless shooting
+        information_error_overdue: bool = False    # used for handling information_error calls cleanly
+        dont_dump: bool = False     # when True, prevents dumping settings to settings.pkl
+        suppress_us_warning = False     # used to prevent repeatedly issuing the same warning during some US runs
+        previous_cvs = ''       # for checking whether a full resample is required when restarting based on a change in cvs
+        previous_two_line_threshold = -1    # for checking whether a full resample is required when restarting based on a change in two_line_threshold
+        previous_information_error_max_dims = -1    # for checking whether a full resample is required when restarting based on a change in information_error_max_dims
 
     # Import config file line-by-line using exec()
     try:

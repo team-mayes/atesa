@@ -59,3 +59,6 @@ Example of aimless shooting prod input file
   at(3,2)=4272,
   at(4,2)=7178,
  &end
+ &wt
+  type="END",
+ &end

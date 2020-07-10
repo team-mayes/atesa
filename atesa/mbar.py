@@ -9,6 +9,7 @@ import scipy
 import pymbar
 import glob
 import re
+import copy
 import argparse
 import matplotlib
 import matplotlib.pyplot as plt
@@ -76,6 +77,22 @@ def main(**kwargs):
     pattern = re.compile('[-0-9.]+')
     data_files = sorted(data_files, key=lambda x: float(pattern.findall(x)[0]))
 
+    # todo: this approach is fine if every data point is used, but is incompatible with the --decorr option. Remove it
+    # todo: or implement a more subtle solution for combining samples from distinct simulations in the same state
+    # todo: after decorr has already been applied.
+    # Combine files from same state
+    # for filename in data_files:
+    #     window_center = pattern.findall(filename)[0]
+    #     if not os.path.exists('mbar_temp_' + window_center + '_0.dat'):
+    #         open('mbar_temp_' + window_center + '_0.dat', 'w').close()
+    #     else:
+    #         with open('mbar_temp_' + window_center + '_0.dat', 'a') as f:
+    #             f.write(open(filename, 'r').read()[1:])
+    #
+    # # New data_files list from combined files
+    # data_files = [name for name in glob.glob('mbar_temp_*_0.dat')]
+    # data_files = sorted(data_files, key=lambda x: float(pattern.findall(x)[0]))
+
     if len(data_files) == 0:
         raise RuntimeError('did not find any data files matching the expected naming convention and with length of at '
                            'least min_data (' + str(kwargs['min_data'][0]) + ')')
@@ -84,6 +101,9 @@ def main(**kwargs):
     R = 1.987e-3                        # gas constant in kcal/mol-K
     beta = 1 / (R * kwargs['t'][0])     # inverse temperature of simulations (in 1/(kcal/mol))
     kconst = kwargs['k'][0]             # spring constant in kcal/mol
+
+    # Set new "ignore" parameter for internal use
+    ignore = kwargs['ignore'][0]
 
     # PMF range
     try:                    # try for user-defined rc_min
@@ -95,10 +115,31 @@ def main(**kwargs):
     except ValueError:      # default; use largest window center
         rc_max = float(pattern.findall(data_files[-1])[0])
 
-    # Refresh data files to reflect new min and max, if necessary   # todo: could clean this up...
+    # Refresh data files to reflect new min and max, if necessary
     if not rc_max == float(pattern.findall(data_files[-1])[0]) or not rc_min == float(pattern.findall(data_files[0])[0]):
-        data_files = [name for name in glob.glob('rcwin_*_us.dat') if rc_min <= float(pattern.findall(name)[0]) <= rc_max and len(open(name, 'r').readlines()) > kwargs['min_data'][0]]
+        data_files = [name for name in glob.glob('rcwin_*_us.dat') if rc_min <= float(pattern.findall(name)[0]) <= rc_max]
         data_files = sorted(data_files, key=lambda x: float(pattern.findall(x)[0]))
+
+    if kwargs['decorr']:    # Use pymbar.timeseries to cut out pre-equilibrated data and decorrelate, if appropriate
+        data_files_temp = []
+        for data_file in data_files:
+            center = str(pattern.findall(data_file)[0])
+            if not os.path.exists('mbar_temp_' + center + '_0.dat'):
+                open('mbar_temp_' + center + '_0.dat', 'w').close()
+            lines = open(data_file, 'r').readlines()
+            data = np.asarray([float(line.split()[1]) for line in lines][:])[ignore:]
+
+            [t0, g, Neff_max] = pymbar.timeseries.detectEquilibration(data)  # compute indices of uncorrelated timeseries
+            data_equil = data[t0:]
+            indices = pymbar.timeseries.subsampleCorrelatedData(data_equil, g=g)
+            A_n = data[indices]
+            with open('mbar_temp_' + center + '_0.dat', 'a') as f:
+                for this_index in indices:
+                    f.write(lines[this_index])
+            if not 'mbar_temp_' + center + '_0.dat' in data_files_temp:
+                data_files_temp.append('mbar_temp_' + center + '_0.dat')
+        data_files = copy.deepcopy(data_files_temp)
+        ignore = 0  # so we don't ignore again further down
 
     K = len(data_files)             # number of umbrellas
     N_max = max(len(open(data_files[k], 'r').readlines()) for k in range(K))    # maximum number of snapshots/simulation
@@ -121,16 +162,16 @@ def main(**kwargs):
 
         if rc_min <= center <= rc_max:
             lines = open(data_files[k], 'r').readlines()
-            data = np.asarray([float(line.split()[1]) for line in lines][:])[kwargs['ignore'][0]:]
+            A_n = np.asarray([float(line.split()[1]) for line in lines][:])[ignore:]
 
-            if not kwargs['decorr']:
-                A_n = data
-            else:
-                # Use pymbar.timeseries to cut out pre-equilibrated data and decorrelate
-                [t0, g, Neff_max] = pymbar.timeseries.detectEquilibration(data)  # compute indices of uncorrelated timeseries
-                data_equil = data[t0:]
-                indices = pymbar.timeseries.subsampleCorrelatedData(data_equil, g=g)
-                A_n = data[indices]
+            # if not kwargs['decorr']:
+            #     A_n = data
+            # else:
+            #     # Use pymbar.timeseries to cut out pre-equilibrated data and decorrelate
+            #     [t0, g, Neff_max] = pymbar.timeseries.detectEquilibration(data)  # compute indices of uncorrelated timeseries
+            #     data_equil = data[t0:]
+            #     indices = pymbar.timeseries.subsampleCorrelatedData(data_equil, g=g)
+            #     A_n = data[indices]
 
             if not center in centers:
                 centers.append(center)
@@ -149,14 +190,21 @@ def main(**kwargs):
                 count += 1
                 update_progress(count / K, 'Collecting data')
 
+    # Now that all of the necessary data is loaded into memory, delete the temp files if necessary
+    # try:
+    #     print(data_files_temp)
+    #     for filename in data_files_temp:
+    #         os.remove(filename)
+    # except NameError:   # if data_file_temp does not exist
+    #     pass
+
     # print([rc0_k[k] for k in range(K)])
     # print([numpy.mean([item for item in rc_kn[k,:] if not item == 0]) - rc0_k[k] for k in range(K)])
     # print([scipy.stats.sem([item for item in rc_kn[k,:] if not item == 0]) for k in range(K)])
 
-    # todo: figure out how to clean this particular plot up
     if not kwargs['quiet']:
         fig, ax = plt.subplots()
-        ax.errorbar([rc0_k[k] for k in range(K)], [numpy.mean([item for item in rc_kn[k,:] if not item == 0]) - rc0_k[k] for k in range(K)], yerr=[scipy.stats.sem([item for item in rc_kn[k,:] if not item == 0]) for k in range(K)], color='#0072BD', lw=1)
+        ax.errorbar([rc0_k[k] for k in range(K)], [numpy.mean([item for item in rc_kn[k,:] if not item == 0]) - rc0_k[k] for k in range(K)], yerr=[scipy.stats.tstd([item for item in rc_kn[k,:] if not item == 0]) for k in range(K)], color='#0072BD', lw=1)
         plt.ylabel('Mean Value', weight='bold')
         plt.xlabel('Reaction Coordinate', weight='bold')
         plt.title('THIS IS NOT YOUR FREE ENERGY PROFILE\nThis plot should probably be smooth.\nOtherwise, you may have some'
