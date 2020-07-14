@@ -89,7 +89,10 @@ class Tests(object):
         kwargs = {'automagic': False, 'i': ['../test_data/as.out'], 'k': [2], 'f': [], 'q': ['absent'], 'r': [0], 'o': ['lmax.out'], 'quiet': True, 'plots': False, 'two_line_threshold': [0.55]}
         lmax.main(**kwargs)
         results = open('lmax.out', 'r').readlines()[1].split(' + ')
-        assert float(results[0].replace('The optimized reaction coordinate (with CVs indexed from 1) is: ', '')) == pytest.approx(-6.494, 1E-2)
+        try:
+            assert float(results[0].replace('The optimized reaction coordinate (with CVs indexed from 1) is: ', '')) == pytest.approx(-6.494, 1E-2)
+        except AssertionError:
+            print(results)
         assert float(results[1].replace('*CV2', '')) == pytest.approx(7.959, 1E-2)
         assert float(results[2].replace('*CV5', '')) == pytest.approx(2.247, 1E-2)
         assert len(results) == 3
