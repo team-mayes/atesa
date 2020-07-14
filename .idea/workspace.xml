@@ -2,12 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="55679143-7654-431c-aee1-71d5375f0f66" name="Default" comment="">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/atesa/configure.py" afterPath="$PROJECT_DIR$/atesa/configure.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/atesa/main.py" afterPath="$PROJECT_DIR$/atesa/main.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/atesa/mbar.py" afterPath="$PROJECT_DIR$/atesa/mbar.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/atesa/tests/test_data/umbrella_sampling_2.5_1.in" afterPath="$PROJECT_DIR$/atesa/tests/test_data/umbrella_sampling_2.5_1.in" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/atesa/tests/test_mbar.py" afterPath="$PROJECT_DIR$/atesa/tests/test_mbar.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/devtools/conda-envs/test_env.yaml" afterPath="$PROJECT_DIR$/devtools/conda-envs/test_env.yaml" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -115,6 +110,16 @@
           </provider>
         </entry>
       </file>
+      <file leaf-file-name="test_env.yaml" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/devtools/conda-envs/test_env.yaml">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="210">
+              <caret line="14" column="10" lean-forward="false" selection-start-line="14" selection-start-column="10" selection-end-line="14" selection-end-column="10" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
       <file leaf-file-name="mbar.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/atesa/mbar.py">
           <provider selected="true" editor-type-id="text-editor">
@@ -127,11 +132,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="test_mbar.py" pinned="false" current-in-tab="true">
+      <file leaf-file-name="test_mbar.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/atesa/tests/test_mbar.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="267">
-              <caret line="39" column="9" lean-forward="true" selection-start-line="39" selection-start-column="9" selection-end-line="43" selection-end-column="15" />
+            <state relative-caret-position="87">
+              <caret line="27" column="29" lean-forward="false" selection-start-line="27" selection-start-column="29" selection-end-line="27" selection-end-column="29" />
               <folding />
             </state>
           </provider>
@@ -150,7 +155,7 @@
       <file leaf-file-name="configure.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/atesa/configure.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="310">
+            <state relative-caret-position="761">
               <caret line="141" column="166" lean-forward="false" selection-start-line="141" selection-start-column="166" selection-end-line="141" selection-end-column="166" />
               <caret line="140" column="48" lean-forward="false" selection-start-line="140" selection-start-column="8" selection-end-line="140" selection-end-column="48" />
               <caret line="141" column="48" lean-forward="false" selection-start-line="141" selection-start-column="8" selection-end-line="141" selection-end-column="48" />
@@ -220,8 +225,8 @@
       <find>assert</find>
       <find>gatekeep</find>
       <find>evaluate_r</find>
-      <find>two_line</find>
       <find>print</find>
+      <find>two_line</find>
     </findStrings>
     <replaceStrings>
       <replace>':</replace>
@@ -292,7 +297,6 @@
         <option value="$PROJECT_DIR$/atesa/resample_and_inferr.py" />
         <option value="$PROJECT_DIR$/atesa/factory.py" />
         <option value="$PROJECT_DIR$/atesa/data/input_files/umbrella sampling_prod_amber.in" />
-        <option value="$PROJECT_DIR$/devtools/conda-envs/test_env.yaml" />
         <option value="$PROJECT_DIR$/atesa/data/atesa.config" />
         <option value="$PROJECT_DIR$/atesa/tests/test_jobtype.py" />
         <option value="$PROJECT_DIR$/atesa/data/input_files/umbrella_sampling_prod_amber.in" />
@@ -313,6 +317,7 @@
         <option value="$PROJECT_DIR$/atesa/main.py" />
         <option value="$PROJECT_DIR$/atesa/mbar.py" />
         <option value="$PROJECT_DIR$/atesa/tests/test_mbar.py" />
+        <option value="$PROJECT_DIR$/devtools/conda-envs/test_env.yaml" />
       </list>
     </option>
   </component>
@@ -835,6 +840,7 @@
   </component>
   <component name="ToolWindowManager">
     <frame x="38" y="23" width="1242" height="777" extended-state="0" />
+    <editor active="true" />
     <layout>
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.16877638" sideWeight="0.4978701" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.36146274" sideWeight="0.1225" order="7" side_tool="true" content_ui="tabs" />
@@ -843,7 +849,7 @@
       <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.302391" sideWeight="0.8775" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Coverage" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.0225" sideWeight="0.5" order="3" side_tool="true" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
-      <window_info id="Project" active="true" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.16583334" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.16583334" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="Database" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32916668" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.13727121" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
@@ -916,27 +922,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="451">
           <caret line="119" column="23" lean-forward="false" selection-start-line="119" selection-start-column="23" selection-end-line="119" selection-end-column="23" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/devtools/scripts/create_conda_env.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="315">
-          <caret line="21" column="90" lean-forward="false" selection-start-line="21" selection-start-column="90" selection-end-line="21" selection-end-column="90" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/devtools/travis-ci/before_install.sh">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="232">
-          <caret line="34" column="0" lean-forward="false" selection-start-line="34" selection-start-column="0" selection-end-line="34" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/devtools/conda-envs/test_env.yaml">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="315">
-          <caret line="21" column="8" lean-forward="false" selection-start-line="21" selection-start-column="8" selection-end-line="21" selection-end-column="8" />
         </state>
       </provider>
     </entry>
@@ -1172,26 +1157,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/atesa/configure.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="310">
-          <caret line="141" column="166" lean-forward="false" selection-start-line="141" selection-start-column="166" selection-end-line="141" selection-end-column="166" />
-          <caret line="140" column="48" lean-forward="false" selection-start-line="140" selection-start-column="8" selection-end-line="140" selection-end-column="48" />
-          <caret line="141" column="48" lean-forward="false" selection-start-line="141" selection-start-column="8" selection-end-line="141" selection-end-column="48" />
-          <folding>
-            <element signature="e#82#97#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/atesa/main.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="223">
-          <caret line="130" column="25" lean-forward="false" selection-start-line="130" selection-start-column="25" selection-end-line="130" selection-end-column="25" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/atesa/mbar.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="131">
@@ -1204,8 +1169,52 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/atesa/tests/test_mbar.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="267">
-          <caret line="39" column="9" lean-forward="true" selection-start-line="39" selection-start-column="9" selection-end-line="43" selection-end-column="15" />
+        <state relative-caret-position="87">
+          <caret line="27" column="29" lean-forward="false" selection-start-line="27" selection-start-column="29" selection-end-line="27" selection-end-column="29" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/atesa/configure.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="761">
+          <caret line="141" column="166" lean-forward="false" selection-start-line="141" selection-start-column="166" selection-end-line="141" selection-end-column="166" />
+          <caret line="140" column="48" lean-forward="false" selection-start-line="140" selection-start-column="8" selection-end-line="140" selection-end-column="48" />
+          <caret line="141" column="48" lean-forward="false" selection-start-line="141" selection-start-column="8" selection-end-line="141" selection-end-column="48" />
+          <folding>
+            <element signature="e#82#97#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/devtools/scripts/create_conda_env.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="210">
+          <caret line="21" column="90" lean-forward="false" selection-start-line="21" selection-start-column="90" selection-end-line="21" selection-end-column="90" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/devtools/travis-ci/before_install.sh">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="259">
+          <caret line="34" column="0" lean-forward="false" selection-start-line="34" selection-start-column="0" selection-end-line="34" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/atesa/main.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="223">
+          <caret line="130" column="25" lean-forward="false" selection-start-line="130" selection-start-column="25" selection-end-line="130" selection-end-column="25" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/devtools/conda-envs/test_env.yaml">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="210">
+          <caret line="14" column="10" lean-forward="false" selection-start-line="14" selection-start-column="10" selection-end-line="14" selection-end-column="10" />
           <folding />
         </state>
       </provider>
