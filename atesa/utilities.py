@@ -161,11 +161,17 @@ def get_cvs(filename, settings, reduce=False):
 
     rc_minmax = [[],[]]
     if reduce:
-        # Prepare cv_minmax list
-        asout_lines = [[float(item) for item in line.replace('A <- ', '').replace('B <- ', '').replace(' \n', '').replace('\n', '').split(' ')] for line in open(settings.as_out_file, 'r').readlines()]
-        open(settings.as_out_file, 'r').close()
-        mapped = list(map(list, zip(*asout_lines)))
-        rc_minmax = [[numpy.min(item) for item in mapped], [numpy.max(item) for item in mapped]]
+        # Try to load from file if available
+        size = os.path.getsize(settings.as_out_file)
+        if os.path.exists(str(size) + '_minmax.pkl'):
+            rc_minmax = pickle.load(open(str(size) + '_minmax.pkl', 'rb'))
+        else:
+            # Prepare new cv_minmax list
+            asout_lines = [[float(item) for item in line.replace('A <- ', '').replace('B <- ', '').replace(' \n', '').replace('\n', '').split(' ')] for line in open(settings.as_out_file, 'r').readlines()]
+            open(settings.as_out_file, 'r').close()
+            mapped = list(map(list, zip(*asout_lines)))
+            rc_minmax = [[numpy.min(item) for item in mapped], [numpy.max(item) for item in mapped]]
+            pickle.dump(rc_minmax, open(str(size) + '_minmax.pkl', 'wb'), protocol=2)
 
     output = ''
     values = []

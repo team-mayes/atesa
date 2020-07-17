@@ -79,7 +79,7 @@ Once a model has been set up near the transition state, aimless shooting can pro
 	
 Note that the absence of any specific CVs in this file results in the default behavior, which is building CVs automatically based on the atoms indicated in the commitment definitions. In this case, ATESA derived 156 CVs to sample at each shooting point.
 
-This job collected 13,052 shooting moves before terminating automatically using based on the :ref:`InformationError` termination criterion with the default settings. A visualization of the sampled data projected onto the three dimensions making up the commitment basins is shown here to help readers who may not be familiar with aimless shooting visualize the data, but this plot is not produced automatically by ATESA:
+This job collected 13,052 shooting moves before terminating automatically using based on the :ref:`InformationError` termination criterion with the default settings. An average acceptance ratio of roughly 25% per thread (per ``status.txt`` in the working directory) reflects a healthy level of efficiency. A visualization of the sampled data projected onto the three dimensions making up the commitment basins is shown here to help readers who may not be familiar with aimless shooting visualize the data, but this plot is not produced automatically by ATESA:
 
 	.. figure:: _images/as_data.gif
 
