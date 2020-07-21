@@ -301,6 +301,9 @@ def main(settings, rescue_running=[]):
                 os.mkdir(settings.working_directory)
                 if os.path.exists('ATESA_TEMP_CVS.txt'):    # continuation of aforementioned kludge
                     shutil.move('ATESA_TEMP_CVS.txt', settings.working_directory + '/cvs.txt')
+            elif not settings.restart and glob.glob(settings.working_directory + '/*') == [settings.working_directory + '/cvs.txt']:
+                # Occurs when restart = False, overwrite = False, and auto_cvs is used
+                pass
             elif not settings.restart:
                 raise RuntimeError('Working directory ' + settings.working_directory + ' already exists, but overwrite '
                                    '= False and restart = False. Either change one of these two settings or choose a '
