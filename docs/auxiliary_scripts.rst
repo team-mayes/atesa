@@ -101,9 +101,9 @@ The output files from an umbrella sampling (US) run can be converted into a free
 
 The basic task in interpreting umbrella sampling data is to "subtract" the effect of the known harmonic restraints on the sampling, leaving only the underlying free energy profile. For a discussion of the exact workings of MBAR, the reader is directed to `Shirts and Chodera, J Chem Phys. 2008; 129(12): 124105 <https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2671659/>`_.
 
-If supported by the local python environment, mbar.py produces several plots: first, a "mean value" plot that shows the derivation from the window center in each data file. This is a diagnostic tool to help identify any problematic regions; if there is no issue, the plot should be a smooth waveform passing through 0 near the middle. Then, it produces a histogram to show the coverage of sampling over the range of the reaction coordinate. There should be no gaps in this plot, or else additional data must be collected to cover the gaps. Finally, it plots the free energy profile itself. All of the data for these plots is also printed the the output file (see the `-o` option below) regardless of whether the plots are shown.
+If supported by the local python environment, mbar.py produces several plots: first, a "mean value" plot that shows the derivation from the window center in each data file. This is a diagnostic tool to help identify any problematic regions; if there is no issue, the plot should be a smooth waveform passing through 0 near the middle. Then, it produces a histogram to show the coverage of sampling over the range of the reaction coordinate. There should be no gaps in this plot, or else additional data must be collected to cover the gaps. Finally, it plots the free energy profile itself. All of the data for these plots is also printed the the output file (see the `-o` option below) regardless of whether the plots are shown. In cases where the data exists on a remote server, it may be convenient to copy the necessary files (see following paragraph) to a local directory before running ``mbar.py`` in order to produce these plots automatically.
 
-mbar.py looks for and uses all data files in the present directory whose name begins with "rcwin_" and ends with "_us.dat". This matches the output files produced by umbrella sampling with ATESA. The script is called directly in the command line from within the desired working directory as follows:
+mbar.py looks for and uses all data files in the present directory whose names begin with "rcwin_" and end with "_us.dat". This matches the output files produced by umbrella sampling with ATESA. The script is called directly in the command line from within the desired working directory as follows:
 
 ::
 
@@ -111,7 +111,7 @@ mbar.py looks for and uses all data files in the present directory whose name be
 	
 `-k kconst`
 
-	The harmonic restraint weight used during umbrella sampling in kcal/mol. This implementation of MBAR requires that all of the restraints be identical. The default is equal to the default setting during an ATESA umbrella sampling job. Default = 50
+	The harmonic restraint weight used during umbrella sampling in kcal/mol. This particular implementation of MBAR requires that all of the restraints be identical. The default is equal to the default setting during an ATESA umbrella sampling job. Default = 50
 	
 `-t temp`
 

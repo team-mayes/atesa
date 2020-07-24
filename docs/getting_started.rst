@@ -57,7 +57,7 @@ Aimless shooting input files for the following step types are required for jobs 
 	ntx=1,		! read coordinates but not velocities from input coordinate file
   	ntxo=1,		! ASCII-formatted restart file (required for ATESA)
   	nstlim=1,	! one simulation step total
-	dt=0.0000001,	! extremely short time step
+	dt=0.00001,	! extremely short time step (note, too small can cause velocity overflow errors)
   	tempi=300.0,	! or whatever temperature (same as temp0)
   	temp0=300.0,	! or whatever temperature (same as tempi)
   		

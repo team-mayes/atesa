@@ -90,12 +90,12 @@ class AdaptSlurm(BatchSystem):
         count = 1
         max_tries = 5
         output = 'first_attempt'
-        errors = ['first_attempt', 'slurm_load_jobs', 'slurm_receive_msg']   # error messages to retry on
+        errors = ['first_attempt', 'slurm_load_jobs', 'slurm_receive_msg', 'send/recv']   # error messages to retry on
 
         command = 'squeue -o %t --job ' + str(jobid)
         while True in [error in output for error in errors] and count <= max_tries:
             if not output == 'first_attempt':
-                time.sleep(30)  # wait 30 seconds before trying again
+                time.sleep(30)      # wait 30 seconds before trying again
                 count += 1
             process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                                        close_fds=True, shell=True)
@@ -109,7 +109,7 @@ class AdaptSlurm(BatchSystem):
         elif output == 'CG' or 'Invalid job id' in output or not output:  # 'Invalid job id' or empty output returned when job is finished in Slurm
             output = 'C'
         elif output == 'R':
-            output = 'R'        # just to be really explicit
+            output = 'R'            # just to be really explicit I guess
         else:
             raise ValueError('Queried Slurm system status for jobid ' + str(jobid) + ' but got unexpected status: ' + output)
 
