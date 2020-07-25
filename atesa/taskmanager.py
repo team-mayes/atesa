@@ -58,9 +58,17 @@ class AdaptSimple(TaskManager):
         if settings.DEBUG:
             command = 'echo "this is a nonsense string for testing purposes: 123456, now here are some garbage symbols: ?!@#$/\';:[]+=_-.<,>"'
 
-        process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                                   close_fds=True, shell=True)
-        output = process.stdout.read().decode()
+        count = 1
+        max_tries = 5
+        output = 'first_attempt'
+        errors = ['first_attempt', 'slurm_load_jobs', 'slurm_receive_msg', 'send/recv']  # error messages to retry on
+        while True in [error in output for error in errors] and count <= max_tries:
+            if not output == 'first_attempt':
+                time.sleep(30)      # wait 30 seconds before trying again
+                count += 1
+            process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                                       close_fds=True, shell=True)
+            output = process.stdout.read().decode()
 
         # Use a regular expression to extract the jobid from this string
         pattern = re.compile('[0-9]+')  # todo: it's not inconceivable that this should fail in some cases. Consider moving building this pattern to a method of BatchSystem.
