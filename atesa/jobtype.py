@@ -584,7 +584,9 @@ class AimlessShooting(JobType):
                 file.close()
 
         # Write updated restart.pkl
-        pickle.dump(allthreads, open('restart.pkl', 'wb'), protocol=2)
+        pickle.dump(allthreads, open('restart.pkl.bak', 'wb'), protocol=2)  # if the code crashes while dumping it could delete the contents of the pkl file
+        if not os.path.getsize('restart.pkl.bak') == 0:
+            shutil.copy('restart.pkl.bak', 'restart.pkl')                   # copying after is safer
 
     def algorithm(self, allthreads, running, settings):
         # In aimless shooting, algorithm should decide whether or not a new shooting point is needed, obtain it if so,
