@@ -75,12 +75,5 @@ class AdaptSimple(TaskManager):
         try:
             return re.findall(pattern, output)[0]
         except IndexError:  # no number in the output
-            time.sleep(30)  # wait 30 seconds in case this is just a momentary timeout issue
-            process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                                       close_fds=True, shell=True)
-            output = process.stdout.read().decode()
-            try:
-                return re.findall(pattern, output)[0]
-            except IndexError:
-                raise RuntimeError('unable to submit batch job: ' + filename + '\nMessage from batch system: ' + output)
+            raise RuntimeError('unable to submit batch job: ' + filename + '\nMessage from batch system: ' + output)
 
