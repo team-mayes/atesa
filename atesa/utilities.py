@@ -38,7 +38,11 @@ def check_commit(filename, settings):
 
     # todo: consider adding support for angles and dihedrals
 
-    traj = pytraj.iterload(filename, settings.topology)
+    try:
+        traj = pytraj.iterload(filename, settings.topology)
+    except ValueError as e:
+        raise RuntimeError('Unable to load file: ' + filename + ' for checking commitment with the specified topology '
+                           'file.\npytraj returned error: ' + e)
     commit_flag = ''    # initialize
 
     for i in range(len(settings.commit_fwd[2])):
