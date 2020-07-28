@@ -542,9 +542,9 @@ class AimlessShooting(JobType):
                 frame_to_check = self.get_frame(self.history.prod_trajs[-1][job_index], -1, settings)
                 if frame_to_check:
                     self.history.prod_results[-1].append(utilities.check_commit(frame_to_check, settings))
+                    os.remove(frame_to_check)
                 else:
                     self.history.prod_results[-1].append('')    # trajectory doesn't exist for some reason, so automatically fail
-                os.remove(frame_to_check)
             self.total_moves += 1
             self.history.timestamps.append(int(time.time()))
             if self.history.prod_results[-1] in [['fwd', 'bwd'], ['bwd', 'fwd']]:   # update last accepted move
