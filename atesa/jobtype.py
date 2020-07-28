@@ -540,7 +540,10 @@ class AimlessShooting(JobType):
             self.history.prod_results.append([])
             for job_index in range(len(self.current_type)):
                 frame_to_check = self.get_frame(self.history.prod_trajs[-1][job_index], -1, settings)
-                self.history.prod_results[-1].append(utilities.check_commit(frame_to_check, settings))
+                if frame_to_check:
+                    self.history.prod_results[-1].append(utilities.check_commit(frame_to_check, settings))
+                else:
+                    self.history.prod_results[-1].append('')    # trajectory doesn't exist for some reason, so automatically fail
                 os.remove(frame_to_check)
             self.total_moves += 1
             self.history.timestamps.append(int(time.time()))
@@ -1265,7 +1268,10 @@ class FindTS(JobType):
         # First, store commitment basin if that didn't get set in gatekeeper
         if not self.history.prod_result:
             frame_to_check = self.get_frame(self.history.prod_trajs[-1], -1, settings)
-            self.history.prod_result = utilities.check_commit(frame_to_check, settings)
+            if frame_to_check:
+                self.history.prod_result = utilities.check_commit(frame_to_check, settings)
+            else:
+                raise RuntimeError('unable to produce coordinates from final frame of file: ' + str(self.history.prod_trajs[-1]))
 
         if self.history.init_basin == 'fwd':
             dir_to_check = 'bwd'
