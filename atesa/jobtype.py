@@ -513,9 +513,9 @@ class AimlessShooting(JobType):
                 if os.path.exists('info_err.out') and len(open('info_err.out', 'r').readlines()) > 0:
                     last_value = open('info_err.out', 'r').readlines()[-1].split(' ')[1]
                     if float(last_value) <= settings.information_error_threshold:
-                        global_terminate = True     # todo: test information error termination criterion
+                        global_terminate = True
 
-                # # Evaluate termination criterion using KPSS statistic data in info_err.out
+                # # Evaluate termination criterion using KPSS statistic data in info_err.out (deprecated)
                 # if os.path.exists('info_err.out'):
                 #     kpss_stat = open('info_err.out', 'r').readlines()[-1].split(' ')[2]     # kpss statistic read from last line
                 #     if float(kpss_stat) <= 0.05:

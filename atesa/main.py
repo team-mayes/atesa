@@ -15,6 +15,8 @@ import pytraj
 import copy
 import time
 import glob
+import psutil
+import warnings
 from atesa import configure
 from atesa import factory
 from atesa import process
@@ -374,7 +376,24 @@ def main(settings, rescue_running=[]):
                         for thread in running:    # todo: should I replace this with something to finish up running jobs and just block submission of new ones?
                             for job_index in range(len(thread.current_type)):
                                 thread.cancel_job(job_index, settings)
-                            running = []
+                        running = []
+                        if not settings.pid == -1:  # finish up currently running resample_and_inferr, if appropriate
+                            proc_status = 'running'
+                            while proc_status == 'running':
+                                try:
+                                    proc = psutil.Process(settings.pid).status()
+                                    if proc in [psutil.STATUS_RUNNING, psutil.STATUS_SLEEPING, psutil.STATUS_DISK_SLEEP]:
+                                        proc_status = 'running'
+                                        time.sleep(60)  # wait 1 minute before checking again
+                                    elif proc in [psutil.STATUS_ZOMBIE, psutil.STATUS_DEAD]:
+                                        proc_status = 'not_running'
+                                    else:
+                                        warnings.warn(
+                                            'unexpected process state for information_error.py subprocess: ' + proc +
+                                            '\nSkipping information error checking at this step')
+                                        proc_status = 'error'
+                                except (psutil.NoSuchProcess, ProcessLookupError):
+                                    proc_status = 'not_running'
                         break
                     running = thread.process(running, settings)
                 else:
