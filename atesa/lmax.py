@@ -228,7 +228,7 @@ def eval_rc(params, obs):
     return rc
 
 
-def main(i, k, f, q, r, o, automagic, plots, quiet, two_line_threshold):
+def main(i, k, f, s, q, r, o, automagic, plots, quiet, two_line_threshold):
     """
     Main runtime function of lmax.py.
 
@@ -266,6 +266,10 @@ def main(i, k, f, q, r, o, automagic, plots, quiet, two_line_threshold):
     plots = plots
     quiet = quiet
     two_line_threshold = two_line_threshold[0]
+    skip = s    # this one also a list
+
+    if not fixed == [None] and len(fixed) > dims:
+        raise RuntimeError('value of k must be less than or equal to number of fixed (-f) dimensions')
 
     # Ignore arguments as described in documentation
     if running:
@@ -344,9 +348,9 @@ def main(i, k, f, q, r, o, automagic, plots, quiet, two_line_threshold):
         if not fixed == [None] and len(fixed) == dims:
             cv_combs = [fixed]
         elif running or automagic:
-            cv_combs = [fixed + [new] for new in range(1, num_cvs + 1) if not new in fixed]
+            cv_combs = [fixed + [new] for new in range(1, num_cvs + 1) if (not new in fixed) and (not new in skip)]
         else:
-            cv_combs = [comb for comb in itertools.combinations(range(1, num_cvs + 1), dims) if (fixed == [None] or set(fixed).issubset(comb))]
+            cv_combs = [comb for comb in itertools.combinations(range(1, num_cvs + 1), dims) if (fixed == [None] or set(fixed).issubset(comb)) and (skip == [None] or not any([skipped in comb for skipped in skip]))]
         if qdot == 'present' and not termination_2:
             cv_combs_temp = cv_combs
             cv_combs = []
@@ -542,6 +546,8 @@ if __name__ == "__main__":
                         help='number of CVs to include in RC. Default=1')
     parser.add_argument('-f', metavar='fixed', type=int, nargs='*', default=[None],
                         help='CVs to require inside the RC. Default=none')
+    parser.add_argument('-s', metavar='skip', type=int, nargs='*', default=[None],
+                        help='CVs to skip (not consider in RC). Default=none')
     parser.add_argument('-q', metavar='include_qdot', type=str, nargs=1, default=['present'],
                         help='valid options are: "present", "absent", and "ignore" (quotes excluded). If "present" or '
                              '"ignore", the input file is assumed to include rate-of-change ("q") data for each CV '
@@ -562,7 +568,7 @@ if __name__ == "__main__":
                         help='If this option is given, arguments passed for k, f, and r are ignored, and the best RC is'
                              ' determined based on the two-line method (see documentation).')
     parser.add_argument('--plots', action='store_true', default=False,
-                        help='If True, plots the final fit between the model and data committor sigmoid.'
+                        help='If True, plots the final fit between the model and data committor sigmoid. '
                              'If this option is given alongside automagic, gnuplot will be used to write plots to the '
                              'terminal during evaluations of the automagic termination criterion (if it is installed). '
                              'The sigmoid data is also printed to the terminal.')
