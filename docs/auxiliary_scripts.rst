@@ -16,7 +16,7 @@ Likelihood maximization is invoked from the command line as:
 
 ::
 
-	lmax.py -i input_file [-k dimensions | -r dimensions | --automagic [--two_line_threshold ratio]] [-f fixed_cvs] [-q qdot_setting] [-o output_file] [--plots] [--quiet]
+	lmax.py -i input_file [-k dimensions | -r dimensions | --automagic [--two_line_threshold ratio]] [-f fixed_cvs] [-s skip] [-q qdot_setting] [-o output_file] [--plots] [--quiet]
 	
 `-i input_file`
 	The only strictly required argument for lmax.py, `input_file` should point to the aimless shooting output file of interest. Usually, this should be the longest "decorrelated" aimless shooting output file in the target working directory (named as "as_decorr_<length>.out", where <length> is the number of shooting points included before decorrelating). Decorrelated output files are produced automatically when using the information error convergence criterion criterion with aimless shooting, but otherwise they can be produced by running a new aimless shooting job with *resample* = True.
@@ -35,6 +35,9 @@ Likelihood maximization is invoked from the command line as:
 		
 `-f fixed_cvs`
 	This option specifies one or more CVs that are required in the final RC. For example, `-k 4 -f 12 31` would return the best four-dimensional RC that contains both CV12 and CV31. The number of required CVs specified with this option must be less than or equal to the number given for `-k` or `-r` if those options are given.
+	
+`-s skip`
+	Similar to `-f`, but this option specifies CVs NOT to include in the RC. This can be useful when your dataset includes dimensions that appear to be well-correlated with the commitment basin but that you have some reason to believe should not be included in the model. Can also be used to obtain runners up to the best models produced with the `\\-\\-automagic` and `-r` settings, by running `lmax.py` again and skipping the last dimension added to the model at hand (the right-most term). Obviously, the same CV cannot be specified with both `-f` and `-s` simultaneously.
 
 `-q qdot_setting`
 	Specifies the inertial behavior of LMax. Valid options are: `present`, `absent`, and `ignore`. Default is `present`.

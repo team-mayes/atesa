@@ -269,7 +269,11 @@ def main(i, k, f, s, q, r, o, automagic, plots, quiet, two_line_threshold):
     skip = s    # this one also a list
 
     if not fixed == [None] and len(fixed) > dims:
-        raise RuntimeError('value of k must be less than or equal to number of fixed (-f) dimensions')
+        raise RuntimeError('value of k must be less than or equal to number of fixed (-f) dimensions.')
+
+    if not fixed == [None] and not skip == [None]:
+        if any([f in skip for f in fixed]) or any([s in fixed for s in skip]):
+            raise RuntimeError('the same CV cannot be indicated with both the -s and -f options at the same time.')
 
     # Ignore arguments as described in documentation
     if running:

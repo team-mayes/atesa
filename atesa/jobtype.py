@@ -595,7 +595,7 @@ class AimlessShooting(JobType):
         # In aimless shooting, algorithm should decide whether or not a new shooting point is needed, obtain it if so,
         # and update self.history to reflect it.
         if self.current_type == ['prod', 'prod']:
-            if not all([os.path.exists(self.history.prod_trajs[-1][i]) for i in range(len(self.current_type))]):     # prod step failed, so retry it
+            if not self.history.consec_fails == 0:     # prod step failed, so retry it
                 self.current_type = ['init']    # will update to ['prod', 'prod'] in next thread.process call
                 return running  # escape immediately
 
