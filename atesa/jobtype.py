@@ -403,7 +403,7 @@ class AimlessShooting(JobType):
                 self.history.prod_results = []      # list of 2-length lists of strings ['fwd'/'bwd'/'', 'fwd'/'bwd'/'']; updated by update_results
                 self.history.last_accepted = -1     # int, index of last accepted prod_trajs entry; updated by update_results (-1 means none yet accepted)
                 self.history.timestamps = []        # list of ints representing seconds since the epoch for the end of each step; updated by update_results
-                self.history.consec_fails = 0  # tally of consecutive failures of init steps
+                self.history.consec_fails = 0       # tally of consecutive failures of simulation steps
             if 'inpcrd' in kwargs.keys():
                 self.history.init_inpcrd.append(kwargs['inpcrd'])
         else:   # self.history should already exist
