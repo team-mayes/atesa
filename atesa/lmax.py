@@ -268,7 +268,7 @@ def main(i, k, f, s, q, r, o, automagic, plots, quiet, two_line_threshold):
     two_line_threshold = two_line_threshold[0]
     skip = s    # this one also a list
 
-    if not fixed == [None] and len(fixed) > dims:
+    if not fixed == [None] and running == 0 and not automagic and len(fixed) > dims:
         raise RuntimeError('value of k must be less than or equal to number of fixed (-f) dimensions.')
 
     if not fixed == [None] and not skip == [None]:

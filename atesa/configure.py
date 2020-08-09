@@ -100,7 +100,7 @@ def configure(input_file, user_working_directory=''):
         information_error_override: bool = False
         information_error_max_dims: int = 6
         max_moves: int = -1     # also used by find_ts
-        max_consecutive_fails: int = -1
+        max_consecutive_fails: int = 10
         two_line_threshold: float = 0.5
 
         # Required only for committor analysis

@@ -413,7 +413,7 @@ These settings are specific to aimless shooting runs only.
 	
 ``max_consecutive_fails``
 
-	The maximum number of consecutive failed shooting moves permitted before the entire aimless shooting run terminates. This option is useful for placing a lower limit on the acceptance ratio so as to avoid spending a lot of resources on inefficient sampling. It does not terminate just the individual thread, because to do so would bias the sampling procedure. If a negative value is given, there is no limit. Default = -1
+	The maximum number of consecutive failed simulations permitted in any single thread before the entire aimless shooting run terminates. In this case, "failed" simulations refers to simulations that do not produce valid output files -- it has nothing to do with whether a shooting move is "accepted" or "rejected". Sometimes simulations occasionally fail for innocuous reasons, but if many failures happen in a row it usually indicates some systemic issue that warrants investigation. If a negative value is given, there is no limit. Default = 10
 	
 The following options concern the information error convergence criterion in aimless shooting, which is turned on by default. See :ref:`InformationError` for a general description of this method.
 	
@@ -500,8 +500,6 @@ Keep in mind that if you perform a large amount of sampling and then discover th
 ``us_auto_coords_directory`` **‡**
 
 	By default, umbrella sampling uses initial coordinates generated from the files designated in the *initial_coordinates* option. Alternatively, and more conveniently, this option can be used to specify an aimless shooting working directory from which to automatically identify suitable initial coordinates using *n* of the most recent "accepted" trajectories from the aimless shooting threads, where *n* is the value of *us_degeneracy*. If this option is used, the contents of *initial_coordinates* will be ignored. Default = ''
-	
-.. _USPathwayRestraintsFileConfig:
 	
 ``us_pathway_restraints_file``
 
