@@ -619,15 +619,23 @@ class AimlessShooting(JobType):
                             '\n traj = mdtraj.load(self.history.prod_trajs[-1][job_index], top=settings.topology) did not raise a ValueError' +
                             '\n traj.n_frames: ' + str(traj.n_frames))
                     except ValueError:
-                        raise RuntimeError(
-                            'new init_inpcrd that should be based on frame ' + str(frame) + ' of trajectory file ' +
-                            self.history.prod_trajs[-1][job_index] + ' was not successfully created. Its name (may be '
-                            'an empty string) was recorded as: ' + new_point + '\n'
-                            'This should be impossible. Debug information:'
-                            '\n self.history.prod_results[-1]: ' + str(self.history.prod_results[-1]) +
-                            '\n self.history.consec_fails: ' + str(self.history.consec_fails) +
-                            '\n os.path.exists(self.history.prod_trajs[-1][job_index]): ' + str(os.path.exists(self.history.prod_trajs[-1][job_index])) +
-                            '\n traj = mdtraj.load(self.history.prod_trajs[-1][job_index], top=settings.topology) DID raise a ValueError')
+                        print('thread.get_frame raised value error; waiting 30 seconds and then trying again')
+                        time.sleep(30)
+                        new_point = self.get_frame(self.history.prod_trajs[-1][job_index], frame, settings)
+                        if not os.path.exists(new_point):
+                            try:
+                                traj = mdtraj.load(self.history.prod_trajs[-1][job_index], top=settings.topology)
+                            except ValueError:
+                                raise RuntimeError(
+                                    'new init_inpcrd that should be based on frame ' + str(frame) + ' of trajectory file ' +
+                                    self.history.prod_trajs[-1][job_index] + ' was not successfully created. Its name (may be '
+                                    'an empty string) was recorded as: ' + new_point + '\n'
+                                    'This should be impossible. Debug information:'
+                                    '\n self.history.prod_results[-1]: ' + str(self.history.prod_results[-1]) +
+                                    '\n self.history.consec_fails: ' + str(self.history.consec_fails) +
+                                    '\n os.path.exists(self.history.prod_trajs[-1][job_index]): ' + str(os.path.exists(self.history.prod_trajs[-1][job_index])) +
+                                    '\n traj = mdtraj.load(self.history.prod_trajs[-1][job_index], top=settings.topology) DID raise a ValueError' +
+                                    '\n This error reached on second attempt after waiting 30 seconds.')
                 self.history.init_inpcrd.append(new_point)
             else:   # not an accepted move
                 if settings.always_new and self.history.last_accepted >= 0:  # choose a new shooting move from last accepted trajectory
@@ -650,17 +658,25 @@ class AimlessShooting(JobType):
                                 '\n traj = mdtraj.load(self.history.prod_trajs[self.history.last_accepted][job_index], top=settings.topology) did not raise a ValueError' +
                                 '\n traj.n_frames: ' + str(traj.n_frames))
                         except ValueError:
-                            raise RuntimeError(
-                                'new init_inpcrd that should be based on frame ' + str(frame) + ' of trajectory file ' +
-                                self.history.prod_trajs[self.history.last_accepted][job_index] + ' was not successfully '
-                                'created. Its name (may be an empty string) was recorded as: ' + new_point + '\n'
-                                'This should be impossible. Debug information:'
-                                '\n self.history.prod_results[-1]: ' + str(self.history.prod_results[-1]) +
-                                '\n self.history.last_accepted: ' + str(self.history.last_accepted) +
-                                '\n self.history.consec_fails: ' + str(self.history.consec_fails) +
-                                '\n os.path.exists(self.history.prod_trajs[self.history.last_accepted][job_index]): ' + str(
-                                    os.path.exists(self.history.prod_trajs[self.history.last_accepted][job_index])) +
-                                '\n traj = mdtraj.load(self.history.prod_trajs[self.history.last_accepted][job_index], top=settings.topology) DID not raise a ValueError')
+                            print('thread.get_frame raised ValueError; waiting 30 seconds and then trying again')
+                            time.sleep(30)
+                            new_point = self.get_frame(self.history.prod_trajs[self.history.last_accepted][job_index], frame, settings)
+                            if not os.path.exists(new_point):
+                                try:
+                                    traj = mdtraj.load(self.history.prod_trajs[self.history.last_accepted][job_index], top=settings.topology)
+                                except ValueError:
+                                    raise RuntimeError(
+                                        'new init_inpcrd that should be based on frame ' + str(frame) + ' of trajectory file ' +
+                                        self.history.prod_trajs[self.history.last_accepted][job_index] + ' was not successfully '
+                                        'created. Its name (may be an empty string) was recorded as: ' + new_point + '\n'
+                                        'This should be impossible. Debug information:'
+                                        '\n self.history.prod_results[-1]: ' + str(self.history.prod_results[-1]) +
+                                        '\n self.history.last_accepted: ' + str(self.history.last_accepted) +
+                                        '\n self.history.consec_fails: ' + str(self.history.consec_fails) +
+                                        '\n os.path.exists(self.history.prod_trajs[self.history.last_accepted][job_index]): ' + str(
+                                            os.path.exists(self.history.prod_trajs[self.history.last_accepted][job_index])) +
+                                        '\n traj = mdtraj.load(self.history.prod_trajs[self.history.last_accepted][job_index], top=settings.topology) DID raise a ValueError' +
+                                        '\n This error reached on second attempt after waiting 30 seconds.')
                     self.history.init_inpcrd.append(new_point)
                 else:   # always_new = False or there have been no accepted moves in this thread yet
                     self.history.init_inpcrd.append(self.history.init_inpcrd[-1])   # begin next move from same point as last move
