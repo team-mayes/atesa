@@ -1862,7 +1862,7 @@ class UmbrellaSampling(JobType):
                                         'a restart.pkl file. Are you sure that this is an ATESA aimless shooting '
                                         'working directory?')
             as_threads = pickle.load(open(settings.us_auto_coords_directory + '/restart.pkl', 'rb'))
-            as_threads = [thread for thread in as_threads if not thread.last_accepted == -1]    # only threads with non-zero number of accepted moves
+            as_threads = [thread for thread in as_threads if not thread.history.last_accepted == -1]    # only threads with non-zero number of accepted moves
 
             if as_threads == []:
                 raise RuntimeError('there appear to be no threads in the supplied aimless shooting restart file (' +
@@ -1873,7 +1873,7 @@ class UmbrellaSampling(JobType):
             # Get last accepted trajectory from a random thread
             thread_index = random.randint(0, len(as_threads) - 1)
             last_accepted = as_threads[thread_index].history.last_accepted
-            settings.initial_coordinates = as_threads[thread_index].history.prod_trajs[last_accepted]   # list of trajectories [fwd, bwd]
+            settings.initial_coordinates = [settings.us_auto_coords_directory + '/' + item for item in as_threads[thread_index].history.prod_trajs[last_accepted]]   # list of trajectories [fwd, bwd]
 
             ## Deprecated complicated and ineffectual method
             # as_threads = [thread for thread in as_threads if len([result for result in thread.history.prod_results if 'bwd' in result and 'fwd' in result]) >= settings.us_degeneracy]    # exclude threads with not enough moves
