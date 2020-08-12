@@ -41,6 +41,12 @@ If ATESA outputs an error message that confuses you, especially if it happens ve
 	
 is often the result of a failed simulation, usually because of a systemic issue in the way the model is set up. It may also arise when a necessary file has been errantly deleted. Regardless of the particular error, if everything seemed fine and then ATESA suddenly crashed, often simply resubmitting the job (with restart = True, as appropriate) will fix it.
 
+Another common issue is::
+
+	EOFError: Ran out of input
+	
+while trying to open the restart pickle file ("restart.pkl"). This occurs because the restart file has been errantly emptied due to an interrupted write attempt. ATESA automatically generates a backup file called "restart.pkl.bak" in the working directory, so if you get this error, simply copy the backup file over the empty original.
+
 Although the user is of course permitted under the license to attempt to debug the code themselves (and to use the modified code in whatever manner they see fit), no one finds it easy to read someone else’s code. If you encounter an issue with ATESA that you cannot resolve, I encourage you to raise an issue on `our GitHub page <https://github.com/team-mayes/atesa>`_. And if you encounter an error that you did resolve by modifying the code, please submit a pull request so that everyone can benefit!
 
 Job Type-Specific Issues
@@ -66,7 +72,7 @@ The "ideal" committor analysis result is a perfectly narrow peak of exactly 50% 
 
 	.. figure:: _images/comana_good.png
 	
-	This is an example of a good-looking, realistic committor analysis result. The model used to arrive at this result appears to be quite strong. That the peak is not *quite* at 0.5 is of little consequence, and in fact to be expected when attempting to describe very high-dimensional systems with a relatively low-dimensional model.
+	This is an example of an excellent committor analysis result. The model used to arrive at this result appears to be very strong. That the peak is not *quite* at 0.5 is of little consequence, and in fact to be expected when attempting to describe very high-dimensional systems with a relatively low-dimensional model.
 	
 	.. figure:: _images/comana_bimodal.png
 	
@@ -74,11 +80,11 @@ The "ideal" committor analysis result is a perfectly narrow peak of exactly 50% 
 	
 	.. figure:: _images/comana_offcenter.png
 		
-	The distribution is roughly gaussian, but centered far from 50%. This is another common result that arises when there's simply not enough data from aimless shooting to arrive at a strong model through likelihood maximization. If you get this result, you're probably on the right path; just keep sampling, and if you've already reached your information error termination threshold (if you're using one), lower it slightly.
+	The distribution is roughly gaussian, but centered far from 50%. This is another common result that arises when there's simply not enough data from aimless shooting to arrive at a strong model through likelihood maximization. If the peak isn't right along an edge (0 or 1) then this result is still fairly strong, but if you want to improve it, simply collecting more data or using a higher-dimensional reaction coordinate may help.
 	
 	.. figure:: _images/comana_flat.png
 	
-	A roughly flat distribution, this result can arise either from insufficient sampling, missing candidate dimensions, or the use of a lower-dimensional model than is truly appropriate for the system. This result is still fairly strong, but if you want to improve it, simply collecting more data or using a higher-dimensional reaction coordinate may help.
+	A roughly flat distribution, this result can arise either from insufficient sampling, missing candidate dimensions, or the use of a lower-dimensional model than is truly appropriate for the system. Similarly to the previous example, this is still a reasonably strong result.
 	
 	.. figure:: _images/comana_edge_only.png
 	

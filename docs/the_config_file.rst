@@ -495,11 +495,11 @@ Keep in mind that if you perform a large amount of sampling and then discover th
 	
 ``us_degeneracy``
 
-	The number of independent threads to run *for each window* during umbrella sampling. Setting it to 1 or less means only one thread per window. This should usually be a small number greater than one. If this option is combined with *us_auto_coords_directory*, each of the independent threads will correspond to initial coordinates taken from a different accepted aimless shooting trajectory; otherwise, they will all start from the same coordinates. Default = 5
+	The number of independent threads to run *for each window* during umbrella sampling. Setting it to 1 or less means only one thread per window. This should usually be a small number greater than one. The degenerate threads will all start from the same coordinates. Default = 5
 	
 ``us_auto_coords_directory`` **‡**
 
-	By default, umbrella sampling uses initial coordinates generated from the files designated in the *initial_coordinates* option. Alternatively, and more conveniently, this option can be used to specify an aimless shooting working directory from which to automatically identify suitable initial coordinates using *n* of the most recent "accepted" trajectories from the aimless shooting threads, where *n* is the value of *us_degeneracy*. If this option is used, the contents of *initial_coordinates* will be ignored. Default = ''
+	By default, umbrella sampling uses initial coordinates generated from the files designated in the *initial_coordinates* option. Alternatively, and more conveniently, this option can be used to specify an aimless shooting working directory from which to automatically identify suitable initial coordinates. The most recent accepted trajectory from a random thread will be selected. If this option is used, the contents of *initial_coordinates* will be ignored. Default = ''
 	
 ``us_pathway_restraints_file``
 

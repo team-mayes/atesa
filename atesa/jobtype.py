@@ -1862,48 +1862,62 @@ class UmbrellaSampling(JobType):
                                         'a restart.pkl file. Are you sure that this is an ATESA aimless shooting '
                                         'working directory?')
             as_threads = pickle.load(open(settings.us_auto_coords_directory + '/restart.pkl', 'rb'))
-            as_threads = [thread for thread in as_threads if len([result for result in thread.history.prod_results if 'bwd' in result and 'fwd' in result]) >= settings.us_degeneracy]    # exclude threads with not enough moves
+            as_threads = [thread for thread in as_threads if not thread.last_accepted == -1]    # only threads with non-zero number of accepted moves
+
             if as_threads == []:
-                raise RuntimeError('no threads in the indicated aimless shooting directory (' +
-                                   settings.us_auto_coords_directory + ') have enough accepted moves to be used for '
-                                   'us_auto_coords. This shouldn\'t happen if you ran aimless shooting for more than a '
-                                   'tiny number of steps and chose a reasonable value for us_degeneracy (should only be'
-                                   ' like 10 at most; you chose ' + str(us_degeneracy))
-            used_indices = []
-            temp_init_coords = []   # initialize list of initial coordinate trajectories to pass forward later
-            count = 0
-            while count < settings.us_degeneracy:   # todo: consider simplifying by removing reference to us_degeneracy and this whole loop
-                if not len(used_indices) == len(as_threads):    # if not every index has been used yet
-                    thread_index = -1
-                    while_count = 0
-                    while thread_index not in used_indices:     # don't reuse indices
-                        thread_index = random.randint(0, len(as_threads) - 1)  # pick a random thread
-                        while_count += 1
-                        if while_count >= 100000 * len(as_threads):
-                            raise RuntimeError('Taking far too long to find unused thread index while building umbrella'
-                                               ' sampling initial coordinates. If you see this error, please report it '
-                                               'on our GitHub page along with the following debug information:\n'
-                                               ' len(as_threads) = ' + str(len(as_threads)) + '\n'
-                                               ' while_count = ' + str(while_count) + '\n'
-                                               ' used_indices = ' + str(used_indices) + '\n')
-                        used_indices.append(thread_index)
-                else:   # if every index has been used already
-                    used_indices = []   # reset used_indices
-                    thread_index = random.randint(0, len(as_threads) - 1)      # pick a random thread
-                    used_indices.append(thread_index)
+                raise RuntimeError('there appear to be no threads in the supplied aimless shooting restart file (' +
+                                   settings.us_auto_coords_directory + '/restart.pkl) with any accepted moves. If this '
+                                   'isn\'t the wrong restart file and there really are no accepted moves, it is not a '
+                                   'suitable data set for the us_auto_coords_directory option.')
 
-                this_thread = as_threads[thread_index]
-                traj_index = -1
-                while this_thread.history.prod_trajs[traj_index][0] in temp_init_coords:
-                    traj_index -= 1
-                if os.path.exists(this_thread.history.prod_trajs[traj_index][0]) and os.path.exists(this_thread.history.prod_trajs[traj_index][1]):  # todo: this is necessary, but ruins it... Need to rewrite this section
-                    temp_init_coords += this_thread.history.prod_trajs[traj_index]
-                    count += 1
+            # Get last accepted trajectory from a random thread
+            thread_index = random.randint(0, len(as_threads) - 1)
+            last_accepted = as_threads[thread_index].history.last_accepted
+            settings.initial_coordinates = as_threads[thread_index].history.prod_trajs[last_accepted]   # list of trajectories [fwd, bwd]
 
-            settings.initial_coordinates = copy.deepcopy(temp_init_coords)  # overwrite initial_coordinates
-            # todo: as written, this is just going to load all the settings.initial_coordinates trajectories together
-            # todo: and take from them only the best individual frames cloest to the window centers. Will take quite
-            # todo: some rewriting to spawn different threads for each pair of trajectories...
+            ## Deprecated complicated and ineffectual method
+            # as_threads = [thread for thread in as_threads if len([result for result in thread.history.prod_results if 'bwd' in result and 'fwd' in result]) >= settings.us_degeneracy]    # exclude threads with not enough moves
+            # if as_threads == []:
+            #     raise RuntimeError('no threads in the indicated aimless shooting directory (' +
+            #                        settings.us_auto_coords_directory + ') have enough accepted moves to be used for '
+            #                        'us_auto_coords. This shouldn\'t happen if you ran aimless shooting for more than a '
+            #                        'tiny number of steps and chose a reasonable value for us_degeneracy (should only be'
+            #                        ' like 10 at most; you chose: ' + str(us_degeneracy) + ')')
+            # used_indices = []
+            # temp_init_coords = []   # initialize list of initial coordinate trajectories to pass forward later
+            # count = 0
+            # while count < settings.us_degeneracy:   # todo: consider simplifying by removing reference to us_degeneracy and this whole loop
+            #     if not len(used_indices) == len(as_threads):    # if not every index has been used yet
+            #         thread_index = -1
+            #         while_count = 0
+            #         while thread_index not in used_indices:     # don't reuse indices
+            #             thread_index = random.randint(0, len(as_threads) - 1)  # pick a random thread
+            #             while_count += 1
+            #             if while_count >= 100000 * len(as_threads):
+            #                 raise RuntimeError('Taking far too long to find unused thread index while building umbrella'
+            #                                    ' sampling initial coordinates. If you see this error, please report it '
+            #                                    'on our GitHub page along with the following debug information:\n'
+            #                                    ' len(as_threads) = ' + str(len(as_threads)) + '\n'
+            #                                    ' while_count = ' + str(while_count) + '\n'
+            #                                    ' used_indices = ' + str(used_indices) + '\n')
+            #             used_indices.append(thread_index)
+            #     else:   # if every index has been used already
+            #         used_indices = []   # reset used_indices
+            #         thread_index = random.randint(0, len(as_threads) - 1)      # pick a random thread
+            #         used_indices.append(thread_index)
+            #
+            #     this_thread = as_threads[thread_index]
+            #     traj_index = -1
+            #     while this_thread.history.prod_trajs[traj_index][0] in temp_init_coords:
+            #         traj_index -= 1
+            #     if os.path.exists(this_thread.history.prod_trajs[traj_index][0]) and os.path.exists(this_thread.history.prod_trajs[traj_index][1]):  # todo: this is necessary, but ruins it... Need to rewrite this section
+            #         temp_init_coords += this_thread.history.prod_trajs[traj_index]
+            #         count += 1
+            #
+            # settings.initial_coordinates = copy.deepcopy(temp_init_coords)  # overwrite initial_coordinates
+            # # todo: as written, this is just going to load all the settings.initial_coordinates trajectories together
+            # # todo: and take from them only the best individual frames cloest to the window centers. Will take quite
+            # # todo: some rewriting to spawn different threads for each pair of trajectories...
 
         # Here, we need to convert the provided trajectory file(s) into single-frame coordinate files to use as the
         # initial coordinates of each thread.

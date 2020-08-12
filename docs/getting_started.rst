@@ -153,6 +153,8 @@ Each of the bracketed values should be replaced by the appropriate name. The "md
 
 	amber_slurm.tpl
 	
+In general, the overwrite flag ("-O") should be present when using Amber, or certain functionalities may not work.
+
 Template slots are delimited by double curly braces, as in "{{ example }}". Anything not delimited in this way will be taken as literal. The user should provide batch files that will work for their particular software environment, making use of the templates wherever the call to the molecular simulation software would differ between simulations. In addition to the configuration file settings (again, see :ref:`BatchTemplateSettings`), the following keywords should be included in batch script templates for ATESA to fill out automatically. It is safe to omit any of these keywords if you are sure that a fixed value is appropriate instead.
 
 ``{{ name }}``
