@@ -287,7 +287,7 @@ def main(settings, rescue_running=[]):
                 temp_settings.__dict__.pop('env')  # env attribute is not picklable
                 pickle.dump(temp_settings, open(settings.working_directory + '/settings.pkl', 'wb'), protocol=2)
             # Run resample
-            utilities.resample(settings, partial=False, full_cvs=True)
+            utilities.resample(settings, partial=False, full_cvs=settings.resample_full_cvs)
             if settings.information_error_checking:     # update info_err.out if called for by settings
                 information_error.main()
             sys.exit()
@@ -415,7 +415,7 @@ def main(settings, rescue_running=[]):
         return 'ATESA run exiting normally (all threads ended individually)'
 
 
-if __name__ == "__main__":
+def run_main():
     # Obtain settings namespace, initialize threads, and move promptly into main.
     try:
         working_directory = sys.argv[2]
@@ -424,4 +424,7 @@ if __name__ == "__main__":
     settings = configure.configure(sys.argv[1], working_directory)
     exit_message = main(settings)
     print(exit_message)
+
+if __name__ == "__main__":
+    run_main()
 
