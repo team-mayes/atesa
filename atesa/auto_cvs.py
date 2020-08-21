@@ -133,17 +133,17 @@ def main(settings):
     for atom_index in commit_atoms:
         this_partners = []
         for local_index in range(len(settings.commit_fwd[0])):
-            if settings.commit_fwd[0][local_index] == atom_index and not settings.commit_fwd[1][local_index] in this_partners:
+            if settings.commit_fwd[0][local_index] - 1 == atom_index and not settings.commit_fwd[1][local_index] in this_partners:
                 this_partners += [settings.commit_fwd[1][local_index]]
         for local_index in range(len(settings.commit_fwd[1])):
-            if settings.commit_fwd[1][local_index] == atom_index and not settings.commit_fwd[0][local_index] in this_partners:
-                this_partners += [settings.commit_fwd[0][local_index]]
+            if settings.commit_fwd[1][local_index] == atom_index and not settings.commit_fwd[0][local_index] - 1 in this_partners:
+                this_partners += [settings.commit_fwd[0][local_index] - 1]
         for local_index in range(len(settings.commit_bwd[0])):
-            if settings.commit_bwd[0][local_index] == atom_index and not settings.commit_bwd[1][local_index] in this_partners:
+            if settings.commit_bwd[0][local_index] - 1 == atom_index and not settings.commit_bwd[1][local_index] in this_partners:
                 this_partners += [settings.commit_bwd[1][local_index]]
         for local_index in range(len(settings.commit_bwd[1])):
-            if settings.commit_bwd[1][local_index] == atom_index and not settings.commit_bwd[0][local_index] in this_partners:
-                this_partners += [settings.commit_bwd[0][local_index]]
+            if settings.commit_bwd[1][local_index] == atom_index and not settings.commit_bwd[0][local_index] - 1 in this_partners:
+                this_partners += [settings.commit_bwd[0][local_index] - 1]
         partners.append(this_partners)
     for partners_index in range(len(partners)):
         if len(partners[partners_index]) < 1:   # just a quick fail-safe
