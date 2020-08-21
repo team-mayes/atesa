@@ -121,7 +121,7 @@ def init_threads(settings):
                 info_err_lines = open(settings.working_directory + '/info_err.out', 'r').readlines()
 
                 # Resample completely if there's been a change in the number of definitions of CVs, or in the settings
-                # for two_line_threshold or information_error_max_dims
+                # for, information_error_max_dims or information_error_lmax_string
                 wrong_length = False
                 for data_length in [str(line.split()[0]) for line in info_err_lines]:
                     first_line = open(settings.working_directory + '/as_decorr_' + data_length + '.out', 'r').readlines()[0]
@@ -131,8 +131,8 @@ def init_threads(settings):
                     if not num_cvs == len(settings.cvs):
                         wrong_length = True
                 if (settings.previous_cvs and not settings.previous_cvs == settings.cvs) or \
-                        (not settings.previous_two_line_threshold == settings.two_line_threshold) or \
                         (not settings.previous_information_error_max_dims == settings.information_error_max_dims) or \
+                        (not settings.previous_information_error_lmax_string == settings.information_error_lmax_string) or \
                         wrong_length:
                     utilities.resample(settings, partial=False)
                     information_error.main()
@@ -244,7 +244,7 @@ def handle_loop_exception(attempted_rescue, running, settings):
     #             return None
 
     # This code reached if return statement above is not
-    print('\nRescue failed. Cancelling currently running batch jobs belonging to this process in order to '
+    print('\nCancelling currently running batch jobs belonging to this process in order to '
           'preserve resources.')
     for thread in running:
         try:
@@ -323,11 +323,11 @@ def main(settings, rescue_running=[]):
             previous_settings = pickle.load(open(settings.working_directory + '/settings.pkl', 'rb'))
             settings.previous_cvs = previous_settings.cvs
             try:
-                settings.previous_two_line_threshold = previous_settings.two_line_threshold
+                settings.previous_information_error_max_dims = previous_settings.information_error_max_dims
             except AttributeError:
                 pass
             try:
-                settings.previous_information_error_max_dims = previous_settings.information_error_max_dims
+                settings.previous_information_error_lmax_string = previous_settings.information_error_lmax_string
             except AttributeError:
                 pass
         if not settings.dont_dump:

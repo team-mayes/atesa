@@ -286,7 +286,7 @@ def main(i, k, f, s, q, r, o, automagic, plots, quiet, two_line_threshold):
         dims = -1
         running = 0
 
-    # Load settings object from .pkl file if present, to check for information criterion override and max_dims
+    # Load settings object from .pkl file if present, to check for information error override and max_dims
     information_error_max_dims = -1
     if automagic:
         try:
@@ -303,12 +303,6 @@ def main(i, k, f, s, q, r, o, automagic, plots, quiet, two_line_threshold):
                 print('Setting maximum number of automagic dimensions to: ' + str(int(information_error_max_dims)))
             except AttributeError:
                 print('information_error_max_dims is not set; defaulting to no limit')
-            if two_line_threshold == 0.5:
-                try:
-                    two_line_threshold = settings.two_line_threshold
-                    print('Setting two-line test threshold to: ' + str(two_line_threshold))
-                except AttributeError:
-                    print('two_line_threshold is not set; defaulting to 0.5')
         except FileNotFoundError:
             pass
 
@@ -432,7 +426,7 @@ def main(i, k, f, s, q, r, o, automagic, plots, quiet, two_line_threshold):
             dims = len(fixed)
 
     if automagic and (two_line_result < 0 and not reached_maximum):   # ran out of CVs to append and two_line_test never passed
-        err = RuntimeError('The automagic convergence criterion was never satisfied even after including every '
+        err = RuntimeError('The automagic termination criterion was never satisfied even after including every '
                            'candidate CV in the model reaction coordinate.\nThis almost certainly indicates that either'
                            ' one or more key CVs are absent from the aimless shooting output file supplied, or that not'
                            ' enough unimportant CVs were included to give context to the important ones. Either way you'

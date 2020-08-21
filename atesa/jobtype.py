@@ -1172,8 +1172,6 @@ class EquilibriumPathSampling(JobType):
                                                         'have sufficient permissions to create files in the working '
                                                         'directory.')
 
-                            # todo: figure out how it's possible that coord_file has an out-of-bounds RC value
-                            # todo: maybe set a diagnostic try-except block that requires that the rc_value entry is correct when checked against the file and go from there?
                             try:
                                 # Newly inserted assertion check
                                 frame_to_check = coord_file
@@ -1475,7 +1473,7 @@ class FindTS(JobType):
 
         while not_finished and as_settings.initial_coordinates:     # second condition to ensure initial_coordinates exists
             # Now call main.main() with the new settings object
-            main.main(as_settings)   # todo: maybe clean this up sometime for intelligibility
+            main.main(as_settings)
             os.chdir(settings.working_directory)    # chdir back to original working directory
 
             # Decide what to do next based on the contents of the status.txt file in the new working directory
@@ -1886,7 +1884,7 @@ class UmbrellaSampling(JobType):
             # used_indices = []
             # temp_init_coords = []   # initialize list of initial coordinate trajectories to pass forward later
             # count = 0
-            # while count < settings.us_degeneracy:   # todo: consider simplifying by removing reference to us_degeneracy and this whole loop
+            # while count < settings.us_degeneracy:
             #     if not len(used_indices) == len(as_threads):    # if not every index has been used yet
             #         thread_index = -1
             #         while_count = 0
@@ -1910,14 +1908,15 @@ class UmbrellaSampling(JobType):
             #     traj_index = -1
             #     while this_thread.history.prod_trajs[traj_index][0] in temp_init_coords:
             #         traj_index -= 1
-            #     if os.path.exists(this_thread.history.prod_trajs[traj_index][0]) and os.path.exists(this_thread.history.prod_trajs[traj_index][1]):  # todo: this is necessary, but ruins it... Need to rewrite this section
+            #     if os.path.exists(this_thread.history.prod_trajs[traj_index][0]) and os.path.exists(this_thread.history.prod_trajs[traj_index][1]):  # this is necessary, but ruins it...
             #         temp_init_coords += this_thread.history.prod_trajs[traj_index]
             #         count += 1
             #
             # settings.initial_coordinates = copy.deepcopy(temp_init_coords)  # overwrite initial_coordinates
-            # # todo: as written, this is just going to load all the settings.initial_coordinates trajectories together
-            # # todo: and take from them only the best individual frames cloest to the window centers. Will take quite
-            # # todo: some rewriting to spawn different threads for each pair of trajectories...
+            #
+            # # as written, this is just going to load all the settings.initial_coordinates trajectories together
+            # # and take from them only the best individual frames cloest to the window centers. Will take quite
+            # # some rewriting to spawn different threads for each pair of trajectories...
 
         # Here, we need to convert the provided trajectory file(s) into single-frame coordinate files to use as the
         # initial coordinates of each thread.

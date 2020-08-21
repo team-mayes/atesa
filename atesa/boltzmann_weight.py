@@ -68,7 +68,7 @@ def main(**kwargs):
 
     windows = []    # nested list of format [[lower0, upper0], [lower1, upper1], ...]
     data = []       # nested list with indices corresponding windows, format [[x00, x01, ...], [x10, x11,...], ...]
-    alldata = []    # simple list [x00, x01, ... x0N, x10, x11, ...]    # todo: do I use this for anything? If not, remove it.
+    # alldata = []    # simple list [x00, x01, ... x0N, x10, x11, ...]
 
     # Determine the window boundaries
     for line in file:
@@ -86,7 +86,7 @@ def main(**kwargs):
         split = line.split(' ')
         if float('%.3f' % float(split[0])) <= float(split[2]) <= float('%.3f' % float(split[1])):
             data[windows.index([float('%.3f' % float(split[0])), float('%.3f' % float(split[1]))])].append(float(split[2]))
-            alldata.append(float(split[2]))
+            # alldata.append(float(split[2]))
         else:
             raise RuntimeError('Impossible line in input file ' + kwargs['i'] + ': sampled value is not within window '
                                'boundaries.\n The offending line: ' + line)

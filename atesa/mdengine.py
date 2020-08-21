@@ -124,7 +124,7 @@ class AdaptAmber(MDEngine):
                                        'must be either \'lt\' (less than) or \'gt\' (greater than)')
 
                 f.write(' &rst\n')
-                f.write('  iat=' + str(basin[0][def_index]) + ',' + str(basin[1][def_index]) + ',\n') # todo: broken
+                f.write('  iat=' + str(basin[0][def_index]) + ',' + str(basin[1][def_index]) + ',\n')
                 f.write('  r1=0, r2=' + str(basin[2][def_index] + extra) + \
                         ', r3=' + str(basin[2][def_index] + extra) + \
                         ', r4=' + str(basin[2][def_index] + extra + 2) + ',\n')

@@ -145,7 +145,7 @@ def get_cvs(filename, settings, reduce=False):
                     while len(replace_string) < length:
                         replace_string += '0'
                     newline = newline.replace(coords[index], replace_string)
-                sys.stdout.write(newline)   # todo: replace this with an internal object that gets returned
+                sys.stdout.write(newline)
             else:
                 sys.stdout.write(line)
 
@@ -421,14 +421,13 @@ def resample(settings, partial=False, full_cvs=False):
         for thread in allthreads:
             if thread.this_cvs_list:       # if there were any 'fwd' or 'bwd' results in this thread
                 mapped = list(map(list, zip(*[item[0] for item in thread.this_cvs_list if item[1] <= cutoff_timestamp])))   # list of lists of values of each CV
-                # open(thread.name + '_' + str(length) + '_cvs_tempfile.out', 'w').write(str([str(line) + '\n' for line in mapped]))    # todo: remove this line
 
                 slowest_lag = -1    # initialize running tally of slowest autocorrelation time among CVs in this thread
                 if settings.include_qdot:
                     ndims = len(thread.this_cvs_list[0]) / 2   # number of non-rate-of-change CVs
                     if not ndims % 1 == 0:
-                        raise ValueError('include_qdot = True but an odd number of dimensions were found in the threads'
-                                         ' in restart.pkl')
+                        raise ValueError('include_qdot = True, but an odd number of dimensions were found in the '
+                                         'threads in restart.pkl, so they can\'t contain inertial terms.')
                     ndims = int(ndims)
                 else:
                     ndims = len(thread.this_cvs_list[0])

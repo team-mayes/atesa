@@ -100,9 +100,9 @@ def configure(input_file, user_working_directory=''):
         information_error_freq: int = 250
         information_error_override: bool = False
         information_error_max_dims: int = 6
+        information_error_lmax_string = '--automagic'
         max_moves: int = -1     # also used by find_ts
         max_consecutive_fails: int = 10
-        two_line_threshold: float = 0.5
 
         # Required only for committor analysis
         committor_analysis_n: int = 10
@@ -139,8 +139,8 @@ def configure(input_file, user_working_directory=''):
         dont_dump: bool = False     # when True, prevents dumping settings to settings.pkl
         suppress_us_warning = False     # used to prevent repeatedly issuing the same warning during some US runs
         previous_cvs = ''       # for checking whether a full resample is required when restarting based on a change in cvs
-        previous_two_line_threshold = -1    # for checking whether a full resample is required when restarting based on a change in two_line_threshold
         previous_information_error_max_dims = -1    # for checking whether a full resample is required when restarting based on a change in information_error_max_dims
+        previous_information_error_lmax_string = '--automagic'  # for checking whether a full resample is required when restarting based on a change in information_error_lmax_string
 
     # Import config file line-by-line using exec()
     try:

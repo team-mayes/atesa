@@ -294,7 +294,7 @@ These settings define the combined variables (CVs) for the job. In aimless shoot
     
 	Using *auto_cvs* treats all of the atoms in *commit_fwd* and *commit_bwd* as bonded to one another for the purposes of determining CVs, so there is no need to define these CVs manually. Examples of CVs that *should* be defined manually if desired include any distances, angles, or dihedrals defined using atoms that are not contiguously bonded to one another (*e.g.*, a distance between nearby charged particles) and also do not appear in the commitment definitions, or any other custom CVs of unique relevance to the rare event of interest. Note that although commitment basin definitions (which are interpreted internally using pytraj) are always 1-indexed, the CV definitions produced automatically with this option are defined using mdtraj and will be 0-indexed. The software handles this distinction without issue, but the user must be careful not to confuse 0-indexed atom indices from "cvs.txt" with 1-indexed atom indices in the commitment basins.
     
-	The number of CVs that are created using this option can grow very large very quickly when large radii are chosen, which in extreme cases can cause significant I/O overhead and slow down calls to :ref:`LikelihoodMaximization`. Default = 5
+	The number of CVs that are created using this option can grow very large very quickly when large radii are chosen, which in extreme cases can cause significant I/O overhead and slow down calls to :ref:`LikelihoodMaximization`. Furthermore, when using *auto_cvs* even with relatively small radii, it is unlikely that ``lmax.py`` runs to optimize models of three or more dimensions will be feasible without using either the `-r` or `--automagic` flags. Default = 5
 
 ``auto_cvs_exclude_water``
 	
@@ -431,11 +431,15 @@ The following options concern the information error convergence criterion in aim
 	
 ``information_error_freq``
 
-	An integer number of shooting moves between each check of the information error convergence criterion. Too-small values can cause some significant overhead in the main ATESA process, but this does not significantly affect aimless shooting sampling efficiency. Default = 250
+	An integer number of shooting moves between each check of the information error convergence criterion. Too-small values can cause some significant overhead in the main ATESA process, but this does not significantly affect aimless shooting sampling efficiency. Aimless shooting runs with *resample = True* or *restart = True* will reassess information error if this option has changed since the last run. Default = 250
+	
+``information_error_lmax_string``
+
+	Part of the command string passed to lmax.py when assessing information error. Information error is based on the reaction coordinate model produced using ``lmax.py`` on the decorrelated aimless shooting output files, with options for the `-o`, `-i`, and `-q` flags set automatically. All other options (most importantly, `-k`, `-f`, `-r`, `--automagic`, and `--two_line_threshold`) can be set using this option in the configuration file. See :ref:`LikelihoodMaximization` for documentation on ``lmax.py``. You should use this option if you have a preference for tying your aimless shooting termination criterion to a particular model building strategy other than the default. Aimless shooting runs with *resample = True* or *restart = True* will reassess information error if this option has changed since the last run. Default = '--automagic'
 	
 ``information_error_max_dims``
 
-	The maximum number of dimensions that may be included in the "automagic" reaction coordinate assessed during information error checking (see :ref:`Automagic`). If this value is set, the algorithm will move forward with a model of this dimensionality if no smaller model meets the automagic convergence criteria. Larger values are more robust but may result in an undesirably high-dimensional RC being used for the convergence criterion, which in turn could lead to slower convergence of the information error. If a value less than zero is given, there is no maximum. Default = 6
+	The maximum number of dimensions that may be included in the "automagic" reaction coordinate assessed during information error checking (if the --automagic option is in use; see :ref:`Automagic`). If this value is set, the algorithm will move forward with a model of this dimensionality if no smaller model meets the automagic --two_line_threshold criterion. Larger values are more robust but may result in an undesirably high-dimensional RC being used for the convergence criterion, which in turn could lead to slower convergence of the information error. If a value less than zero is given, there is no maximum. Aimless shooting runs with *resample = True* or *restart = True* will reassess information error if this option has changed since the last run. Default = 6
 	
 ``information_error_override``
 
