@@ -498,7 +498,7 @@ def interpret_cv(cv_index, settings):
     Returns
     -------
     atoms : list
-        A list of 1-indexed atom indices as integers that define the given CV
+        A list of 1-indexed atom indices as strings that define the given CV
     optype : str
         A string (either 'distance', 'angle', 'dihedral', or 'diffdistance') corresponding to the type for this CV.
     nat : int
@@ -553,7 +553,7 @@ def interpret_cv(cv_index, settings):
             atoms = [item.replace('@', '') for item in atoms.split(' @')]  # pytraj style atom indices
         else:
             atoms = atoms.split(',')  # mdtraj style atom indices
-            atoms = [int(item) + 1 for item in atoms if not item == '']  # fix zero-indexing in mdtraj
+            atoms = [str(int(item) + 1) for item in atoms if not item == '']  # fix zero-indexing in mdtraj
     else:
         count = 0
         for match in re.finditer('[\[\\\']([@0-9]+[,\ ]){1}[@0-9]+[\]\\\']', this_cv.replace(', ', ',')):
@@ -572,6 +572,7 @@ def interpret_cv(cv_index, settings):
             atoms = [item.replace('@', '') for item in atoms.replace('\'', ' ').replace('@', ' @').split()]
         else:
             atoms = atoms.split(',')
+            atoms = [str(int(item) + 1) for item in atoms if not item == '']  # fix zero-indexing in mdtraj
 
     while '' in atoms:
         atoms.remove('')  # remove empty list elements if present

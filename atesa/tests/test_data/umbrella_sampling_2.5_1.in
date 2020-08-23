@@ -53,11 +53,11 @@ Example of aimless shooting prod input file
   offnorm(2)=1.55,
   nat(2)=4,
   nat1(2)=2,
-  at(1,2)=7177,
-  at(2,2)=7178,
+  at(1,2)=7178,
+  at(2,2)=7179,
   nat2(2)=2,
-  at(3,2)=4272,
-  at(4,2)=7178,
+  at(3,2)=4273,
+  at(4,2)=7179,
  &end
  &wt
   type="END",

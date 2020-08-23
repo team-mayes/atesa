@@ -11,7 +11,6 @@ import pickle
 import time
 import math
 from atesa import utilities
-from atesa.main import Thread
 
 def update_progress(progress, message='Progress', eta=0, quiet=False):
     """
@@ -117,10 +116,13 @@ def main(working_directory, rc_definition, as_out_file, extrema=False):
                            'directory (' + working_directory + ') contains a settings.pkl file with job_type = ' +
                            settings.job_type)
 
-    settings.as_out_file = as_out_file   # for reducing CVs properly
+    settings.as_out_file = as_out_file      # for reducing CVs properly
+    settings.include_qdot = False           # unnecessary for our purposes
 
-    if extrema:
-        print('Returning final RC values of forward and backward trajectories from an accepted shooting move...')
+    if extrema: # todo: this gives impossible values, must be broken (probably something to do with reduce)
+        from atesa.main import Thread
+        print('Evaluating final RC values of forward and backward trajectories from an accepted shooting move... (this '
+              'may take a little while if this is your first time running this script for this particular as_out_file)')
         result = []
         allthreads = pickle.load(open('restart.pkl', 'rb'))
         for thread in allthreads:
@@ -128,7 +130,7 @@ def main(working_directory, rc_definition, as_out_file, extrema=False):
                 for job_index in range(2):
                     frame_to_check = thread.get_frame(thread.history.prod_trajs[thread.history.last_accepted][job_index], -1, settings)
                     cvs = utilities.get_cvs(frame_to_check, settings, reduce=True).split(' ')
-                    result.append(utilities.evaluate_rc(settings.rc_definition, cvs))
+                    result.append(utilities.evaluate_rc(rc_definition, cvs))
                     os.remove(frame_to_check)
                 print(' Shooting move name: ' + thread.history.init_coords[thread.history.last_accepted][0])
                 print(' extrema: ' + str(result))

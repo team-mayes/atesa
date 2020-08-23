@@ -154,6 +154,26 @@ class Tests(object):
         assert not False in [raw_lines[0][0] == 'B', raw_lines[1][0] == 'A', raw_lines[2][0] == 'B', raw_lines[3][0] == 'A']
         assert filecmp.cmp('as_full_cvs.out', '../test_data/as_full_cvs.out')
 
+    def test_interpret_cv(self):
+        """Test interpret_cv for a distance, angle, dihedral, and difference of distances for both pytraj and mdtraj"""
+        settings = configure('../../data/atesa.config')
+        settings.cvs = ['pytraj.distance(traj, \'@1 @2\')[0]',
+                        'pytraj.angle(traj, \'@1 @2 @3\')[0]',
+                        'pytraj.dihedral(traj, \'@1 @2 @3 @4\')[0]',
+                        'pytraj.distance(traj, \'@1 @2\')[0] - pytraj.distance(traj, \'@3 @4\')[0]',
+                        'mdtraj.compute_distances(mtraj, numpy.array([[83, 84]]))[0][0] * 10',
+                        'mdtraj.compute_angles(mtraj, numpy.array([[83, 85, 86]]))[0][0] * 180 / numpy.pi',
+                        'mdtraj.compute_dihedrals(mtraj, numpy.array([[84, 83, 85, 86]]))[0][0] * 180 / numpy.pi',
+                        '(mdtraj.compute_distances(mtraj, numpy.array([[101, 103]]))[0][0] * 10) - (mdtraj.compute_distances(mtraj, numpy.array([[101, 104]]))[0][0] * 10)']
+        assert utilities.interpret_cv(1, settings) == (['1', '2'], 'distance', 2)
+        assert utilities.interpret_cv(2, settings) == (['1', '2', '3'], 'angle', 3)
+        assert utilities.interpret_cv(3, settings) == (['1', '2', '3', '4'], 'dihedral', 4)
+        assert utilities.interpret_cv(4, settings) == (['1', '2', '3', '4'], 'diffdistance', 4)
+        assert utilities.interpret_cv(5, settings) == (['84', '85'], 'distance', 2)
+        assert utilities.interpret_cv(6, settings) == (['84', '86', '87'], 'angle', 3)
+        assert utilities.interpret_cv(7, settings) == (['85', '84', '86', '87'], 'dihedral', 4)
+        assert utilities.interpret_cv(8, settings) == (['102', '104', '102', '105'], 'diffdistance', 4)
+
     @classmethod
     def teardown_method(self, method):
         "Runs at end of class"
