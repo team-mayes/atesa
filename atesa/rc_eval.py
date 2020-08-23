@@ -71,12 +71,15 @@ def update_progress(progress, message='Progress', eta=0, quiet=False):
     sys.stdout.flush()
 
 
-def main(working_directory, rc_definition):
+def main(working_directory, rc_definition, as_out_file, extrema=False):
     """
     The main function of rc_eval.py. Accepts an aimless shooting working directory and a reaction coordinate definition,
     producing in that directory a new file named 'rc.out' (overwriting if one already exists) identifying each shooting
     point (files in the directory whose names end in "_init.rst7") and its corresponding reaction coordinate value in a
     sorted list.
+
+    If extrema == True, skips producing rc.out and just returns the minimum and maximum RC value for a single accepted
+    shooting move, which is useful when preparing umbrella sampling simulations.
 
     Parameters
     ----------
@@ -85,6 +88,12 @@ def main(working_directory, rc_definition):
     rc_definition : str
         A reaction coordinate definition formatted as a string of python-readable code with "CV[X]" standing in for the
         Xth CV value (one-indexed); this RC definition should be in terms of reduced variables (values between 0 and 1)
+    as_out_file : str
+        Path to the aimless shooting output file used to build the reaction coordinate. Usually this should be a
+        decorrelated file (named with "decorr").
+    extrema : bool
+        If True, skips producing rc.out and just returns the minimum and maximum RC value for a single accepted shooting
+        move, which is useful when preparing umbrella sampling simulations.
 
     Returns
     -------
@@ -103,6 +112,29 @@ def main(working_directory, rc_definition):
                                 'automatically when running ATESA, but one was not found in the working directory: '
                                 + working_directory)
 
+    if not settings.job_type == 'aimless_shooting':
+        raise RuntimeError('rc_eval.py can only be called on an aimless shooting working directory, but the provided '
+                           'directory (' + working_directory + ') contains a settings.pkl file with job_type = ' +
+                           settings.job_type)
+
+    settings.as_out_file = as_out_file   # for reducing CVs properly
+
+    if extrema:
+        print('Returning final RC values of forward and backward trajectories from an accepted shooting move...')
+        result = []
+        allthreads = pickle.load(open('restart.pkl', 'rb'))
+        for thread in allthreads:
+            if thread.history.last_accepted > -1:   # if accepted move exists in thread
+                for job_index in range(2):
+                    frame_to_check = thread.get_frame(thread.history.prod_trajs[thread.history.last_accepted][job_index], -1, settings)
+                    cvs = utilities.get_cvs(frame_to_check, settings, reduce=True).split(' ')
+                    result.append(utilities.evaluate_rc(settings.rc_definition, cvs))
+                    os.remove(frame_to_check)
+                print(' Shooting move name: ' + thread.history.init_coords[thread.history.last_accepted][0])
+                print(' extrema: ' + str(result))
+                return None   # to exit the script after returning extrema
+        raise RuntimeError('none of the shooting moves in the working directory appear to contain any accepted moves.')
+
     # Obtain list of shooting point coordinate files
     file_list = glob.glob('*_init.rst7')
     if not file_list:
@@ -118,7 +150,7 @@ def main(working_directory, rc_definition):
     speed_data = [0, 0]
     for file in file_list:
         t = time.time()
-        cv_list = utilities.get_cvs(file, settings, reduce=settings.rc_reduced_cvs).split(' ')
+        cv_list = utilities.get_cvs(file, settings, reduce=True).split(' ')
         results.append([file + ': ', utilities.evaluate_rc(rc_definition, cv_list)])
         this_speed = time.time() - t
         speed_data = [(speed_data[1] * speed_data[0] + this_speed) / (speed_data[1] + 1), speed_data[1] + 1]
@@ -136,4 +168,10 @@ def main(working_directory, rc_definition):
 
 
 if __name__ == '__main__':
-    main(sys.argv[1], sys.argv[2])
+    if len(sys.argv) == 5:
+        extrema = sys.argv[4]
+    else:
+        extrema = False
+    if len(sys.argv) <= 3:
+        raise RuntimeError('not enough arguments; you gave ' + str(len(sys.argv) - 1) + ' but rc_eval.py takes 3 or 4')
+    main(sys.argv[1], sys.argv[2], sys.argv[3], extrema)

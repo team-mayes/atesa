@@ -81,11 +81,15 @@ This plot (in ASCII form) would be outputted to the terminal at the end of the o
 rc_eval.py: Reaction Coordinate Evaluation 
 ------------------------------------------
 
-ATESA also comes with a separate script for evaluating reaction coordinates for each shooting point coordinate file in a given directory. This script should be given an aimless shooting working directory, where it will produce a new file `rc.out` containing the reaction coordinate values of each point, sorted by ascending absolute value (such that points closest to the supposed transition state come first). The syntax is as follows:
+ATESA also comes with a separate script for evaluating reaction coordinates for each shooting point coordinate file in a given directory. This script should be given an aimless shooting working directory, where it will produce a new file `rc.out` containing the reaction coordinate values of each point, sorted by ascending absolute value (such that points closest to the supposed transition state come first). 
+
+Alternatively, when `extrema = True`, the script skips creating `rc.out` and simply returns the RC values of a the final forward and backward frames of a single accepted trajectory in the working directory. This is useful when preparing for equilibrium path sampling or umbrella sampling jobs, which require the user to specify the range of RC values to sample over.
+
+The syntax is as follows:
 
 ::
 
-	rc_eval.py working_directory rc_definition
+	rc_eval.py working_directory rc_definition as_out_file [extrema]
 	
 `working_directory`
 	Specifies the aimless shooting working directory in which to operate
@@ -93,7 +97,13 @@ ATESA also comes with a separate script for evaluating reaction coordinates for 
 `rc_definition`
 	Defines the reaction coordinate to evaluate for each shooting point. The format is the same as in the `rc_definition` configuration file setting (see :ref:`ReactionCoordinateDefinition`), except that here there must be no whitespace (' ') characters. The identities of CVs are determined from the settings.pkl object stored in the working directory.
 	
-The produced output file `rc.out` is (optionally) used as input for a committor analysis run (see :ref:`CommittorAnalysis`). Note that running this script can take a very long time if there is a large number of shooting moves in the indicated working directory. The user should prepare for as much as 10 seconds per shooting move (equal to the number of lines in the raw aimless shooting output file), depending on the available hardware.
+`as_out_file`
+	The path to the aimless shooting output file used to build the reaction coordinate (the *-i* argument for ``lmax.py``. Usually this should be the largest "decorrelated" output file in the aimless shooting working directory.
+	
+`extrema`
+	A boolean, either "True" or "False". If "True", the script skips creating `rc.out` and simply returns the RC values of a the final forward and backward frames of a single accepted trajectory in the working directory. This is useful when preparing for equilibrium path sampling or umbrella sampling jobs, which require the user to specify the range of RC values to sample over. This is the only option with a default value; if it is omitted, it will be interpreted as False.
+	
+The produced output file `rc.out` is (optionally) used as input for a committor analysis run (see :ref:`CommittorAnalysis`). Note that running this script with `extrema = False` can take a very long time if there is a large number of shooting moves in the indicated working directory. The user should prepare for as much as 10 seconds per shooting move (equal to the number of lines in the raw aimless shooting output file), depending on the available hardware.
 
 .. _MBAR:
 

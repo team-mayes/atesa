@@ -35,8 +35,8 @@ class Tests(object):
 
         # First test without extant settings.pkl file
         with pytest.raises(FileNotFoundError):
-            rc_eval.main('../test_temp/', '3*CV1 - 0.3*CV2')
-        process = subprocess.Popen('rc_eval.py ../test_temp/ \'3*CV0 - 0.3*CV1\'', stdin=subprocess.PIPE,
+            rc_eval.main('../test_temp/', '3*CV1 - 0.3*CV2', '../test_data/as.out')
+        process = subprocess.Popen('rc_eval.py ../test_temp/ 3*CV0-0.3*CV1 ../test_data/as.out', stdin=subprocess.PIPE,
                                    stdout=subprocess.PIPE, stderr=subprocess.STDOUT, close_fds=True, shell=True)
         output = process.stdout.read().decode()
         assert 'FileNotFoundError' in output    # this section just to ensure it works when called both ways
@@ -44,10 +44,10 @@ class Tests(object):
         settings.__dict__.pop('env')    # env attribute is not picklable
         pickle.dump(settings, open('settings.pkl', 'wb'), protocol=2)   # main will look for this file to load in settings
         # shutil.move('settings.pkl', '../test_data/settings.pkl')
-        rc_eval.main('../test_temp/', '3*CV1 - 0.3*CV2')
+        rc_eval.main('../test_temp/', '3*CV1 - 0.3*CV2', '../test_data/as.out')
         assert os.path.exists('rc.out')
         lines = open('rc.out', 'r').readlines()
-        for i in range(len(lines)):
+        for i in range(len(lines)):     # assert that the rc.out file is properly sorted
             try:
                 assert abs(float(lines[i].split(': ')[1])) < abs(float(lines[i+1].split(': ')[1]))
             except IndexError:

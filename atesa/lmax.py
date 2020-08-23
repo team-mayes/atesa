@@ -530,7 +530,7 @@ def main(i, k, f, s, q, r, o, automagic, plots, quiet, two_line_threshold):
         print('Committor sigmoid histogram data:')
         print(' RC values: ' + str(rc_values))
         print(' Observed probabilities of commitment to the forward basin: ' + str(probs))
-        print(' Ideal committor sigmoid: ' + str((1 + erf(numpy.array([value for value in rc_values])))/2))
+        print(' Ideal committor sigmoid: ' + str(list((1 + erf(numpy.array([value for value in rc_values])))/2)))
 
         fig.canvas.draw()
         plt.show()
