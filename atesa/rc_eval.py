@@ -11,7 +11,7 @@ import pickle
 import time
 import math
 from atesa import utilities
-
+from atesa.main import Thread
 
 def update_progress(progress, message='Progress', eta=0, quiet=False):
     """
