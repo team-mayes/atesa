@@ -152,7 +152,11 @@ class Tests(object):
         raw_lines = open('as_raw.out', 'r').readlines()
         assert len(raw_lines) == 4
         assert not False in [raw_lines[0][0] == 'B', raw_lines[1][0] == 'A', raw_lines[2][0] == 'B', raw_lines[3][0] == 'A']
-        assert filecmp.cmp('as_full_cvs.out', '../test_data/as_full_cvs.out')
+        new_lines = open('as_full_cvs.out', 'r').readlines()
+        cmp_lines = open('../test_data/as_full_cvs.out', 'r').readlines()
+        for line_index in range(len(new_lines)):
+            for item_index in range(len(new_lines[line_index].split())):
+                assert pytest.approx(float(new_lines[line_index].split()[item_index]), float(cmp_lines[line_index].split()[item_index]), 1e-3)
 
     def test_interpret_cv(self):
         """Test interpret_cv for a distance, angle, dihedral, and difference of distances for both pytraj and mdtraj"""
