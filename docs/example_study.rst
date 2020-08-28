@@ -79,7 +79,7 @@ Once a model has been set up near the transition state, aimless shooting can pro
 	
 Note that the absence of any specific CVs in this file results in the default behavior, which is building CVs automatically based on the atoms indicated in the commitment definitions. In this case, ATESA derived 156 CVs to sample at each shooting point.
 
-This job collected 13,052 shooting moves before terminating automatically using based on the :ref:`InformationError` termination criterion with the default settings. An average acceptance ratio of roughly 25% per thread (per ``status.txt`` in the working directory) reflects a healthy level of efficiency. A visualization of the sampled data projected onto the three dimensions making up the commitment basins is shown here to help readers who may not be familiar with aimless shooting visualize the data, but this plot is not produced automatically by ATESA:
+This job collected 30,088 shooting moves before terminating automatically using based on the :ref:`InformationError` termination criterion with the default settings. An average acceptance ratio of 16.14% per thread (per ``status.txt`` in the working directory) reflects a healthy level of efficiency. A visualization of the sampled data projected onto the three dimensions making up the commitment basins is shown here to help readers who may not be familiar with aimless shooting visualize the data, but this plot is not produced automatically by ATESA:
 
 	.. figure:: _images/as_data.gif
 
@@ -88,19 +88,19 @@ Likelihood Maximization and rc_eval.py
 
 After aimless shooting terminates, we pass the results to the auxiliary script :ref:`LikelihoodMaximization` in order to obtain a model reaction coordinate that describes the probable fate of a simulation beginning from a given set of initial conditions.
 
-In order to minimize the influence of the initial coordinates chosen to begin aimless shooting with on this result, we use the largest decorrelated aimless shooting output file available, which in this case is named ``as_decorr_13000.out``. Decorrelated output files include only the shooting points after the point where all of the CVs have no correlation with their initial values for that thread with at least 95% confidence, or in other words when the autocorrelation of each CV is less than or equal to 1.96 / sqrt(n) for n shooting moves in the thread. These files are built automatically by ATESA when evaluating the information error termination criterion, but otherwise can be produced manually by running a repeat of the aimless shooting job with ``resample = True``.
+In order to minimize the influence of the initial coordinates chosen to begin aimless shooting with on this result, we use the largest decorrelated aimless shooting output file available, which in this case is named ``as_decorr_30000.out``. Decorrelated output files include only the shooting points after the point where all of the CVs have no correlation with their initial values for that thread with at least 95% confidence, or in other words when the autocorrelation of each CV is less than or equal to 1.96 / sqrt(n) for n shooting moves in the thread. These files are built automatically by ATESA when evaluating the information error termination criterion, but otherwise can be produced manually by running a repeat of the aimless shooting job with ``resample = True``.
 
-To illustrate the flexibility of likelihood maximization, let's include one dimension that we want to be sure makes it into the final reaction coordinate. You might choose to do this if you have a particular interest in the relationship between a given dimension and the fate of a simulation. In this case, we'll choose the distance between the chlorine atom and the carbon to which it bonds in the product state. Consulting the automatically produced ``cvs.txt`` in the working directory (so in this case, located at ``/scratch/tburgin/ethyl_chlorosulfite_as/cvs.txt``) we see that this is CV12, so we call likelihood maximization as::
+	lmax.py -i /scratch/tburgin/ethyl_chlorosulfite_as/as_decorr_30000.out --automagic --plots
 
-	lmax.py -i /scratch/tburgin/ethyl_chlorosulfite_as/as_decorr_13000.out --automagic --plots -f 12
-
-The ``--plots`` option produces the sigmoid committor plot and, when automatic is used as is the case here, the two-line test plot shown below. The good relationship between the modeled and ideal committor sigmoids is a necessary, but not a sufficient, condition for a good reaction coordinate:
+The ``--plots`` option produces the sigmoid committor plot ((b), at right) and, when automatic is used as is the case here, the two-line test plot (see :ref:`LikelihoodMaximization`_). The good relationship between the modeled and ideal committor sigmoids is a necessary, but not a sufficient, condition for a good reaction coordinate:
 
 	.. figure:: _images/lmax.png
 	
+ATESA does not automatically generate the figure in panel (a), but it's a useful way to visualize the reaction coordinate. Although it the chosen dimensions are non-obvious, they nonetheless have a strong rationale: the first term describes the relative closeness of the reactive carbon to either of the other atoms it may bond to, while the two angle terms describe the direction of the partially charged face of the carbon atom, using the sulfur atom as a reference point.
+
 After selecting a reaction coordinate, we need to call the auxiliary script :ref:`RCEval`. This will build a file named ``rc.out`` in the working directory, which we need in the next step::
 
-	rc_eval.py /scratch/tburgin/ethyl_chlorosulfite_as/ -1.352-2.766*CV12+3.572*CV22+2.985*CV4
+	rc_eval.py /scratch/tburgin/ethyl_chlorosulfite_as/ -5.68+10.57*CV156-1.86*CV30+1.68*CV29
 
 Committor Analysis
 ------------------
@@ -131,16 +131,14 @@ Committor analysis is again called through the main ATESA script. Our complete c
 	
 The use of ``as_settings_file`` to point to the ``settings.pkl`` file produced during aimless shooting ensures that the same commitment basin and CV definitions are used. The next block of options specifies how committor analysis will be carried out: all of the shooting points identified in ``/scratch/tburgin/ethyl_chlorosulfite_as/rc.out`` (the file produced just before by ``rc_eval.py``) as having a reaction coordinate absolute value of less than or equal to the threshold value of 0.005 will be used to seed 20 individual committor analysis simulations, the results of which when taken together make up the output of committor analysis.
 
-Plotting the contents of the output file produced by this job (``/scratch/tburgin/ethyl_chlorosulfite_as/committor_analysis/committor_analysis.out``) as a histogram, we see that it is roughly even and centered near 0.5, which affirms that our reaction coordinate is a good one.
+Plotting the contents of the output file produced by this job (``/scratch/tburgin/ethyl_chlorosulfite_as/committor_analysis/committor_analysis.out``) as a histogram, we see that it is roughly even and centered towards the middle, which affirms that our reaction coordinate is a reasonably good one.
 
 	.. figure:: _images/ethyl_chlorosulfite_comana.png
 
-Pathway-restrained Umbrella Sampling
+Umbrella Sampling
 ------------------------------------
 
-Finally, we're ready to evaluate the energy profile along our reaction coordinate. ATESA features two separate job types for this purpose: equilibrium path sampling, and umbrella sampling. If you have access to it, the latter is usually strongly preferable, so we'll focus on that here.
-
-Our first attempt will be using basic settings::
+Finally, we're ready to evaluate the energy profile along our reaction coordinate. ATESA features two separate job types for this purpose: equilibrium path sampling, and umbrella sampling. If you have access to it, the latter is usually strongly preferable, so we'll focus on that here::
 
 	job_type = 'umbrella_sampling'
 	topology = 'ethyl_chlorosulfite.prmtop'
@@ -151,13 +149,13 @@ Our first attempt will be using basic settings::
 
 	initial_coordinates = ['fwd.nc','bwd.nc']
 
-	rc_definition = '-1.677 - 2.522*CV12 + 2.456*CV22 + 3.120*CV4 + 1.309*CV35'
+	rc_definition = '-5.68 + 10.57*CV156 - 1.86*CV30 + 1.68*CV29'
 
-	as_out_file = '/scratch/hbmayes_root/hbmayes1/tburgin/200415_ethyl_chlorosulfite_as/as_decorr_13000.out'
-	as_settings_file = '/scratch/hbmayes_root/hbmayes1/tburgin/200415_ethyl_chlorosulfite_as/settings.pkl'
+	as_out_file = '/scratch/tburgin/ethyl_chlorosulfite_as/as_decorr_30000.out'
+	as_settings_file = '/scratch/tburgin/ethyl_chlorosulfite_as/settings.pkl'
 
 	us_rc_step = 0.25
-	us_restraint = 50
+	us_restraint = 5
 	us_rc_min = -6
 	us_rc_max = 12
 
@@ -167,8 +165,14 @@ Our first attempt will be using basic settings::
 	prod_walltime = '04:00:00'
 	prod_ppn = 1
 	
+The choice of a stepsize of 0.25 and a restraint weight of 5 is not arbitrary; these values must be carefully matched so as to ensure overlap among all adjacent windows. It is usually wise to run a pilot study with only a single window to verify the approximate width of the sampling histogram for your particular settings (it is safe to assume that each window will be approximately even in width, though they may be shifted from their centers somewhat).
+
+This job produces a large number of output files named with the suffix "_us.out" in the working directory. When it's finished, we can use the auxiliary script ``mbar.py`` to analyze it::
+
+	mbar.py --decorr -k 5
 	
-so on and so forth... ::
+Here we use the `--decorr` flag to specify that we have not checked the data for decorrelation or equilibration, so pyMBAR will do that work for us. We also set `-k 5` to indicate that the umbrella sampling restraint is 5 kcal/mol. After a mean-value plot (see :ref:`UmbrellaSamplingTroubleshooting`_), ``mbar.py`` produces the data histograms and free energy profile shown below (though I have of course added the reference activation energy after the fact)::
+
+	.. figure:: _images/umbrella_sampling.png
 	
-	
-	us_cv_restraints_file = '/scratch/hbmayes_root/hbmayes1/tburgin/200415_ethyl_chlorosulfite_as/as_full_cvs.out'
+That the histograms overlap everywhere leaving no gaps is a necessary-but-not-sufficient condition for an acceptable dataset. Comparison of the activation energy to the theoretical value goes a long way towards validating this result.

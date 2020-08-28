@@ -87,21 +87,26 @@ def check_commit(filename, settings):
     return commit_flag
 
 
-def get_cvs(filename, settings, reduce=False):
+def get_cvs(filename, settings, reduce=False, frame=0):
     """
     Get CV values for a coordinate file given by filename, as well as rates of change if settings.include_qdot = True.
 
     If reduce = True, the returned CVs will be reduced to between 0 and 1 based on the minimum and maximum values of
     that CV in as.out, which is assumed to exist at settings.as_out_file.
 
+    If frame is anything other than 0, it will be interpreted as a frame index and filename will be interpreted as a
+    trajectory file instead of an .rst7 coordinate file. This option is incompatible with settings.include_qdot = True.
+
     Parameters
     ----------
     filename : str
-        Name of .rst7-formatted coordinate file to be checked
+        Name of .rst7-formatted coordinate file to be checked (or trajectory file if not frame == 0)
     settings : argparse.Namespace
         Settings namespace object
     reduce : bool
         Boolean determining whether to reduce the CV values for use in evaluating an RC value that uses reduced values
+    frame : int
+        Frame of trajectory filename to use (1-indexed, negatives not valid, only used if not equal to 0)
 
     Returns
     -------
@@ -159,9 +164,21 @@ def get_cvs(filename, settings, reduce=False):
 
     os.chdir(settings.working_directory)    # make sure we're in the working directory
 
-    traj = pytraj.iterload(filename, settings.topology)
-    mtraj = mdtraj.load(filename, top=settings.topology)
-    traj_name = filename
+    # define variables as they are expected to be interpreted in CV definitions (these are potentially invoked by eval)
+    delete_traj_name = False  # so we don't delete the traj_name file later unless we created it below
+    if frame == 0:
+        traj = pytraj.iterload(filename, settings.topology)
+        mtraj = mdtraj.load(filename, top=settings.topology)
+        traj_name = filename
+    elif frame < 0:
+        raise RuntimeError('frame must be >= 0')
+    else:
+        traj = pytraj.iterload(filename, settings.topology, frame_slice=[(frame - 1, frame)])
+        mtraj = mdtraj.load_frame(filename, frame - 1, top=settings.topology)
+        if True in ['traj_name' in cv for cv in settings.cvs]:  # if True, need .rst7 formatted file to operate on
+            mdengine = factory.mdengine_factory(settings.md_engine)
+            traj_name = mdengine.get_frame(None, filename, frame, settings)
+            delete_traj_name = True     # to be sure we clean up traj_name later
 
     rc_minmax = [[],[]]
     if reduce:
@@ -182,10 +199,10 @@ def get_cvs(filename, settings, reduce=False):
     local_index = -1
     for cv in settings.cvs:
         local_index += 1
-        evaluation = eval(cv)
-        if settings.include_qdot:  # want to save values for later
+        evaluation = eval(cv)       # evaluate the CV definition code (potentially using traj, mtraj, and/or traj_name)
+        if settings.include_qdot:   # want to save values for later
             values.append(float(evaluation))
-        if reduce:    # legacy from original atesa, for reducing values to between 0 and 1
+        if reduce:                  # reduce values if necessary
             evaluation = reduce_cv(evaluation, local_index, rc_minmax)
         output += str(evaluation) + ' '
     if settings.include_qdot and not settings.job_type == 'equilibrium_path_sampling':  # if True, then we want to include rate of change for every CV, too
@@ -213,6 +230,9 @@ def get_cvs(filename, settings, reduce=False):
 
     if output[-1] == ' ':
         output = output[:-1]    # remove trailing space
+
+    if delete_traj_name:
+        os.remove(traj_name)
 
     return output
 
@@ -475,9 +495,11 @@ def resample(settings, partial=False, full_cvs=False):
                         for job_index in range(2):
                             if os.path.exists(thread.history.prod_trajs[step_index][job_index]):
                                 for frame_index in range(pytraj.iterload(thread.history.prod_trajs[step_index][job_index], settings.topology).n_frames):
-                                    frame_to_check = thread.get_frame(thread.history.prod_trajs[step_index][job_index], frame_index + 1, temp_settings)
-                                    f.write(get_cvs(frame_to_check, temp_settings) + '\n')
-                                    os.remove(frame_to_check)
+                                    f.write(get_cvs(thread.history.prod_trajs[step_index][job_index], temp_settings, False, frame_index + 1) + '\n')
+                                    ## Deprecated code from before the frame argument was implemented in get_cvs
+                                    # frame_to_check = thread.get_frame(thread.history.prod_trajs[step_index][job_index], frame_index + 1, temp_settings)
+                                    # f.write(get_cvs(frame_to_check, temp_settings) + '\n')
+                                    # os.remove(frame_to_check)
 
 
 def interpret_cv(cv_index, settings):

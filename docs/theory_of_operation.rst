@@ -75,7 +75,7 @@ What is Umbrella Sampling?
 
 ATESA's preferred method for obtaining a free energy profile along a determined reaction coordinate is umbrella sampling. This is a fairly simple method where many simulations beginning along different portions of the reaction coordinate are restrained to that portion using a harmonic bias. The shape of the resulting distribution of reaction coordinate values sampled over the course of the simulations can be interpreted to measure the underlying free energy profile by "subtracting" the influence of the known harmonic restraints using any of a number of algorithms (one of which, the Multistate Bennett Acceptance Ratio, or "MBAR", is automated in ATESA using the `pymbar <https://github.com/choderalab/pymbar>`_ package).
 
-.. figure:: _images/umbrella_sampling.png
+.. figure:: _images/umbrella_sampling_histogram.png
 
 	An example of the raw sampling data from an umbrella sampling job. Colors alternate to help distinguish different simulations, with adjacent simulations overlapping in sampling to avoid gaps. This data can be directly interpreted using MBAR to obtain a free energy profile.
 

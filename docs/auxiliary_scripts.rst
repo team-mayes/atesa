@@ -101,9 +101,9 @@ The syntax is as follows:
 	The path to the aimless shooting output file used to build the reaction coordinate (the *-i* argument for ``lmax.py``. Usually this should be the largest "decorrelated" output file in the aimless shooting working directory.
 	
 `extrema`
-	A boolean, either "True" or "False". If "True", the script skips creating `rc.out` and simply returns the RC values of a the final forward and backward frames of a single accepted trajectory in the working directory. This is useful when preparing for equilibrium path sampling or umbrella sampling jobs, which require the user to specify the range of RC values to sample over. This is the only option with a default value; if it is omitted, it will be interpreted as False.
+	A boolean, either "True" or "False". If "True", the script skips creating `rc.out` and simply returns the RC values of a the final forward and backward frames of a single accepted trajectory in the working directory. This is useful when preparing for equilibrium path sampling or umbrella sampling jobs, which require the user to specify the range of RC values to sample over. This is the only option with a default value; if it is omitted, it will be set to False.
 	
-The produced output file `rc.out` is (optionally) used as input for a committor analysis run (see :ref:`CommittorAnalysis`). Note that running this script with `extrema = False` can take a very long time if there is a large number of shooting moves in the indicated working directory. The user should prepare for as much as 10 seconds per shooting move (equal to the number of lines in the raw aimless shooting output file), depending on the available hardware.
+The produced output file `rc.out` is (optionally) used as input for a committor analysis run (see :ref:`CommittorAnalysis`). Note that running this script with `extrema = False` can take a long time if there is a large number of shooting moves in the indicated working directory.
 
 .. _MBAR:
 
