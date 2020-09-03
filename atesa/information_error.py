@@ -72,6 +72,8 @@ def main():
         return None
 
     # Run likelihood maximization on largest decorrelated datafile
+    if os.path.exists(str(length) + '_lmax.out'):   # remove pre-existing output file if it exists
+        os.remove(str(length) + '_lmax.out')
     if settings.include_qdot:
         q_str = 'present'
     else:

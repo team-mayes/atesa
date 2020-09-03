@@ -79,9 +79,11 @@ Once a model has been set up near the transition state, aimless shooting can pro
 	
 Note that the absence of any specific CVs in this file results in the default behavior, which is building CVs automatically based on the atoms indicated in the commitment definitions. In this case, ATESA derived 156 CVs to sample at each shooting point.
 
-This job collected 30,088 shooting moves before terminating automatically using based on the :ref:`InformationError` termination criterion with the default settings. An average acceptance ratio of 16.14% per thread (per ``status.txt`` in the working directory) reflects a healthy level of efficiency. A visualization of the sampled data projected onto the three dimensions making up the commitment basins is shown here to help readers who may not be familiar with aimless shooting visualize the data, but this plot is not produced automatically by ATESA:
+This job collected 30,088 shooting moves before terminating automatically using based on the :ref:`InformationError` termination criterion with the default settings. An average acceptance ratio of 16.14% per thread (per ``status.txt`` in the working directory) reflects a healthy level of efficiency. A visualization of the sampled data projected onto the three dimensions making up the reaction coordinate produced in the next step is shown here to help readers who may not be familiar with aimless shooting visualize the data, but this plot is not produced automatically by ATESA:
 
 	.. figure:: _images/as_data.gif
+	
+	A visualization of the aimless shooting data. Each point represents a single shooting move, colored according to its fate: blue for reactant, orange for products.
 
 Likelihood Maximization and rc_eval.py
 --------------------------------------
@@ -92,7 +94,7 @@ In order to minimize the influence of the initial coordinates chosen to begin ai
 
 	lmax.py -i /scratch/tburgin/ethyl_chlorosulfite_as/as_decorr_30000.out --automagic --plots
 
-The ``--plots`` option produces the sigmoid committor plot ((b), at right) and, when automatic is used as is the case here, the two-line test plot (see :ref:`LikelihoodMaximization`_). The good relationship between the modeled and ideal committor sigmoids is a necessary, but not a sufficient, condition for a good reaction coordinate:
+The ``--plots`` option produces the sigmoid committor plot ((b), at right) and, when automatic is used as is the case here, the two-line test plot (see :ref:`LikelihoodMaximization`). The good relationship between the modeled and ideal committor sigmoids is a necessary, but not a sufficient, condition for a good reaction coordinate:
 
 	.. figure:: _images/lmax.png
 	
@@ -171,7 +173,7 @@ This job produces a large number of output files named with the suffix "_us.out"
 
 	mbar.py --decorr -k 5
 	
-Here we use the `--decorr` flag to specify that we have not checked the data for decorrelation or equilibration, so pyMBAR will do that work for us. We also set `-k 5` to indicate that the umbrella sampling restraint is 5 kcal/mol. After a mean-value plot (see :ref:`UmbrellaSamplingTroubleshooting`_), ``mbar.py`` produces the data histograms and free energy profile shown below (though I have of course added the reference activation energy after the fact)::
+Here we use the `--decorr` flag to specify that we have not checked the data for decorrelation or equilibration, so pyMBAR will do that work for us. We also set `-k 5` to indicate that the umbrella sampling restraint is 5 kcal/mol. After a mean-value plot (see :ref:`UmbrellaSamplingTroubleshooting`_), ``mbar.py`` produces the data histograms and free energy profile shown below (though I have of course added the reference activation energy after the fact):
 
 	.. figure:: _images/umbrella_sampling.png
 	
