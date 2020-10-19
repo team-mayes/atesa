@@ -6,7 +6,11 @@ Getting Started with ATESA
 Installation
 ------------
 
-[Insert finalized installation instructions here]
+For now, the only way to install ATESA is to download it directly from `GitHub <https://github.com/team-mayes/atesa>`_, navigate to the root ATESA directory, and run the ``setup.py`` script directly::
+
+	python setup.py
+	
+In the future, we will support installation via a package manager.
 
 Usage
 -----

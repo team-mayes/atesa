@@ -90,7 +90,7 @@ The "ideal" committor analysis result is a perfectly narrow peak of exactly 50% 
 	
 	All or nearly all of the simulations are grouped along one edge (either one). This should be a rare result, and is the only one here that represents a fundamental failure somewhere in the workflow. The underlying cause is either: (a) that the settings or other important features of the simulations or ATESA have changed significantly between aimless shooting and committor analysis (for example, a different quantum mechanics model, or a change in the definition of the commitment basins); or (b) that the aimless shooting data has been misinterpreted in some way, due to some unnoticed error. If after carefully verifying that the settings have not changed (remember to check the simulation input files, batch file templates, and ATESA configuration files) you still cannot find the source of this error, please raise an issue on `our GitHub page <https://github.com/team-mayes/atesa>`_ with the "bug" label. Please also be sure to include a thorough description of your problem and attach the files "settings.pkl" and "restart.pkl" from the aimless shooting working directory.
 
-.. _UmbrellaSamplingTroubleshooting
+.. _UmbrellaSamplingTroubleshooting:
 
 Umbrella Sampling
 ~~~~~~~~~~~~~~~~~

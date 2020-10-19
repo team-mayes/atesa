@@ -110,9 +110,11 @@ The produced output file `rc.out` is (optionally) used as input for a committor 
 mbar.py: Energy Profiles from US
 --------------------------------
 
-The output files from an umbrella sampling (US) run can be converted into a free energy profile by any number of methods, but one of the most ideal is the Multistate Bennett Acceptance Ratio", or "MBAR". ATESA comes with a suitable implementation of MBAR using the `pymbar <https://github.com/choderalab/pymbar>`_ package available from the Chodera lab.
+The output files from an umbrella sampling (US) run can be converted into a free energy profile by any number of methods, but one of the most ideal is the Multistate Bennett Acceptance Ratio", or "MBAR". ATESA comes with a suitable implementation of MBAR using the `pymbar <https://github.com/choderalab/pymbar>`_ package available from the Chodera lab. If you publish work making use of this script, be sure to cite the appropriate papers described on that page; at minimum, you should cite::
 
-The basic task in interpreting umbrella sampling data is to "subtract" the effect of the known harmonic restraints on the sampling, leaving only the underlying free energy profile. For a discussion of the exact workings of MBAR, the reader is directed to `Shirts and Chodera, J Chem Phys. 2008; 129(12): 124105 <https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2671659/>`_.
+	Shirts M. R. and Chodera, J. D. Statistically optimal analysis of samples from multiple equilibrium states. J. Chem. Phys. 129:124105 (2008). DOI: 10.1063/1.2978177
+
+The basic task in interpreting umbrella sampling data is to "subtract" the effect of the known harmonic restraints on the sampling, leaving only the underlying free energy profile. For a discussion of the exact workings of MBAR, the reader is directed to `the original paper <https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2671659/>`_.
 
 If supported by the local python environment, mbar.py produces several plots: first, a "mean value" plot that shows the derivation from the window center in each data file. This is a diagnostic tool to help identify any problematic regions; if there is no issue, the plot should be a smooth waveform passing through 0 near the middle. Then, it produces a histogram to show the coverage of sampling over the range of the reaction coordinate. There should be no gaps in this plot, or else additional data must be collected to cover the gaps. Finally, it plots the free energy profile itself. All of the data for these plots is also printed the the output file (see the `-o` option below) regardless of whether the plots are shown. In cases where the data exists on a remote server, it may be convenient to copy the necessary files (see following paragraph) to a local directory before running ``mbar.py`` in order to produce these plots automatically.
 
@@ -134,27 +136,29 @@ mbar.py looks for and uses all data files in the present directory whose names b
 
 	The name of the output file produced by the script. It will be overwritten if it exists. Default = mbar.out
 	
-`--min_data min`
+`\\-\\-min_data min`
 
 	The minimum number of samples that must be present in a given data file for it to be included in the analysis. This can be useful to exclude results from simulations that did not finish for some reason, but should be used with care. Default = 0
 	
-`--ignore threshold`
+`\\-\\-ignore threshold`
 
-	The number of samples from the beginning of each data file to ignore during analysis. This is useful for manually specifying a decorrelation time from the initial coordinates in each window, if desired. Probably should not be used in combination with `--decorr`. Default = 1
+	The number of samples from the beginning of each data file to ignore during analysis. This is useful for manually specifying a decorrelation time from the initial coordinates in each window, if desired. Probably should not be used in combination with `\\-\\-decorr`. Default = 1
 	
-`--decorr`
+`\\-\\-decorr`
 
-	If this option is given, then the built-in pymbar.timeseries.detectEquilibration and pymbar.timeseries.subsampleCorrelatedData functions are used to attempt to automatically pare the data in each data file down to equilibrated and decorrelated samples. If you don't know what this means, you probably *should* use it.
+	If this option is given, then the built-in pymbar.timeseries.detectEquilibration and pymbar.timeseries.subsampleCorrelatedData functions are used to attempt to automatically pare the data in each data file down to equilibrated and decorrelated samples. If you don't know what this means, you probably *should* use it. If you publish work that makes use of this option, you must cite (in addition to the aforementioned paper)::
 	
-`--rc_min min`
+	Chodera, J. D. A simple method for automated equilibration detection in molecular simulations. J. Chem. Theor. Comput. 12:1799, 2016. DOI: 10.1021/acs.jctc.5b00784
+	
+`\\-\\-rc_min min`
 
 	The smallest value of the reaction coordinate to include in the final energy profile. If this option isn't specified, then the smallest window center is used instead (which is usually safe).
 	
-`--rc_max max`
+`\\-\\-rc_max max`
 
 	The largest value of the reaction coordinate to include in the final energy profile. If this option isn't specified, then the largest window center is used instead (which is usually safe).
 	
-`--quiet`
+`\\-\\-quiet`
 
 	If this option is given, all the output to the terminal and the display of plots is suppressed, and the only result is the output file.
 

@@ -3,7 +3,7 @@
 Example Study
 ============
 
-This page will detail a complete workflow in ATESA for an example chemical reaction. Not every setting or option applied in this workflow will be appropriate for every application of ATESA; rather than being prescriptive, the purpose of this page is to illustrate a particular application of the software to help readers better grasp what running ATESA ia actually like. If you're instead looking for an introduction to the theory underlying any of these steps, check out the :ref:`TheoryAndDefinitions` page.
+This page will detail a complete workflow in ATESA for an example chemical reaction. Not every setting or option applied in this workflow will be appropriate for every application of ATESA; rather than being prescriptive, the purpose of this page is to illustrate a particular application of the software to help readers better grasp what running ATESA is actually like. If you're instead looking for an introduction to the theory underlying any of these steps, check out the :ref:`TheoryAndDefinitions` page.
 
 Where appropriate, this page will include complete examples of input, template, and configuration files. **Not all of the contents of these files will be appropriate for your application**. Therefore, we strongly discourage you from copying-and-pasting content from this page unless you know what you're doing. The complete files are provided only for illustrative purposes.
 
@@ -98,7 +98,7 @@ The ``--plots`` option produces the sigmoid committor plot ((b), at right) and, 
 
 	.. figure:: _images/lmax.png
 	
-ATESA does not automatically generate the figure in panel (a), but it's a useful way to visualize the reaction coordinate. Although it the chosen dimensions are non-obvious, they nonetheless have a strong rationale: the first term describes the relative closeness of the reactive carbon to either of the other atoms it may bond to, while the two angle terms describe the direction of the partially charged face of the carbon atom, using the sulfur atom as a reference point.
+ATESA does not automatically generate the figure in panel (a), but it's a useful way to visualize the reaction coordinate. Although the chosen dimensions are non-obvious, they nonetheless have a strong rationale: the first term describes the relative closeness of the reactive carbon to either of the other atoms it may bond to, while the two angle terms describe the direction of the partially charged face of the carbon atom, using the sulfur atom as a reference point.
 
 After selecting a reaction coordinate, we need to call the auxiliary script :ref:`RCEval`. This will build a file named ``rc.out`` in the working directory, which we need in the next step::
 
