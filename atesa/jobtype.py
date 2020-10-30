@@ -691,10 +691,8 @@ class AimlessShooting(JobType):
         # utilities.resample(settings)  # to build as_decorr.out I suppose. Kinda silly.
         pass
 
-    def verify(self, arg, suffix, argtype):
+    def verify(self, arg, argtype):
         # Supported verify types for aimless shooting: 'history', 'type'
-        print(suffix)
-        print(thread.terminated)
         if argtype == 'type':
             if not arg in [[''], ['init'], ['prod', 'prod']]:
                 return False
@@ -1175,7 +1173,7 @@ class EquilibriumPathSampling(JobType):
 
                                 # Now make the thread and set its parameters
                                 new_thread = main.Thread()
-                                EquilibriumPathSampling.update_history(new_thread, settings, **{'initialize': True, 'inpcrd': coord_file})
+                                EquilibriumPathSampling.update_history(self, new_thread, settings, **{'initialize': True, 'inpcrd': coord_file})
                                 new_thread.topology = settings.topology
                                 new_thread.name = coord_file + '_' + str(new_thread.suffix)
 
