@@ -206,11 +206,8 @@ class Tests(object):
         settings.job_type = 'aimless_shooting'
         settings.initial_coordinates = ['../test_data/test.rst7', '../test_data/test_two_init.rst7']
         settings.degeneracy = 2
-        allthreads = main.init_threads(settings)
-        for thread in allthreads:
-            print(thread.history.init_coords)
         jobtype = factory.jobtype_factory(settings.job_type)
-        assert jobtype.get_initial_coordinates(allthreads[0], settings) == ['test.rst7_0', 'test.rst7_1', 'test_two_init.rst7_0', 'test_two_init.rst7_1']
+        assert jobtype.get_initial_coordinates(settings) == ['test.rst7_0', 'test.rst7_1', 'test_two_init.rst7_0', 'test_two_init.rst7_1']
 
     def test_gatekeep_aimless_shooting(self):
         """Tests gatekeep with job_type = 'aimless_shooting'"""
@@ -349,9 +346,8 @@ class Tests(object):
         settings.committor_analysis_use_rc_out = True
         settings.path_to_rc_out = '../test_data/rc_eval.out'
         settings.rc_threshold = 0.002
-        allthreads = main.init_threads(settings)
         jobtype = factory.jobtype_factory(settings.job_type)
-        assert jobtype.get_initial_coordinates(allthreads[0], settings) == ['1.1_1.2_2.2_2.6.rst7_2_10_init_fwd.rst_2_1_2.rst7_5_init_fwd.rst', '1.1_1.2_2.2_2.6.rst7_2_10_init_fwd.rst_4_58_3.rst7_4_init_fwd.rst']
+        assert jobtype.get_initial_coordinates(settings) == ['1.1_1.2_2.2_2.6.rst7_2_10_init_fwd.rst_2_1_2.rst7_5_init_fwd.rst', '1.1_1.2_2.2_2.6.rst7_2_10_init_fwd.rst_4_58_3.rst7_4_init_fwd.rst']
 
     def test_get_initial_coordinates_committor_analysis_rc_out_does_not_exist(self):
         """Tests get_initial_coordinates with job_type = 'committor_analysis' using an RC out file that does not exist"""
@@ -443,8 +439,8 @@ class Tests(object):
         jobtype.update_results(allthreads[0], allthreads, settings)
         settings.samples_per_window = 1
         jobtype = factory.jobtype_factory(settings.job_type)
-        assert jobtype.check_termination(allthreads[0], allthreads, settings) == False
-        assert allthreads[0].terminated == True
+        assert jobtype.check_termination(allthreads[0], allthreads, settings) == False  # global termination False
+        assert allthreads[0].terminated == True     # thread termination True
 
     def test_update_results_equilibrium_path_sampling(self):
         """Tests update_results with job_type = 'equilibrium_path_sampling'"""
@@ -517,9 +513,8 @@ class Tests(object):
     def test_get_initial_coordinates_equilibrium_path_sampling(self):
         """Tests get_initial_coordinates with job_type = 'equilibrium_path_sampling'"""
         settings = config_equilibrium_path_sampling()
-        allthreads = main.init_threads(settings)
         jobtype = factory.jobtype_factory(settings.job_type)
-        assert jobtype.get_initial_coordinates(allthreads[0], settings) == ['test.rst7']
+        assert jobtype.get_initial_coordinates(settings) == ['test.rst7']
 
     def test_gatekeep_equilibrium_path_sampling(self):
         """Tests gatekeep with job_type = 'committor_analysis'"""

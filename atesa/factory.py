@@ -23,7 +23,7 @@ def mdengine_factory(mdengine_toolkit):
 
     """
 
-    mdengine_toolkits = {'amber': mdengine.AdaptAmber}
+    mdengine_toolkits = {'amber': mdengine.AdaptAmber()}
 
     if mdengine_toolkit not in mdengine_toolkits.keys():
         raise ValueError('unsupported MDEngine name: ' + mdengine_toolkit)
@@ -47,9 +47,9 @@ def batchsystem_factory(batchsystem_toolkit):
 
     """
 
-    batchsystem_toolkits = {'slurm': batchsystem.AdaptSlurm,
-                            'pbs': batchsystem.AdaptPBS,
-                            'torque': batchsystem.AdaptPBS}   # torque and pbs are synonyms
+    batchsystem_toolkits = {'slurm': batchsystem.AdaptSlurm(),
+                            'pbs': batchsystem.AdaptPBS(),
+                            'torque': batchsystem.AdaptPBS()}   # torque and pbs are synonyms
 
     if batchsystem_toolkit not in batchsystem_toolkits.keys():
         raise ValueError('unsupported BatchSystem name: ' + batchsystem_toolkit)
@@ -73,11 +73,11 @@ def jobtype_factory(jobtype_toolkit):
 
     """
 
-    jobtype_toolkits = {'aimless_shooting': jobtype.AimlessShooting,
-                        'committor_analysis': jobtype.CommittorAnalysis,
-                        'equilibrium_path_sampling': jobtype.EquilibriumPathSampling,
-                        'find_ts': jobtype.FindTS,
-                        'umbrella_sampling': jobtype.UmbrellaSampling}
+    jobtype_toolkits = {'aimless_shooting': jobtype.AimlessShooting(),
+                        'committor_analysis': jobtype.CommittorAnalysis(),
+                        'equilibrium_path_sampling': jobtype.EquilibriumPathSampling(),
+                        'find_ts': jobtype.FindTS(),
+                        'umbrella_sampling': jobtype.UmbrellaSampling()}
 
     if jobtype_toolkit not in jobtype_toolkits.keys():
         raise ValueError('unsupported JobType name: ' + jobtype_toolkit)
@@ -101,7 +101,7 @@ def taskmanager_factory(taskmanager_toolkit):
 
     """
 
-    taskmanager_toolkits = {'simple': taskmanager.AdaptSimple}
+    taskmanager_toolkits = {'simple': taskmanager.AdaptSimple()}
 
     if taskmanager_toolkit not in taskmanager_toolkits.keys():
         raise ValueError('unsupported TaskManager name: ' + taskmanager_toolkit)

@@ -53,7 +53,7 @@ class AdaptSimple(TaskManager):
             import atesa.factory as factory
 
         batchsystem = factory.batchsystem_factory(settings.batch_system)
-        command = batchsystem.get_submit_command(None).replace('{file}', filename)
+        command = batchsystem.get_submit_command().replace('{file}', filename)
 
         if settings.DEBUG:
             command = 'echo "this is a nonsense string for testing purposes: 123456, now here are some garbage symbols: ?!@#$/\';:[]+=_-.<,>"'

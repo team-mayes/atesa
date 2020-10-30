@@ -77,15 +77,15 @@ class Thread(object):
 
     def get_frame(self, traj, frame, settings):
         mdengine = factory.mdengine_factory(settings.md_engine)
-        return mdengine.get_frame(self, traj, frame, settings)
+        return mdengine.get_frame(traj, frame, settings)
 
     def get_status(self, job_index, settings):
         batchsystem = factory.batchsystem_factory(settings.batch_system)
-        return batchsystem.get_status(self, self.jobids[job_index], settings)
+        return batchsystem.get_status(self.jobids[job_index], settings)
 
     def cancel_job(self, job_index, settings):
         batchsystem = factory.batchsystem_factory(settings.batch_system)
-        batchsystem.cancel_job(self, self.jobids[job_index], settings)
+        batchsystem.cancel_job(self.jobids[job_index], settings)
 
 
 def init_threads(settings):
@@ -175,7 +175,7 @@ def init_threads(settings):
     except shutil.SameFileError:
         pass
 
-    for file in jobtype.get_initial_coordinates(None, settings):
+    for file in jobtype.get_initial_coordinates(settings):
         if '/' in file:
             file = file[file.rindex('/') + 1:]          # drop path to file from filename
 
@@ -407,7 +407,7 @@ def main(settings, rescue_running=[]):
         handle_loop_exception(attempted_rescue, running, settings)
 
     jobtype = factory.jobtype_factory(settings.job_type)
-    jobtype.cleanup(None, settings)
+    jobtype.cleanup(settings)
 
     if termination_criterion:
         return 'ATESA run exiting normally (global termination criterion met)'

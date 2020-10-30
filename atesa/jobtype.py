@@ -32,19 +32,19 @@ class JobType(abc.ABC):
     """
 
     @abc.abstractmethod
-    def get_input_file(self, job_index, settings):
+    def get_input_file(self, thread, job_index, settings):
         """
         Obtain appropriate input file for next job.
 
         At its most simple, implementations of this method can simply return settings.path_to_input_files + '/' +
-        settings.job_type + '_' + self.current_type[job_index] + '_' + settings.md_engine + '.in'
+        settings.job_type + '_' + thread.current_type[job_index] + '_' + settings.md_engine + '.in'
 
         Parameters
         ----------
-        self : Thread
-            Methods in the JobType abstract base class are intended to be invoked by Thread objects
+        thread : Thread
+            Methods in the JobType abstract base class are intended to operate on Thread objects
         job_index : int
-            0-indexed integer identifying which job within self.current_type to return the input file for
+            0-indexed integer identifying which job within thread.current_type to return the input file for
         settings : argparse.Namespace
             Settings namespace object
 
@@ -64,8 +64,6 @@ class JobType(abc.ABC):
 
         Parameters
         ----------
-        self : Thread
-            Methods in the JobType abstract base class are intended to be invoked by Thread objects
         settings : argparse.Namespace
             Settings namespace object
 
@@ -79,7 +77,7 @@ class JobType(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def check_for_successful_step(self, settings):
+    def check_for_successful_step(self, thread, settings):
         """
         Check whether a just-completed step was successful, as defined by whether the update_results and
         check_termination methods should be run.
@@ -91,8 +89,8 @@ class JobType(abc.ABC):
 
         Parameters
         ----------
-        self : Thread
-            Methods in the JobType abstract base class are intended to be invoked by Thread objects
+        thread : Thread
+            Methods in the JobType abstract base class are intended to operate on Thread objects
         settings : argparse.Namespace
             Settings namespace object
 
@@ -106,7 +104,7 @@ class JobType(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def update_history(self, settings, **kwargs):
+    def update_history(self, thread, settings, **kwargs):
         """
         Update or initialize the history namespace for this job type.
 
@@ -119,8 +117,8 @@ class JobType(abc.ABC):
 
         Parameters
         ----------
-        self : Thread
-            Methods in the JobType abstract base class are intended to be invoked by Thread objects
+        thread : Thread
+            Methods in the JobType abstract base class are intended to operate on Thread objects
         settings : argparse.Namespace
             Settings namespace object
         kwargs : dict
@@ -135,15 +133,15 @@ class JobType(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def get_inpcrd(self):
+    def get_inpcrd(self, thread):
         """
         Return a list (possibly of length one) containing the names of the appropriate inpcrd files for the next step
-        in the thread given by self.
+        in the thread given by thread.
 
         Parameters
         ----------
-        self : Thread
-            Methods in the JobType abstract base class are intended to be invoked by Thread objects
+        thread : Thread
+            Methods in the JobType abstract base class are intended to operate on Thread objects
 
         Returns
         -------
@@ -155,14 +153,14 @@ class JobType(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def gatekeeper(self, settings):
+    def gatekeeper(self, thread, settings):
         """
         Return boolean indicating whether job is ready for next interpretation step.
 
         Parameters
         ----------
-        self : Thread
-            Methods in the JobType abstract base class are intended to be invoked by Thread objects
+        thread : Thread
+            Methods in the JobType abstract base class are intended to operate on Thread objects
         settings : argparse.Namespace
             Settings namespace object
 
@@ -176,14 +174,14 @@ class JobType(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def get_next_step(self, settings):
+    def get_next_step(self, thread, settings):
         """
         Return name of next type of simulation to run in the itinerary of this job type.
 
         Parameters
         ----------
-        self : Thread
-            Methods in the JobType abstract base class are intended to be invoked by Thread objects
+        thread : Thread
+            Methods in the JobType abstract base class are intended to operate on Thread objects
         settings : argparse.Namespace
             Settings namespace object
 
@@ -197,14 +195,14 @@ class JobType(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def get_batch_template(self, type, settings):
+    def get_batch_template(self, thread, type, settings):
         """
         Return name of batch template file for the type of job indicated.
 
         Parameters
         ----------
-        self : Thread
-            Methods in the JobType abstract base class are intended to be invoked by Thread objects
+        thread : Thread
+            Methods in the JobType abstract base class are intended to operate on Thread objects
         type : str
             Name of the type of job desired, corresponding to the template file
         settings : argparse.Namespace
@@ -220,17 +218,17 @@ class JobType(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def check_termination(self, allthreads, settings):
+    def check_termination(self, thread, allthreads, settings):
         """
         Check termination criteria for the particular thread at hand as well as for the entire process.
 
-        These methods should update self.status and self.terminated in order to communicate the results of the check for
+        These methods should update thread.status and thread.terminated in order to communicate the results of the check for
         the inidividual thread, and should return a boolean to communicate the results of the check for the entire run.
 
         Parameters
         ----------
-        self : Thread
-            Methods in the JobType abstract base class are intended to be invoked by Thread objects
+        thread : Thread
+            Methods in the JobType abstract base class are intended to operate on Thread objects
         allthreads : list
             The list of all extant Thread objects
         settings : argparse.Namespace
@@ -246,7 +244,7 @@ class JobType(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def update_results(self, allthreads, settings):
+    def update_results(self, thread, allthreads, settings):
         """
         Update appropriate results file(s) as needed.
 
@@ -255,8 +253,8 @@ class JobType(abc.ABC):
 
         Parameters
         ----------
-        self : Thread
-            Methods in the JobType abstract base class are intended to be invoked by Thread objects
+        thread : Thread
+            Methods in the JobType abstract base class are intended to operate on Thread objects
         allthreads : list
             The list of all extant Thread objects
         settings : argparse.Namespace
@@ -271,7 +269,7 @@ class JobType(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def algorithm(self, allthreads, running, settings):
+    def algorithm(self, thread, allthreads, running, settings):
         """
         Update thread attributes to prepare for next move.
 
@@ -280,8 +278,8 @@ class JobType(abc.ABC):
 
         Parameters
         ----------
-        self : Thread
-            Methods in the JobType abstract base class are intended to be invoked by Thread objects
+        thread : Thread
+            Methods in the JobType abstract base class are intended to operate on Thread objects
         allthreads : list
             The list of all extant Thread objects
         running : list
@@ -305,8 +303,6 @@ class JobType(abc.ABC):
 
         Parameters
         ----------
-        self : None
-            self is not used in cleanup methods
         settings : argparse.Namespace
             Settings namespace object
 
@@ -325,8 +321,6 @@ class JobType(abc.ABC):
 
         Parameters
         ----------
-        self : None
-            self is not used in verify methods
         arg : any_type
             Object to verify
         argtype : str
@@ -346,8 +340,8 @@ class AimlessShooting(JobType):
     Adapter class for aimless shooting
     """
 
-    def get_input_file(self, job_index, settings):
-        return settings.path_to_input_files + '/' + settings.job_type + '_' + self.current_type[job_index] + '_' + settings.md_engine + '.in'
+    def get_input_file(self, thread, job_index, settings):
+        return settings.path_to_input_files + '/' + settings.job_type + '_' + thread.current_type[job_index] + '_' + settings.md_engine + '.in'
 
     def get_initial_coordinates(self, settings):
         list_to_return = []
@@ -370,97 +364,97 @@ class AimlessShooting(JobType):
                     pass
         return list_to_return
 
-    def check_for_successful_step(self, settings):
-        if self.current_type == ['init']:   # requires that self.history.init_coords[-1] exists
-            if os.path.exists(self.history.init_coords[-1][0]):
+    def check_for_successful_step(self, thread, settings):
+        if thread.current_type == ['init']:   # requires that thread.history.init_coords[-1] exists
+            if os.path.exists(thread.history.init_coords[-1][0]):
                 return True
-            self.history.consec_fails += 1  # reached iff return statement above is not
-        elif self.current_type == ['prod', 'prod']:   # requires that both files in self.history.prod_trajs[-1] exist and have at least one frame
-            if all([os.path.exists(self.history.prod_trajs[-1][i]) for i in range(2)]):
+            thread.history.consec_fails += 1  # reached iff return statement above is not
+        elif thread.current_type == ['prod', 'prod']:   # requires that both files in thread.history.prod_trajs[-1] exist and have at least one frame
+            if all([os.path.exists(thread.history.prod_trajs[-1][i]) for i in range(2)]):
                 try:
-                    if all([mdtraj.load(self.history.prod_trajs[-1][i], top=settings.topology).n_frames > 0 for i in range(2)]):
-                        self.history.consec_fails = 0
+                    if all([mdtraj.load(thread.history.prod_trajs[-1][i], top=settings.topology).n_frames > 0 for i in range(2)]):
+                        thread.history.consec_fails = 0
                         return True
                 except ValueError:  # mdtraj raises a value error when loading an empty trajectory (zero frames)
                     pass
-            self.history.consec_fails += 1  # reached iff return statement above is not
+            thread.history.consec_fails += 1  # reached iff return statement above is not
 
-        if self.history.consec_fails > settings.max_consecutive_fails and settings.max_consecutive_fails >= 0:
-            raise RuntimeError('number of consecutive failures in ' + self.current_type[0] + ' step of thread ' +
-                               self.history.init_inpcrd[0] + ' exceeds the maximum of ' +
+        if thread.history.consec_fails > settings.max_consecutive_fails and settings.max_consecutive_fails >= 0:
+            raise RuntimeError('number of consecutive failures in ' + thread.current_type[0] + ' step of thread ' +
+                               thread.history.init_inpcrd[0] + ' exceeds the maximum of ' +
                                str(settings.max_consecutive_fails) + '. This value can be modified with the option '
                                '\'max_consecutive_fails\' in the configuration file.')
 
         return False
 
-    def update_history(self, settings, **kwargs):
+    def update_history(self, thread, settings, **kwargs):
         if 'initialize' in kwargs.keys():
             if kwargs['initialize']:
-                self.history = argparse.Namespace()
-                self.history.init_inpcrd = []       # list of strings, inpcrd for init steps; initialized by main.init_threads and updated by algorithm
-                self.history.init_coords = []       # list of 2-length lists of strings, init[_fwd.rst7, _bwd.rst7]; updated by update_history and then in algorithm
-                self.history.prod_trajs = []        # list of 2-length lists of strings, [_fwd.nc, _bwd.nc]; updated by update_history
-                self.history.prod_results = []      # list of 2-length lists of strings ['fwd'/'bwd'/'', 'fwd'/'bwd'/'']; updated by update_results
-                self.history.last_accepted = -1     # int, index of last accepted prod_trajs entry; updated by update_results (-1 means none yet accepted)
-                self.history.timestamps = []        # list of ints representing seconds since the epoch for the end of each step; updated by update_results
-                self.history.consec_fails = 0       # tally of consecutive failures of simulation steps
+                thread.history = argparse.Namespace()
+                thread.history.init_inpcrd = []       # list of strings, inpcrd for init steps; initialized by main.init_threads and updated by algorithm
+                thread.history.init_coords = []       # list of 2-length lists of strings, init[_fwd.rst7, _bwd.rst7]; updated by update_history and then in algorithm
+                thread.history.prod_trajs = []        # list of 2-length lists of strings, [_fwd.nc, _bwd.nc]; updated by update_history
+                thread.history.prod_results = []      # list of 2-length lists of strings ['fwd'/'bwd'/'', 'fwd'/'bwd'/'']; updated by update_results
+                thread.history.last_accepted = -1     # int, index of last accepted prod_trajs entry; updated by update_results (-1 means none yet accepted)
+                thread.history.timestamps = []        # list of ints representing seconds since the epoch for the end of each step; updated by update_results
+                thread.history.consec_fails = 0       # tally of consecutive failures of simulation steps
             if 'inpcrd' in kwargs.keys():
-                self.history.init_inpcrd.append(kwargs['inpcrd'])
-        else:   # self.history should already exist
-            if self.current_type == ['init']:     # update init attributes
+                thread.history.init_inpcrd.append(kwargs['inpcrd'])
+        else:   # thread.history should already exist
+            if thread.current_type == ['init']:     # update init attributes
                 if 'rst' in kwargs.keys():
-                    if len(self.history.init_coords) < self.suffix + 1:
-                        self.history.init_coords.append([])
-                        if len(self.history.init_coords) < self.suffix + 1:
-                            raise IndexError('history.init_coords is the wrong length for thread: ' + self.history.init_inpcrd[0] +
-                                             '\nexpected length ' + str(self.suffix))
-                    self.history.init_coords[self.suffix].append(kwargs['rst'])
-            elif self.current_type == ['prod', 'prod']:
+                    if len(thread.history.init_coords) < thread.suffix + 1:
+                        thread.history.init_coords.append([])
+                        if len(thread.history.init_coords) < thread.suffix + 1:
+                            raise IndexError('history.init_coords is the wrong length for thread: ' + thread.history.init_inpcrd[0] +
+                                             '\nexpected length ' + str(thread.suffix))
+                    thread.history.init_coords[thread.suffix].append(kwargs['rst'])
+            elif thread.current_type == ['prod', 'prod']:
                 if 'nc' in kwargs.keys():
-                    if len(self.history.prod_trajs) < self.suffix + 1:
-                        self.history.prod_trajs.append([])
-                        if len(self.history.prod_trajs) < self.suffix + 1:
-                            raise IndexError('history.prod_trajs is the wrong length for thread: ' + self.history.init_inpcrd[0] +
-                                             '\nexpected length ' + str(self.suffix))
-                    self.history.prod_trajs[self.suffix].append(kwargs['nc'])
+                    if len(thread.history.prod_trajs) < thread.suffix + 1:
+                        thread.history.prod_trajs.append([])
+                        if len(thread.history.prod_trajs) < thread.suffix + 1:
+                            raise IndexError('history.prod_trajs is the wrong length for thread: ' + thread.history.init_inpcrd[0] +
+                                             '\nexpected length ' + str(thread.suffix))
+                    thread.history.prod_trajs[thread.suffix].append(kwargs['nc'])
 
-    def get_inpcrd(self):
-        if self.current_type == ['init']:
-            return [self.history.init_inpcrd[-1]]   # should return a list, but history.init_inpcrd contains strings
-        elif self.current_type == ['prod', 'prod']:
-            return self.history.init_coords[-1]     # should return a list, and history.init_coords contains lists
+    def get_inpcrd(self, thread):
+        if thread.current_type == ['init']:
+            return [thread.history.init_inpcrd[-1]]   # should return a list, but history.init_inpcrd contains strings
+        elif thread.current_type == ['prod', 'prod']:
+            return thread.history.init_coords[-1]     # should return a list, and history.init_coords contains lists
         else:
-            raise ValueError('invalid thread.current_type value: ' + str(self.current_type) + ' for thread: ' + self.history.init_inpcrd[0])
+            raise ValueError('invalid thread.current_type value: ' + str(thread.current_type) + ' for thread: ' + thread.history.init_inpcrd[0])
 
-    def gatekeeper(self, settings):
+    def gatekeeper(self, thread, settings):
         # Implement flexible length shooting...
-        if self.current_type == ['prod', 'prod']:
-            for job_index in range(len(self.jobids)):
-                if self.get_status(job_index, settings) == 'R':     # if the job in question is running
-                    frame_to_check = self.get_frame(self.history.prod_trajs[-1][job_index], -1, settings)
+        if thread.current_type == ['prod', 'prod']:
+            for job_index in range(len(thread.jobids)):
+                if thread.get_status(job_index, settings) == 'R':     # if the job in question is running
+                    frame_to_check = thread.get_frame(thread.history.prod_trajs[-1][job_index], -1, settings)
                     if frame_to_check and utilities.check_commit(frame_to_check, settings):  # if it has committed to a basin
-                        self.cancel_job(job_index, settings)        # cancel it
+                        thread.cancel_job(job_index, settings)        # cancel it
                         os.remove(frame_to_check)
 
         # if every job in this thread has status 'C'ompleted/'C'anceled...
-        if all(item == 'C' for item in [self.get_status(job_index, settings) for job_index in range(len(self.jobids))]):
+        if all(item == 'C' for item in [thread.get_status(job_index, settings) for job_index in range(len(thread.jobids))]):
             return True
         else:
             return False
 
-    def get_next_step(self, settings):
-        if self.current_type == []:
-            self.current_type = ['init']
-            self.current_name = ['init']
-        elif self.current_type == ['init']:
-            self.current_type = ['prod', 'prod']
-            self.current_name = ['fwd', 'bwd']
-        elif self.current_type == ['prod', 'prod']:
-            self.current_type = ['init']
-            self.current_name = ['init']
-        return self.current_type, self.current_name
+    def get_next_step(self, thread, settings):
+        if thread.current_type == []:
+            thread.current_type = ['init']
+            thread.current_name = ['init']
+        elif thread.current_type == ['init']:
+            thread.current_type = ['prod', 'prod']
+            thread.current_name = ['fwd', 'bwd']
+        elif thread.current_type == ['prod', 'prod']:
+            thread.current_type = ['init']
+            thread.current_name = ['init']
+        return thread.current_type, thread.current_name
 
-    def get_batch_template(self, type, settings):
+    def get_batch_template(self, thread, type, settings):
         if type in ['init', 'prod']:
             templ = settings.md_engine + '_' + settings.batch_system + '.tpl'
             if os.path.exists(settings.path_to_templates + '/' + templ):
@@ -470,14 +464,14 @@ class AimlessShooting(JobType):
         else:
             raise ValueError('unexpected batch template type for aimless_shooting: ' + str(type))
 
-    def check_termination(self, allthreads, settings):
+    def check_termination(self, thread, allthreads, settings):
         global_terminate = False    # initialize
-        if self.current_type == ['prod', 'prod']:  # aimless shooting only checks termination after prod steps
+        if thread.current_type == ['prod', 'prod']:  # aimless shooting only checks termination after prod steps
             thread_terminate = ''
             global_terminate = False
 
             # Implement settings.max_moves thread termination criterion
-            if self.total_moves >= settings.max_moves and settings.max_moves > 0:
+            if thread.total_moves >= settings.max_moves and settings.max_moves > 0:
                 thread_terminate = 'maximum move limit (' + str(settings.max_moves) + ') reached'
 
             # Implement information error global termination criterion
@@ -522,46 +516,46 @@ class AimlessShooting(JobType):
                 #         global_terminate = True
 
             if thread_terminate:
-                self.status = 'terminated after step ' + str(self.suffix) + ' due to: ' + thread_terminate
-                self.terminated = True
+                thread.status = 'terminated after step ' + str(thread.suffix) + ' due to: ' + thread_terminate
+                thread.terminated = True
             else:
-                self.status = 'running step ' + str(self.suffix + 1)  # suffix isn't updated until call to algorithm()
-                self.terminated = False
+                thread.status = 'running step ' + str(thread.suffix + 1)  # suffix isn't updated until call to algorithm()
+                thread.terminated = False
 
         return global_terminate
 
-    def update_results(self, allthreads, settings):
-        if self.current_type == ['prod', 'prod']:   # aimless shooting only writes after prod steps
+    def update_results(self, thread, allthreads, settings):
+        if thread.current_type == ['prod', 'prod']:   # aimless shooting only writes after prod steps
             # Initialize as.out if not already extant
             if not os.path.exists(settings.working_directory + '/as_raw.out'):
                 open(settings.working_directory + '/as_raw.out', 'w').close()
 
             # Update current_results, total and accepted move counts, and status.txt
-            self.history.prod_results.append([])
-            for job_index in range(len(self.current_type)):
-                frame_to_check = self.get_frame(self.history.prod_trajs[-1][job_index], -1, settings)
+            thread.history.prod_results.append([])
+            for job_index in range(len(thread.current_type)):
+                frame_to_check = thread.get_frame(thread.history.prod_trajs[-1][job_index], -1, settings)
                 if frame_to_check:
-                    self.history.prod_results[-1].append(utilities.check_commit(frame_to_check, settings))
+                    thread.history.prod_results[-1].append(utilities.check_commit(frame_to_check, settings))
                     os.remove(frame_to_check)
                 else:
-                    self.history.prod_results[-1].append('')    # trajectory doesn't exist for some reason, so automatically fail
-            self.total_moves += 1
-            self.history.timestamps.append(int(time.time()))
-            if self.history.prod_results[-1] in [['fwd', 'bwd'], ['bwd', 'fwd']]:   # update last accepted move
-                if settings.cleanup and self.history.last_accepted >= 0:            # delete previous last accepted trajectories
-                    for job_index in range(len(self.current_type)):
-                        os.remove(self.history.prod_trajs[self.history.last_accepted][job_index])
-                self.history.last_accepted = int(len(self.history.prod_trajs) - 1)   # new index of last accepted move
-                self.accept_moves += 1
+                    thread.history.prod_results[-1].append('')    # trajectory doesn't exist for some reason, so automatically fail
+            thread.total_moves += 1
+            thread.history.timestamps.append(int(time.time()))
+            if thread.history.prod_results[-1] in [['fwd', 'bwd'], ['bwd', 'fwd']]:   # update last accepted move
+                if settings.cleanup and thread.history.last_accepted >= 0:            # delete previous last accepted trajectories
+                    for job_index in range(len(thread.current_type)):
+                        os.remove(thread.history.prod_trajs[thread.history.last_accepted][job_index])
+                thread.history.last_accepted = int(len(thread.history.prod_trajs) - 1)   # new index of last accepted move
+                thread.accept_moves += 1
 
             # Write CVs to as_raw.out and as_full_cvs.out
-            if self.history.prod_results[-1][0] in ['fwd', 'bwd']:
-                if self.history.prod_results[-1][0] == 'fwd':
+            if thread.history.prod_results[-1][0] in ['fwd', 'bwd']:
+                if thread.history.prod_results[-1][0] == 'fwd':
                     this_basin = 'B'
                 else:   # 'bwd'
                     this_basin = 'A'
                 open(settings.working_directory + '/as_raw.out', 'a').write(this_basin + ' <- ')
-                open(settings.working_directory + '/as_raw.out', 'a').write(utilities.get_cvs(self.history.init_coords[-1][0], settings) + '\n')
+                open(settings.working_directory + '/as_raw.out', 'a').write(utilities.get_cvs(thread.history.init_coords[-1][0], settings) + '\n')
                 open(settings.working_directory + '/as_raw.out', 'a').close()
 
                 ## Turns out this really slows things down; better left to resampling as needed
@@ -569,21 +563,21 @@ class AimlessShooting(JobType):
                 # if not os.path.exists(settings.working_directory + '/as_full_cvs.out'):
                 #     open(settings.working_directory + '/as_full_cvs.out', 'w').close()
                 # with open(settings.working_directory + '/as_full_cvs.out', 'a') as f:
-                #     for job_index in range(len(self.current_type)):
-                #         for frame_index in range(pytraj.iterload(self.history.prod_trajs[-1][job_index], settings.topology).n_frames):
-                #             frame_to_check = self.get_frame(self.history.prod_trajs[-1][job_index], frame_index + 1, settings)
+                #     for job_index in range(len(thread.current_type)):
+                #         for frame_index in range(pytraj.iterload(thread.history.prod_trajs[-1][job_index], settings.topology).n_frames):
+                #             frame_to_check = thread.get_frame(thread.history.prod_trajs[-1][job_index], frame_index + 1, settings)
                 #             f.write(utilities.get_cvs(frame_to_check, settings) + '\n')
                 #             os.remove(frame_to_check)
 
             with open('status.txt', 'w') as file:
-                for thread in allthreads:
+                for this_thread in allthreads:
                     try:
-                        acceptance_percentage = str(100 * thread.accept_moves / thread.total_moves)[0:5] + '%'
+                        acceptance_percentage = str(100 * this_thread.accept_moves / this_thread.total_moves)[0:5] + '%'
                     except ZeroDivisionError:   # 0/0
                         acceptance_percentage = '0%'
-                    file.write(thread.history.init_inpcrd[0] + ' acceptance ratio: ' + str(thread.accept_moves) +
-                               '/' + str(thread.total_moves) + ', or ' + acceptance_percentage + '\n')
-                    file.write('  Status: ' + thread.status + '\n')
+                    file.write(this_thread.history.init_inpcrd[0] + ' acceptance ratio: ' + str(this_thread.accept_moves) +
+                               '/' + str(this_thread.total_moves) + ', or ' + acceptance_percentage + '\n')
+                    file.write('  Status: ' + this_thread.status + '\n')
                 file.close()
 
         # Write updated restart.pkl
@@ -591,105 +585,105 @@ class AimlessShooting(JobType):
         if not os.path.getsize('restart.pkl.bak') == 0:
             shutil.copy('restart.pkl.bak', 'restart.pkl')                   # copying after is safer
 
-    def algorithm(self, allthreads, running, settings):
+    def algorithm(self, thread, allthreads, running, settings):
         # In aimless shooting, algorithm should decide whether or not a new shooting point is needed, obtain it if so,
-        # and update self.history to reflect it.
-        if self.current_type == ['prod', 'prod']:
-            if not self.history.consec_fails == 0:     # prod step failed, so retry it
-                self.current_type = ['init']    # will update to ['prod', 'prod'] in next thread.process call
+        # and update thread.history to reflect it.
+        if thread.current_type == ['prod', 'prod']:
+            if not thread.history.consec_fails == 0:     # prod step failed, so retry it
+                thread.current_type = ['init']    # will update to ['prod', 'prod'] in next thread.process call
                 return running  # escape immediately
 
-            self.suffix += 1
-            self.name = self.history.init_inpcrd[0] + '_' + str(self.suffix)
-            if self.history.prod_results[-1] in [['fwd', 'bwd'], ['bwd', 'fwd']]:    # accepted move
+            thread.suffix += 1
+            thread.name = thread.history.init_inpcrd[0] + '_' + str(thread.suffix)
+            if thread.history.prod_results[-1] in [['fwd', 'bwd'], ['bwd', 'fwd']]:    # accepted move
                 job_index = int(numpy.round(random.random()))    # randomly select a trajectory (there are only ever two in aimless shooting)
                 frame = random.randint(settings.min_dt, settings.max_dt)
-                new_point = self.get_frame(self.history.prod_trajs[-1][job_index], frame, settings)
+                new_point = thread.get_frame(thread.history.prod_trajs[-1][job_index], frame, settings)
                 if not os.path.exists(new_point):
                     try:
-                        traj = mdtraj.load(self.history.prod_trajs[-1][job_index], top=settings.topology)
+                        traj = mdtraj.load(thread.history.prod_trajs[-1][job_index], top=settings.topology)
                         raise RuntimeError(
                             'new init_inpcrd that should be based on frame ' + str(frame) + ' of trajectory file ' +
-                            self.history.prod_trajs[-1][job_index] + ' was not successfully created. Its name (may be '
+                            thread.history.prod_trajs[-1][job_index] + ' was not successfully created. Its name (may be '
                             'an empty string) was recorded as: ' + new_point + '\n'
                             'This should be impossible. Debug information:'
-                            '\n self.history.prod_results[-1]: ' + str(self.history.prod_results[-1]) +
-                            '\n self.history.consec_fails: ' + str(self.history.consec_fails) +
-                            '\n os.path.exists(self.history.prod_trajs[-1][job_index]): ' + str(os.path.exists(self.history.prod_trajs[-1][job_index])) +
-                            '\n traj = mdtraj.load(self.history.prod_trajs[-1][job_index], top=settings.topology) did not raise a ValueError' +
+                            '\n thread.history.prod_results[-1]: ' + str(thread.history.prod_results[-1]) +
+                            '\n thread.history.consec_fails: ' + str(thread.history.consec_fails) +
+                            '\n os.path.exists(thread.history.prod_trajs[-1][job_index]): ' + str(os.path.exists(thread.history.prod_trajs[-1][job_index])) +
+                            '\n traj = mdtraj.load(thread.history.prod_trajs[-1][job_index], top=settings.topology) did not raise a ValueError' +
                             '\n traj.n_frames: ' + str(traj.n_frames))
                     except ValueError:
                         print('thread.get_frame raised value error; waiting 30 seconds and then trying again')
                         time.sleep(30)
-                        new_point = self.get_frame(self.history.prod_trajs[-1][job_index], frame, settings)
+                        new_point = thread.get_frame(thread.history.prod_trajs[-1][job_index], frame, settings)
                         if not os.path.exists(new_point):
                             try:
-                                traj = mdtraj.load(self.history.prod_trajs[-1][job_index], top=settings.topology)
+                                traj = mdtraj.load(thread.history.prod_trajs[-1][job_index], top=settings.topology)
                             except ValueError:
                                 raise RuntimeError(
                                     'new init_inpcrd that should be based on frame ' + str(frame) + ' of trajectory file ' +
-                                    self.history.prod_trajs[-1][job_index] + ' was not successfully created. Its name (may be '
+                                    thread.history.prod_trajs[-1][job_index] + ' was not successfully created. Its name (may be '
                                     'an empty string) was recorded as: ' + new_point + '\n'
                                     'This should be impossible. Debug information:'
-                                    '\n self.history.prod_results[-1]: ' + str(self.history.prod_results[-1]) +
-                                    '\n self.history.consec_fails: ' + str(self.history.consec_fails) +
-                                    '\n os.path.exists(self.history.prod_trajs[-1][job_index]): ' + str(os.path.exists(self.history.prod_trajs[-1][job_index])) +
-                                    '\n traj = mdtraj.load(self.history.prod_trajs[-1][job_index], top=settings.topology) DID raise a ValueError' +
+                                    '\n thread.history.prod_results[-1]: ' + str(thread.history.prod_results[-1]) +
+                                    '\n thread.history.consec_fails: ' + str(thread.history.consec_fails) +
+                                    '\n os.path.exists(thread.history.prod_trajs[-1][job_index]): ' + str(os.path.exists(thread.history.prod_trajs[-1][job_index])) +
+                                    '\n traj = mdtraj.load(thread.history.prod_trajs[-1][job_index], top=settings.topology) DID raise a ValueError' +
                                     '\n This error reached on second attempt after waiting 30 seconds.')
-                self.history.init_inpcrd.append(new_point)
+                thread.history.init_inpcrd.append(new_point)
             else:   # not an accepted move
-                if settings.always_new and self.history.last_accepted >= 0:  # choose a new shooting move from last accepted trajectory
+                if settings.always_new and thread.history.last_accepted >= 0:  # choose a new shooting move from last accepted trajectory
                     job_index = int(numpy.round(random.random()))  # randomly select a trajectory (there are only ever two in aimless shooting)
                     frame = random.randint(settings.min_dt, settings.max_dt)
-                    new_point = self.get_frame(self.history.prod_trajs[self.history.last_accepted][job_index], frame, settings)
+                    new_point = thread.get_frame(thread.history.prod_trajs[thread.history.last_accepted][job_index], frame, settings)
                     if not os.path.exists(new_point):
                         try:
-                            traj = mdtraj.load(self.history.prod_trajs[self.history.last_accepted][job_index], top=settings.topology)
+                            traj = mdtraj.load(thread.history.prod_trajs[thread.history.last_accepted][job_index], top=settings.topology)
                             raise RuntimeError(
                                 'new init_inpcrd that should be based on frame ' + str(frame) + ' of trajectory file ' +
-                                self.history.prod_trajs[self.history.last_accepted][job_index] + ' was not successfully '
+                                thread.history.prod_trajs[thread.history.last_accepted][job_index] + ' was not successfully '
                                 'created. Its name (may be an empty string) was recorded as: ' + new_point + '\n'
                                 'This should be impossible. Debug information:'
-                                '\n self.history.prod_results[-1]: ' + str(self.history.prod_results[-1]) +
-                                '\n self.history.last_accepted: ' + str(self.history.last_accepted) +
-                                '\n self.history.consec_fails: ' + str(self.history.consec_fails) +
-                                '\n os.path.exists(self.history.prod_trajs[self.history.last_accepted][job_index]): ' + str(
-                                    os.path.exists(self.history.prod_trajs[self.history.last_accepted][job_index])) +
-                                '\n traj = mdtraj.load(self.history.prod_trajs[self.history.last_accepted][job_index], top=settings.topology) did not raise a ValueError' +
+                                '\n thread.history.prod_results[-1]: ' + str(thread.history.prod_results[-1]) +
+                                '\n thread.history.last_accepted: ' + str(thread.history.last_accepted) +
+                                '\n thread.history.consec_fails: ' + str(thread.history.consec_fails) +
+                                '\n os.path.exists(thread.history.prod_trajs[thread.history.last_accepted][job_index]): ' + str(
+                                    os.path.exists(thread.history.prod_trajs[thread.history.last_accepted][job_index])) +
+                                '\n traj = mdtraj.load(thread.history.prod_trajs[thread.history.last_accepted][job_index], top=settings.topology) did not raise a ValueError' +
                                 '\n traj.n_frames: ' + str(traj.n_frames))
                         except ValueError:
                             print('thread.get_frame raised ValueError; waiting 30 seconds and then trying again')
                             time.sleep(30)
-                            new_point = self.get_frame(self.history.prod_trajs[self.history.last_accepted][job_index], frame, settings)
+                            new_point = thread.get_frame(thread.history.prod_trajs[thread.history.last_accepted][job_index], frame, settings)
                             if not os.path.exists(new_point):
                                 try:
-                                    traj = mdtraj.load(self.history.prod_trajs[self.history.last_accepted][job_index], top=settings.topology)
+                                    traj = mdtraj.load(thread.history.prod_trajs[thread.history.last_accepted][job_index], top=settings.topology)
                                 except ValueError:
                                     raise RuntimeError(
                                         'new init_inpcrd that should be based on frame ' + str(frame) + ' of trajectory file ' +
-                                        self.history.prod_trajs[self.history.last_accepted][job_index] + ' was not successfully '
+                                        thread.history.prod_trajs[thread.history.last_accepted][job_index] + ' was not successfully '
                                         'created. Its name (may be an empty string) was recorded as: ' + new_point + '\n'
                                         'This should be impossible. Debug information:'
-                                        '\n self.history.prod_results[-1]: ' + str(self.history.prod_results[-1]) +
-                                        '\n self.history.last_accepted: ' + str(self.history.last_accepted) +
-                                        '\n self.history.consec_fails: ' + str(self.history.consec_fails) +
-                                        '\n os.path.exists(self.history.prod_trajs[self.history.last_accepted][job_index]): ' + str(
-                                            os.path.exists(self.history.prod_trajs[self.history.last_accepted][job_index])) +
-                                        '\n traj = mdtraj.load(self.history.prod_trajs[self.history.last_accepted][job_index], top=settings.topology) DID raise a ValueError' +
+                                        '\n thread.history.prod_results[-1]: ' + str(thread.history.prod_results[-1]) +
+                                        '\n thread.history.last_accepted: ' + str(thread.history.last_accepted) +
+                                        '\n thread.history.consec_fails: ' + str(thread.history.consec_fails) +
+                                        '\n os.path.exists(thread.history.prod_trajs[thread.history.last_accepted][job_index]): ' + str(
+                                            os.path.exists(thread.history.prod_trajs[thread.history.last_accepted][job_index])) +
+                                        '\n traj = mdtraj.load(thread.history.prod_trajs[thread.history.last_accepted][job_index], top=settings.topology) DID raise a ValueError' +
                                         '\n This error reached on second attempt after waiting 30 seconds.')
-                    self.history.init_inpcrd.append(new_point)
+                    thread.history.init_inpcrd.append(new_point)
                 else:   # always_new = False or there have been no accepted moves in this thread yet
-                    self.history.init_inpcrd.append(self.history.init_inpcrd[-1])   # begin next move from same point as last move
+                    thread.history.init_inpcrd.append(thread.history.init_inpcrd[-1])   # begin next move from same point as last move
 
-            if settings.cleanup and self.history.last_accepted < self.suffix - 1:   # delete this trajectory if it is not the new last_accepted
-                for job_index in range(len(self.current_type)):
-                    os.remove(self.history.prod_trajs[-1][job_index])
+            if settings.cleanup and thread.history.last_accepted < thread.suffix - 1:   # delete this trajectory if it is not the new last_accepted
+                for job_index in range(len(thread.current_type)):
+                    os.remove(thread.history.prod_trajs[-1][job_index])
 
-        elif self.current_type == ['init']:
-            if not os.path.exists(self.history.init_coords[-1][0]):  # init step failed, so retry it
-                self.current_type = []  # reset current_type so it will be pushed back to ['init'] by thread.process
+        elif thread.current_type == ['init']:
+            if not os.path.exists(thread.history.init_coords[-1][0]):  # init step failed, so retry it
+                thread.current_type = []  # reset current_type so it will be pushed back to ['init'] by thread.process
             else:   # init step produced the desired file, so update coordinates
-                self.history.init_coords[-1].append(utilities.rev_vels(self.history.init_coords[-1][0]))
+                thread.history.init_coords[-1].append(utilities.rev_vels(thread.history.init_coords[-1][0]))
 
         return running
 
@@ -700,7 +694,7 @@ class AimlessShooting(JobType):
     def verify(self, arg, suffix, argtype):
         # Supported verify types for aimless shooting: 'history', 'type'
         print(suffix)
-        print(self.terminated)
+        print(thread.terminated)
         if argtype == 'type':
             if not arg in [[''], ['init'], ['prod', 'prod']]:
                 return False
@@ -736,8 +730,8 @@ class CommittorAnalysis(JobType):
     Adapter class for committor analysis
     """
 
-    def get_input_file(self, job_index, settings):
-        return settings.path_to_input_files + '/' + settings.job_type + '_' + self.current_type[job_index] + '_' + settings.md_engine + '.in'
+    def get_input_file(self, thread, job_index, settings):
+        return settings.path_to_input_files + '/' + settings.job_type + '_' + thread.current_type[job_index] + '_' + settings.md_engine + '.in'
 
     def get_initial_coordinates(self, settings):
         if settings.committor_analysis_use_rc_out:
@@ -775,45 +769,45 @@ class CommittorAnalysis(JobType):
             except AttributeError:
                 raise RuntimeError('committor_analysis_use_rc_out = False, but initial_coordinates was not provided.')
 
-    def check_for_successful_step(self, settings):
+    def check_for_successful_step(self, thread, settings):
         return True     # nothing to check for in committor analysis
 
-    def update_history(self, settings, **kwargs):
+    def update_history(self, thread, settings, **kwargs):
         if 'initialize' in kwargs.keys():
             if kwargs['initialize']:
-                self.history = argparse.Namespace()
-                self.history.prod_inpcrd = []    # one-length list of strings; set by main.init_threads
-                self.history.prod_trajs = []     # list of strings; updated by update_history
-                self.history.prod_results = []   # list of strings, 'fwd'/'bwd'/''; updated by update_results
+                thread.history = argparse.Namespace()
+                thread.history.prod_inpcrd = []    # one-length list of strings; set by main.init_threads
+                thread.history.prod_trajs = []     # list of strings; updated by update_history
+                thread.history.prod_results = []   # list of strings, 'fwd'/'bwd'/''; updated by update_results
             if 'inpcrd' in kwargs.keys():
-                self.history.prod_inpcrd.append(kwargs['inpcrd'])
-        else:   # self.history should already exist
+                thread.history.prod_inpcrd.append(kwargs['inpcrd'])
+        else:   # thread.history should already exist
             if 'nc' in kwargs.keys():
-                self.history.prod_trajs.append(kwargs['nc'])
+                thread.history.prod_trajs.append(kwargs['nc'])
 
-    def get_inpcrd(self):
-        return [self.history.prod_inpcrd[0] for null in range(len(self.current_type))]
+    def get_inpcrd(self, thread):
+        return [thread.history.prod_inpcrd[0] for null in range(len(thread.current_type))]
 
-    def gatekeeper(self, settings):
-        for job_index in range(len(self.jobids)):
-            if self.get_status(job_index, settings) == 'R':     # if the job in question is running
-                frame_to_check = self.get_frame(self.history.prod_trajs[job_index], -1, settings)
+    def gatekeeper(self, thread, settings):
+        for job_index in range(len(thread.jobids)):
+            if thread.get_status(job_index, settings) == 'R':     # if the job in question is running
+                frame_to_check = thread.get_frame(thread.history.prod_trajs[job_index], -1, settings)
                 if frame_to_check and utilities.check_commit(frame_to_check, settings):  # if it has committed to a basin
-                    self.cancel_job(job_index, settings)        # cancel it
+                    thread.cancel_job(job_index, settings)        # cancel it
                     os.remove(frame_to_check)
 
         # if every job in this thread has status 'C'ompleted/'C'anceled...
-        if all(item == 'C' for item in [self.get_status(job_index, settings) for job_index in range(len(self.jobids))]):
+        if all(item == 'C' for item in [thread.get_status(job_index, settings) for job_index in range(len(thread.jobids))]):
             return True
         else:
             return False
 
-    def get_next_step(self, settings):
-        self.current_type = ['prod' for null in range(settings.committor_analysis_n)]
-        self.current_name = [str(int(i)) for i in range(settings.committor_analysis_n)]
-        return self.current_type, self.current_name
+    def get_next_step(self, thread, settings):
+        thread.current_type = ['prod' for null in range(settings.committor_analysis_n)]
+        thread.current_name = [str(int(i)) for i in range(settings.committor_analysis_n)]
+        return thread.current_type, thread.current_name
 
-    def get_batch_template(self, type, settings):
+    def get_batch_template(self, thread, type, settings):
         if type == 'prod':
             templ = settings.md_engine + '_' + settings.batch_system + '.tpl'
             if os.path.exists(settings.path_to_templates + '/' + templ):
@@ -823,27 +817,27 @@ class CommittorAnalysis(JobType):
         else:
             raise ValueError('unexpected batch template type for committor_analysis: ' + str(type))
 
-    def check_termination(self, allthreads, settings):
-        self.terminated = True  # committor analysis threads always terminate after one step
+    def check_termination(self, thread, allthreads, settings):
+        thread.terminated = True  # committor analysis threads always terminate after one step
         return False            # no global termination criterion exists for committor analysis
 
-    def update_results(self, allthreads, settings):
+    def update_results(self, thread, allthreads, settings):
         # Initialize committor_analysis.out if not already extant
         if not os.path.exists('committor_analysis.out'):
             with open('committor_analysis.out', 'w') as f:
                 f.write('Committed to Forward Basin / Total Committed to Either Basin\n')
 
         # Update current_results
-        for job_index in range(len(self.current_type)):
-            frame_to_check = self.get_frame(self.history.prod_trajs[job_index], -1, settings)
+        for job_index in range(len(thread.current_type)):
+            frame_to_check = thread.get_frame(thread.history.prod_trajs[job_index], -1, settings)
             if frame_to_check:
-                self.history.prod_results.append(utilities.check_commit(frame_to_check, settings))
+                thread.history.prod_results.append(utilities.check_commit(frame_to_check, settings))
                 os.remove(frame_to_check)
 
         # Write results to committor_analysis.out
         fwds = 0
         bwds = 0
-        for result in self.history.prod_results:
+        for result in thread.history.prod_results:
             if result == 'fwd':
                 fwds += 1
             elif result == 'bwd':
@@ -854,7 +848,7 @@ class CommittorAnalysis(JobType):
         # Write updated restart.pkl
         pickle.dump(allthreads, open('restart.pkl', 'wb'), protocol=2)
 
-    def algorithm(self, allthreads, running, settings):
+    def algorithm(self, thread, allthreads, running, settings):
         return running    # nothing to set because there is no next step
 
     def cleanup(self, settings):
@@ -869,22 +863,22 @@ class EquilibriumPathSampling(JobType):
     Adapter class for equilibrium path sampling
     """
 
-    def get_input_file(self, job_index, settings):
+    def get_input_file(self, thread, job_index, settings):
         if not settings.eps_n_steps % settings.eps_out_freq == 0:
             raise RuntimeError('eps_n_steps must be evenly divisible by eps_out_freq')
 
-        if self.current_type == ['init']:
-            return settings.path_to_input_files + '/' + settings.job_type + '_' + self.current_type[job_index] + '_' + settings.md_engine + '.in'
+        if thread.current_type == ['init']:
+            return settings.path_to_input_files + '/' + settings.job_type + '_' + thread.current_type[job_index] + '_' + settings.md_engine + '.in'
         else:
             if job_index == 0:  # have to roll to determine the number of fwd and bwd steps
                 roll = random.randint(1, int(settings.eps_n_steps/settings.eps_out_freq)) * settings.eps_out_freq
-                self.history.prod_lens.append([roll, settings.eps_n_steps - roll])
+                thread.history.prod_lens.append([roll, settings.eps_n_steps - roll])
 
-            input_file_name = 'eps_' + str(self.history.prod_lens[-1][job_index]) + '.in'
+            input_file_name = 'eps_' + str(thread.history.prod_lens[-1][job_index]) + '.in'
 
             if not os.path.exists(input_file_name):
                 template = settings.env.get_template(settings.md_engine + '_eps_in.tpl')
-                filled = template.render(nstlim=str(self.history.prod_lens[-1][job_index]), ntwx=str(settings.eps_out_freq))
+                filled = template.render(nstlim=str(thread.history.prod_lens[-1][job_index]), ntwx=str(settings.eps_out_freq))
                 with open(input_file_name, 'w') as newfile:
                     newfile.write(filled)
                     newfile.close()
@@ -911,33 +905,33 @@ class EquilibriumPathSampling(JobType):
                 pass
         return list_to_return
 
-    def check_for_successful_step(self, settings):
-        if self.current_type == ['init']:   # requires that self.history.init_coords[-1] exists
-            if os.path.exists(self.history.init_coords[-1][0]):
+    def check_for_successful_step(self, thread, settings):
+        if thread.current_type == ['init']:   # requires that thread.history.init_coords[-1] exists
+            if os.path.exists(thread.history.init_coords[-1][0]):
                 return True
-        if self.current_type == ['prod', 'prod']:   # requires that both files in self.history.prod_trajs[-1] exist
-            if all([os.path.exists(self.history.prod_trajs[-1][i]) for i in range(2)]):
+        if thread.current_type == ['prod', 'prod']:   # requires that both files in thread.history.prod_trajs[-1] exist
+            if all([os.path.exists(thread.history.prod_trajs[-1][i]) for i in range(2)]):
                 return True
         return False
 
-    def update_history(self, settings, **kwargs):
+    def update_history(self, thread, settings, **kwargs):
         if 'initialize' in kwargs.keys():
             if kwargs['initialize']:
-                self.history = argparse.Namespace()
-                self.history.init_inpcrd = []       # list of strings, inpcrd for init steps; initialized by main.init_threads and updated by algorithm
-                self.history.init_coords = []       # list of 2-length lists of strings, init [_fwd.rst7, _bwd.rst7]; updated by update_history and then in algorithm
-                self.history.prod_trajs = []        # list of 2-length lists of strings, [_fwd.nc, _bwd.nc]; updated by update_history
-                self.history.prod_results = []      # list of 2-length lists of strings ['fwd'/'bwd'/'', 'fwd'/'bwd'/'']; updated by update_results
-                self.history.prod_lens = []         # list of 2-length lists of ints indicating the lengths of fwd and bwd trajectories at each step; updated by get_input_file
-                self.history.last_accepted = -1     # int, index of last accepted prod_trajs entry; updated by update_results (-1 means none yet accepted)
+                thread.history = argparse.Namespace()
+                thread.history.init_inpcrd = []       # list of strings, inpcrd for init steps; initialized by main.init_threads and updated by algorithm
+                thread.history.init_coords = []       # list of 2-length lists of strings, init [_fwd.rst7, _bwd.rst7]; updated by update_history and then in algorithm
+                thread.history.prod_trajs = []        # list of 2-length lists of strings, [_fwd.nc, _bwd.nc]; updated by update_history
+                thread.history.prod_results = []      # list of 2-length lists of strings ['fwd'/'bwd'/'', 'fwd'/'bwd'/'']; updated by update_results
+                thread.history.prod_lens = []         # list of 2-length lists of ints indicating the lengths of fwd and bwd trajectories at each step; updated by get_input_file
+                thread.history.last_accepted = -1     # int, index of last accepted prod_trajs entry; updated by update_results (-1 means none yet accepted)
             if 'inpcrd' in kwargs.keys():
-                self.history.init_inpcrd.append(kwargs['inpcrd'])
+                thread.history.init_inpcrd.append(kwargs['inpcrd'])
                 cvs = utilities.get_cvs(kwargs['inpcrd'], settings, reduce=settings.rc_reduced_cvs).split(' ')
                 init_rc = utilities.evaluate_rc(settings.rc_definition, cvs)
                 window_index = 0
                 for bounds in settings.eps_bounds:
                     if bounds[0] <= init_rc <= bounds[1]:
-                        self.history.bounds = bounds
+                        thread.history.bounds = bounds
                         if settings.eps_dynamic_seed:
                             settings.eps_empty_windows[window_index] -= 1  # decrement empty window count in this window
                             if settings.eps_empty_windows[window_index] < 0:  # minimum value 0
@@ -945,56 +939,56 @@ class EquilibriumPathSampling(JobType):
                         break
                     window_index += 1
                 try:
-                    temp = self.history.bounds  # just to make sure this got set
+                    temp = thread.history.bounds  # just to make sure this got set
                 except AttributeError:
                     raise RuntimeError('new equilibrium path sampling thread initial coordinates ' + kwargs['inpcrd'] +
                                        ' has out-of-bounds reaction coordinate value: ' + str(init_rc))
-        else:   # self.history should already exist
-            if self.current_type == ['init']:     # update init attributes
+        else:   # thread.history should already exist
+            if thread.current_type == ['init']:     # update init attributes
                 if 'rst' in kwargs.keys():
-                    if len(self.history.init_coords) < self.suffix + 1:
-                        self.history.init_coords.append([])
-                        if len(self.history.init_coords) < self.suffix + 1:
-                            raise IndexError('history.init_coords is the wrong length for thread: ' + self.history.init_inpcrd[0] +
-                                             '\nexpected length ' + str(self.suffix))
-                    self.history.init_coords[self.suffix].append(kwargs['rst'])
-            elif self.current_type == ['prod', 'prod']:
+                    if len(thread.history.init_coords) < thread.suffix + 1:
+                        thread.history.init_coords.append([])
+                        if len(thread.history.init_coords) < thread.suffix + 1:
+                            raise IndexError('history.init_coords is the wrong length for thread: ' + thread.history.init_inpcrd[0] +
+                                             '\nexpected length ' + str(thread.suffix))
+                    thread.history.init_coords[thread.suffix].append(kwargs['rst'])
+            elif thread.current_type == ['prod', 'prod']:
                 if 'nc' in kwargs.keys():
-                    if len(self.history.prod_trajs) < self.suffix + 1:
-                        self.history.prod_trajs.append([])
-                        if len(self.history.prod_trajs) < self.suffix + 1:
-                            raise IndexError('history.prod_trajs is the wrong length for thread: ' + self.history.init_inpcrd[0] +
-                                             '\nexpected length ' + str(self.suffix))
-                    self.history.prod_trajs[self.suffix].append(kwargs['nc'])
+                    if len(thread.history.prod_trajs) < thread.suffix + 1:
+                        thread.history.prod_trajs.append([])
+                        if len(thread.history.prod_trajs) < thread.suffix + 1:
+                            raise IndexError('history.prod_trajs is the wrong length for thread: ' + thread.history.init_inpcrd[0] +
+                                             '\nexpected length ' + str(thread.suffix))
+                    thread.history.prod_trajs[thread.suffix].append(kwargs['nc'])
 
-    def get_inpcrd(self):
-        if self.current_type == ['init']:
-            return [self.history.init_inpcrd[-1]]   # should return a list, but history.init_inpcrd contains strings
-        elif self.current_type == ['prod', 'prod']:
-            return self.history.init_coords[-1]     # should return a list, and history.init_coords contains lists
+    def get_inpcrd(self, thread):
+        if thread.current_type == ['init']:
+            return [thread.history.init_inpcrd[-1]]   # should return a list, but history.init_inpcrd contains strings
+        elif thread.current_type == ['prod', 'prod']:
+            return thread.history.init_coords[-1]     # should return a list, and history.init_coords contains lists
         else:
-            raise ValueError('invalid thread.current_type value: ' + str(self.current_type) + ' for thread: ' + self.history.init_inpcrd[0])
+            raise ValueError('invalid thread.current_type value: ' + str(thread.current_type) + ' for thread: ' + thread.history.init_inpcrd[0])
 
-    def gatekeeper(self, settings):
+    def gatekeeper(self, thread, settings):
         # if every job in this thread has status 'C'ompleted/'C'anceled...
-        if all(item == 'C' for item in [self.get_status(job_index, settings) for job_index in range(len(self.jobids))]):
+        if all(item == 'C' for item in [thread.get_status(job_index, settings) for job_index in range(len(thread.jobids))]):
             return True
         else:
             return False
 
-    def get_next_step(self, settings):
-        if self.current_type == []:
-            self.current_type = ['init']
-            self.current_name = ['init']
-        elif self.current_type == ['init']:
-            self.current_type = ['prod', 'prod']
-            self.current_name = ['fwd', 'bwd']
-        elif self.current_type == ['prod', 'prod']:
-            self.current_type = ['init']
-            self.current_name = ['init']
-        return self.current_type, self.current_name
+    def get_next_step(self, thread, settings):
+        if thread.current_type == []:
+            thread.current_type = ['init']
+            thread.current_name = ['init']
+        elif thread.current_type == ['init']:
+            thread.current_type = ['prod', 'prod']
+            thread.current_name = ['fwd', 'bwd']
+        elif thread.current_type == ['prod', 'prod']:
+            thread.current_type = ['init']
+            thread.current_name = ['init']
+        return thread.current_type, thread.current_name
 
-    def get_batch_template(self, type, settings):
+    def get_batch_template(self, thread, type, settings):
         if type in ['init', 'prod']:
             templ = settings.md_engine + '_' + settings.batch_system + '.tpl'
             if os.path.exists(settings.path_to_templates + '/' + templ):
@@ -1004,98 +998,98 @@ class EquilibriumPathSampling(JobType):
         else:
             raise ValueError('unexpected batch template type for equilibrium path sampling: ' + str(type))
 
-    def check_termination(self, allthreads, settings):
+    def check_termination(self, thread, allthreads, settings):
         global_terminate = False    # initialize
-        if self.current_type == ['prod', 'prod']:  # equilibrium path sampling only checks termination after prod steps
+        if thread.current_type == ['prod', 'prod']:  # equilibrium path sampling only checks termination after prod steps
             thread_terminate = ''
             global_terminate = False    # no global termination criteria for this jobtype
 
             if settings.samples_per_window > 0:
                 samples = 0
-                for thread in allthreads:
-                    if thread.history.bounds == self.history.bounds:
-                        for job_index in range(len(thread.history.prod_results)):
-                            samples += len([1 for i in range(len(thread.history.prod_results[job_index])) if thread.history.bounds[0] <= thread.history.prod_results[job_index][i] <= thread.history.bounds[1]])
+                for this_thread in allthreads:
+                    if this_thread.history.bounds == thread.history.bounds:
+                        for job_index in range(len(this_thread.history.prod_results)):
+                            samples += len([1 for i in range(len(this_thread.history.prod_results[job_index])) if this_thread.history.bounds[0] <= this_thread.history.prod_results[job_index][i] <= this_thread.history.bounds[1]])
                 if samples >= settings.samples_per_window:
                     thread_terminate = 'reached desired number of samples in this window'
 
             if thread_terminate:
-                self.status = 'terminated after step ' + str(self.suffix) + ' due to: ' + thread_terminate
-                self.terminated = True
+                thread.status = 'terminated after step ' + str(thread.suffix) + ' due to: ' + thread_terminate
+                thread.terminated = True
             else:
-                self.status = 'running step ' + str(self.suffix + 1)  # suffix isn't updated until call to algorithm()
-                self.terminated = False
+                thread.status = 'running step ' + str(thread.suffix + 1)  # suffix isn't updated until call to algorithm()
+                thread.terminated = False
 
         return global_terminate
 
-    def update_results(self, allthreads, settings):
-        if self.current_type == ['prod', 'prod']:   # equilibrium path sampling only writes after prod steps
+    def update_results(self, thread, allthreads, settings):
+        if thread.current_type == ['prod', 'prod']:   # equilibrium path sampling only writes after prod steps
             # Initialize eps.out if not already extant
             if not os.path.exists(settings.working_directory + '/eps.out'):
                 open(settings.working_directory + '/eps.out', 'w').write('Lower RC bound; Upper RC bound; RC value')
                 open(settings.working_directory + '/eps.out', 'w').close()
 
             # Update current_results, total and accepted move counts, and status.txt
-            self.history.prod_results.append([])
+            thread.history.prod_results.append([])
             # First, add results from init frame
-            cvs = utilities.get_cvs(self.history.init_coords[-1][0], settings, reduce=settings.rc_reduced_cvs).split(' ')
-            self.history.prod_results[-1].append(utilities.evaluate_rc(settings.rc_definition, cvs))
+            cvs = utilities.get_cvs(thread.history.init_coords[-1][0], settings, reduce=settings.rc_reduced_cvs).split(' ')
+            thread.history.prod_results[-1].append(utilities.evaluate_rc(settings.rc_definition, cvs))
             # Then, add results from fwd and then bwd trajectories, frame-by-frame
-            for job_index in range(len(self.current_type)):
-                if self.history.prod_lens[-1][job_index] > 0:
-                    n_frames = pytraj.iterload(self.history.prod_trajs[-1][job_index], settings.topology).n_frames
+            for job_index in range(len(thread.current_type)):
+                if thread.history.prod_lens[-1][job_index] > 0:
+                    n_frames = pytraj.iterload(thread.history.prod_trajs[-1][job_index], settings.topology).n_frames
                     for frame in range(n_frames):
-                        frame_to_check = self.get_frame(self.history.prod_trajs[-1][job_index], frame + 1, settings)
+                        frame_to_check = thread.get_frame(thread.history.prod_trajs[-1][job_index], frame + 1, settings)
                         cvs = utilities.get_cvs(frame_to_check, settings, reduce=settings.rc_reduced_cvs).split(' ')
-                        self.history.prod_results[-1].append(utilities.evaluate_rc(settings.rc_definition, cvs))
+                        thread.history.prod_results[-1].append(utilities.evaluate_rc(settings.rc_definition, cvs))
                         os.remove(frame_to_check)
-            self.total_moves += 1
-            if True in [self.history.bounds[0] <= rc_value <= self.history.bounds[1] for rc_value in self.history.prod_results[-1]]:
-                self.history.last_accepted = int(len(self.history.prod_trajs) - 1)   # new index of last accepted move
-                self.accept_moves += 1
+            thread.total_moves += 1
+            if True in [thread.history.bounds[0] <= rc_value <= thread.history.bounds[1] for rc_value in thread.history.prod_results[-1]]:
+                thread.history.last_accepted = int(len(thread.history.prod_trajs) - 1)   # new index of last accepted move
+                thread.accept_moves += 1
 
             # Write RC values of accepted frames to eps.out, either from most recent step if it was accepted, or from
             # last_accepted step if it was not (and there has been an accepted step)
-            if self.history.last_accepted >= 0:     # last_accepted refers to most recent step iff it was accepted
-                for rc_value in self.history.prod_results[self.history.last_accepted]:
-                    if self.history.bounds[0] <= rc_value <= self.history.bounds[1]:
-                        open(settings.working_directory + '/eps.out', 'a').write(str(self.history.bounds[0]) + ' ' + str(self.history.bounds[1]) + ' ' + str(rc_value) + '\n')
+            if thread.history.last_accepted >= 0:     # last_accepted refers to most recent step iff it was accepted
+                for rc_value in thread.history.prod_results[thread.history.last_accepted]:
+                    if thread.history.bounds[0] <= rc_value <= thread.history.bounds[1]:
+                        open(settings.working_directory + '/eps.out', 'a').write(str(thread.history.bounds[0]) + ' ' + str(thread.history.bounds[1]) + ' ' + str(rc_value) + '\n')
                         open(settings.working_directory + '/eps.out', 'a').close()
 
             with open('status.txt', 'w') as file:
-                for thread in allthreads:
+                for this_thread in allthreads:
                     try:
-                        acceptance_percentage = str(100 * thread.accept_moves / thread.total_moves)[0:5] + '%'
+                        acceptance_percentage = str(100 * this_thread.accept_moves / this_thread.total_moves)[0:5] + '%'
                     except ZeroDivisionError:   # 0/0
                         acceptance_percentage = '0%'
-                    file.write(thread.history.init_inpcrd[0] + ' acceptance ratio: ' + str(thread.accept_moves) +
-                               '/' + str(thread.total_moves) + ', or ' + acceptance_percentage + '\n')
-                    file.write('  Status: ' + thread.status + '\n')
+                    file.write(this_thread.history.init_inpcrd[0] + ' acceptance ratio: ' + str(this_thread.accept_moves) +
+                               '/' + str(this_thread.total_moves) + ', or ' + acceptance_percentage + '\n')
+                    file.write('  Status: ' + this_thread.status + '\n')
                 file.close()
 
         # Write updated restart.pkl
         pickle.dump(allthreads, open('restart.pkl', 'wb'), protocol=2)
 
-    def algorithm(self, allthreads, running, settings):
+    def algorithm(self, thread, allthreads, running, settings):
         # In equilibrium path sampling, algorithm should decide whether or not a new shooting point is needed, obtain it
-        # if so, and update self.history to reflect it.
-        if self.current_type == ['prod', 'prod']:
-            self.suffix += 1
-            self.name = self.history.init_inpcrd[0] + '_' + str(self.suffix)
+        # if so, and update thread.history to reflect it.
+        if thread.current_type == ['prod', 'prod']:
+            thread.suffix += 1
+            thread.name = thread.history.init_inpcrd[0] + '_' + str(thread.suffix)
 
-            successful_step = EquilibriumPathSampling.check_for_successful_step(self, settings) # since algorithm runs either way
+            successful_step = EquilibriumPathSampling.check_for_successful_step(self, thread, settings) # since algorithm runs either way
 
             # Need these values for non-accepted move behavior
-            if self.history.last_accepted >= 0:
-                traj = pytraj.iterload(self.history.prod_trajs[self.history.last_accepted][0], settings.topology)
+            if thread.history.last_accepted >= 0:
+                traj = pytraj.iterload(thread.history.prod_trajs[thread.history.last_accepted][0], settings.topology)
                 n_fwd = traj.n_frames
-                traj = pytraj.iterload(self.history.prod_trajs[self.history.last_accepted][1], settings.topology)
+                traj = pytraj.iterload(thread.history.prod_trajs[thread.history.last_accepted][1], settings.topology)
                 n_bwd = traj.n_frames
 
-            if True in [self.history.bounds[0] <= rc_value <= self.history.bounds[1] for rc_value in self.history.prod_results[-1]] and successful_step:    # accepted move, both trajectories exist
-                traj = pytraj.iterload(self.history.prod_trajs[-1][0], settings.topology)
+            if True in [thread.history.bounds[0] <= rc_value <= thread.history.bounds[1] for rc_value in thread.history.prod_results[-1]] and successful_step:    # accepted move, both trajectories exist
+                traj = pytraj.iterload(thread.history.prod_trajs[-1][0], settings.topology)
                 n_fwd = traj.n_frames
-                traj = pytraj.iterload(self.history.prod_trajs[-1][1], settings.topology)
+                traj = pytraj.iterload(thread.history.prod_trajs[-1][1], settings.topology)
                 n_bwd = traj.n_frames
 
                 if settings.DEBUG:
@@ -1105,16 +1099,16 @@ class EquilibriumPathSampling(JobType):
 
                 if 0 < random_bead <= n_bwd:
                     frame = random_bead
-                    new_point = self.get_frame(self.history.prod_trajs[-1][1], frame, settings)
+                    new_point = thread.get_frame(thread.history.prod_trajs[-1][1], frame, settings)
                 elif n_bwd < random_bead <= n_fwd + n_bwd:
                     frame = random_bead - n_bwd
-                    new_point = self.get_frame(self.history.prod_trajs[-1][0], frame, settings)
+                    new_point = thread.get_frame(thread.history.prod_trajs[-1][0], frame, settings)
                 else:   # random_bead = 0, chooses the "init" bead
-                    new_point = self.history.init_inpcrd[-1]
-                self.history.init_inpcrd.append(new_point)
+                    new_point = thread.history.init_inpcrd[-1]
+                thread.history.init_inpcrd.append(new_point)
 
             else:   # not an accepted move or not both trajectories exist (which we'll not accept no matter what)
-                if self.history.last_accepted >= 0:  # choose a new shooting move from last accepted trajectory
+                if thread.history.last_accepted >= 0:  # choose a new shooting move from last accepted trajectory
                     if settings.DEBUG:
                         random_bead = n_fwd + n_bwd
                     else:
@@ -1122,23 +1116,23 @@ class EquilibriumPathSampling(JobType):
 
                     if 0 < random_bead <= n_bwd:
                         frame = random_bead
-                        new_point = self.get_frame(self.history.prod_trajs[self.history.last_accepted][1], frame, settings)
+                        new_point = thread.get_frame(thread.history.prod_trajs[thread.history.last_accepted][1], frame, settings)
                     elif n_bwd < random_bead <= n_fwd + n_bwd:
                         frame = random_bead - n_bwd
-                        new_point = self.get_frame(self.history.prod_trajs[self.history.last_accepted][0], frame, settings)
+                        new_point = thread.get_frame(thread.history.prod_trajs[thread.history.last_accepted][0], frame, settings)
                     else:  # random_bead = 0, chooses the "init" bead
-                        new_point = self.history.init_inpcrd[self.history.last_accepted]
-                    self.history.init_inpcrd.append(new_point)
+                        new_point = thread.history.init_inpcrd[thread.history.last_accepted]
+                    thread.history.init_inpcrd.append(new_point)
 
                 else:   # there have been no accepted moves in this thread yet
-                    self.history.init_inpcrd.append(self.history.init_inpcrd[-1])   # begin next move from same point as last move
+                    thread.history.init_inpcrd.append(thread.history.init_inpcrd[-1])   # begin next move from same point as last move
 
             # Implement dynamic seeding of EPS windows
-            if settings.eps_dynamic_seed and True in [self.history.bounds[0] <= rc_value <= self.history.bounds[1] for rc_value in self.history.prod_results[-1]] and successful_step and self.history.last_accepted >= 0:
+            if settings.eps_dynamic_seed and True in [thread.history.bounds[0] <= rc_value <= thread.history.bounds[1] for rc_value in thread.history.prod_results[-1]] and successful_step and thread.history.last_accepted >= 0:
                 frame_index = -1
-                for rc_value in self.history.prod_results[-1]:  # results are ordered as: [init, fwd, bwd]
+                for rc_value in thread.history.prod_results[-1]:  # results are ordered as: [init, fwd, bwd]
                     frame_index += 1
-                    if not self.history.bounds[0] <= rc_value <= self.history.bounds[1]:
+                    if not thread.history.bounds[0] <= rc_value <= thread.history.bounds[1]:
                         try:
                             window_index = [bounds[0] <= rc_value <= bounds[1] for bounds in settings.eps_bounds].index(True)
                         except ValueError:  # rc_value not in range of eps_bounds, so nothing to do here
@@ -1147,25 +1141,25 @@ class EquilibriumPathSampling(JobType):
                         if settings.eps_empty_windows[window_index] > 0:    # time to make a new Thread here
                             # First have to get or make the file for the initial coordinates
                             if frame_index == 0:        # init coordinates
-                                coord_file = self.history.init_coords[-1][0]
+                                coord_file = thread.history.init_coords[-1][0]
                             elif frame_index <= n_fwd:  # in fwd trajectory
-                                coord_file = self.get_frame(self.history.prod_trajs[-1][0], frame_index, settings)
+                                coord_file = thread.get_frame(thread.history.prod_trajs[-1][0], frame_index, settings)
                                 if coord_file == '':
-                                    raise FileNotFoundError('Trajectory ' + self.history.prod_trajs[-1][0] + ' was not '
+                                    raise FileNotFoundError('Trajectory ' + thread.history.prod_trajs[-1][0] + ' was not '
                                                             'found in spite of an RC value having been assigned to it.')
                             else:                       # in bwd trajectory
-                                coord_file = self.get_frame(self.history.prod_trajs[-1][1], frame_index - n_fwd, settings)
+                                coord_file = thread.get_frame(thread.history.prod_trajs[-1][1], frame_index - n_fwd, settings)
                                 if coord_file == '':
-                                    raise FileNotFoundError('Trajectory ' + self.history.prod_trajs[-1][1] + ' was not '
+                                    raise FileNotFoundError('Trajectory ' + thread.history.prod_trajs[-1][1] + ' was not '
                                                             'found in spite of an RC value having been assigned to it.')
 
                             if not os.path.exists(coord_file):
                                 if frame_index == 0:
-                                    traj_name = self.history.init_coords[-1][0]
+                                    traj_name = thread.history.init_coords[-1][0]
                                 elif frame_index <= n_fwd:
-                                    traj_name = self.history.prod_trajs[-1][0]
+                                    traj_name = thread.history.prod_trajs[-1][0]
                                 else:
-                                    traj_name = self.history.prod_trajs[-1][1]
+                                    traj_name = thread.history.prod_trajs[-1][1]
                                 raise FileNotFoundError('attempted to make a new equilibrium path sampling thread from '
                                                         + traj_name + ', but was unable to create a new coordinate file'
                                                         '. Verify that this file has not become corrupted and that you '
@@ -1199,21 +1193,21 @@ class EquilibriumPathSampling(JobType):
                                               ' raise an issue on the ATESA GitHub page.'
                                               '\nDEBUG:' +
                                               '\n coord_file: ' + str(coord_file) +
-                                              '\n self.history.prod_results[-1]: ' + str(self.history.prod_results[-1]) +
+                                              '\n thread.history.prod_results[-1]: ' + str(thread.history.prod_results[-1]) +
                                               '\n frame_index: ' + str(frame_index) +
-                                              '\n self.history.prod_trajs[-1]: ' + str(self.history.prod_trajs[-1]) +
-                                              '\n self.history.init_coords[-1][0]: ' + str(self.history.init_coords[-1][0]) +
-                                              '\n self.history.bounds: ' + str(self.history.bounds) +
+                                              '\n thread.history.prod_trajs[-1]: ' + str(thread.history.prod_trajs[-1]) +
+                                              '\n thread.history.init_coords[-1][0]: ' + str(thread.history.init_coords[-1][0]) +
+                                              '\n thread.history.bounds: ' + str(thread.history.bounds) +
                                               '\n n_fwd: ' + str(n_fwd) +
                                               '\n n_bwd: ' + str(n_bwd))
 
 
 
-        elif self.current_type == ['init']:
-            if not os.path.exists(self.history.init_coords[-1][0]):  # init step failed, so retry it
-                self.current_type = []  # reset current_type so it will be pushed back to ['init'] by thread.process
+        elif thread.current_type == ['init']:
+            if not os.path.exists(thread.history.init_coords[-1][0]):  # init step failed, so retry it
+                thread.current_type = []  # reset current_type so it will be pushed back to ['init'] by thread.process
             else:   # init step produced the desired file, so update coordinates
-                self.history.init_coords[-1].append(utilities.rev_vels(self.history.init_coords[-1][0]))
+                thread.history.init_coords[-1].append(utilities.rev_vels(thread.history.init_coords[-1][0]))
 
         return running
 
@@ -1229,23 +1223,23 @@ class FindTS(JobType):
     Adapter class for finding transition state (find TS)
     """
 
-    def get_input_file(self, job_index, settings):
+    def get_input_file(self, thread, job_index, settings):
         # In find TS, not only do we want to get the input filename, we also want to store the initial basin and write
         # the restraint file to push it into the other basin. First, get the basin...
-        commit = utilities.check_commit(self.history.prod_inpcrd[0], settings)
+        commit = utilities.check_commit(thread.history.prod_inpcrd[0], settings)
         if commit == '':
             raise RuntimeError('the coordinates provided during a find_ts run must represent a structure in either the '
-                               'fwd or bwd basin, but the coordinate file ' + self.history.prod_inpcrd[0] + ' is '
+                               'fwd or bwd basin, but the coordinate file ' + thread.history.prod_inpcrd[0] + ' is '
                                'in neither.\nIf it is a transition state guess, you should set jobtype = '
                                '\'aimless_shooting\' instead to begin aimless shooting.')
         elif commit in ['fwd', 'bwd']:
-            self.history.init_basin = commit
+            thread.history.init_basin = commit
         else:
             raise RuntimeError('internal error in utilities.check_commit(); did not return valid output with coordinate'
-                               ' file: ' + self.history.prod_inpcrd[0])
+                               ' file: ' + thread.history.prod_inpcrd[0])
 
         # Then, write the restraint file
-        if self.history.init_basin == 'fwd':
+        if thread.history.init_basin == 'fwd':
             other_basin = settings.commit_bwd
         else:  # == 'bwd', the only other valid option
             other_basin = settings.commit_fwd
@@ -1269,52 +1263,52 @@ class FindTS(JobType):
 
         return settings.initial_coordinates
 
-    def check_for_successful_step(self, settings):
+    def check_for_successful_step(self, thread, settings):
         return True  # nothing to check for in find TS
 
-    def update_history(self, settings, **kwargs):
+    def update_history(self, thread, settings, **kwargs):
         if 'initialize' in kwargs.keys():
             if kwargs['initialize']:
-                self.history = argparse.Namespace()
-                self.history.prod_inpcrd = []   # one-length list of strings; set by main.init_threads
-                self.history.prod_trajs = []    # list of strings; updated by update_history
-                self.history.prod_result = ''   # string, 'fwd'/'bwd'/''; set by update_results or gatekeeper
-                self.history.init_basin = ''    # string, 'fwd'/'bwd'/''; set by get_inpcrd
+                thread.history = argparse.Namespace()
+                thread.history.prod_inpcrd = []   # one-length list of strings; set by main.init_threads
+                thread.history.prod_trajs = []    # list of strings; updated by update_history
+                thread.history.prod_result = ''   # string, 'fwd'/'bwd'/''; set by update_results or gatekeeper
+                thread.history.init_basin = ''    # string, 'fwd'/'bwd'/''; set by get_inpcrd
             if 'inpcrd' in kwargs.keys():
-                self.history.prod_inpcrd.append(kwargs['inpcrd'])
-        else:  # self.history should already exist
+                thread.history.prod_inpcrd.append(kwargs['inpcrd'])
+        else:  # thread.history should already exist
             if 'nc' in kwargs.keys():
-                self.history.prod_trajs.append(kwargs['nc'])
+                thread.history.prod_trajs.append(kwargs['nc'])
 
-    def get_inpcrd(self):
-        return [self.history.prod_inpcrd[0]]
+    def get_inpcrd(self, thread):
+        return [thread.history.prod_inpcrd[0]]
 
-    def gatekeeper(self, settings):
-        for job_index in range(len(self.jobids)):
-            if self.get_status(job_index, settings) == 'R':  # if the job in question is running
-                frame_to_check = self.get_frame(self.history.prod_trajs[-1][job_index], -1, settings)
-                if self.history.init_basin == 'fwd':
+    def gatekeeper(self, thread, settings):
+        for job_index in range(len(thread.jobids)):
+            if thread.get_status(job_index, settings) == 'R':  # if the job in question is running
+                frame_to_check = thread.get_frame(thread.history.prod_trajs[-1][job_index], -1, settings)
+                if thread.history.init_basin == 'fwd':
                     commit_basin = 'bwd'
-                else:   # self.history.init_basin = 'bwd'; get_inpcrd only allows for these two values
+                else:   # thread.history.init_basin = 'bwd'; get_inpcrd only allows for these two values
                     commit_basin = 'fwd'
                 if frame_to_check and utilities.check_commit(frame_to_check, settings) == commit_basin:  # if it has committed to the opposite basin
-                    self.history.prod_result = commit_basin
-                    self.cancel_job(job_index, settings)  # cancel it
+                    thread.history.prod_result = commit_basin
+                    thread.cancel_job(job_index, settings)  # cancel it
                     os.remove(frame_to_check)
 
         # if every job in this thread has status 'C'ompleted/'C'anceled...
         if all(item == 'C' for item in
-               [self.get_status(job_index, settings) for job_index in range(len(self.jobids))]):
+               [thread.get_status(job_index, settings) for job_index in range(len(thread.jobids))]):
             return True
         else:
             return False
 
-    def get_next_step(self, settings):
-        self.current_type = ['prod']
-        self.current_name = ['ts_guess']
-        return self.current_type, self.current_name
+    def get_next_step(self, thread, settings):
+        thread.current_type = ['prod']
+        thread.current_name = ['ts_guess']
+        return thread.current_type, thread.current_name
 
-    def get_batch_template(self, type, settings):
+    def get_batch_template(self, thread, type, settings):
         if type == 'prod':
             templ = settings.md_engine + '_' + settings.batch_system + '.tpl'
             if os.path.exists(settings.path_to_templates + '/' + templ):
@@ -1324,27 +1318,27 @@ class FindTS(JobType):
         else:
             raise ValueError('unexpected batch template type for find_ts: ' + str(type))
 
-    def check_termination(self, allthreads, settings):
-        self.terminated = True  # find TS threads always terminate after one step
+    def check_termination(self, thread, allthreads, settings):
+        thread.terminated = True  # find TS threads always terminate after one step
         return False            # no global termination criterion exists for find TS
 
-    def update_results(self, allthreads, settings):
+    def update_results(self, thread, allthreads, settings):
         # First, store commitment basin if that didn't get set in gatekeeper
-        if not self.history.prod_result:
-            frame_to_check = self.get_frame(self.history.prod_trajs[-1], -1, settings)
+        if not thread.history.prod_result:
+            frame_to_check = thread.get_frame(thread.history.prod_trajs[-1], -1, settings)
             if frame_to_check:
-                self.history.prod_result = utilities.check_commit(frame_to_check, settings)
+                thread.history.prod_result = utilities.check_commit(frame_to_check, settings)
             else:
-                raise RuntimeError('unable to produce coordinates from final frame of file: ' + str(self.history.prod_trajs[-1]))
+                raise RuntimeError('unable to produce coordinates from final frame of file: ' + str(thread.history.prod_trajs[-1]))
 
-        if self.history.init_basin == 'fwd':
+        if thread.history.init_basin == 'fwd':
             dir_to_check = 'bwd'
             other_basin_define = settings.commit_bwd
-        else:  # self.history.init_basin = 'bwd'; get_inpcrd only allows for these two values
+        else:  # thread.history.init_basin = 'bwd'; get_inpcrd only allows for these two values
             dir_to_check = 'fwd'
             other_basin_define = settings.commit_fwd
 
-        if not self.history.prod_result == dir_to_check:
+        if not thread.history.prod_result == dir_to_check:
             raise RuntimeError('find TS failed to commit to the opposite basin from its given initial coordinates. The '
                                'simulation may have terminated too early for some reason, such as a time or step limit.'
                                ' Otherwise, the most likely explanation is that the definition of the target basin ('
@@ -1386,23 +1380,23 @@ class FindTS(JobType):
         def write_ts_guess_frames(traj, frame_indices):
             ts_guesses = []  # initialize list of transition state guesses to test
             for frame_index in frame_indices:
-                pytraj.write_traj(self.name + '_ts_guess_' + str(frame_index) + '.rst7', traj,
+                pytraj.write_traj(thread.name + '_ts_guess_' + str(frame_index) + '.rst7', traj,
                                   frame_indices=[frame_index - 1], options='multi', overwrite=True, velocity=True)
                 try:
-                    os.rename(self.name + '_ts_guess_' + str(frame_index) + '.rst7.1',
-                              self.name + '_ts_guess_' + str(frame_index) + '.rst7')
+                    os.rename(thread.name + '_ts_guess_' + str(frame_index) + '.rst7.1',
+                              thread.name + '_ts_guess_' + str(frame_index) + '.rst7')
                 except FileNotFoundError:
-                    if not os.path.exists(self.name + '_ts_guess_' + str(frame_index) + '.rst7'):
+                    if not os.path.exists(thread.name + '_ts_guess_' + str(frame_index) + '.rst7'):
                         raise RuntimeError(
-                            'Error: attempted to write file ' + self.name + '_ts_guess_' + str(frame_index)
+                            'Error: attempted to write file ' + thread.name + '_ts_guess_' + str(frame_index)
                             + '.rst7, but was unable to. Please ensure that you have '
                               'permission to write to the working directory: ' + settings.working_directory)
-                ts_guesses.append(self.name + '_ts_guess_' + str(frame_index) + '.rst7')
+                ts_guesses.append(thread.name + '_ts_guess_' + str(frame_index) + '.rst7')
 
             return ts_guesses
 
         # Now we measure the relevant bond lengths for each frame in the trajectory
-        traj = pytraj.iterload(self.history.prod_trajs[0], settings.topology)
+        traj = pytraj.iterload(thread.history.prod_trajs[0], settings.topology)
         this_lengths = []
         for def_index in range(len(other_basin_define[0])):
             # Each iteration appends a list of the appropriate distances to this_lengths
@@ -1442,7 +1436,7 @@ class FindTS(JobType):
         else:   # number of frames in bounds <= 50, so we'll take all of them
             frame_indices = [int(ii) for ii in range(opt_result.best_bounds[0], opt_result.best_bounds[1]+1)]
 
-        print('First attempt. Testing the following frames from the forced trajectory ' + self.history.prod_trajs[0] +
+        print('First attempt. Testing the following frames from the forced trajectory ' + thread.history.prod_trajs[0] +
               ': ' + ', '.join([str(item) for item in frame_indices]))
         ts_guesses = write_ts_guess_frames(traj, frame_indices)
 
@@ -1509,10 +1503,10 @@ class FindTS(JobType):
                 # First option: examples of fwd and bwd results found within the same thread indicate that it is a TS,
                 # if a poor one; return it and exit
                 final_names = []
-                for thread in as_threads:
-                    reformatted_results = ' '.join([res[0] + ' ' + res[1] for res in thread.history.prod_results])
+                for this_thread in as_threads:
+                    reformatted_results = ' '.join([res[0] + ' ' + res[1] for res in this_thread.history.prod_results])
                     if 'fwd' in reformatted_results and 'bwd' in reformatted_results:
-                        final_names.append(thread.history.init_inpcrd[0])   # to match format in status.txt and be maximally useful
+                        final_names.append(this_thread.history.init_inpcrd[0])   # to match format in status.txt and be maximally useful
                 if final_names:
                     print('Found working transition state guess(es):\n' + '\n'.join(final_names) + '\nSee ' +
                           as_settings.working_directory + '/status.txt for more information (acceptance probabilities '
@@ -1524,8 +1518,8 @@ class FindTS(JobType):
                 # Next option: there are only examples of commitment in a single direction. In this case, we want to
                 # move the window of test frames over in the appropriate direction and run aimless shooting again
                 reformatted_results = ''
-                for thread in as_threads:
-                    reformatted_results += ' '.join([res[0] + ' ' + res[1] for res in thread.history.prod_results]) + ' '
+                for this_thread in as_threads:
+                    reformatted_results += ' '.join([res[0] + ' ' + res[1] for res in this_thread.history.prod_results]) + ' '
 
                 if 'fwd' in reformatted_results and not 'bwd' in reformatted_results:       # went to 'fwd' only
                     ts_guesses = []  # re-initialize list of transition state guesses to test
@@ -1535,7 +1529,7 @@ class FindTS(JobType):
                         frame_indices = [frame_index + (max(frame_indices) - min(frame_indices)) + 1 for frame_index in frame_indices if frame_index + (max(frame_indices) - min(frame_indices)) + 1 < traj.n_frames]
 
                     print('Previous attempt failed: trajectories went to \'fwd\' basin only. Now testing the following'
-                          ' frames from the forced trajectory ' + self.history.prod_trajs[0] + ': ' +
+                          ' frames from the forced trajectory ' + thread.history.prod_trajs[0] + ': ' +
                           ', '.join([str(item) for item in frame_indices]))
                     sys.stdout.flush()
                     ts_guesses = write_ts_guess_frames(traj, frame_indices)
@@ -1548,7 +1542,7 @@ class FindTS(JobType):
                         frame_indices = [frame_index + (max(frame_indices) - min(frame_indices)) + 1 for frame_index in frame_indices if frame_index + (max(frame_indices) - min(frame_indices)) + 1 < traj.n_frames]
 
                     print('Previous attempt failed: trajectories went to \'bwd\' basin only. Now testing the following'
-                          ' frames from the forced trajectory ' + self.history.prod_trajs[0] + ': ' +
+                          ' frames from the forced trajectory ' + thread.history.prod_trajs[0] + ': ' +
                           ', '.join([str(int(item)) for item in frame_indices]))
                     sys.stdout.flush()
                     ts_guesses = write_ts_guess_frames(traj, frame_indices)
@@ -1572,9 +1566,9 @@ class FindTS(JobType):
                         previous_index = -1
                         current_index = -1
                         this_index = -1
-                        for thread in sorted_allthreads:
+                        for this_thread in sorted_allthreads:
                             this_index += 1
-                            reformatted_results = ' '.join([res[0] + ' ' + res[1] for res in thread.history.prod_results])
+                            reformatted_results = ' '.join([res[0] + ' ' + res[1] for res in this_thread.history.prod_results])
                             if 'fwd' in reformatted_results and not 'bwd' in reformatted_results:
                                 previous_result = current_result
                                 current_result = 'fwd'
@@ -1596,7 +1590,7 @@ class FindTS(JobType):
                                   str(int(previous_index)) + ' and ' + str(int(current_index)) + ' from the forced trajectory '
                                   'went to only \'' + previous_result + '\' and only \'' + current_result + '\' basins,'
                                   ' respectively. Now testing the following frames from the forced trajectory' +
-                                  self.history.prod_trajs[0] + ': ' + ', '.join([str(int(item)) for item in frame_indices]))
+                                  thread.history.prod_trajs[0] + ': ' + ', '.join([str(int(item)) for item in frame_indices]))
                             sys.stdout.flush()
                             ts_guesses = write_ts_guess_frames(traj, frame_indices)
                         else:
@@ -1622,7 +1616,7 @@ class FindTS(JobType):
                                'definitions are too loose (states that are not yet truly committed to one or both '
                                'basins are being wrongly identified as committed) or are simply wrong.')
 
-    def algorithm(self, allthreads, running, settings):
+    def algorithm(self, thread, allthreads, running, settings):
         return running  # nothing to set because there is no next step
 
     def cleanup(self, settings):
@@ -1637,8 +1631,8 @@ class UmbrellaSampling(JobType):
     Adapter class for umbrella sampling
     """
 
-    def get_input_file(self, job_index, settings):
-        input_file_name = 'umbrella_sampling_' + str(self.history.window) + '_' + str(self.history.index) + '.in'
+    def get_input_file(self, thread, job_index, settings):
+        input_file_name = 'umbrella_sampling_' + str(thread.history.window) + '_' + str(thread.history.index) + '.in'
         if not os.path.exists(settings.working_directory + '/' + input_file_name):
             # Make sure template input file includes 'irxncor=1'
             if not True in ['irxncor=1' in line for line in open(settings.path_to_input_files + '/umbrella_sampling_prod_' + settings.md_engine + '.in', 'r').readlines()]:
@@ -1655,7 +1649,7 @@ class UmbrellaSampling(JobType):
                                        '/umbrella_sampling_prod_' + settings.md_engine + '.in, which is required when a'
                                        ' us_pathway_restraints_file is specified in the config file. Make sure that '
                                        'exactly that string is present.')
-                if not os.path.exists(settings.working_directory + '/us_pathway_restraints_' + str(self.history.window) + '.DISANG'):
+                if not os.path.exists(settings.working_directory + '/us_pathway_restraints_' + str(thread.history.window) + '.DISANG'):
                     if not os.path.exists(settings.us_pathway_restraints_file):
                         raise FileNotFoundError('Attempted to implement us_pathway_restraints for umbrella sampling, but '
                                                 'could not find the indicated file: ' +
@@ -1720,9 +1714,9 @@ class UmbrellaSampling(JobType):
 
                     # Now build the actual DISANG file.
                     min_max = pickle.load(open('min_max.pkl', 'rb'))                # load the min_max pickle file
-                    window_index = closest(window_centers, self.history.window)     # identify the appropriate window_index
-                    open(settings.working_directory + '/us_pathway_restraints_' + str(self.history.window) + '.DISANG', 'w').close()
-                    with open(settings.working_directory + '/us_pathway_restraints_' + str(self.history.window) + '.DISANG', 'a') as f:
+                    window_index = closest(window_centers, thread.history.window)     # identify the appropriate window_index
+                    open(settings.working_directory + '/us_pathway_restraints_' + str(thread.history.window) + '.DISANG', 'w').close()
+                    with open(settings.working_directory + '/us_pathway_restraints_' + str(thread.history.window) + '.DISANG', 'a') as f:
                         f.write('ATESA automatically generated restraint file implementing us_pathway_restraints_file option\n')
                         for cv_index in range(len(min_max[window_index])):
                             atoms, optype, nat = utilities.interpret_cv(cv_index + 1, settings)  # get atom indices and type for this CV
@@ -1764,8 +1758,8 @@ class UmbrellaSampling(JobType):
                 file.write(' &rxncor\n')
                 file.write('  rxn_dimension=' + str(settings.rc_definition.count('CV')) + ',\n')
                 file.write('  rxn_kconst=' + str(settings.us_restraint) + ',\n')
-                file.write('  rxn_c0=' + str(self.history.window) + ',\n')
-                file.write('  rxn_out_fname=\'rcwin_' + str(self.history.window) + '_' + str(self.history.index) + '_us.dat\',\n')
+                file.write('  rxn_c0=' + str(thread.history.window) + ',\n')
+                file.write('  rxn_out_fname=\'rcwin_' + str(thread.history.window) + '_' + str(thread.history.index) + '_us.dat\',\n')
                 file.write('  rxn_out_frq=1,\n')
                 file.write(' &end\n')
                 file.write(' &rxncor_order_parameters\n')
@@ -1828,7 +1822,7 @@ class UmbrellaSampling(JobType):
                                            ' &wt namelist with \'type="END"\', which must be added by ATESA when using '
                                            'the us_pathway_restraints_file option. Please remove it and try again.')
                     file.write(' &wt\n  type="END",\n &end\n')
-                    file.write('DISANG=us_pathway_restraints_' + str(self.history.window) + '.DISANG')
+                    file.write('DISANG=us_pathway_restraints_' + str(thread.history.window) + '.DISANG')
                 else:
                     if not True in ['type="end"' in line.lower() for line in open(settings.path_to_input_files + '/umbrella_sampling_prod_' + settings.md_engine + '.in', 'r').readlines()]:
                         file.write(' &wt\n  type="END",\n &end\n')
@@ -1860,7 +1854,7 @@ class UmbrellaSampling(JobType):
                                         'a restart.pkl file. Are you sure that this is an ATESA aimless shooting '
                                         'working directory?')
             as_threads = pickle.load(open(settings.us_auto_coords_directory + '/restart.pkl', 'rb'))
-            as_threads = [thread for thread in as_threads if not thread.history.last_accepted == -1]    # only threads with non-zero number of accepted moves
+            as_threads = [this_thread for this_thread in as_threads if not this_thread.history.last_accepted == -1]    # only threads with non-zero number of accepted moves
 
             if as_threads == []:
                 raise RuntimeError('there appear to be no threads in the supplied aimless shooting restart file (' +
@@ -1980,45 +1974,45 @@ class UmbrellaSampling(JobType):
 
         return list_to_return
 
-    def check_for_successful_step(self, settings):
+    def check_for_successful_step(self, thread, settings):
         return True     # nothing to check for in umbrella sampling
 
-    def update_history(self, settings, **kwargs):
+    def update_history(self, thread, settings, **kwargs):
         if 'initialize' in kwargs.keys():
             if kwargs['initialize']:
-                self.history = argparse.Namespace()
-                self.history.prod_inpcrd = []    # one-length list of strings; set by main.init_threads
-                self.history.prod_trajs = []     # list of strings; updated by update_history
-                self.history.prod_results = []   # list of sampled RC values as floats; updated by update_results
+                thread.history = argparse.Namespace()
+                thread.history.prod_inpcrd = []    # one-length list of strings; set by main.init_threads
+                thread.history.prod_trajs = []     # list of strings; updated by update_history
+                thread.history.prod_results = []   # list of sampled RC values as floats; updated by update_results
             if 'inpcrd' in kwargs.keys():
-                self.history.prod_inpcrd.append(kwargs['inpcrd'])
+                thread.history.prod_inpcrd.append(kwargs['inpcrd'])
                 window_index = kwargs['inpcrd'].replace('.rst7', '').replace(settings.working_directory + '/init_', '').replace('init_', '')     # string with format [window]_[index]
                 try:
-                    self.history.window = window_index[:window_index.index('_')]
+                    thread.history.window = window_index[:window_index.index('_')]
                 except ValueError:
                     raise RuntimeError('improperly formatted inpcrd filename: ' + kwargs['inpcrd'])
-                self.history.index = window_index[window_index.index('_') + 1:]
-        else:   # self.history should already exist
+                thread.history.index = window_index[window_index.index('_') + 1:]
+        else:   # thread.history should already exist
             if 'nc' in kwargs.keys():
-                self.history.prod_trajs.append(kwargs['nc'])
+                thread.history.prod_trajs.append(kwargs['nc'])
 
-    def get_inpcrd(self):
-        return [self.history.prod_inpcrd[0] for null in range(len(self.current_type))]
+    def get_inpcrd(self, thread):
+        return [thread.history.prod_inpcrd[0] for null in range(len(thread.current_type))]
 
-    def gatekeeper(self, settings):
+    def gatekeeper(self, thread, settings):
         # If every job in this thread has status 'C'ompleted/'C'anceled...
-        if all(item == 'C' for item in [self.get_status(job_index, settings) for job_index in range(len(self.jobids))]):
+        if all(item == 'C' for item in [thread.get_status(job_index, settings) for job_index in range(len(thread.jobids))]):
             return True
         else:
             return False
 
-    def get_next_step(self, settings):
+    def get_next_step(self, thread, settings):
         # Each step in umbrella sampling is simply the only prod step
-        self.current_type = ['prod']
-        self.current_name = ['us']
-        return self.current_type, self.current_name
+        thread.current_type = ['prod']
+        thread.current_name = ['us']
+        return thread.current_type, thread.current_name
 
-    def get_batch_template(self, type, settings):
+    def get_batch_template(self, thread, type, settings):
         if type == 'prod':
             templ = settings.md_engine + '_' + settings.batch_system + '.tpl'
             if os.path.exists(settings.path_to_templates + '/' + templ):
@@ -2028,20 +2022,20 @@ class UmbrellaSampling(JobType):
         else:
             raise ValueError('unexpected batch template type for umbrella sampling: ' + str(type))
 
-    def check_termination(self, allthreads, settings):
-        self.terminated = True  # umbrella sampling threads always terminate after one step
+    def check_termination(self, thread, allthreads, settings):
+        thread.terminated = True  # umbrella sampling threads always terminate after one step
         return False            # no global termination criterion exists for umbrella sampling
 
-    def update_results(self, allthreads, settings):
+    def update_results(self, thread, allthreads, settings):
         # Update rc value results for this thread
-        self.history.prod_results += [float(item.split()[1]) for item in
-                                      open('rcwin_' + str(self.history.window) + '_' + str(self.history.index) +
-                                           '_us.dat', 'r').readlines()[len(self.history.prod_results):]]
+        thread.history.prod_results += [float(item.split()[1]) for item in
+                                      open('rcwin_' + str(thread.history.window) + '_' + str(thread.history.index) +
+                                           '_us.dat', 'r').readlines()[len(thread.history.prod_results):]]
 
         # Write updated restart.pkl
         pickle.dump(allthreads, open('restart.pkl', 'wb'), protocol=2)
 
-    def algorithm(self, allthreads, running, settings):
+    def algorithm(self, thread, allthreads, running, settings):
         return running    # nothing to set because there is no next step
 
     def cleanup(self, settings):

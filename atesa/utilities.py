@@ -177,7 +177,7 @@ def get_cvs(filename, settings, reduce=False, frame=0):
         mtraj = mdtraj.load_frame(filename, frame - 1, top=settings.topology)
         if True in ['traj_name' in cv for cv in settings.cvs]:  # if True, need .rst7 formatted file to operate on
             mdengine = factory.mdengine_factory(settings.md_engine)
-            traj_name = mdengine.get_frame(None, filename, frame, settings)
+            traj_name = mdengine.get_frame(filename, frame, settings)
             delete_traj_name = True     # to be sure we clean up traj_name later
 
     rc_minmax = [[],[]]
