@@ -92,7 +92,7 @@ After aimless shooting terminates, we pass the results to the auxiliary script :
 
 In order to minimize the influence of the initial coordinates chosen to begin aimless shooting with on this result, we use the largest decorrelated aimless shooting output file available, which in this case is named ``as_decorr_30000.out``. Decorrelated output files include only the shooting points after the point where all of the CVs have no correlation with their initial values for that thread with at least 95% confidence, or in other words when the autocorrelation of each CV is less than or equal to 1.96 / sqrt(n) for n shooting moves in the thread. These files are built automatically by ATESA when evaluating the information error termination criterion, but otherwise can be produced manually by running a repeat of the aimless shooting job with ``resample = True``.
 
-	lmax.py -i /scratch/tburgin/ethyl_chlorosulfite_as/as_decorr_30000.out --automagic --plots
+	lmax.py -i /scratch/tburgin/ethyl_chlorosulfite_as/as_decorr_30000.out --two_line_test --plots
 
 The ``--plots`` option produces the sigmoid committor plot ((b), at right) and, when automatic is used as is the case here, the two-line test plot (see :ref:`LikelihoodMaximization`). The good relationship between the modeled and ideal committor sigmoids is a necessary, but not a sufficient, condition for a good reaction coordinate:
 

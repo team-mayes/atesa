@@ -128,17 +128,17 @@ def objective_function(params, A_data, B_data):
     return -1 * sum
 
 
-def two_line_test(results, plots, two_line_threshold=0.5):
+def two_line_test_func(results, plots, two_line_threshold=0.5):
     """
     Perform a double linear regression on intersecting subsets of the data in results to determine whether to terminate
-    and how many dimensions to return in the RC during automagic.
+    and how many dimensions to return in the RC during two_line_test.
 
     Can only be called with len(results) >= 5.
 
     Parameters
     ----------
     results : list
-        List of dictionary objects indexed by step of automagic, each possessing attribute 'fun' giving the optimization
+        List of dictionary objects indexed by step of two_line_test, each possessing attribute 'fun' giving the optimization
         score for that step
     plots : bool
         If True, plot lines using gnuplot
@@ -228,7 +228,7 @@ def eval_rc(params, obs):
     return rc
 
 
-def main(i, k, f, s, q, r, o, automagic, plots, quiet, two_line_threshold):
+def main(**kwargs):
     """
     Main runtime function of lmax.py.
 
@@ -247,7 +247,7 @@ def main(i, k, f, s, q, r, o, automagic, plots, quiet, two_line_threshold):
     """
 
     # Ensure existence and validity of input file
-    input_file = i[0]
+    input_file = kwargs['i'][0]
     if not os.path.exists(input_file):
         raise FileNotFoundError('could not find input file: ' + input_file)
     input_file_lines = open(input_file, 'r').readlines()
@@ -257,18 +257,18 @@ def main(i, k, f, s, q, r, o, automagic, plots, quiet, two_line_threshold):
                            'line. Is this the correct file? Be sure to remove any blank lines.')
 
     # Bring in other arguments, just for neatness
-    dims = k[0]
-    fixed = f  # we actually want this one to stay a list
-    qdot = q[0]
-    running = r[0]
-    output_file = o[0]
-    automagic = automagic
-    plots = plots
-    quiet = quiet
-    two_line_threshold = two_line_threshold[0]
-    skip = s    # this one also a list
+    dims = kwargs['k'][0]
+    fixed = kwargs['f']  # we actually want this one to stay a list
+    qdot = kwargs['q'][0]
+    running = kwargs['r'][0]
+    output_file = kwargs['o'][0]
+    two_line_test = kwargs['two_line_test']
+    plots = kwargs['plots']
+    quiet = kwargs['quiet']
+    two_line_threshold = kwargs['two_line_threshold'][0]
+    skip = kwargs['s']    # this one also a list
 
-    if not fixed == [None] and running == 0 and not automagic and len(fixed) > dims:
+    if not fixed == [None] and running == 0 and not two_line_test and len(fixed) > dims:
         raise RuntimeError('value of k must be less than or equal to number of fixed (-f) dimensions.')
 
     if not fixed == [None] and not skip == [None]:
@@ -280,7 +280,7 @@ def main(i, k, f, s, q, r, o, automagic, plots, quiet, two_line_threshold):
         if fixed == [None]:
             fixed = []
         dims = running
-    if automagic:
+    if two_line_test:
         if fixed == [None]:
             fixed = []
         dims = -1
@@ -288,7 +288,7 @@ def main(i, k, f, s, q, r, o, automagic, plots, quiet, two_line_threshold):
 
     # Load settings object from .pkl file if present, to check for information error override and max_dims
     information_error_max_dims = -1
-    if automagic:
+    if two_line_test:
         try:
             settings = pickle.load(open('settings.pkl', 'rb'))
             print('Loaded settings.pkl...')
@@ -300,7 +300,7 @@ def main(i, k, f, s, q, r, o, automagic, plots, quiet, two_line_threshold):
                 print('information_error_override is not set; defaulting to False')
             try:
                 information_error_max_dims = settings.information_error_max_dims
-                print('Setting maximum number of automagic dimensions to: ' + str(int(information_error_max_dims)))
+                print('Setting maximum number of two_line_test dimensions to: ' + str(int(information_error_max_dims)))
             except AttributeError:
                 print('information_error_max_dims is not set; defaulting to no limit')
         except FileNotFoundError:
@@ -333,10 +333,10 @@ def main(i, k, f, s, q, r, o, automagic, plots, quiet, two_line_threshold):
     # Prepare for and then enter optimization loop
     termination = False     # initialize primary termination criterion flag
     termination_2 = False   # additional termination flag for use with qdot = 'present', to perform final optimization
-    reached_maximum = False # indicates whether the maximum number of allowed dimensions has been reached by automagic
-    two_line_result = -1    # initialize current model dimensionality for automagic
+    reached_maximum = False # indicates whether the maximum number of allowed dimensions has been reached by two_line_test
+    two_line_result = -1    # initialize current model dimensionality for two_line_test
     cv_combs = [[]]         # initialize list of CV combinations to iterate through
-    results = []  # initialize for automagic
+    results = []  # initialize for two_line_test
     while not termination and len(cv_combs[0]) <= N:
         # Initialize current best result
         current_best = [argparse.Namespace(), [0], [], []]
@@ -345,7 +345,7 @@ def main(i, k, f, s, q, r, o, automagic, plots, quiet, two_line_threshold):
         # Assemble list of RCs to optimize
         if not fixed == [None] and len(fixed) == dims:
             cv_combs = [fixed]
-        elif running or automagic:
+        elif running or two_line_test:
             cv_combs = [fixed + [new] for new in range(1, num_cvs + 1) if (not new in fixed) and (not new in skip)]
         else:
             cv_combs = [comb for comb in itertools.combinations(range(1, num_cvs + 1), dims) if (fixed == [None] or set(fixed).issubset(comb)) and (skip == [None] or not any([skipped in comb for skipped in skip]))]
@@ -389,9 +389,9 @@ def main(i, k, f, s, q, r, o, automagic, plots, quiet, two_line_threshold):
             update_progress(count / count_to, 'Optimizing ' + str(count_to) + ' combination(s) of CVs', eta, quiet=quiet)
 
         # Update fixed and results parameters as needed
-        if automagic:
+        if two_line_test:
             results.append(current_best)
-        if running or automagic:
+        if running or two_line_test:
             fixed = current_best[1]
             if qdot == 'present':
                 for item in fixed:
@@ -399,18 +399,18 @@ def main(i, k, f, s, q, r, o, automagic, plots, quiet, two_line_threshold):
                         fixed.remove(item)
 
         # Check termination criteria
-        if not running and not automagic:
+        if not running and not two_line_test:
             termination = True
-        elif running and not automagic:
+        elif running and not two_line_test:
             if int(len(current_best[1])) == running:
                 termination = True
-        elif automagic and not termination_2:
+        elif two_line_test and not termination_2:
             if len(results) >= 5:   # can only confidently check for convergence with at least 5 points
-                two_line_result = two_line_test([result[0] for result in results], plots, two_line_threshold)
+                two_line_result = two_line_test_func([result[0] for result in results], plots, two_line_threshold)
                 if two_line_result >= 0:
                     termination = True
                     current_best = results[two_line_result]
-        if automagic and len(cv_combs[0]) == information_error_max_dims and not termination_2:
+        if two_line_test and len(cv_combs[0]) == information_error_max_dims and not termination_2:
             termination = True
             reached_maximum = True
             current_best = results[-1]
@@ -425,8 +425,8 @@ def main(i, k, f, s, q, r, o, automagic, plots, quiet, two_line_threshold):
                     fixed.remove(item)
             dims = len(fixed)
 
-    if automagic and (two_line_result < 0 and not reached_maximum):   # ran out of CVs to append and two_line_test never passed
-        err = RuntimeError('The automagic termination criterion was never satisfied even after including every '
+    if two_line_test and (two_line_result < 0 and not reached_maximum):   # ran out of CVs to append and two_line_test never passed
+        err = RuntimeError('The two_line_test termination criterion was never satisfied even after including every '
                            'candidate CV in the model reaction coordinate.\nThis almost certainly indicates that either'
                            ' one or more key CVs are absent from the aimless shooting output file supplied, or that not'
                            ' enough unimportant CVs were included to give context to the important ones. Either way you'
@@ -562,17 +562,17 @@ if __name__ == "__main__":
     parser.add_argument('--quiet', action='store_true',
                         help='If this option is given, progress messages outputted to the terminal are suppressed and ' 
                              'only the final result is written (either to the terminal or the output file.)')
-    parser.add_argument('--automagic', action='store_true', default=False,
+    parser.add_argument('--two_line_test', action='store_true', default=False,
                         help='If this option is given, arguments passed for k, f, and r are ignored, and the best RC is'
                              ' determined based on the two-line method (see documentation).')
     parser.add_argument('--plots', action='store_true', default=False,
                         help='If True, plots the final fit between the model and data committor sigmoid. '
-                             'If this option is given alongside automagic, gnuplot will be used to write plots to the '
-                             'terminal during evaluations of the automagic termination criterion (if it is installed). '
+                             'If this option is given alongside two_line_test, gnuplot will be used to write plots to the '
+                             'terminal during evaluations of the two_line_test termination criterion (if it is installed). '
                              'The sigmoid data is also printed to the terminal.')
     parser.add_argument('--two_line_threshold', metavar='two_line_threshold', type=float, nargs=1, default=[0.5],
-                        help='If this option is given alongside automgagic, sets the maximum ratio of slopes in the'
-                             'two-line test. See the documentation for automagic for details. Default=0.5')
+                        help='If this option is given alongside two_line_test, sets the maximum ratio of slopes in the'
+                             'two-line test. See the documentation for two_line_test for details. Default=0.5')
 
     arguments = vars(parser.parse_args())  # Retrieves arguments as a dictionary object
 
