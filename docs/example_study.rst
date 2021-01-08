@@ -47,7 +47,7 @@ ATESA automates the discovery of suitable initial transition state models using 
 	prod_walltime = '04:00:00'
 	prod_ppn = 1
 
-As shown below, this job automatically finds a transition state very close to that proposed by Schreiner *et al.* [3]
+As shown below, this job automatically finds a transition state very close to that proposed by Schreiner *et al.*
 
 	.. figure:: _images/find_ts.png
 
@@ -173,7 +173,7 @@ This job produces a large number of output files named with the suffix "_us.out"
 
 	mbar.py --decorr -k 5
 	
-Here we use the `--decorr` flag to specify that we have not checked the data for decorrelation or equilibration, so pyMBAR will do that work for us. We also set `-k 5` to indicate that the umbrella sampling restraint is 5 kcal/mol. After a mean-value plot (see :ref:`UmbrellaSamplingTroubleshooting`_), ``mbar.py`` produces the data histograms and free energy profile shown below (though I have of course added the reference activation energy after the fact):
+Here we use the `--decorr` flag to specify that we have not checked the data for decorrelation or equilibration, so pyMBAR will do that work for us. We also set `-k 5` to indicate that the umbrella sampling restraint is 5 kcal/mol. After a mean-value plot (see :ref:`UmbrellaSamplingTroubleshooting` for more information), ``mbar.py`` produces the data histograms and free energy profile shown below (though I have of course added the reference activation energy after the fact):
 
 	.. figure:: _images/umbrella_sampling.png
 	

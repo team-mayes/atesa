@@ -52,7 +52,7 @@ def main():
     if datalengths:
         open('info_err_temp.out', 'w').close()
 
-    # Get length of largest datafile to perform automagic model optimization on
+    # Get length of largest datafile to perform two_line_test model optimization on
     length = max(datalengths)
     datalengths.remove(length)  # so as to skip repeat optimization later
 

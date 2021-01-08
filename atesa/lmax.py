@@ -204,7 +204,7 @@ def two_line_test_func(results, plots, two_line_threshold=0.5):
                         (numpy.asarray(points2[0]), numpy.asarray(points2[1]), {'legend': '2nd slope: ' + '%.3f' % best_closest[2].slope}),
                         _with='lines', terminal='dumb 80,40', unset='grid')
     if plots:
-        print('Automagic plot data:')
+        print('Two_line_test plot data:')
         print(' Model scores: ' + str(numpy.asarray([result.fun for result in results])))
         print(' First line values: ' + str(points1[1]))
         print(' Second line values: ' + str(points2[1]))

@@ -109,7 +109,7 @@ The standard workflow when analyzing umbrella sampling data with ATESA is to run
 	
 * The Mean Value Plot
 
-	The second plot is a line plot depicting the difference between the mean value of the sampling data in each window and that window's restraint center, versus the window center value. If there are multiple simulations located at the same window center (and there really should be), these will appear at the same value on the horizontal axis, with the line passing through them in the order they were read in (that is, arbitrarily).
+	The second plot is a line plot depicting the difference between the mean value of the sampling data in each window and that window's restraint center on the vertical axis, versus the window restraint center on the horizontal axis. If there are multiple simulations located at the same window center (and there ought to be), these will appear at the same value on the horizontal axis, with the line passing through them in arbitrary order.
 	
 	The ideal mean value plot should be a smooth sinusoid passing through the value of zero on the vertical axis at three points: near the leftward extreme, near the middle, and near the rightward extreme. These correspond to the regions of the free energy profile with zero slope at one stable state, the transition state, and the other stable state, respectively. If either of the extrema do not pass through zero, further umbrella sampling windows should be added on the corresponding end until zero (and ideally, a little bit beyond) is reached.
 	
