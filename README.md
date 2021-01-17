@@ -1,4 +1,4 @@
-atesa
+ATESA
 ==============================
 [//]: # (Badges)
 [![Travis Build Status](https://travis-ci.org/team-mayes/atesa.svg?branch=master)](https://travis-ci.org/team-mayes/atesa)
@@ -10,9 +10,11 @@ A flexible and extensible program for automating transition path sampling with a
 
 Full documentation available [here](https://atesa.readthedocs.io/en/latest/).
 
-ATESA automates a particular Transition Path Sampling (TPS) workflow that uses the flexible length aimless shooting algorithm of [Mullen *et al.* 2015](http://doi.org/10.1021/acs.jctc.5b00032) as its main workhorse. ATESA interacts directly with a batch system or job manager to dynamically submit, track, and interpret various simulation and analysis jobs based on one or more initial structures provided to it. It employs a variable length approach that periodically checks simulations for commitment to user-defined reactant and product states in order to maximize the acceptance ratio and minimize wasted computational resources.
+ATESA automates a particular Transition Path Sampling (TPS) workflow that uses the flexible length aimless shooting algorithm of [Mullen *et al.* 2015](http://doi.org/10.1021/acs.jctc.5b00032). ATESA interacts directly with a batch system or job manager to dynamically submit, track, and interpret various simulation and analysis jobs based on one or more initial structures provided to it. It employs a variable length approach that periodically checks simulations for commitment to user-defined reactant and product states in order to maximize the acceptance ratio and minimize wasted computational resources.
 
-ATESA contains methods to automate initial transition state guessing, flexible length aimless shooting, intertial likelihood maximization, committor analysis, and equilibrium path sampling. In combination, these components constitute a near-complete automation of the workflow between identifying the reaction of interest, and obtaining, validating, and analyzing the energy profile along a *bona fide* reaction coordinate that describes it.
+ATESA implements automation of obtaining a suitable initial transition state, flexible length aimless shooting, inertial likelihood maximization, committor analysis, umbrella sampling (and analysis with the Multistate Bennett Acceptance Ratio), and equilibrium path sampling. These components constitute a near-complete automation of the workflow between identifying the reaction of interest, and obtaining, validating, and analyzing the energy profile along an unbiased and *bona fide* reaction coordinate that describes it.
+
+At present, ATESA only supports simulations with Amber, and TORQUE/PBS or Slurm batch schedulers. If you are interested in using ATESA with another simulation engine or batch scheduler, please raise a "Feature Request" issue describing your needs.
 
 ### Copyright
 

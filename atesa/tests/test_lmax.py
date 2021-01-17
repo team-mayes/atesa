@@ -36,13 +36,13 @@ class Tests(object):
         # First assemble data designed not to pass due to insufficient data:
         results = data_converter([-100, -110, -120, -130])
         with pytest.raises(RuntimeError):
-            lmax.two_line_test(results, False)
+            lmax.two_line_test_func(results, False)
         # Next, data designed not to pass due to too mild a slope change
         results = data_converter([-100, -110, -120, -129, -138])
-        assert lmax.two_line_test(results, False) == -1
+        assert lmax.two_line_test_func(results, False) == -1
         # Data designed to pass at index 2 because it's just garbage (very much a fringe test)
         results = data_converter([-100, -110, -120, -122, -124])
-        assert lmax.two_line_test(results, False) == 2
+        assert lmax.two_line_test_func(results, False) == 2
 
     def test_objective_function(self):
         """Tests objective_function using dummy data"""
