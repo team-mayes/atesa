@@ -1,3 +1,4 @@
 """
-Empty init file in case you choose a package besides PyTest such as Nose which may look for such a file
+This is the docstring for an empty init file, to support testing packages besides PyTest such as Nose that may look for
+such a file
 """
