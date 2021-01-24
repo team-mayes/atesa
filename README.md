@@ -1,5 +1,5 @@
-![ATESA_logo](docs/_images/atesa_logo.png)
-==============================
+<img src="docs/_images/atesa_logo.png" alt="ATESA_logo" width="400"/>
+
 [//]: # (Badges)
 [![Travis Build Status](https://travis-ci.org/team-mayes/atesa.svg?branch=master)](https://travis-ci.org/team-mayes/atesa)
 [![codecov](https://codecov.io/gh/team-mayes/atesa/branch/master/graph/badge.svg)](https://codecov.io/gh/team-mayes/atesa/branch/master)

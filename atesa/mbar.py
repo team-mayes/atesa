@@ -269,7 +269,15 @@ def main(**kwargs):
     df_i /= beta
 
     if not kwargs['quiet']:
-        print("PMF (kcal/mol)")
+        print('Final results. This analysis was based on the pyMBAR package. If you publish work based on this output,'
+              'please cite:\n')
+        print('Shirts MR and Chodera JD. Statistically optimal analysis of samples from multiple equilibrium states. J.'
+              ' Chem. Phys. 129:124105 (2008). DOI: 10.1063/1.2978177\n')
+        if kwargs['decorr']:
+            print('Since this run also included the "decorr" option, you also need to cite:\n')
+            print('Chodera JD. A simple method for automated equilibration detection in molecular simulations. J. Chem.'
+                  ' Theor. Comput. 12:1799, 2016. DOI: 10.1021/acs.jctc.5b00784\n')
+        print("\nPMF (kcal/mol)")
         print("%8s %8s %8s" % ('bin', 'f', 'df'))
         for i in range(nbins):
             print("%8.2f %8.3f %8.3f" % (bin_center_i[i], f_i[i], df_i[i]))
@@ -283,7 +291,15 @@ def main(**kwargs):
         plt.xlabel('Reaction Coordinate', weight='bold')
         plt.show()
     with open(kwargs['o'][0], 'a') as f:
-        f.write('~~Free Energy Profile~~\nReaction coordinate    Free energy (kcal/mol)    Error (kcal/mol)\n')
+        f.write('Final results. This analysis was based on the pyMBAR package. If you publish work based on this '
+                'output, please cite:\n')
+        f.write('Shirts MR and Chodera JD. Statistically optimal analysis of samples from multiple equilibrium states.'
+                ' J. Chem. Phys. 129:124105 (2008). DOI: 10.1063/1.2978177\n')
+        if kwargs['decorr']:
+            f.write('Since this run also included the "decorr" option, you also need to cite:\n')
+            f.write('Chodera JD. A simple method for automated equilibration detection in molecular simulations. J. '
+                    'Chem. Theor. Comput. 12:1799, 2016. DOI: 10.1021/acs.jctc.5b00784\n')
+        f.write('\n~~Free Energy Profile~~\nReaction coordinate    Free energy (kcal/mol)    Error (kcal/mol)\n')
         for i in range(nbins):
             f.write('%.3f' % bin_center_i[i] + '    ' + '%.3f' % f_i[i] + '    ' + '%.3f' % df_i[i] + '\n')
 
