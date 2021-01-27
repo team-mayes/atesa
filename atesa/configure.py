@@ -41,7 +41,7 @@ def configure(input_file, user_working_directory=''):
 
         # Core settings required for all jobs
         job_type: str
-        batch_system: str   # todo: would be pretty easy to set up an 'auto' option for this that checks which batch system is available
+        batch_system: str
         restart: bool
         md_engine: str = 'amber'
         task_manager: str = 'simple'

@@ -45,6 +45,9 @@ Each pair of lines is bin edges followed by bin heights
 0.714 0.764 0.814 0.864 0.914 0.964 1.014 1.064 1.114 1.164 1.214 1.264 1.314
 17 78 302 1012 1918 2343 2172 1472 506 138 36 6
 
+Final results. This analysis was based on the pyMBAR package. If you publish work based on this output, please cite:
+Shirts MR and Chodera JD. Statistically optimal analysis of samples from multiple equilibrium states. J. Chem. Phys. 129:124105 (2008). DOI: 10.1063/1.2978177
+
 ~~Free Energy Profile~~
 Reaction coordinate    Free energy (kcal/mol)    Error (kcal/mol)
 -0.923    0.000    0.000

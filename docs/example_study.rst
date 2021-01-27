@@ -5,7 +5,7 @@ Example Study
 
 This page will detail a complete workflow in ATESA for an example chemical reaction. Not every setting or option applied in this workflow will be appropriate for every application of ATESA; rather than being prescriptive, the purpose of this page is to illustrate a particular application of the software to help readers better grasp what running ATESA is actually like. If you're instead looking for an introduction to the theory underlying any of these steps, check out the :ref:`TheoryAndDefinitions` page.
 
-Where appropriate, this page will include complete examples of input, template, and configuration files. **Not all of the contents of these files will be appropriate for your application**. Therefore, we strongly discourage you from copying-and-pasting content from this page unless you know what you're doing. The complete files are provided only for illustrative purposes.
+Where appropriate, we have included complete examples of input, template, and configuration files as well as key results for each step. They can be found in the 'examples' folder downloaded with ATESA. **Not all of the contents of these files will be appropriate for your application**. You will almost certainly need to make changes to one or more of these files to suit your particular model and computing cluster environment. Also note that because of the non-deterministic nature of these methods, you should not expect to get exactly identical results if you follow along with these steps yourself.
 
 Initial Setup and the Model
 ---------------------------
@@ -20,12 +20,12 @@ The model we will be working with here is the gas-phase decomposition of ethyl c
 
 Setup of ATESA for a new system begins with obtaining initial coordinates through whatever means, such as download from a repository like the Protein Databank, or created bespoke using appropriate software. In either case, as with most molecular simulations, the system should first be minimized, heated to the desired temperature, and equilibrated in the desired relaxed state. Excellent tutorials for these steps (among others) using Amber are available `here <https://ambermd.org/tutorials/basic/tutorial0/index.htm>`_. Fluency in basic molecular simulations is assumed of users of ATESA, so be sure you're comfortable before moving forward!
 
-In this case, we produced initial coordinates using `Open Babel <http://www.cheminfo.org/Chemistry/Cheminformatics/FormatConverter/index.html>`_ with the SMILES string "CCOS(=O)Cl", and then minimized, heated to 300 K, and briefly equilibrated the system in Amber.
+In this case, we produced initial coordinates using `Open Babel <http://www.cheminfo.org/Chemistry/Cheminformatics/FormatConverter/index.html>`_ with the SMILES string "CCOS(=O)Cl", and then equilibrated the system over 10 ps in Amber (a very short time, appropriate for such a small system). Because we are modeling a chemical reaction, this equilibration is done with a hybrid QM/MM model. The topology and equilibration input files and the resulting coordinates can be found in 'examples/model_setup'.
 
 Finding a Transition State
 --------------------------
 
-ATESA automates the discovery of suitable initial transition state models using gentle restraints to force reactions to take place, and then identifying the transition state along that forced pathway. The restraints are based only on user-defined definitions of the two stable states that the transition state connects. The complete configuration file used for this job was as follows (remember that many of these options are user- and model-specific!)::
+ATESA automates the discovery of suitable initial transition state models using gentle restraints to force reactions to take place, and then identifying the transition state(s) along that forced pathway. The restraints are based only on user-defined definitions of the two stable states that the transition state connects. The complete configuration file used for this job was as follows (remember that many of these options are user- and model-specific!)::
 
 	job_type = 'find_ts'
 	topology = 'ethyl_chlorosulfite.prmtop'
@@ -47,11 +47,11 @@ ATESA automates the discovery of suitable initial transition state models using 
 	prod_walltime = '04:00:00'
 	prod_ppn = 1
 
-As shown below, this job automatically finds a transition state very close to that proposed by Schreiner *et al.*
+Based on the five aimless shooting moves with which each candidate transition state frame from the forced trajectory was tested, only a single frame was selected as a suitable aimless shooting initial coordinate file, as indicated in ATESA's output following this job. The coordinates for that frame can be found in 'examples/find_ts'. As shown below, this transition state is very close to the one proposed by Schreiner *et al.* 
 
 	.. figure:: _images/find_ts.png
 
-	Definitions of stable states and initial and final structures from the example transition state search. The stable state definitions are read by inner index; for example, the first element of the definition of the “bwd” state is read as “the distance between atom 3 and atom 5 is less than (‘lt’) 1.5 Å”. Based on these definitions, the initial coordinates (at left) occupy the “bwd” state, and restraints are automatically constructed to build a transition state (at right) that has roughly equal probabilities of relaxing to either state. The narrow, transparent bonds in the transition state structure show the original topology of the model, for comparison.
+	Definitions of stable states and initial and final structures from the example transition state search. The stable state definitions are read by inner index; for example, the first element of the definition of the “bwd” state is read as “the distance between atom 3 and atom 5 is less than (‘lt’) 1.5 Å”. Based on these definitions, the initial coordinates (at left) occupy the “bwd” state, and restraints are automatically constructed to build a putative transition state (at right) that has significantly non-zero probabilities of relaxing to either state. The narrow, transparent bonds in the transition state structure show the original topology of the model, for comparison.
 
 Aimless Shooting
 ----------------

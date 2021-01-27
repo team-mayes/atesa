@@ -1,0 +1,32 @@
+Input file for example committor analysis simulations with Amber 18
+ &cntrl
+  imin=0,
+  ioutfm=1,					! netCDF output format
+  ntx=1,					! Do not read velocities from input coordinates
+  ntxo=1,
+  nstlim=100,				! Maximum number of simulation steps
+  dt=0.001,					! Simulation step size
+  ntf=2,					! Forces to calculate. 1 = all, 2 = omit hydrogen bonds, 3 = omit all bonds (generally ntf = ntc)
+  ntc=2,					! SHAKE. 1 = none, 2 = hydrogen bonds, 3 = all bonds
+  tempi=300.0,				! Initial temperature for drawing new velocities from Boltzmann distribution
+  temp0=300.0,
+  ntpr=10,  				! Steps between writes to out
+  ntwx=1,					! Steps between writes to mdcrd. 0 = no mdcrd
+  cut=9999,					! Maximum non-bonded interaction distance in Å
+  ntb=0,					! Periodicity. = 2 for ntp > 0
+  ntp=0,					! Pressure control scheme. 0 = none, 1 = isotropic
+  ntt=2,					! Temperature control scheme. 2 = Anderson, 3 = Langevin
+  vrand=100,				! Steps between redistribution of velocities according to Boltzmann distribution
+  ig=-1,					! Psuedorandom seed (-1 = different each time)
+  ifqnt=1,					! Turn on qmmm namelist
+ &end						
+ &qmmm
+  qmmask='@1-5,7,8',		! QM region
+  qmcharge=0,  				! Overall charge of qm region
+  qm_theory='PM3',			
+  qmshake=0,
+  qmcut=8.0,				! Maximum non-bonded interaction distance in Å
+ &end
+ &wt
+  type="END",
+ &end

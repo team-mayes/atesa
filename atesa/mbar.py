@@ -274,7 +274,7 @@ def main(**kwargs):
         print('Shirts MR and Chodera JD. Statistically optimal analysis of samples from multiple equilibrium states. J.'
               ' Chem. Phys. 129:124105 (2008). DOI: 10.1063/1.2978177\n')
         if kwargs['decorr']:
-            print('Since this run also included the "decorr" option, you also need to cite:\n')
+            print('\nSince this run also included the "decorr" option, you also need to cite:\n')
             print('Chodera JD. A simple method for automated equilibration detection in molecular simulations. J. Chem.'
                   ' Theor. Comput. 12:1799, 2016. DOI: 10.1021/acs.jctc.5b00784\n')
         print("\nPMF (kcal/mol)")
@@ -296,7 +296,7 @@ def main(**kwargs):
         f.write('Shirts MR and Chodera JD. Statistically optimal analysis of samples from multiple equilibrium states.'
                 ' J. Chem. Phys. 129:124105 (2008). DOI: 10.1063/1.2978177\n')
         if kwargs['decorr']:
-            f.write('Since this run also included the "decorr" option, you also need to cite:\n')
+            f.write('\nSince this run also included the "decorr" option, you also need to cite:\n')
             f.write('Chodera JD. A simple method for automated equilibration detection in molecular simulations. J. '
                     'Chem. Theor. Comput. 12:1799, 2016. DOI: 10.1021/acs.jctc.5b00784\n')
         f.write('\n~~Free Energy Profile~~\nReaction coordinate    Free energy (kcal/mol)    Error (kcal/mol)\n')
