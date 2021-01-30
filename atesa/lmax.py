@@ -210,10 +210,13 @@ def two_line_test_func(results, plots, two_line_threshold=0.5):
         print(' Second line values: ' + str(points2[1]))
 
     if not best_closest:    # no pairs of lines whose intersection was closest to their shared point
+        print('Two line test: found no suitable model, performing an additional optimization step and retrying')
         return -1
 
     slope_fract = best_closest[2].slope / best_closest[1].slope
     if slope_fract > two_line_threshold:  # best point does not meet threshold for relative difference in slopes
+        print('Two line test: best model has ratio of slopes ' + str(slope_fract) + ', which does not meet threshold ' +
+              str(two_line_threshold) + '; performing an additional optimization step and retrying')
         return -1
     else:                   # DOES meet threshold; return the index of the passing result
         return best_closest[0][0] - 1   # - 1 because of different indexing standards
@@ -329,6 +332,9 @@ def main(**kwargs):
                                'include_qdot (q) = True, but this input file has an odd number of entries per line. Are'
                                ' you sure it includes rate-of-change data?')
         num_cvs = int(num_cvs / 2)
+
+    if two_line_test:
+        print('Two line test requires at least five optimizations, so there will be five progress bars before testing.')
 
     # Prepare for and then enter optimization loop
     termination = False     # initialize primary termination criterion flag
@@ -581,6 +587,7 @@ if __name__ == "__main__":
     warnings.filterwarnings('ignore', category=RuntimeWarning, message='invalid value encountered in greater')
     warnings.filterwarnings('ignore', category=RuntimeWarning, message='divide by zero encountered in log')
     warnings.filterwarnings('ignore', category=RuntimeWarning, message='invalid value encountered in double_scalars')
+    warnings.filterwarnings('ignore', category=RuntimeWarning, message='invalid value encountered in subtract')
     warnings.filterwarnings('ignore', category=RuntimeWarning, message='divide by zero encountered in double_scalars')
 
     main(**arguments)

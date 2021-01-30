@@ -7,6 +7,14 @@ This page will detail a complete workflow in ATESA for an example chemical react
 
 Where appropriate, we have included complete examples of input, template, and configuration files as well as key results for each step. They can be found in the 'examples' folder downloaded with ATESA. **Not all of the contents of these files will be appropriate for your application**. You will almost certainly need to make changes to one or more of these files to suit your particular model and computing cluster environment. Also note that because of the non-deterministic nature of these methods, you should not expect to get exactly identical results if you follow along with these steps yourself.
 
+Finally, we have included the approximate computational resources consumed during each step. As with all molecular simulations, your results may vary widely based on the details of your simulation and the computational environment, so be cautious in applying these estimates. In our case, all performance statistics are based on simulations on the San Diego Supercomputer Center's Comet platform, using single cores on compute nodes with the following characteristics::
+
+	Intel Haswell Standard Compute Nodes
+	Clock speed	2.5 GHz
+	Cores/node	24
+	DRAM/node	128 GB
+	SSD memory/node	320 GB
+
 Initial Setup and the Model
 ---------------------------
 
@@ -47,7 +55,7 @@ ATESA automates the discovery of suitable initial transition state models using 
 	prod_walltime = '04:00:00'
 	prod_ppn = 1
 
-Based on the five aimless shooting moves with which each candidate transition state frame from the forced trajectory was tested, only a single frame was selected as a suitable aimless shooting initial coordinate file, as indicated in ATESA's output following this job. The coordinates for that frame can be found in 'examples/find_ts'. As shown below, this transition state is very close to the one proposed by Schreiner *et al.* 
+Based on the five aimless shooting moves with which each candidate transition state frame from the forced trajectory was tested, only a single frame was selected as a suitable aimless shooting initial coordinate file, as indicated in ATESA's output following this job. The coordinates for that frame can be found in 'examples/find_ts'. As shown below, this transition state is very close to the one proposed by Schreiner *et al.* Under our test conditions, this job took 18 minutes to complete.
 
 	.. figure:: _images/find_ts.png
 
@@ -56,12 +64,12 @@ Based on the five aimless shooting moves with which each candidate transition st
 Aimless Shooting
 ----------------
 
-Once a model has been set up near the transition state, aimless shooting can proceed. In this case we used the transition state identified in the previous step as the initial coordinates, with 25 copies to speed up the sampling::
+Once a model has been set up near the transition state, aimless shooting can proceed. In this case we used the transition state identified in the previous step as the initial coordinates, with 25 copies ('degeneracy = 25') to speed up the sampling::
 
 	job_type = 'aimless_shooting'
 	topology = 'ethyl_chlorosulfite.prmtop'
 	batch_system = 'slurm'
-	restart = True
+	restart = False
 	working_directory = '/scratch/tburgin/ethyl_chlorosulfite_as'
 	overwrite = True
 
@@ -70,14 +78,16 @@ Once a model has been set up near the transition state, aimless shooting can pro
 
 	commit_fwd = ([3,1,1],[5,5,2],[2.2,2.0,3.0],['gt','lt','gt'])
 	commit_bwd = ([3,1,1],[5,5,2],[1.5,3.5,2.4],['lt','gt','lt'])
+	
+	information_error_freq = 2500
 
 	path_to_input_files = '/home/tburgin/ethyl_chlorosulfite/input_files'
 	path_to_templates = '/home/tburgin/ethyl_chlorosulfite/templates'
 
-	prod_walltime = '01:00:00'
+	prod_walltime = '00:30:00'
 	prod_ppn = 1
 	
-Note that the absence of any specific CVs in this file results in the default behavior, which is building CVs automatically based on the atoms indicated in the commitment definitions. In this case, ATESA derived 156 CVs to sample at each shooting point.
+Note that the absence of any specific CVs in this file results in the default behavior, which is building CVs automatically based on the atoms indicated in the commitment definitions. In this case, ATESA derived 156 CVs to sample at each shooting point. We also set the number of steps between assessments of the information error termination criterion 10 times higher than the default since our system is very small and we'll accumulate hundreds of simulations very rapidly. Similarly, we set a short walltime and allocate only a single core to the production simulations to reflect their low computational requirements. During our testing, this job collected data at the rate of approximately 150 shooting moves per hour; however, for very short simulations like these, much of this time is attributable to overhead while waiting for the batch system to allocate resources for individual simulations, or for ATESA to complete processing steps between steps. For longer individual simulations, this overhead will be greatly diminished.
 
 This job collected 30,088 shooting moves before terminating automatically using based on the :ref:`InformationError` termination criterion with the default settings. An average acceptance ratio of 16.14% per thread (per ``status.txt`` in the working directory) reflects a healthy level of efficiency. A visualization of the sampled data projected onto the three dimensions making up the reaction coordinate produced in the next step is shown here to help readers who may not be familiar with aimless shooting visualize the data, but this plot is not produced automatically by ATESA:
 
