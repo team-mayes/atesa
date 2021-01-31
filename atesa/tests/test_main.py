@@ -32,11 +32,11 @@ class Tests(object):
         settings = configure('../../data/atesa.config')
         settings.initial_coordinates = ['../test_data/test.rst7']
         settings.topology = '../test_data/test.prmtop'
-        settings.degeneracy = 1
+        settings.degeneracy = 2
         settings.overwrite = True
         settings.resample = False
         settings.DEBUG = True
-        assert main.main(settings) == 'ATESA run exiting normally (global termination criterion met)'
+        assert main.main(settings) == 'ATESA run exiting normally'
 
     def test_configure_broken(self):
         """Tests configure.py with a non-existent file"""

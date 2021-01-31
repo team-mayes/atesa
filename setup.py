@@ -56,7 +56,7 @@ setup(
     'pytraj',
     'numpy',
     'mdtraj',
-    'jinja2',
+    'django',
     'statsmodels',
     'pydantic',
     'gnuplotlib',

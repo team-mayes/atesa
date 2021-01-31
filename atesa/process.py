@@ -3,7 +3,7 @@ This portion of the program is responsible for handling setup of the appropriate
 Thread, passing them to a task manager to submit them, and updating the list of currently running threads accordingly.
 """
 
-import jinja2
+import django.template
 import os
 import sys
 import warnings
@@ -67,7 +67,7 @@ def process(thread, running, settings):
                          'working_directory': settings.working_directory,
                          'extra': eval('settings.' + type + '_extra') }
 
-        filled = template.render(these_kwargs)
+        filled = template.render(django.template.Context(these_kwargs))
         newfilename = thread.name + '_' + name + '.' + settings.batch_system
         try:
             with open(newfilename, 'w') as newfile:

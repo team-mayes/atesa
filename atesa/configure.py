@@ -12,10 +12,11 @@ import sys
 import os
 import shutil
 import pickle
-from jinja2 import Environment, FileSystemLoader
+import django.template as template
 import typing
 import pydantic
 from atesa import auto_cvs
+from django.conf import settings as django_settings
 
 def configure(input_file, user_working_directory=''):
     """
@@ -184,9 +185,11 @@ def configure(input_file, user_working_directory=''):
     except IndexError:  # no directory given, not a problem
         pass
 
-    # Set Jinja2 environment
+    # Set Django template environment
     if os.path.exists(settings.path_to_templates):
-        settings.env = Environment(loader=FileSystemLoader(settings.path_to_templates))
+        settings.env = template.Engine(dirs=[settings.path_to_templates])
+        if not django_settings.configured:
+            django_settings.configure()
     else:
         sys.exit('Error: could not locate templates folder: ' + settings.path_to_templates)
 

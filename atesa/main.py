@@ -17,12 +17,15 @@ import time
 import glob
 import psutil
 import warnings
+import itertools
 from atesa import configure
 from atesa import factory
 from atesa import process
 from atesa import interpret
 from atesa import utilities
 from atesa import information_error
+from itertools import product
+from multiprocess import Pool
 
 class Thread(object):
     """
@@ -256,7 +259,6 @@ def handle_loop_exception(attempted_rescue, running, settings):
 
     raise UnableToRescueException('Job cancellation complete, ATESA is now shutting down.')
 
-
 def main(settings, rescue_running=[]):
     """
     Perform the primary loop of building, submitting, monitoring, and analyzing jobs.
@@ -348,9 +350,6 @@ def main(settings, rescue_running=[]):
         running = rescue_running
         attempted_rescue = True
 
-    termination_criterion = False   # initialize global termination criterion boolean
-    interpreted = []                # threads that have finished an interpret step, for resetting attempted_rescue
-
     # Initialize threads with first process step
     try:
         if not rescue_running:  # if rescue_running, this step has already finished and we just want the while loop
@@ -363,6 +362,29 @@ def main(settings, rescue_running=[]):
                   #'If you haven\'t already done so, consider running verify_threads.py to remove corrupted threads from this file.'
         raise e
 
+    try:
+        if settings.job_type == 'aimless_shooting' and len(os.sched_getaffinity(0)) > 1:
+            with Pool(len(os.sched_getaffinity(0))) as p:
+                p.starmap(main_loop, zip(itertools.repeat(settings), itertools.repeat(allthreads), [[thread] for thread in allthreads]))
+        else:
+            main_loop(settings, allthreads, running)
+    except AttributeError:  # os.sched_getaffinity raises AttributeError on non-UNIX systems.
+        main_loop(settings, allthreads, running)
+
+    ## Deprecated thread pool
+    # pool = ThreadPool(len(allthreads))
+    # func = partial(main_loop, settings)
+    # results = pool.map(func, [[thread] for thread in allthreads])
+
+    jobtype = factory.jobtype_factory(settings.job_type)
+    jobtype.cleanup(settings)
+
+    return 'ATESA run exiting normally'
+
+def main_loop(settings, allthreads, running):
+    termination_criterion = False
+    attempted_rescue = False
+    interpreted = []
     # Begin main loop
     # This whole thing is in a try-except block to handle cancellation of jobs when the code crashes in any way
     try:
@@ -406,14 +428,6 @@ def main(settings, rescue_running=[]):
         print(str(e))
         handle_loop_exception(attempted_rescue, running, settings)
 
-    jobtype = factory.jobtype_factory(settings.job_type)
-    jobtype.cleanup(settings)
-
-    if termination_criterion:
-        return 'ATESA run exiting normally (global termination criterion met)'
-    else:
-        return 'ATESA run exiting normally (all threads ended individually)'
-
 
 def run_main():
     # Obtain settings namespace, initialize threads, and move promptly into main.
@@ -427,4 +441,3 @@ def run_main():
 
 if __name__ == "__main__":
     run_main()
-

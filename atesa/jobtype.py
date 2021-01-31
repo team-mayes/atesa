@@ -19,9 +19,12 @@ import warnings
 import copy
 import re
 import psutil
+import django.template
 from atesa import utilities
 from atesa import main
 from atesa import factory
+from oslo_concurrency import lockutils
+from oslo_concurrency import processutils
 
 class JobType(abc.ABC):
     """
@@ -524,6 +527,7 @@ class AimlessShooting(JobType):
 
         return global_terminate
 
+    @lockutils.synchronized('not_thread_process_safe', fair=True, external=True, lock_path='./')
     def update_results(self, thread, allthreads, settings):
         if thread.current_type == ['prod', 'prod']:   # aimless shooting only writes after prod steps
             # Initialize as.out if not already extant
@@ -876,7 +880,7 @@ class EquilibriumPathSampling(JobType):
 
             if not os.path.exists(input_file_name):
                 template = settings.env.get_template(settings.md_engine + '_eps_in.tpl')
-                filled = template.render(nstlim=str(thread.history.prod_lens[-1][job_index]), ntwx=str(settings.eps_out_freq))
+                filled = template.render(django.template.Context({'nstlim': str(thread.history.prod_lens[-1][job_index]), 'ntwx': str(settings.eps_out_freq)}))
                 with open(input_file_name, 'w') as newfile:
                     newfile.write(filled)
                     newfile.close()
