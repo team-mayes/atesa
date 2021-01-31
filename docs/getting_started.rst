@@ -6,11 +6,15 @@ Getting Started with ATESA
 Installation
 ------------
 
-For now, the only way to install ATESA is to download it directly from `GitHub <https://github.com/team-mayes/atesa>`_, navigate to the root ATESA directory, and run the ``setup.py`` script directly::
+ATESA should be installed directly on the high-performance computing (HPC) resource that you intend to use. For now, the only way to install ATESA is to download it directly from `GitHub <https://github.com/team-mayes/atesa>` or clone it::
 
-	python setup.py
+	git clone https://github.com/team-mayes/atesa.git
+
+Then, navigate to the root ATESA directory, and run the ``setup.py`` script directly::
+
+	python setup.py install --user
 	
-In the future, we will support installation via a package manager.
+If you're using a custom python environment, be sure to activate it before installing. In the future, we will support installation directly via a package manager.
 
 Usage
 -----
@@ -23,7 +27,7 @@ ATESA is designed to dynamically handle jobs on a PBS/Torque or Slurm batch syst
    
 The config_file parameter is required and supports absolute or relative paths. The working_directory parameter is optional, but if it is provided it overrides the value in the configuration file. This option is made available for use on systems that only allocate working space for jobs after they have been initialized. For details on the contents of the configuration file, see :ref:`TheConfigFile`.
 
-Although ATESA can be run directly from the command line, because its process continues for the entirety of the job it is usually recommended to submit it as its own batch job. A single core and a modest allocation of memory should be sufficient to run ATESA on most platforms (it is neither memory- nor processor-intensive, although many features involve a significant amount of I/O, and more memory may be necessary when using the information error termination criterion).
+Although ATESA can be run directly from the command line, because its process continues for the entirety of the job it is usually recommended to submit it as its own batch job. A single core and a modest allocation of memory should be sufficient to run ATESA on most platforms (it is neither memory- nor processor-intensive, although many features involve a significant amount of I/O, and more memory may be necessary when using the information error termination criterion). The exception is when you are running aimless shooting with simulations that are exceptionally quick -- on the order of less than a minute per simulation. In this case, ATESA supports multiprocessing on UNIX-based systems; simply allocate the desired number of cores and ATESA will use them as efficiently as it can.
 
 Note that almost all ATESA jobs will produce a large amount of data, at least transiently. For this reason, the working directory should probably be set to a path inside the "scratch" filesystem or equivalent on your HPC cluster. If you aren't sure what this means, consult the documentation or support staff for your cluster.
 

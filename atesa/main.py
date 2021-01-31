@@ -25,7 +25,7 @@ from atesa import interpret
 from atesa import utilities
 from atesa import information_error
 from itertools import product
-from multiprocess import Pool
+from multiprocess import Pool, Manager
 
 class Thread(object):
     """
@@ -215,9 +215,9 @@ def handle_loop_exception(attempted_rescue, running, settings):
 
     """
 
-    class UnableToRescueException(Exception):
-        """ Custom exception for closing out ATESA after an unsuccessful rescue attempt """
-        pass
+    # class UnableToRescueException(Exception):
+    #     """ Custom exception for closing out ATESA after an unsuccessful rescue attempt """
+    #     pass
 
     # # todo: finish implementing and then uncomment this
     # if not attempted_rescue:
@@ -257,7 +257,7 @@ def handle_loop_exception(attempted_rescue, running, settings):
             print('\nEncountered exception while attempting to cancel a job: ' + str(little_e) +
                   '\nIgnoring and continuing...')
 
-    raise UnableToRescueException('Job cancellation complete, ATESA is now shutting down.')
+    raise RuntimeError('Job cancellation complete, ATESA is now shutting down.')
 
 def main(settings, rescue_running=[]):
     """
@@ -364,6 +364,17 @@ def main(settings, rescue_running=[]):
 
     try:
         if settings.job_type == 'aimless_shooting' and len(os.sched_getaffinity(0)) > 1:
+            manager = Manager()
+            managed_allthreads = []
+            for thread in allthreads:
+                thread_dict = thread.__dict__
+                thread_history_dict = thread.history.__dict__
+                managed_thread = Thread()
+                managed_thread.history = manager.Namespace()
+                managed_thread.__dict__.update(thread_dict)
+                managed_thread.history.__dict__.update(thread_history_dict)
+                managed_allthreads.append(managed_thread)
+            allthreads = manager.list(managed_allthreads)
             with Pool(len(os.sched_getaffinity(0))) as p:
                 p.starmap(main_loop, zip(itertools.repeat(settings), itertools.repeat(allthreads), [[thread] for thread in allthreads]))
         else:

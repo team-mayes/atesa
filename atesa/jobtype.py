@@ -527,39 +527,41 @@ class AimlessShooting(JobType):
 
         return global_terminate
 
+    # AimlessShooting.update_results breaks if accessed by multiple processes at once; this lock prevents that.
     @lockutils.synchronized('not_thread_process_safe', fair=True, external=True, lock_path='./')
     def update_results(self, thread, allthreads, settings):
-        if thread.current_type == ['prod', 'prod']:   # aimless shooting only writes after prod steps
+        local_thread = thread
+        if local_thread.current_type == ['prod', 'prod']:   # aimless shooting only writes after prod steps
             # Initialize as.out if not already extant
             if not os.path.exists(settings.working_directory + '/as_raw.out'):
                 open(settings.working_directory + '/as_raw.out', 'w').close()
 
             # Update current_results, total and accepted move counts, and status.txt
-            thread.history.prod_results.append([])
-            for job_index in range(len(thread.current_type)):
-                frame_to_check = thread.get_frame(thread.history.prod_trajs[-1][job_index], -1, settings)
+            local_thread.history.prod_results.append([])
+            for job_index in range(len(local_thread.current_type)):
+                frame_to_check = local_thread.get_frame(local_thread.history.prod_trajs[-1][job_index], -1, settings)
                 if frame_to_check:
-                    thread.history.prod_results[-1].append(utilities.check_commit(frame_to_check, settings))
+                    local_thread.history.prod_results[-1].append(utilities.check_commit(frame_to_check, settings))
                     os.remove(frame_to_check)
                 else:
-                    thread.history.prod_results[-1].append('')    # trajectory doesn't exist for some reason, so automatically fail
-            thread.total_moves += 1
-            thread.history.timestamps.append(int(time.time()))
-            if thread.history.prod_results[-1] in [['fwd', 'bwd'], ['bwd', 'fwd']]:   # update last accepted move
-                if settings.cleanup and thread.history.last_accepted >= 0:            # delete previous last accepted trajectories
-                    for job_index in range(len(thread.current_type)):
-                        os.remove(thread.history.prod_trajs[thread.history.last_accepted][job_index])
-                thread.history.last_accepted = int(len(thread.history.prod_trajs) - 1)   # new index of last accepted move
-                thread.accept_moves += 1
+                    local_thread.history.prod_results[-1].append('')    # trajectory doesn't exist for some reason, so automatically fail
+            local_thread.total_moves += 1
+            local_thread.history.timestamps.append(int(time.time()))
+            if local_thread.history.prod_results[-1] in [['fwd', 'bwd'], ['bwd', 'fwd']]:   # update last accepted move
+                if settings.cleanup and local_thread.history.last_accepted >= 0:            # delete previous last accepted trajectories
+                    for job_index in range(len(local_thread.current_type)):
+                        os.remove(local_thread.history.prod_trajs[local_thread.history.last_accepted][job_index])
+                local_thread.history.last_accepted = int(len(local_thread.history.prod_trajs) - 1)   # new index of last accepted move
+                local_thread.accept_moves += 1
 
             # Write CVs to as_raw.out and as_full_cvs.out
-            if thread.history.prod_results[-1][0] in ['fwd', 'bwd']:
-                if thread.history.prod_results[-1][0] == 'fwd':
+            if local_thread.history.prod_results[-1][0] in ['fwd', 'bwd']:
+                if local_thread.history.prod_results[-1][0] == 'fwd':
                     this_basin = 'B'
                 else:   # 'bwd'
                     this_basin = 'A'
                 open(settings.working_directory + '/as_raw.out', 'a').write(this_basin + ' <- ')
-                open(settings.working_directory + '/as_raw.out', 'a').write(utilities.get_cvs(thread.history.init_coords[-1][0], settings) + '\n')
+                open(settings.working_directory + '/as_raw.out', 'a').write(utilities.get_cvs(local_thread.history.init_coords[-1][0], settings) + '\n')
                 open(settings.working_directory + '/as_raw.out', 'a').close()
 
                 ## Turns out this really slows things down; better left to resampling as needed
@@ -567,11 +569,20 @@ class AimlessShooting(JobType):
                 # if not os.path.exists(settings.working_directory + '/as_full_cvs.out'):
                 #     open(settings.working_directory + '/as_full_cvs.out', 'w').close()
                 # with open(settings.working_directory + '/as_full_cvs.out', 'a') as f:
-                #     for job_index in range(len(thread.current_type)):
-                #         for frame_index in range(pytraj.iterload(thread.history.prod_trajs[-1][job_index], settings.topology).n_frames):
-                #             frame_to_check = thread.get_frame(thread.history.prod_trajs[-1][job_index], frame_index + 1, settings)
+                #     for job_index in range(len(local_thread.current_type)):
+                #         for frame_index in range(pytraj.iterload(local_thread.history.prod_trajs[-1][job_index], settings.topology).n_frames):
+                #             frame_to_check = local_thread.get_frame(local_thread.history.prod_trajs[-1][job_index], frame_index + 1, settings)
                 #             f.write(utilities.get_cvs(frame_to_check, settings) + '\n')
                 #             os.remove(frame_to_check)
+
+            # This block is necessary to update the local thread in the multiprocess-managed list allthreads.
+            # In cases where allthreads is already literal, this block has no effect.
+            index_to_replace = 0
+            for temp_thread in allthreads:
+                if temp_thread.history.init_inpcrd[0] == local_thread.history.init_inpcrd[0]:
+                    break
+                index_to_replace += 1
+            allthreads[index_to_replace] = local_thread
 
             with open('status.txt', 'w') as file:
                 for this_thread in allthreads:
@@ -584,8 +595,19 @@ class AimlessShooting(JobType):
                     file.write('  Status: ' + this_thread.status + '\n')
                 file.close()
 
+        # This block is necessary to update the local thread in the multiprocess-managed list allthreads.
+        # In cases where allthreads is already literal, this block has no effect.
+        if not thread in allthreads:
+            index_to_replace = 0
+            for temp_thread in allthreads:
+                if temp_thread.history.init_inpcrd[0] == local_thread.history.init_inpcrd[0]:
+                    break
+                index_to_replace += 1
+            allthreads[index_to_replace] = local_thread
+
         # Write updated restart.pkl
-        pickle.dump(allthreads, open('restart.pkl.bak', 'wb'), protocol=2)  # if the code crashes while dumping it could delete the contents of the pkl file
+        unpacked_allthreads = [item for item in allthreads]     # unpack managed reference list into literal list
+        pickle.dump(unpacked_allthreads, open('restart.pkl.bak', 'wb'), protocol=2)  # if the code crashes while dumping it could delete the contents of the pkl file
         if not os.path.getsize('restart.pkl.bak') == 0:
             shutil.copy('restart.pkl.bak', 'restart.pkl')                   # copying after is safer
 
