@@ -445,7 +445,10 @@ def run_main():
         working_directory = sys.argv[2]
     except IndexError:
         working_directory = ''
-    settings = configure.configure(sys.argv[1], working_directory)
+    try:
+        settings = configure.configure(sys.argv[1], working_directory)
+    except IndexError:
+        raise RuntimeError('No configuration file specified. See documentation at atesa.readthedocs.io for details.')
     exit_message = main(settings)
     print(exit_message)
 

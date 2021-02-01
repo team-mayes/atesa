@@ -6,7 +6,13 @@ Getting Started with ATESA
 Installation
 ------------
 
-ATESA should be installed directly on the high-performance computing (HPC) resource that you intend to use. For now, the only way to install ATESA is to download it directly from `GitHub <https://github.com/team-mayes/atesa>` or clone it::
+ATESA should be installed directly on the high-performance computing (HPC) resource that you intend to use. The simplest way to do so is with pip::
+
+	pip install atesa
+	
+You may need to append the `--user` option depending on how your HPC resource is configured.
+
+Alternatively, you can download ATESA directly from `GitHub <https://github.com/team-mayes/atesa>` or clone it::
 
 	git clone https://github.com/team-mayes/atesa.git
 
@@ -14,7 +20,7 @@ Then, navigate to the root ATESA directory, and run the ``setup.py`` script dire
 
 	python setup.py install --user
 	
-If you're using a custom python environment, be sure to activate it before installing. In the future, we will support installation directly via a package manager.
+If you're using a custom python environment, remember to activate it before installing!
 
 Usage
 -----
