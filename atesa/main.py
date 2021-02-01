@@ -24,7 +24,6 @@ from atesa import process
 from atesa import interpret
 from atesa import utilities
 from atesa import information_error
-from itertools import product
 from multiprocess import Pool, Manager
 
 class Thread(object):

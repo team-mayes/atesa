@@ -59,6 +59,7 @@ setup(
     'django',
     'statsmodels',
     'oslo.concurrency',
+    'multiprocess',
     'pydantic',
     'gnuplotlib',
     'numdifftools',

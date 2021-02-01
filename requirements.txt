@@ -1,9 +1,11 @@
 cython>=0.28
 pytraj
+mdtraj
 numpy
 django
 oslo.concurrency
 statsmodels
+multiprocess
 pydantic
 gnuplotlib
 numdifftools
