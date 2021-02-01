@@ -15,6 +15,7 @@ dependencies:
   - pymbar
   - django
   - oslo.concurrency
+  - multiprocess
 
     # Testing
   - pytest
