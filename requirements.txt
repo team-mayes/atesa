@@ -1,7 +1,8 @@
 cython>=0.28
 pytraj
 numpy
-jinja2
+django
+oslo.concurrency
 statsmodels
 pydantic
 gnuplotlib

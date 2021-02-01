@@ -58,7 +58,7 @@ setup(
     'mdtraj',
     'django',
     'statsmodels',
-    'oslo_concurrency',
+    'oslo.concurrency',
     'pydantic',
     'gnuplotlib',
     'numdifftools',
