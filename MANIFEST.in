@@ -4,3 +4,4 @@ include versioneer.py
 
 graft atesa
 global-exclude *.py[cod] __pycache__ *.soinclude atesa/_version.py
+include atesa/_version.py
