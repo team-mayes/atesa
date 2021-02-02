@@ -333,7 +333,7 @@ def main(settings, rescue_running=[]):
                 pass
         if not settings.dont_dump:
             temp_settings = copy.deepcopy(settings)  # initialize temporary copy of settings to modify
-            temp_settings.__dict__.pop('env')  # env attribute is not picklable
+            temp_settings.__dict__.pop('env')  # env attribute is not picklable (update: maybe no longer true, but doesn't matter)
             pickle.dump(temp_settings, open(settings.working_directory + '/settings.pkl', 'wb'), protocol=2)
 
         # Build or load threads
@@ -363,7 +363,11 @@ def main(settings, rescue_running=[]):
 
     try:
         if settings.job_type == 'aimless_shooting' and len(os.sched_getaffinity(0)) > 1:
+            # Initialize Manager for shared data across processes; this is necessary because multiprocessing is being
+            # retrofitted to code designed for serial processing, but it works!
             manager = Manager()
+
+            # Setup Managed allthreads list
             managed_allthreads = []
             for thread in allthreads:
                 thread_dict = thread.__dict__
@@ -374,8 +378,18 @@ def main(settings, rescue_running=[]):
                 managed_thread.history.__dict__.update(thread_history_dict)
                 managed_allthreads.append(managed_thread)
             allthreads = manager.list(managed_allthreads)
+
+            # Setup Managed settings Namespace
+            settings_dict = settings.__dict__
+            managed_settings = manager.Namespace()
+            # Need to explicitly update every key because of how the Managed Namespace works.
+            # Calling exec is the best way to do this I could find. Updating managed_settings.__dict__ doesn't work.
+            for key in settings_dict.keys():
+                exec('managed_settings.' + key + ' = settings_dict[key]')
+
+            # Distribute processes among available core Pool
             with Pool(len(os.sched_getaffinity(0))) as p:
-                p.starmap(main_loop, zip(itertools.repeat(settings), itertools.repeat(allthreads), [[thread] for thread in allthreads]))
+                p.starmap(main_loop, zip(itertools.repeat(managed_settings), itertools.repeat(allthreads), [[thread] for thread in allthreads]))
         else:
             main_loop(settings, allthreads, running)
     except AttributeError:  # os.sched_getaffinity raises AttributeError on non-UNIX systems.
