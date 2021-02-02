@@ -7,6 +7,7 @@ import abc
 import os
 import pytraj
 import mdtraj
+import mdtraj.formats
 
 class MDEngine(abc.ABC):
     """
@@ -79,13 +80,14 @@ class AdaptAmber(MDEngine):
 
         # Use mdtraj to check for non-zero trajectory length (pytraj gives an error below if n_frames = 0)
         try:
-            traj = mdtraj.load(trajectory, top=settings.topology)
-            if traj.n_frames == 0:
-                del traj
+            mtraj = mdtraj.load(trajectory, top=settings.topology)
+            if mtraj.n_frames == 0:
+                del mtraj
                 return ''
         except ValueError:      # sometimes this is the result of trying to load a trajectory too early
             return ''
 
+        traj = pytraj.Trajectory(xyz=mtraj.xyz.astype('f8'), top=settings.topology)
         traj = pytraj.iterload(trajectory, settings.topology)
         try:
             pytraj.write_traj(new_restart_name, traj, format='rst7', frame_indices=[shift_frame], options='multi', overwrite=True, velocity=True)
@@ -104,7 +106,9 @@ class AdaptAmber(MDEngine):
         except OSError:
             if not os.path.exists(new_restart_name):
                 raise OSError('expected pytraj to write either ' + new_restart_name + ' or ' + new_restart_name + '.1, '
-                              'but found neither.')
+                              'but found neither.\nThe most likely explanation is that the ATESA process is unable to '
+                              'write to the working directory (' + settings.working_directory + '). You may have run '
+                              'out of storage space.')
 
         return new_restart_name
 

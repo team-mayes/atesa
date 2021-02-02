@@ -21,6 +21,10 @@ sys.path.insert(0, os.path.abspath('..'))
 #sys.path = ['', '/Users/tburgin/miniconda3/lib/python37.zip', '/Users/tburgin/miniconda3/lib/python3.7', '/Users/tburgin/miniconda3/lib/python3.7/lib-dynload', '/Users/tburgin/miniconda3/lib/python3.7/site-packages', '/Users/tburgin/Documents/PycharmProjects/atesa']
 
 import atesa
+from django.conf import settings as django_settings
+
+if not django_settings.configured:
+    django_settings.configure()
 
 
 # -- Project information -----------------------------------------------------
