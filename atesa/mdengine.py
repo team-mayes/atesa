@@ -78,17 +78,16 @@ class AdaptAmber(MDEngine):
         else:
             raise IndexError('invalid frame index for get_frame: ' + str(frame) + ' (must be >= 1, or exactly -1)')
 
-        # Use mdtraj to check for non-zero trajectory length (pytraj gives an error below if n_frames = 0)
+        # Check for non-zero trajectory length
         try:
-            mtraj = mdtraj.load(trajectory, top=settings.topology)
-            if mtraj.n_frames == 0:
-                del mtraj
+            with pytraj.utils.context.capture_stdout():     # suppress C++ errors if this file is empty
+                traj = pytraj.iterload(trajectory, settings.topology)
+            if traj.n_frames == 0:
+                del traj
                 return ''
         except ValueError:      # sometimes this is the result of trying to load a trajectory too early
             return ''
 
-        traj = pytraj.Trajectory(xyz=mtraj.xyz.astype('f8'), top=settings.topology)
-        traj = pytraj.iterload(trajectory, settings.topology)
         try:
             pytraj.write_traj(new_restart_name, traj, format='rst7', frame_indices=[shift_frame], options='multi', overwrite=True, velocity=True)
         except ValueError:  # pytraj raises a ValueError if frame index is out of range
