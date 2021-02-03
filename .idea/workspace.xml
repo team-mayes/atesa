@@ -1,48 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="55679143-7654-431c-aee1-71d5375f0f66" name="Default" comment="">
-      <change type="DELETED" beforePath="$PROJECT_DIR$/docs/Makefile" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/docs/README.md" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/docs/_images/ATESA_workflow.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/docs/_images/aimless_shooting.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/docs/_images/as_data.gif" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/docs/_images/atesa_logo.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/docs/_images/comana.pdf" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/docs/_images/comana_bimodal.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/docs/_images/comana_edge_only.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/docs/_images/comana_flat.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/docs/_images/comana_good.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/docs/_images/comana_offcenter.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/docs/_images/committor_analysis.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/docs/_images/ethyl_chlorosulfite_comana.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/docs/_images/find_ts.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/docs/_images/lmax.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/docs/_images/lmax_sigmoid.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/docs/_images/pathway_restrained.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/docs/_images/reaction_pathway.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/docs/_images/two-line_test.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/docs/_images/umbrella_sampling.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/docs/_images/umbrella_sampling_histogram.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/docs/_static/README.md" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/docs/_templates/README.md" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/docs/api.rst" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/docs/apidoc/atesa.rst" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/docs/apidoc/atesa.tests.rst" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/docs/apidoc/modules.rst" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/docs/auxiliary_scripts.rst" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/docs/conf.py" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/docs/example_study.rst" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/docs/getting_started.rst" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/docs/index.rst" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/docs/make.bat" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/docs/on_termination_criteria.rst" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/docs/the_config_file.rst" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/docs/theory_of_operation.rst" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/docs/troubleshooting.rst" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/docs/two-line_test.png" afterPath="" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-    </list>
+    <list default="true" id="55679143-7654-431c-aee1-71d5375f0f66" name="Default" comment="" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
