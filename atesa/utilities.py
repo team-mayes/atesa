@@ -341,7 +341,7 @@ def resample(settings, partial=False, full_cvs=False):
 
     """
 
-    # todo: test this thoroughly using a dummy thread and a manual decorrelation time calculation using different software
+    # todo: test this more thoroughly using a dummy thread and a manual decorrelation time calculation using different software
 
     # This function is sometimes called from outside the working directory, so make sure we're there
     os.chdir(settings.working_directory)
