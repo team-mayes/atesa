@@ -119,7 +119,7 @@ def main(working_directory, rc_definition, as_out_file, extrema=False):
     settings.as_out_file = as_out_file      # for reducing CVs properly
     settings.include_qdot = False           # unnecessary for our purposes
 
-    if extrema: # todo: this gives impossible values, must be broken (probably something to do with reduce)
+    if extrema:
         from atesa.main import Thread
         print('Evaluating final RC values of forward and backward trajectories from an accepted shooting move... (this '
               'may take a little while if this is your first time running this script for this particular as_out_file)')

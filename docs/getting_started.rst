@@ -10,7 +10,7 @@ ATESA should be installed directly on the high-performance computing (HPC) resou
 
 	pip install atesa
 	
-You may need to append the `--user` option depending on how your HPC resource is configured.
+You may need to append the `--user` option depending on how your HPC resource is configured. ATESA requires Python 3, and the above pip command may fail if your active python environment defaults to Python 2.
 
 Alternatively, you can download ATESA directly from `GitHub <https://github.com/team-mayes/atesa>` or clone it::
 

@@ -323,6 +323,9 @@ These settings define the combined variables (CVs) for the job. In aimless shoot
 	
 	Use of this option is recommended in particular for committor analysis, umbrella sampling, and equilibrium path sampling jobs following an aimless shooting job. In this case, the *as_settings_file* should point to the settings.pkl file from that aimless shooting job. Default = ''
 
+``sigfigs``
+
+	An integer specifying the number of digits after the decimal place to include when reporting CV values in the output file. Larger numbers mean larger files, which means more I/O overhead and memory consumption. In general you should only need to change this option if you're using a custom CV that requires more digits. Default = 3
 
 Initial Coordinates
 ~~~~~~~~~~~~~~~~~~~

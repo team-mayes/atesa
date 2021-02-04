@@ -104,6 +104,7 @@ def configure(input_file, user_working_directory=''):
         information_error_lmax_string = '--two_line_test'
         max_moves: int = -1     # also used by find_ts
         max_consecutive_fails: int = 10
+        sigfigs: int = 3
 
         # Required only for committor analysis
         committor_analysis_n: int = 10

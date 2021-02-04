@@ -419,7 +419,7 @@ def main_loop(settings, allthreads, running):
                     if attempted_rescue == True:
                         interpreted.append(thread)
                     if termination_criterion:
-                        for thread in running:    # todo: should I replace this with something to finish up running jobs and just block submission of new ones?
+                        for thread in running:
                             for job_index in range(len(thread.current_type)):
                                 thread.cancel_job(job_index, settings)
                         running = []
@@ -431,13 +431,8 @@ def main_loop(settings, allthreads, running):
                                     if proc in [psutil.STATUS_RUNNING, psutil.STATUS_SLEEPING, psutil.STATUS_DISK_SLEEP]:
                                         proc_status = 'running'
                                         time.sleep(60)  # wait 1 minute before checking again
-                                    elif proc in [psutil.STATUS_ZOMBIE, psutil.STATUS_DEAD]:
-                                        proc_status = 'not_running'
                                     else:
-                                        warnings.warn(
-                                            'unexpected process state for information_error.py subprocess: ' + proc +
-                                            '\nSkipping information error checking at this step')
-                                        proc_status = 'error'
+                                        proc_status = 'not_running'
                                 except (psutil.NoSuchProcess, ProcessLookupError):
                                     proc_status = 'not_running'
                         break

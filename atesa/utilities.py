@@ -197,6 +197,7 @@ def get_cvs(filename, settings, reduce=False, frame=0):
     output = ''
     values = []
     local_index = -1
+    sigfigs = '%.' + str(settings.sigfigs) + 'f'
     for cv in settings.cvs:
         local_index += 1
         evaluation = eval(cv)       # evaluate the CV definition code (potentially using traj, mtraj, and/or traj_name)
@@ -204,7 +205,7 @@ def get_cvs(filename, settings, reduce=False, frame=0):
             values.append(float(evaluation))
         if reduce:                  # reduce values if necessary
             evaluation = reduce_cv(evaluation, local_index, rc_minmax)
-        output += '%.3f' % float(evaluation) + ' '
+        output += sigfigs % float(evaluation) + ' '
     if settings.include_qdot and not settings.job_type == 'equilibrium_path_sampling':  # if True, then we want to include rate of change for every CV, too
         # Strategy here is to write a new temporary .rst7 file by incrementing all the coordinate values by their
         # corresponding velocity values, load it as a new iterload object, and then rerun our analysis on that.
@@ -225,7 +226,7 @@ def get_cvs(filename, settings, reduce=False, frame=0):
                                        'wrong file, please specify the right one with the "as_out_file" option in the '
                                        'configuration file. If this is the right file but it does not contain qdot '
                                        'terms, please add "include_qdot = False" to the configuration file.')
-            output += '%.3f' % float(evaluation) + ' '
+            output += sigfigs % float(evaluation) + ' '
         os.remove(incremented_filename)     # clean up temporary file
 
     if output[-1] == ' ':

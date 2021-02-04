@@ -467,6 +467,8 @@ class AimlessShooting(JobType):
         else:
             raise ValueError('unexpected batch template type for aimless_shooting: ' + str(type))
 
+    # Blocks access to this method by more than one thread at once.
+    @lockutils.synchronized('not_thread_process_safe_termination', fair=True, external=True, lock_path='./')
     def check_termination(self, thread, allthreads, settings):
         global_terminate = False    # initialize
         if thread.current_type == ['prod', 'prod']:  # aimless shooting only checks termination after prod steps

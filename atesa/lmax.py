@@ -555,10 +555,10 @@ if __name__ == "__main__":
     parser.add_argument('-q', metavar='include_qdot', type=str, nargs=1, default=['present'],
                         help='valid options are: "present", "absent", and "ignore" (quotes excluded). If "present" or '
                              '"ignore", the input file is assumed to include rate-of-change ("q") data for each CV '
-                             '(formatted as in e.g., "A <- CV0 CV1 q0 q1"); in the former case, a q term will be '
-                             'included in the RC for each CV, implementing inertial likelihood maximization. In the '
-                             'latter, no such terms will be included. Finally, if "absent", the q data will be assumed '
-                             'not to be present in the input file. Default=present')
+                             '(formatted as in e.g., "A <- CV0 CV1 q0 q1"); in the former case, q terms will be used to'
+                             'select the RC (but will not appear in the final RC), implementing inertial likelihood '
+                             'maximization. In the latter, rate of change terms are not used. Finally, if "absent", the'
+                             ' q data will be assumed not to be present in the input file at all. Default=present')
     parser.add_argument('-r', metavar='running', type=int, nargs=1, default=[0],
                         help='if > 0, runs from k = 1 to "running" using the previously obtained k - 1 results as the '
                              'argument for f, ignoring the arguments passed for k and f. Default=0')
@@ -569,13 +569,13 @@ if __name__ == "__main__":
                         help='If this option is given, progress messages outputted to the terminal are suppressed and ' 
                              'only the final result is written (either to the terminal or the output file.)')
     parser.add_argument('--two_line_test', action='store_true', default=False,
-                        help='If this option is given, arguments passed for k, f, and r are ignored, and the best RC is'
-                             ' determined based on the two-line method (see documentation).')
+                        help='If this option is given, arguments passed for k, f, and r are ignored, and the RC is '
+                             'chosen based on the two-line method (see documentation).')
     parser.add_argument('--plots', action='store_true', default=False,
                         help='If True, plots the final fit between the model and data committor sigmoid. '
-                             'If this option is given alongside two_line_test, gnuplot will be used to write plots to the '
-                             'terminal during evaluations of the two_line_test termination criterion (if it is installed). '
-                             'The sigmoid data is also printed to the terminal.')
+                             'If this option is given alongside two_line_test, gnuplot will be used to write plots to '
+                             'the terminal during evaluations of the two_line_test termination criterion (if it is '
+                             'installed). The sigmoid data is also printed to the terminal or output file.')
     parser.add_argument('--two_line_threshold', metavar='two_line_threshold', type=float, nargs=1, default=[0.5],
                         help='If this option is given alongside two_line_test, sets the maximum ratio of slopes in the'
                              'two-line test. See the documentation for two_line_test for details. Default=0.5')
