@@ -294,18 +294,23 @@ def main(**kwargs):
     if two_line_test:
         try:
             settings = pickle.load(open('settings.pkl', 'rb'))
-            print('Loaded settings.pkl...')
+            if not quiet:
+                print('Loaded settings.pkl...')
             try:
                 information_error_override = settings.information_error_override
-                print('Setting information_error_override = ' + str(information_error_override))
+                if not quiet:
+                    print('Setting information_error_override = ' + str(information_error_override))
             except AttributeError:
                 information_error_override = False
-                print('information_error_override is not set; defaulting to False')
+                if not quiet:
+                    print('information_error_override is not set; defaulting to False')
             try:
                 information_error_max_dims = settings.information_error_max_dims
-                print('Setting maximum number of two_line_test dimensions to: ' + str(int(information_error_max_dims)))
+                if not quiet:
+                    print('Setting maximum number of two_line_test dimensions to: ' + str(int(information_error_max_dims)))
             except AttributeError:
-                print('information_error_max_dims is not set; defaulting to no limit')
+                if not quiet:
+                    print('information_error_max_dims is not set; defaulting to no limit')
         except FileNotFoundError:
             pass
 
@@ -333,7 +338,7 @@ def main(**kwargs):
                                ' you sure it includes rate-of-change data?')
         num_cvs = int(num_cvs / 2)
 
-    if two_line_test:
+    if two_line_test and not quiet:
         print('Two line test requires at least five optimizations, so there will be five progress bars before testing.')
 
     # Prepare for and then enter optimization loop

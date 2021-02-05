@@ -22,10 +22,13 @@ def check_commit(filename, settings):
     """
     Check commitment of coordinate file to basins defined by settings.commit_fwd and settings.commit_bwd.
 
+    Raises a RuntimeError if the supplied file is not suitable for checking for commitment.
+
     Parameters
     ----------
     filename : str
-        Name of .rst7-formatted coordinate file to be checked
+        Name of coordinate or trajectory file to be checked. If the file has more than one frame, only the last frame
+        will be loaded.
     settings : argparse.Namespace
         Settings namespace object
 
@@ -39,7 +42,9 @@ def check_commit(filename, settings):
     # todo: consider adding support for angles and dihedrals
 
     try:
-        traj = pytraj.iterload(filename, settings.topology)
+        traj = pytraj.load(filename, settings.topology, frame_indices=[-1])
+        if traj.n_frames == 0:
+            raise RuntimeError('Attempted to check commitment for file: ' + filename + ' but it has no frames.')
     except ValueError as e:
         raise RuntimeError('Unable to load file: ' + filename + ' for checking commitment with the specified topology '
                            'file.\npytraj returned error: ' + str(e))

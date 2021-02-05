@@ -434,10 +434,11 @@ class AimlessShooting(JobType):
         if thread.current_type == ['prod', 'prod']:
             for job_index in range(len(thread.jobids)):
                 if thread.get_status(job_index, settings) == 'R':     # if the job in question is running
-                    frame_to_check = thread.get_frame(thread.history.prod_trajs[-1][job_index], -1, settings)
-                    if frame_to_check and utilities.check_commit(frame_to_check, settings):  # if it has committed to a basin
-                        thread.cancel_job(job_index, settings)        # cancel it
-                        os.remove(frame_to_check)
+                    try:
+                        if utilities.check_commit(thread.history.prod_trajs[-1][job_index], settings):  # if committed
+                            thread.cancel_job(job_index, settings)        # cancel it
+                    except RuntimeError:    # occurs if trajectory doesn't have any frames yet
+                        pass
 
         # if every job in this thread has status 'C'ompleted/'C'anceled...
         if all(item == 'C' for item in [thread.get_status(job_index, settings) for job_index in range(len(thread.jobids))]):
@@ -541,11 +542,9 @@ class AimlessShooting(JobType):
             # Update current_results, total and accepted move counts, and status.txt
             local_thread.history.prod_results.append([])
             for job_index in range(len(local_thread.current_type)):
-                frame_to_check = local_thread.get_frame(local_thread.history.prod_trajs[-1][job_index], -1, settings)
-                if frame_to_check:
-                    local_thread.history.prod_results[-1].append(utilities.check_commit(frame_to_check, settings))
-                    os.remove(frame_to_check)
-                else:
+                try:
+                    local_thread.history.prod_results[-1].append(utilities.check_commit(local_thread.history.prod_trajs[-1][job_index], settings))
+                except RuntimeError:
                     local_thread.history.prod_results[-1].append('')    # trajectory doesn't exist for some reason, so automatically fail
             local_thread.total_moves += 1
             local_thread.history.timestamps.append(int(time.time()))
@@ -817,10 +816,12 @@ class CommittorAnalysis(JobType):
     def gatekeeper(self, thread, settings):
         for job_index in range(len(thread.jobids)):
             if thread.get_status(job_index, settings) == 'R':     # if the job in question is running
-                frame_to_check = thread.get_frame(thread.history.prod_trajs[job_index], -1, settings)
-                if frame_to_check and utilities.check_commit(frame_to_check, settings):  # if it has committed to a basin
-                    thread.cancel_job(job_index, settings)        # cancel it
-                    os.remove(frame_to_check)
+                try:
+                    commit = utilities.check_commit(thread.history.prod_trajs[job_index], settings)
+                    if commit:
+                        thread.cancel_job(job_index, settings)        # cancel it
+                except RuntimeError:    # occurs if trajectory has no frames yet
+                    pass
 
         # if every job in this thread has status 'C'ompleted/'C'anceled...
         if all(item == 'C' for item in [thread.get_status(job_index, settings) for job_index in range(len(thread.jobids))]):
@@ -844,10 +845,10 @@ class CommittorAnalysis(JobType):
             raise ValueError('unexpected batch template type for committor_analysis: ' + str(type))
 
     def check_termination(self, thread, allthreads, settings):
-        thread.terminated = True  # committor analysis threads always terminate after one step
-        return False            # no global termination criterion exists for committor analysis
+        thread.terminated = True    # committor analysis threads always terminate after one step
+        return False                # no global termination criterion exists for committor analysis
 
-    def update_results(self, thread, allthreads, settings):
+    def update_results(self, thread, allthreads, settings): # todo: can I reconfigure this to be parallelizable? Perhaps write to separate files and then combine?
         # Initialize committor_analysis.out if not already extant
         if not os.path.exists('committor_analysis.out'):
             with open('committor_analysis.out', 'w') as f:
@@ -855,10 +856,11 @@ class CommittorAnalysis(JobType):
 
         # Update current_results
         for job_index in range(len(thread.current_type)):
-            frame_to_check = thread.get_frame(thread.history.prod_trajs[job_index], -1, settings)
-            if frame_to_check:
-                thread.history.prod_results.append(utilities.check_commit(frame_to_check, settings))
-                os.remove(frame_to_check)
+            try:
+                commit = utilities.check_commit(thread.history.prod_trajs[job_index], settings)
+            except RuntimeError:    # to be tolerant of failed simulations
+                pass
+            thread.history.prod_results.append(commit)
 
         # Write results to committor_analysis.out
         fwds = 0
@@ -1312,15 +1314,16 @@ class FindTS(JobType):
     def gatekeeper(self, thread, settings):
         for job_index in range(len(thread.jobids)):
             if thread.get_status(job_index, settings) == 'R':  # if the job in question is running
-                frame_to_check = thread.get_frame(thread.history.prod_trajs[-1][job_index], -1, settings)
                 if thread.history.init_basin == 'fwd':
                     commit_basin = 'bwd'
                 else:   # thread.history.init_basin = 'bwd'; get_inpcrd only allows for these two values
                     commit_basin = 'fwd'
-                if frame_to_check and utilities.check_commit(frame_to_check, settings) == commit_basin:  # if it has committed to the opposite basin
-                    thread.history.prod_result = commit_basin
-                    thread.cancel_job(job_index, settings)  # cancel it
-                    os.remove(frame_to_check)
+                try:  # check if it has committed to the opposite basin
+                    if utilities.check_commit(thread.history.prod_trajs[-1][job_index], settings) == commit_basin:
+                        thread.history.prod_result = commit_basin
+                        thread.cancel_job(job_index, settings)  # cancel it
+                except RuntimeError:    # occurs if there are no frames yet in the trajectory
+                    pass
 
         # if every job in this thread has status 'C'ompleted/'C'anceled...
         if all(item == 'C' for item in
@@ -1351,11 +1354,7 @@ class FindTS(JobType):
     def update_results(self, thread, allthreads, settings):
         # First, store commitment basin if that didn't get set in gatekeeper
         if not thread.history.prod_result:
-            frame_to_check = thread.get_frame(thread.history.prod_trajs[-1], -1, settings)
-            if frame_to_check:
-                thread.history.prod_result = utilities.check_commit(frame_to_check, settings)
-            else:
-                raise RuntimeError('unable to produce coordinates from final frame of file: ' + str(thread.history.prod_trajs[-1]))
+            thread.history.prod_result = utilities.check_commit(thread.history.prod_trajs[-1], settings)
 
         if thread.history.init_basin == 'fwd':
             dir_to_check = 'bwd'

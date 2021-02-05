@@ -50,6 +50,14 @@ class Tests(object):
         settings.commit_bwd = [[1, 2], [3, 4], [0.5, 2.0], ['lt', 'gt']]
         assert utilities.check_commit('../test_data/test.rst7', settings) == ''
 
+    def test_check_commit_traj(self):
+        """Tests check_commit using a dummy trajectory file and commitments defined to get result 'fwd'"""
+        settings = configure('../../data/atesa.config')
+        settings.topology = '../test_data/test.prmtop'
+        settings.commit_fwd = [[1, 2], [3, 4], [1.0, 1.7], ['gt', 'lt']]
+        settings.commit_bwd = [[1, 2], [3, 4], [0.5, 2.0], ['lt', 'gt']]
+        assert utilities.check_commit('../test_data/test.nc', settings) == 'fwd'
+
     def test_check_commit_value_errors(self):
         """Tests check_commit using a dummy coordinate file and commitments defined to get ValueErrors"""
         settings = configure('../../data/atesa.config')
