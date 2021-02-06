@@ -681,7 +681,7 @@ class Tests(object):
         new_file = jobtype.get_input_file(allthreads[0], 1, settings)
         assert os.path.exists(new_file)
 
-    def test_get_input_file_umbrella_sampling(self):
+    def test_get_input_file_rxncor_umbrella_sampling(self):
         """Tests get_input_file with job_type = 'umbrella_sampling'"""
         settings = configure('../../data/atesa.config')
         settings.cvs = ['pytraj.distance(traj, \'@1 @2\')[0]', '(mdtraj.compute_distances(mtraj, numpy.array([[7177, 7178]]))[0][0] * 10) - (mdtraj.compute_distances(mtraj, numpy.array([[4272, 7178]]))[0][0] * 10)']
@@ -689,6 +689,7 @@ class Tests(object):
         settings.us_rc_max = 2
         settings.us_rc_step = 0.5
         settings.us_degeneracy = 2
+        settings.us_implementation = 'amber_rxncor'
         settings.job_type = 'umbrella_sampling'
         settings.as_out_file = '../test_data/as.out'
         allthreads = main.init_threads(settings)

@@ -1656,116 +1656,151 @@ class UmbrellaSampling(JobType):
     Adapter class for umbrella sampling
     """
 
+    def add_pathway_restraints(self, thread, settings):
+        """
+        Build appropriate pathway restraints DISANG file for the window in the specified thread
+
+        Parameters
+        ----------
+        settings : argparse.Namespace
+            Settings namespace object
+
+        Returns
+        -------
+        None
+
+        """
+        if not True in ['nmropt=1' in line for line in
+                        open(settings.path_to_input_files + '/umbrella_sampling_prod_' + settings.md_engine + '.in',
+                             'r').readlines()]:
+            raise RuntimeError('did not find \'nmropt=1\' in input file: ' + settings.path_to_input_files +
+                               '/umbrella_sampling_prod_' + settings.md_engine + '.in, which is required when a'
+                               ' us_pathway_restraints_file is specified in the config file. Make sure that '
+                               'exactly that string is present.')
+        if not os.path.exists(settings.working_directory + '/us_pathway_restraints_' + str(thread.history.window) +
+                              '.DISANG'):
+            if not os.path.exists(settings.us_pathway_restraints_file):
+                raise FileNotFoundError('Attempted to implement us_pathway_restraints for umbrella sampling, but '
+                                        'could not find the indicated file: ' +
+                                        settings.us_pathway_restraints_file)
+
+            # Define a helper function
+            def closest(lst, K):
+                # Return index of closest value to K in list lst
+                return min(range(len(lst)), key=lambda i: abs(lst[i] - float(K)))
+
+            # Define function to clean up some floating point precision issues;
+            # e.g.,  numpy.arange(-6,12,0.1)[-1] = 11.899999999999935,
+            # whereas safe_arange(-6,12,0.1)[-1] = 11.9
+            def safe_arange(start, stop, step):
+                return step * numpy.arange(start / step, stop / step)
+
+            window_centers = safe_arange(settings.us_rc_min, settings.us_rc_max, settings.us_rc_step)
+
+            # Build min_max.pkl file if it doesn't already exist
+            if not os.path.exists('min_max.pkl'):
+                # Partition each line in as_full_cvs.out into the nearest US window
+                as_full_cvs_lines = open(settings.us_pathway_restraints_file, 'r').readlines()
+                open(settings.us_pathway_restraints_file, 'r').close()
+
+                # Initialize results list; first index is window, second index is CV, third index is 0 for min and 1 for max
+                # E.g., min_max[12][5][1] is the max value of CV6 in the 13th window
+                min_max = [[[None, None] for null in range(len(as_full_cvs_lines[0].split()))] for null in
+                           range(len(window_centers))]
+
+                rc_minmax = [[], []]  # this minmax is for passing to utilities.get_cvs.reduce_cv
+                if settings.rc_reduced_cvs:
+                    # Prepare cv_minmax list
+                    asout_lines = [[float(item) for item in
+                                    line.replace('A <- ', '').replace('B <- ', '').replace(' \n', '').replace('\n',
+                                    '').split(' ')] for line in open(settings.as_out_file, 'r').readlines()]
+                    open(settings.as_out_file, 'r').close()
+                    mapped = list(map(list, zip(*asout_lines)))
+                    rc_minmax = [[numpy.min(item) for item in mapped], [numpy.max(item) for item in mapped]]
+
+                    def reduce_cv(unreduced_value, local_index, rc_minmax):
+                        # Returns a reduced value for a CV given an unreduced value and the index within as.out corresponding to that CV
+                        this_min = rc_minmax[0][local_index]
+                        this_max = rc_minmax[1][local_index]
+                        return (float(unreduced_value) - this_min) / (this_max - this_min)
+
+                for line in as_full_cvs_lines:
+                    this_line = line.split()
+                    if settings.rc_reduced_cvs:
+                        this_line_temp = []
+                        for cv_index in range(len(this_line)):
+                            this_line_temp.append(reduce_cv(this_line[cv_index], cv_index, rc_minmax))
+                        this_line = copy.copy(this_line_temp)
+                    rc = utilities.evaluate_rc(settings.rc_definition, this_line)
+                    window_index = closest(window_centers, rc)
+
+                    # Add min and max as appropriate
+                    for cv_index in range(len(line.split())):
+                        if min_max[window_index][cv_index][0] is None or float(
+                                min_max[window_index][cv_index][0]) > float(line.split()[cv_index]):
+                            min_max[window_index][cv_index][0] = line.split()[cv_index]  # set new min
+                        if min_max[window_index][cv_index][1] is None or float(
+                                min_max[window_index][cv_index][1]) < float(line.split()[cv_index]):
+                            min_max[window_index][cv_index][1] = line.split()[cv_index]  # set new max
+
+                pickle.dump(min_max, open('min_max.pkl', 'wb'), protocol=2)
+
+            # Now build the actual DISANG file.
+            min_max = pickle.load(open('min_max.pkl', 'rb'))  # load the min_max pickle file
+            window_index = closest(window_centers, thread.history.window)  # identify the appropriate window_index
+            open(settings.working_directory + '/us_pathway_restraints_' + str(thread.history.window) + '.DISANG',
+                 'w').close()
+            with open(settings.working_directory + '/us_pathway_restraints_' + str(thread.history.window) + '.DISANG',
+                      'a') as f:
+                f.write('ATESA automatically generated restraint file implementing us_pathway_restraints_file option\n')
+                for cv_index in range(len(min_max[window_index])):
+                    atoms, optype, nat = utilities.interpret_cv(cv_index + 1, settings)  # get atom indices and type for this CV
+                    try:
+                        this_min = float(min_max[window_index][cv_index][0])
+                        this_max = float(min_max[window_index][cv_index][1])
+                    except TypeError:  # no min and/or max for this window_index, so skip it
+                        continue
+                    f.write(' &rst iat=' + ', '.join([str(atom) for atom in atoms]) + ', r1=' +
+                            str(this_min - (this_max - this_min)) + ', r2=' + str(this_min) + ', r3=' +
+                            str(this_max) + ', r4=' + str(this_max + (this_max - this_min)) + ', rk2=100, rk3=100, /\n')
+
     def get_input_file(self, thread, job_index, settings):
         input_file_name = 'umbrella_sampling_' + str(thread.history.window) + '_' + str(thread.history.index) + '.in'
-        if not os.path.exists(settings.working_directory + '/' + input_file_name):
+
+        # If the appropriate file already exists, simply return it
+        if os.path.exists(settings.working_directory + '/' + input_file_name):
+            return input_file_name
+
+        # Build restraint file that implements us_pathway_restraints_file, if applicable
+        if settings.us_pathway_restraints_file:
+            if settings.md_engine.lower() == 'amber':
+                add_pathway_restraints(self, thread, settings)
+            else:
+                raise RuntimeError(
+                    'The us_pathway_restraints_file option is only compatible with md_engine = amber')
+
+        # Break down settings.rc_definition into component terms
+        # rc_definition must be a linear combination of terms for US anyway, so our strategy here is to condense it
+        # into just numbers, CV terms, and +/-/* characters, and then split into a list to iterate over.
+        condensed_rc = settings.rc_definition.replace(' ', '').replace('--', '+').replace('+-', '-').replace('-', '+-')
+        condensed_rc = [item for item in condensed_rc.split('+') if not item in ['', ' ']]
+        alp0 = sum([float(item) for item in condensed_rc if not 'CV' in item])  # extract constant terms
+        condensed_rc = [item for item in condensed_rc if 'CV' in item]  # remove constant terms
+        if len(condensed_rc) == 0:
+            raise RuntimeError(
+                'it appears that the provided reaction coordinate contains no CVs or it otherwise '
+                'improperly formatted. Only linear combinations of constant terms and CVs (with '
+                'coefficients) are permitted. The offending RC definition is: ' + settings.rc_definition)
+
+        if settings.us_implementation.lower() == 'amber_rxncor':
             # Make sure template input file includes 'irxncor=1'
             if not True in ['irxncor=1' in line for line in open(settings.path_to_input_files + '/umbrella_sampling_prod_' + settings.md_engine + '.in', 'r').readlines()]:
                 raise RuntimeError('did not find \'irxncor=1\' in input file: ' + settings.path_to_input_files +
-                                   '/umbrella_sampling_prod_' + settings.md_engine + '.in. Make sure that exactly that '
-                                   'string is present.')
+                                   '/umbrella_sampling_prod_' + settings.md_engine + '.in, but it is required for '
+                                   'umbrella sampling with us_implementation = \'amber_rxncor\'. Make sure that exactly'
+                                   ' that string is present.')
             shutil.copy(settings.path_to_input_files + '/umbrella_sampling_prod_' + settings.md_engine + '.in',
                         settings.working_directory + '/' + input_file_name)
-
-            # Build restraint file that implements us_pathway_restraints_file, if applicable
-            if settings.us_pathway_restraints_file:
-                if not True in ['nmropt=1' in line for line in open(settings.path_to_input_files + '/umbrella_sampling_prod_' + settings.md_engine + '.in', 'r').readlines()]:
-                    raise RuntimeError('did not find \'nmropt=1\' in input file: ' + settings.path_to_input_files +
-                                       '/umbrella_sampling_prod_' + settings.md_engine + '.in, which is required when a'
-                                       ' us_pathway_restraints_file is specified in the config file. Make sure that '
-                                       'exactly that string is present.')
-                if not os.path.exists(settings.working_directory + '/us_pathway_restraints_' + str(thread.history.window) + '.DISANG'):
-                    if not os.path.exists(settings.us_pathway_restraints_file):
-                        raise FileNotFoundError('Attempted to implement us_pathway_restraints for umbrella sampling, but '
-                                                'could not find the indicated file: ' +
-                                                settings.us_pathway_restraints_file)
-
-                    # Define a helper function
-                    def closest(lst, K):
-                        # Return index of closest value to K in list lst
-                        return min(range(len(lst)), key=lambda i: abs(lst[i] - float(K)))
-
-                    # Define function to clean up some floating point precision issues;
-                    # e.g.,  numpy.arange(-6,12,0.1)[-1] = 11.899999999999935,
-                    # whereas safe_arange(-6,12,0.1)[-1] = 11.9
-                    def safe_arange(start, stop, step):
-                        return step * numpy.arange(start / step, stop / step)
-
-                    window_centers = safe_arange(settings.us_rc_min, settings.us_rc_max, settings.us_rc_step)
-
-                    # Build min_max.pkl file if it doesn't already exist
-                    if not os.path.exists('min_max.pkl'):
-                        # Partition each line in as_full_cvs.out into the nearest US window
-                        as_full_cvs_lines = open(settings.us_pathway_restraints_file, 'r').readlines()
-                        open(settings.us_pathway_restraints_file, 'r').close()
-
-                        # Initialize results list; first index is window, second index is CV, third index is 0 for min and 1 for max
-                        # E.g., min_max[12][5][1] is the max value of CV6 in the 13th window
-                        min_max = [[[None, None] for null in range(len(as_full_cvs_lines[0].split()))] for null in range(len(window_centers))]
-
-                        rc_minmax = [[], []]    # this minmax is for passing to utilities.get_cvs.reduce_cv
-                        if settings.rc_reduced_cvs:
-                            # Prepare cv_minmax list
-                            asout_lines = [[float(item) for item in line.replace('A <- ', '').replace('B <- ', '').replace(' \n', '').replace('\n', '').split(' ')] for line in
-                                           open(settings.as_out_file, 'r').readlines()]
-                            open(settings.as_out_file, 'r').close()
-                            mapped = list(map(list, zip(*asout_lines)))
-                            rc_minmax = [[numpy.min(item) for item in mapped], [numpy.max(item) for item in mapped]]
-
-                            def reduce_cv(unreduced_value, local_index, rc_minmax):
-                                # Returns a reduced value for a CV given an unreduced value and the index within as.out corresponding to that CV
-                                this_min = rc_minmax[0][local_index]
-                                this_max = rc_minmax[1][local_index]
-                                return (float(unreduced_value) - this_min) / (this_max - this_min)
-
-                        for line in as_full_cvs_lines:
-                            this_line = line.split()
-                            if settings.rc_reduced_cvs:
-                                this_line_temp = []
-                                for cv_index in range(len(this_line)):
-                                    this_line_temp.append(reduce_cv(this_line[cv_index], cv_index, rc_minmax))
-                                this_line = copy.copy(this_line_temp)
-                            rc = utilities.evaluate_rc(settings.rc_definition, this_line)
-                            window_index = closest(window_centers, rc)
-
-                            # Add min and max as appropriate
-                            for cv_index in range(len(line.split())):
-                                if min_max[window_index][cv_index][0] is None or float(min_max[window_index][cv_index][0]) > float(line.split()[cv_index]):
-                                    min_max[window_index][cv_index][0] = line.split()[cv_index]     # set new min
-                                if min_max[window_index][cv_index][1] is None or float(min_max[window_index][cv_index][1]) < float(line.split()[cv_index]):
-                                    min_max[window_index][cv_index][1] = line.split()[cv_index]     # set new max
-
-                        pickle.dump(min_max, open('min_max.pkl', 'wb'), protocol=2)
-
-                    # Now build the actual DISANG file.
-                    min_max = pickle.load(open('min_max.pkl', 'rb'))                # load the min_max pickle file
-                    window_index = closest(window_centers, thread.history.window)     # identify the appropriate window_index
-                    open(settings.working_directory + '/us_pathway_restraints_' + str(thread.history.window) + '.DISANG', 'w').close()
-                    with open(settings.working_directory + '/us_pathway_restraints_' + str(thread.history.window) + '.DISANG', 'a') as f:
-                        f.write('ATESA automatically generated restraint file implementing us_pathway_restraints_file option\n')
-                        for cv_index in range(len(min_max[window_index])):
-                            atoms, optype, nat = utilities.interpret_cv(cv_index + 1, settings)  # get atom indices and type for this CV
-                            try:
-                                this_min = float(min_max[window_index][cv_index][0])
-                                this_max = float(min_max[window_index][cv_index][1])
-                            except TypeError:   # no min and/or max for this window_index, so skip it
-                                continue
-                            f.write(' &rst iat=' + ', '.join([str(atom) for atom in atoms]) + ', r1=' +
-                                    str(this_min - (this_max - this_min)) + ', r2=' + str(this_min) + ', r3=' +
-                                    str(this_max) + ', r4=' + str(this_max + (this_max - this_min)) + ', rk2=100, '
-                                    'rk3=100, /\n')
-
-            # In preparation for next step, break down settings.rc_definition into component terms
-            # rc_definition must be a linear combination of terms for US anyway, so our strategy here is to condense it
-            # into just numbers, CV terms, and +/-/* characters, and then split into a list to iterate over.
-            condensed_rc = settings.rc_definition.replace(' ','').replace('--','+').replace('+-','-').replace('-','+-')
-            condensed_rc = [item for item in condensed_rc.split('+') if not item in ['', ' ']]
-            alp0 = sum([float(item) for item in condensed_rc if not 'CV' in item])  # extract constant terms
-            condensed_rc = [item for item in condensed_rc if 'CV' in item]          # remove constant terms
-            if len(condensed_rc) == 0:
-                raise RuntimeError('it appears that the provided reaction coordinate contains no CVs or it otherwise '
-                                   'improperly formatted. Only linear combinations of constant terms and CVs (with '
-                                   'coefficients) are permitted. The offending RC definition is: ' + settings.rc_definition)
 
             # Prepare cv_minmax list for evaluating min and max terms later, if appropriate
             if settings.rc_reduced_cvs:
@@ -1801,7 +1836,7 @@ class UmbrellaSampling(JobType):
                         null = float(coeff)
                     except ValueError:
                         raise RuntimeError('unable to cast coefficient of CV' + str(cv_index) + ' to float. It must be '
-                                           'specified in a non-standard way? Offending term is: ' + term)
+                                           'specified in a non-standard way. Offending term is: ' + term)
                     if settings.rc_reduced_cvs:
                         this_min = rc_minmax[0][cv_index - 1]
                         this_max = rc_minmax[1][cv_index - 1]
@@ -1840,24 +1875,98 @@ class UmbrellaSampling(JobType):
 
                 file.write(' &end\n')
 
-                if settings.us_pathway_restraints_file:
-                    if True in ['type="end"' in line.lower() for line in open(settings.path_to_input_files + '/umbrella_sampling_prod_' + settings.md_engine + '.in', 'r').readlines()]:
-                        raise RuntimeError('The umbrella sampling input file ' + settings.path_to_input_files +
-                                           '/umbrella_sampling_prod_' + settings.md_engine + '.in appears to contain an'
-                                           ' &wt namelist with \'type="END"\', which must be added by ATESA when using '
-                                           'the us_pathway_restraints_file option. Please remove it and try again.')
-                    file.write(' &wt\n  type="END",\n &end\n')
-                    file.write('DISANG=us_pathway_restraints_' + str(thread.history.window) + '.DISANG')
-                else:
-                    if not True in ['type="end"' in line.lower() for line in open(settings.path_to_input_files + '/umbrella_sampling_prod_' + settings.md_engine + '.in', 'r').readlines()]:
-                        file.write(' &wt\n  type="END",\n &end\n')
-                        if not settings.suppress_us_warning:
-                            print('Did not find an &wt namelist with \'type="END"\' in the umbrella sampling input file' +
-                                  settings.path_to_input_files + '/umbrella_sampling_prod_' + settings.md_engine + '.in, so'
-                                  ' ATESA added it automatically.')
-                            settings.suppress_us_warning = True     # so that this is only printed once
+        elif settings.us_implementation.lower() == 'plumed':
+            # We want to add specify a plumedfile in the Amber input file, and then make that file
+            # First, deal with the Amber input file.
+            # Check to ensure that the string 'plumed=1' appears in the input file
+            if not True in ['plumed=1' in line.lower().replace(' ','') for line in open(settings.path_to_input_files + '/umbrella_sampling_prod_' + settings.md_engine + '.in', 'r').readlines()]:
+                raise RuntimeError('Required option plumed=1 not found in the Amber input file: ' +
+                                   settings.path_to_input_files + '/umbrella_sampling_prod_' + settings.md_engine + '.in')
 
-                file.close()
+            # Then replace the template slot we asked the user to prepare with the appropriate plumedfile name
+            plumedfile = 'plumed_' + str(thread.history.window) + '.in'
+            lines = open(settings.path_to_input_files + '/umbrella_sampling_prod_' + settings.md_engine + '.in','r').readlines()
+            with open(settings.path_to_input_files + '/umbrella_sampling_prod_' + settings.md_engine + '.in','w') as f:
+                for line in lines:
+                    if '{{ plumedfile }}' in line:
+                        line.replace('{{ plumedfile }}', plumedfile)
+                    f.write(line)
+
+            # Next, build the plumedfile
+            if not os.path.exists(plumedfile):
+                with open(plumedfile) as f:
+                    f.write('# PLUMED file to define restraints for umbrella sampling centered at: ' + str(thread.history.window) + '\n')
+                    f.write('UNITS LENGTH=A ENERGY=kcal/mol')
+                    # Iterate through each term in the RC to add definitions for them to the plumed file
+                    labels = []
+                    RCfunc = str(alp0)
+                    for term in condensed_rc:
+                        # First, obtain the type of CV (optype) and the number of atoms involved (nat)
+                        cv_index = int(re.findall('CV[0-9]+', term)[0].replace('CV', ''))
+                        atoms, optype, nat = utilities.interpret_cv(cv_index, settings)  # get atom indices and type for this CV
+
+                        coeff = term.replace('CV' + str(cv_index), '').replace('*', '')
+                        try:
+                            null = float(coeff)
+                        except ValueError:
+                            raise RuntimeError('unable to cast coefficient of CV' + str(cv_index) + ' to float. It must be '
+                                               'specified in a non-standard way. Offending term is: ' + term)
+
+                        # 'distance', 'angle', 'dihedral', or 'diffdistance'
+                        if optype == 'distance':
+                            f.write('DISTANCE LABEL=CV' + str(cv_index) + ' ATOMS=' + str(atoms[0]) + ',' + str(atoms[1]) + '\n')
+                            labels.append('CV' + str(cv_index))
+                            cv_str = 'cv' + str(cv_index)
+                        elif optype == 'angle':
+                            f.write('ANGLE LABEL=CV' + str(cv_index) + ' ATOMS=' + str(atoms[0]) + ',' + str(atoms[1]) + ',' + str(atoms[2]) + '\n')
+                            labels.append('CV' + str(cv_index))
+                            cv_str = 'cv' + str(cv_index) + '*180/(2*pi)'
+                        elif optype == 'dihedral':
+                            f.write('TORSION LABEL=CV' + str(cv_index) + ' ATOMS=' + str(atoms[0]) + ',' + str(
+                                atoms[1]) + ',' + str(atoms[2]) + ',' + str(atoms[3]) + '\n')
+                            labels.append('CV' + str(cv_index))
+                            cv_str = 'cv' + str(cv_index) + '*180/(2*pi)'
+                        elif optype == 'diffdistance':
+                            f.write('DISTANCE LABEL=CV' + str(cv_index) + 'A ATOMS=' + str(atoms[0]) + ',' + str(atoms[1]) + '\n')
+                            f.write('DISTANCE LABEL=CV' + str(cv_index) + 'B ATOMS=' + str(atoms[2]) + ',' + str(atoms[3]) + '\n')
+                            labels.append('CV' + str(cv_index) + 'A')
+                            labels.append('CV' + str(cv_index) + 'B')
+                            cv_str = '(cv' + str(cv_index) + 'a - cv' + str(cv_index) + 'b)'
+
+                        # Construct RC function
+                        RCfunc += '+' + coeff + '*' + cv_str
+
+
+                    f.write('CUSTOM ...\n')
+                    f.write('  LABEL=RC\n')
+                    f.write('  ARG=' + ','.join(labels) + '\n')
+                    f.write('  VAR=' + ','.join([item.lower() for item in labels]) + '\n')
+                    f.write('  FUNC=' + RCfunc + '\n')
+                    f.write('  PERIODIC=NO\n')
+                    f.write('... CUSTOM\n')
+                    f.write('restraint-rc: RESTRAINT ARG=RC KAPPA=' + str(settings.us_restraint) + ' AT=' + str(thread.history.window) + '\n')
+                    f.write('PRINT ARG=RC FILE=rcwin_' + str(thread.history.window) + '_' + str(thread.history.index) + '_us.dat')
+
+        else:
+            raise RuntimeError('unrecognized us_implementation option: ' + settings.us_implementation)
+
+        with open(settings.working_directory + '/' + input_file_name, 'a') as file:
+            if settings.us_pathway_restraints_file:
+                if True in ['type="end"' in line.lower() for line in open(settings.path_to_input_files + '/umbrella_sampling_prod_' + settings.md_engine + '.in', 'r').readlines()]:
+                    raise RuntimeError('The umbrella sampling input file ' + settings.path_to_input_files +
+                                       '/umbrella_sampling_prod_' + settings.md_engine + '.in appears to contain an'
+                                       ' &wt namelist with \'type="END"\', which must be added by ATESA when using '
+                                       'the us_pathway_restraints_file option. Please remove it and try again.')
+                file.write(' &wt\n  type="END",\n &end\n')
+                file.write('DISANG=us_pathway_restraints_' + str(thread.history.window) + '.DISANG')
+            else:
+                if not True in ['type="end"' in line.lower() for line in open(settings.path_to_input_files + '/umbrella_sampling_prod_' + settings.md_engine + '.in', 'r').readlines()]:
+                    file.write(' &wt\n  type="END",\n &end\n')
+                    if not settings.suppress_us_warning:
+                        print('Did not find an &wt namelist with \'type="END"\' in the umbrella sampling input file' +
+                              settings.path_to_input_files + '/umbrella_sampling_prod_' + settings.md_engine + '.in, so'
+                              ' ATESA added it automatically.')
+                        settings.suppress_us_warning = True     # so that this is only printed once
 
         return input_file_name
 

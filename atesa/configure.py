@@ -123,6 +123,7 @@ def configure(input_file, user_working_directory=''):
         samples_per_window: int = -1
 
         # Required only for umbrella sampling
+        us_implementation: str = 'plumed'
         us_rc_min: float = -12
         us_rc_max: float = 12
         us_rc_step: float = 0.25

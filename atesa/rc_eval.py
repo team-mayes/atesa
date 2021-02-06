@@ -121,17 +121,14 @@ def main(working_directory, rc_definition, as_out_file, extrema=False):
 
     if extrema:
         from atesa.main import Thread
-        print('Evaluating final RC values of forward and backward trajectories from an accepted shooting move... (this '
-              'may take a little while if this is your first time running this script for this particular as_out_file)')
+        print('Evaluating final RC values of forward and backward trajectories from an accepted shooting move...')
         result = []
         allthreads = pickle.load(open('restart.pkl', 'rb'))
         for thread in allthreads:
             if thread.history.last_accepted > -1:   # if accepted move exists in thread
                 for job_index in range(2):
-                    frame_to_check = thread.get_frame(thread.history.prod_trajs[thread.history.last_accepted][job_index], -1, settings)
-                    cvs = utilities.get_cvs(frame_to_check, settings, reduce=True).split(' ')
+                    cvs = utilities.get_cvs(thread.history.prod_trajs[thread.history.last_accepted][job_index], settings, reduce=True).split(' ')
                     result.append(utilities.evaluate_rc(rc_definition, cvs))
-                    os.remove(frame_to_check)
                 print(' Shooting move name: ' + thread.history.init_coords[thread.history.last_accepted][0])
                 print(' extrema: ' + str(result))
                 return None   # to exit the script after returning extrema

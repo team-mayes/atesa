@@ -183,6 +183,10 @@ Finally, we're ready to evaluate the energy profile along our reaction coordinat
 	
 The choice of a stepsize of 0.25 and a restraint weight of 5 is not arbitrary; these values must be carefully matched so as to ensure overlap among all adjacent windows. It is usually wise to run a pilot study with only a single window to verify the approximate width of the sampling histogram for your particular settings (it is safe to assume that each window will be approximately even in width, though they may be shifted from their centers somewhat).
 
+The appropriate minimum and maximum RC values to sample over can be identified using a built-in script: ``rc_eval.py``::
+
+	rc_eval.py /oasis/scratch/comet/tburgin/temp_project/210131_ethyl_chlorosulfite_as_parallel_manager -1.600+2.053*CV156+0.576*CV1+0.655*CV22 /oasis/scratch/comet/tburgin/temp_project/210131_ethyl_chlorosulfite_as_parallel_manager/as_decorr_15000.out True
+
 This job produces a large number of output files named with the suffix "_us.out" in the working directory. When it's finished, we can use the auxiliary script ``mbar.py`` to analyze it::
 
 	mbar.py --decorr -k 5
