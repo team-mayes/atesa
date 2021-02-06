@@ -82,7 +82,7 @@ def configure(input_file, user_working_directory=''):
         commit_fwd: typing.Tuple[typing.List[int], typing.List[int], typing.List[float], typing.List[str]] = ([-1], [-1], [-1], ['unset'])
         commit_bwd: typing.Tuple[typing.List[int], typing.List[int], typing.List[float], typing.List[str]] = ([-1], [-1], [-1], ['unset'])
 
-        # Required only for committor analysis and equilibrium path sampling
+        # Required only for committor analysis, umbrella sampling, and equilibrium path sampling
         rc_definition: str = ''
         as_out_file: str = 'as_raw.out'
         rc_reduced_cvs: bool = True

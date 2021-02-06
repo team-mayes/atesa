@@ -1792,6 +1792,15 @@ class UmbrellaSampling(JobType):
                 'improperly formatted. Only linear combinations of constant terms and CVs (with '
                 'coefficients) are permitted. The offending RC definition is: ' + settings.rc_definition)
 
+        # Prepare cv_minmax list for evaluating min and max terms later, if appropriate
+        if settings.rc_reduced_cvs:
+            asout_lines = [[float(item) for item in
+                            line.replace('A <- ', '').replace('B <- ', '').replace(' \n', '').replace('\n', '').split(
+                                ' ')] for line in open(settings.as_out_file, 'r').readlines()]
+            open(settings.as_out_file, 'r').close()
+            mapped = list(map(list, zip(*asout_lines)))
+            rc_minmax = [[numpy.min(item) for item in mapped], [numpy.max(item) for item in mapped]]
+
         if settings.us_implementation.lower() == 'amber_rxncor':
             # Make sure template input file includes 'irxncor=1'
             if not True in ['irxncor=1' in line for line in open(settings.path_to_input_files + '/umbrella_sampling_prod_' + settings.md_engine + '.in', 'r').readlines()]:
@@ -1801,15 +1810,6 @@ class UmbrellaSampling(JobType):
                                    ' that string is present.')
             shutil.copy(settings.path_to_input_files + '/umbrella_sampling_prod_' + settings.md_engine + '.in',
                         settings.working_directory + '/' + input_file_name)
-
-            # Prepare cv_minmax list for evaluating min and max terms later, if appropriate
-            if settings.rc_reduced_cvs:
-                asout_lines = [[float(item) for item in
-                                line.replace('A <- ', '').replace('B <- ', '').replace(' \n', '').replace('\n', '').split(
-                                    ' ')] for line in open(settings.as_out_file, 'r').readlines()]
-                open(settings.as_out_file, 'r').close()
-                mapped = list(map(list, zip(*asout_lines)))
-                rc_minmax = [[numpy.min(item) for item in mapped], [numpy.max(item) for item in mapped]]
 
             # Here, we'll write the &rxncor and &rxncor_order_parameters namelists manually
             with open(settings.working_directory + '/' + input_file_name, 'a') as file:
@@ -1885,18 +1885,18 @@ class UmbrellaSampling(JobType):
 
             # Then replace the template slot we asked the user to prepare with the appropriate plumedfile name
             plumedfile = 'plumed_' + str(thread.history.window) + '.in'
-            lines = open(settings.path_to_input_files + '/umbrella_sampling_prod_' + settings.md_engine + '.in','r').readlines()
-            with open(settings.path_to_input_files + '/umbrella_sampling_prod_' + settings.md_engine + '.in','w') as f:
+            lines = open(settings.path_to_input_files + '/umbrella_sampling_prod_' + settings.md_engine + '.in', 'r').readlines()
+            with open(settings.working_directory + '/' + input_file_name, 'w') as f:
                 for line in lines:
                     if '{{ plumedfile }}' in line:
-                        line.replace('{{ plumedfile }}', plumedfile)
+                        line = line.replace('{{ plumedfile }}', '\'' + plumedfile + '\'')
                     f.write(line)
 
             # Next, build the plumedfile
             if not os.path.exists(plumedfile):
-                with open(plumedfile) as f:
+                with open(plumedfile, 'w') as f:
                     f.write('# PLUMED file to define restraints for umbrella sampling centered at: ' + str(thread.history.window) + '\n')
-                    f.write('UNITS LENGTH=A ENERGY=kcal/mol')
+                    f.write('UNITS LENGTH=A ENERGY=kcal/mol\n')
                     # Iterate through each term in the RC to add definitions for them to the plumed file
                     labels = []
                     RCfunc = str(alp0)
@@ -1911,6 +1911,16 @@ class UmbrellaSampling(JobType):
                         except ValueError:
                             raise RuntimeError('unable to cast coefficient of CV' + str(cv_index) + ' to float. It must be '
                                                'specified in a non-standard way. Offending term is: ' + term)
+
+                        if settings.rc_reduced_cvs:
+                            this_min = rc_minmax[0][cv_index - 1]
+                            this_max = rc_minmax[1][cv_index - 1]
+
+                        else:  # to effectively turn off reduction of variables, we set...
+                            this_min = 0
+                            this_max = 1
+
+                        alp = float(coeff) / (this_max - this_min)
 
                         # 'distance', 'angle', 'dihedral', or 'diffdistance'
                         if optype == 'distance':
@@ -1931,10 +1941,12 @@ class UmbrellaSampling(JobType):
                             f.write('DISTANCE LABEL=CV' + str(cv_index) + 'B ATOMS=' + str(atoms[2]) + ',' + str(atoms[3]) + '\n')
                             labels.append('CV' + str(cv_index) + 'A')
                             labels.append('CV' + str(cv_index) + 'B')
-                            cv_str = '(cv' + str(cv_index) + 'a - cv' + str(cv_index) + 'b)'
+                            cv_str = '(cv' + str(cv_index) + 'a-cv' + str(cv_index) + 'b)'
+                        else:
+                            raise RuntimeError('unrecognized CV type: ' + optype)
 
                         # Construct RC function
-                        RCfunc += '+' + coeff + '*' + cv_str
+                        RCfunc += '+' + str(alp) + '*' + cv_str
 
 
                     f.write('CUSTOM ...\n')
