@@ -16,6 +16,8 @@ import pickle
 import copy
 import subprocess
 import warnings
+import itertools
+from multiprocess import Pool
 from statsmodels.tsa import stattools
 
 def check_commit(filename, settings):
@@ -249,8 +251,9 @@ def get_cvs(filename, settings, reduce=False, frame=0):
                 output += sigfigs % float(evaluation) + ' '
             os.remove(incremented_filename)     # clean up temporary file
 
-    while output[-1] in [' ', '\\', 'n']:
-        output = output[:-1]    # remove trailing space and/or newline
+    while output[-1] in [' ', '\n']:
+        output = output[:-1]                # remove trailing space and/or newline on terminating line
+    output = output.replace(' \n', '\n')    # remove trailing spaces on non-terminating lines
 
     if delete_traj_name:
         os.remove(traj_name)
@@ -509,14 +512,58 @@ def resample(settings, partial=False, full_cvs=False):
         open(settings.working_directory + '/as_full_cvs.out', 'w').close()
         temp_settings = copy.deepcopy(settings)
         temp_settings.include_qdot = False  # never want to include_qdot in this upcoming call to get_cvs
-        with open(settings.working_directory + '/as_full_cvs.out', 'a') as f:
-            for thread in allthreads:
-                for step_index in range(min([len(thread.history.prod_results), len(thread.history.prod_trajs)])):    # just in case one got an extra write in over the other
-                    if thread.history.prod_results[step_index] in [['fwd', 'bwd'], ['bwd', 'fwd']]:     # if step accepted
-                        for job_index in range(2):
-                            if os.path.exists(thread.history.prod_trajs[step_index][job_index]):
-                                f.write(get_cvs(thread.history.prod_trajs[step_index][job_index], temp_settings, False, 'all') + '\n')
+        try:
+            affinity = len(os.sched_getaffinity(0))
+        except AttributeError:  # os.sched_getaffinity raises AttributeError on non-UNIX systems.
+            affinity = 1
+        if affinity == 1:
+            with open(settings.working_directory + '/as_full_cvs.out', 'a') as f:
+                for thread in allthreads:
+                    for step_index in range(min([len(thread.history.prod_results), len(thread.history.prod_trajs)])):    # just in case one got an extra write in over the other
+                        if thread.history.prod_results[step_index] in [['fwd', 'bwd'], ['bwd', 'fwd']]:     # if step accepted
+                            for job_index in range(2):
+                                if os.path.exists(thread.history.prod_trajs[step_index][job_index]):
+                                    f.write(get_cvs(thread.history.prod_trajs[step_index][job_index], temp_settings, False, 'all') + '\n')
+        else:   # affinity > 1
+            # Map partial_full_cvs calls to available processes
+            with Pool(affinity) as p:
+                p.starmap(main_loop, zip(allthreads, ['partial_full_cvs_' + str(thread_index) + '.out' for thread_index in range(len(allthreads))], itertools.repeat(temp_settings)))
+            # Finally, combine the partial files into the full file
+            with open(settings.working_directory + '/as_full_cvs.out', 'w') as outfile:
+                for fname in ['partial_full_cvs_' + str(thread_index) + '.out' for thread_index in range(len(allthreads))]:
+                    with open(fname) as infile:
+                        for line in infile:
+                            if line:    # skip blank lines
+                                outfile.write(line)
+                    os.remove(fname)
 
+def partial_full_cvs(thread, filename, settings):
+    """
+    Write the full CVs list to the file given by filename for each accepted move in each thread in threads.
+
+    A helper function for parallelizing get_cvs (has to be defined at top-level for multiprocessing)
+
+    Parameters
+    ----------
+    thread : Thread
+        Thread object to evaluate
+    filename : str
+        Name of the file to write CVs to
+    settings : argparse.Namespace
+        Settings namespace object
+
+    Returns
+    -------
+    None
+
+    """
+    open(settings.working_directory + '/' + filename, 'w').close()
+    with open(settings.working_directory + '/' + filename, 'a') as f:
+        for step_index in range(min([len(thread.history.prod_results), len(thread.history.prod_trajs)])):  # just in case one got an extra write in over the other
+            if thread.history.prod_results[step_index] in [['fwd', 'bwd'], ['bwd', 'fwd']]:  # if step accepted
+                for job_index in range(2):
+                    if os.path.exists(thread.history.prod_trajs[step_index][job_index]):
+                        f.write(get_cvs(thread.history.prod_trajs[step_index][job_index], settings, False, 'all') + '\n')
 
 def interpret_cv(cv_index, settings):
     """
