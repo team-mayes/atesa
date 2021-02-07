@@ -12,11 +12,7 @@ ATESA should be installed directly on the high-performance computing (HPC) resou
 	
 You may need to append the `--user` option depending on how your HPC resource is configured. ATESA requires Python 3, and the above pip command may fail if your active python environment defaults to Python 2.
 
-Alternatively, you can download ATESA directly from `GitHub <https://github.com/team-mayes/atesa>` or clone it::
-
-	git clone https://github.com/team-mayes/atesa.git
-
-Then, navigate to the root ATESA directory, and run the ``setup.py`` script directly::
+Alternatively, you can download or clone ATESA directly from `GitHub <https://github.com/team-mayes/atesa>` and install using the ``setup.py`` script in its root directory directly::
 
 	python setup.py install --user
 	
@@ -33,7 +29,7 @@ ATESA is designed to dynamically handle jobs on a PBS/Torque or Slurm batch syst
    
 The config_file parameter is required and supports absolute or relative paths. The working_directory parameter is optional, but if it is provided it overrides the value in the configuration file. This option is made available for use on systems that only allocate working space for jobs after they have been initialized. For details on the contents of the configuration file, see :ref:`TheConfigFile`.
 
-Although ATESA can be run directly from the command line, because its process continues for the entirety of the job it is usually recommended to submit it as its own batch job. A single core and a modest allocation of memory should be sufficient to run ATESA on most platforms (it is neither memory- nor processor-intensive, although many features involve a significant amount of I/O, and more memory may be necessary when using the information error termination criterion). The exception is when you are running aimless shooting with simulations that are exceptionally quick -- on the order of less than a minute per simulation. In this case, ATESA supports multiprocessing on UNIX-based systems; simply allocate the desired number of cores and ATESA will use them as efficiently as it can.
+Although ATESA can be run directly from the command line, because its process continues for the entirety of the job it is usually best to submit it as its own batch job, or to run it on an interactive resource allocation. A single core and a modest allocation of memory should be sufficient to run ATESA on most platforms (it is generally neither memory- nor processor-intensive, although many features involve a significant amount of I/O, and more memory may be necessary when using the information error termination criterion). ATESA supports multiprocessing during aimless shooting on UNIX-based systems; this may improve performance when using very short simulations (say, less than a minute per simulation), a large number of aimless shooting threads (say, hundreds), or both. Simply allocate the desired number of cores and ATESA will use them as efficiently as it can.
 
 Note that almost all ATESA jobs will produce a large amount of data, at least transiently. For this reason, the working directory should probably be set to a path inside the "scratch" filesystem or equivalent on your HPC cluster. If you aren't sure what this means, consult the documentation or support staff for your cluster.
 
@@ -75,7 +71,7 @@ Aimless shooting input files for the following step types are required for jobs 
   	tempi=300.0,	! or whatever temperature (same as temp0)
   	temp0=300.0,	! or whatever temperature (same as tempi)
   		
-* **prod**: Aimless shooting "prod" steps are the primary simulation steps for each shooting move. They take the initial coordinates and velocities from an "init" step (with velocities reversed in the case of backward trajectories) and run until the model commits to one of the stable states defined in the configuration file. Therefore, the time step and number of simulation steps should be much larger than in an "init" simulation. In Amber, the following settings should be specified in the &cntrl namelist, instead of the above "init" settings and in addition to any other model-specific settings::
+* **prod**: Aimless shooting "prod" steps are the primary simulation steps for each shooting move. They take the initial coordinates and velocities from an "init" step (with velocities reversed in the case of backward trajectories) and run until the simulation commits to one of the stable states defined in the configuration file. Therefore, the time step and number of simulation steps should be much larger than in an "init" simulation. In Amber, the following settings should be specified in the &cntrl namelist, instead of the above "init" settings and in addition to any other model-specific settings::
 
 	ntx=5,		! read coordinates AND velocities from input coordinate file
   	ntxo=1,		! ASCII-formatted restart file (required for ATESA)
@@ -90,7 +86,7 @@ Aimless shooting input files for the following step types are required for jobs 
 
 Only a "prod" committor analysis input file is required for jobs with job_type "committor_analysis":
 
-* **prod**: Committor analysis only consists of "prod" steps. These jobs can use exactly the same settings as aimless shooting "prod" steps, except that each simulation should obtain new velocities, as in an aimless shooting "init" steps. In Amber, that means that these three options should be set as follows::
+* **prod**: These jobs can use exactly the same settings as aimless shooting "prod" steps, except that each simulation should obtain new initial velocities, as in an aimless shooting "init" steps. In Amber, that means that these three options should be set as follows::
 
 	ntx=1,		! read coordinates but not velocities from input coordinate file
 	tempi=300.0,	! or whatever temperature (same as temp0)
@@ -100,12 +96,12 @@ Only a "prod" committor analysis input file is required for jobs with job_type "
 
 Only a "prod" umbrella sampling input file is required for jobs with job_type "umbrella_sampling":
 
-* 	**prod**: Umbrella sampling only consists of "prod" steps. As this type of umbrella sampling is built on unique Amber functionality, only Amber is supported. Umbrella sampling simulations are a little different in that the user-supplied input file is used as the foundation for additional data that ATESA appends in new lines at the end. This file can be almost identical to a committor analysis "prod" file, and the only required settings in the base file are that "nmropt" and "irxncor" are turned on (and that a version of Amber that supports the latter option is available, of course)::
+* 	**prod**: By default, umbrella sampling restraints are applied using PLUMED. The umbrella sampling input file can be almost identical to a committor analysis "prod" file, with the following mandatory additions::
 
-		irxncor=1,		! enable irxncor umbrella sampling
-		nmropt=1,		! enable energy restraints
+		plumed=1,		! enable plumed backend
+		plumedfile={{ plumedfile}},		! template slot for declaring plumed file
 		
-	In addition, this file should *not* include an "&wt" namelist with type="END", because it's necessary for ATESA to specify this option itself.
+	ATESA will write the appropriate plumed file automatically and insert a reference to it into the input file as needed.
 	
 ``equilibrium_path_sampling``
 
@@ -129,7 +125,7 @@ Equilibrium path sampling input files for the following step types are required 
 
 Only a "prod" find_ts input file for the following step type is required for jobs with job_type "find_ts":
 
-* **prod** "find_ts" jobs consist only of "prod" steps. This file can be mostly identical to the "aimless_shooting" prod input file, with two key additions: there must be a restraint specified using the file "find_ts_restraints.disang", and the weight of the restraint must be set to steadily increase over time (beginning from zero). An example of a working implementation of this in Amber is as follows. Options in the &cntrl namelist that can be the same as in aimless shooting are here replaced by an elipse (...) for brevity, but they must still be explicitly specified in the input file. Other than that, it should be quite safe to copy the rest of this exactly into your Amber "find_ts" input file::
+* **prod** This file can be mostly identical to the "aimless_shooting" prod input file, with two key additions: there must be a restraint specified using the file "find_ts_restraints.disang", and the weight of the restraint must be set to steadily increase over time (beginning from zero). An example of a working implementation of this in Amber is as follows. Options in the &cntrl namelist that can be the same as in aimless shooting are here replaced by an elipse (...) for brevity, but they must still be explicitly specified in the input file. Other than that, it should be quite safe to copy the rest of this exactly into your Amber "find_ts" input file::
 
 	 &cntrl
 	  ...
@@ -199,4 +195,4 @@ The output (final) coordinate file from this simulation.
 
 The output trajectory file from this simulation.
 
-As indicated in the preceding section, the 'templates' directory should also include a template file for the equilibrium path sampling "prod" step input file, if equilibrium path sampling is to performed.
+As indicated in the preceding section, if you wish to use equilibrium path sampling, the 'templates' directory should also include a template file for the equilibrium path sampling "prod" step input file.

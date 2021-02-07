@@ -73,7 +73,7 @@ def main(**kwargs):
     """
 
     # Compile and sort data files
-    data_files = [name for name in glob.glob('rcwin_*_us.dat') if len(open(name, 'r').readlines()) > kwargs['min_data'][0]]
+    data_files = [name for name in glob.glob('rcwin_*_us.dat') if (len(open(name, 'r').readlines()) - 1) > kwargs['min_data'][0]]
     pattern = re.compile('[-0-9.]+')
     data_files = sorted(data_files, key=lambda x: float(pattern.findall(x)[0]))
 
@@ -110,8 +110,8 @@ def main(**kwargs):
         center = str(pattern.findall(data_file)[0])
         if not os.path.exists('mbar_temp_' + center + '_0.dat'):
             open('mbar_temp_' + center + '_0.dat', 'w').close()
-        lines = open(data_file, 'r').readlines()
-        data = np.asarray([float(line.split()[1]) for line in lines])[kwargs['ignore'][0]:]
+        lines = open(data_file, 'r').readlines()[kwargs['ignore'][0] + 1:]
+        data = np.asarray([float(line.split()[1]) for line in lines if len(line.split()) > 1])
 
         if kwargs['decorr']:
             [t0, g, Neff_max] = pymbar.timeseries.detectEquilibration(data)  # compute indices of uncorrelated timeseries

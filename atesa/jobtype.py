@@ -1884,7 +1884,7 @@ class UmbrellaSampling(JobType):
                                    settings.path_to_input_files + '/umbrella_sampling_prod_' + settings.md_engine + '.in')
 
             # Then replace the template slot we asked the user to prepare with the appropriate plumedfile name
-            plumedfile = 'plumed_' + str(thread.history.window) + '.in'
+            plumedfile = 'plumed_' + str(thread.history.window) + '_' + str(thread.history.index) + '.in'
             lines = open(settings.path_to_input_files + '/umbrella_sampling_prod_' + settings.md_engine + '.in', 'r').readlines()
             with open(settings.working_directory + '/' + input_file_name, 'w') as f:
                 for line in lines:
@@ -1930,12 +1930,12 @@ class UmbrellaSampling(JobType):
                         elif optype == 'angle':
                             f.write('ANGLE LABEL=CV' + str(cv_index) + ' ATOMS=' + str(atoms[0]) + ',' + str(atoms[1]) + ',' + str(atoms[2]) + '\n')
                             labels.append('CV' + str(cv_index))
-                            cv_str = 'cv' + str(cv_index) + '*180/(2*pi)'
+                            cv_str = 'cv' + str(cv_index) + '*180/(pi)'
                         elif optype == 'dihedral':
                             f.write('TORSION LABEL=CV' + str(cv_index) + ' ATOMS=' + str(atoms[0]) + ',' + str(
                                 atoms[1]) + ',' + str(atoms[2]) + ',' + str(atoms[3]) + '\n')
                             labels.append('CV' + str(cv_index))
-                            cv_str = 'cv' + str(cv_index) + '*180/(2*pi)'
+                            cv_str = 'cv' + str(cv_index) + '*180/(pi)'
                         elif optype == 'diffdistance':
                             f.write('DISTANCE LABEL=CV' + str(cv_index) + 'A ATOMS=' + str(atoms[0]) + ',' + str(atoms[1]) + '\n')
                             f.write('DISTANCE LABEL=CV' + str(cv_index) + 'B ATOMS=' + str(atoms[2]) + ',' + str(atoms[3]) + '\n')
@@ -1947,7 +1947,6 @@ class UmbrellaSampling(JobType):
 
                         # Construct RC function
                         RCfunc += '+' + str(alp) + '*' + cv_str
-
 
                     f.write('CUSTOM ...\n')
                     f.write('  LABEL=RC\n')
@@ -2174,9 +2173,16 @@ class UmbrellaSampling(JobType):
 
     def update_results(self, thread, allthreads, settings):
         # Update rc value results for this thread
+        if settings.us_implementation.lower() == 'amber_rxncor':
+            offset = 0
+        elif settings.us_implementation.lower() == 'plumed':
+            offset = 1
+        else:
+            raise RuntimeError('unrecognized us_implementation setting: ' + settings.us_implementation)
         thread.history.prod_results += [float(item.split()[1]) for item in
                                       open('rcwin_' + str(thread.history.window) + '_' + str(thread.history.index) +
-                                           '_us.dat', 'r').readlines()[len(thread.history.prod_results):]]
+                                           '_us.dat', 'r').readlines()[offset + len(thread.history.prod_results):]
+                                           if len(item.split()) > 1]
 
         # Write updated restart.pkl
         pickle.dump(allthreads, open('restart.pkl', 'wb'), protocol=2)

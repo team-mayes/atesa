@@ -451,6 +451,10 @@ The following options concern the information error convergence criterion in aim
 ``two_line_threshold``
 
 	A float defining the maximum ratio of the slopes of the lines constituting one of the likelihood maximization "two_line_test" algorithm's convergence criteria. See :ref:`Two_line_test` for details. Default = 0.5
+	
+``sigfigs``
+
+	An integer defining the number of digits after the decimal to report for CVs in aimless shooting output files. In general, there should be no need to modify this option unless you have defined a custom CV that requires greater than the default precision. Default = 3
 
 
 Committor Analysis Settings
@@ -514,7 +518,16 @@ Keep in mind that if you perform a large amount of sampling and then discover th
 	
 ``us_pathway_restraints_file``
 
-	A string giving the path to the full CVs output file (default name "as_full_cvs.out", produced only when *resample* and *resample_full_cvs* are both *True*) in the desired aimless shooting working directory. By default, the restraints applied during umbrella sampling are only along the reaction coordinate, with all other degrees of freedom left unrestrained. In some cases, this can result in errant sampling of regions of state space that technically have the desired reaction coordinate value, but do not actually fall within the transition path ensemble. Such errors are usually visible in umbrella sampling output data as discontinuities or unsmoothness in the mean value plot produced by the mbar.py analysis script; see the :ref:`UmbrellaSamplingTroubleshooting` section of the :ref:`Troubleshooting` page for more information. One possible way to fix this is by rerunning umbrella sampling with this option set, which will apply restraints to every CV included in the aimless shooting output files. These restraints are flat and equal to zero within the range of values observed during any accepted aimless shooting trajectory, and then increase in energy steeply outside this range. In this way, and to the extent that aimless shooting explored the relevant phase space of each CV and that the included CVs cover the relevant dimensions, this option requires the umbrella sampling simulations to remain within the reaction pathway ensemble, producing much better results. However, because of the risk that important regions of state space are errantly gated off, this option should only be used as necessary, not as a first-resort. **Important:** If this option is set, you must include 'nmropt=1,' in the &cntrl namelist of the 'umbrella_sampling_prod_amber.in' file in the input_files directory. Default = ''
+	Implements pathway restrained umbrella sampling. This is a string giving the path to the full CVs output file (default name "as_full_cvs.out", produced only when *resample* and *resample_full_cvs* are both *True*) in the desired aimless shooting working directory.
+	By default, the restraints applied during umbrella sampling are only along the reaction coordinate, with all other degrees of freedom left unrestrained. In some cases, this can result in errant sampling of regions of state space that technically have the desired reaction coordinate value, but do not actually fall within the transition path ensemble. Such errors are usually visible in umbrella sampling output data as discontinuities or unsmoothness in the mean value plot produced by the mbar.py analysis script; see the :ref:`UmbrellaSamplingTroubleshooting` section of the :ref:`Troubleshooting` page for more information. One possible way to fix this is by rerunning umbrella sampling with this option set, which will apply restraints to every CV included in the aimless shooting output files. These restraints are flat and equal to zero within the range of values observed during any accepted aimless shooting trajectory, and then increase in energy steeply outside this range. In this way, and to the extent that aimless shooting explored the relevant phase space of each CV and that the included CVs cover the relevant dimensions, this option requires the umbrella sampling simulations to remain within the reaction pathway ensemble, producing much better results.
+	Because of the risk that important regions of state space are errantly gated off, this option should only be used as necessary, not as a first-resort. **Important:** If this option is set, you must include 'nmropt=1,' in the &cntrl namelist of the 'umbrella_sampling_prod_amber.in' file in the input_files directory. Default = ''
+	
+``us_implementation``
+
+	A string, supported options are "plumed" or "amber_rxncor".
+	If "plumed" is selected, umbrella sampling restraints are automatically generated and applied using PLUMED, which must be installed and available for use with Amber. Also requires that both "plumed=1" and "plumedfile={{ plumedfile }}" are declared in the umbrella sampling input file.
+	If "amber_rxncor" is selected, umbrella sampling restraints are implemented directly in Amber using the "irxncor" option. The version of Amber being used must support it (at time of writing, no publicly available version of Amber yet supports this option). Also requires that both "irxncor=1" and "nmropt=1" are declared in the umbrella sampling input file.
+	Default = 'plumed'
 
 .. _EquilibriumPathSamplingSettings:
 
