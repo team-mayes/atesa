@@ -180,14 +180,14 @@ def get_cvs(filename, settings, reduce=False, frame=0):
     # define variables as they are expected to be interpreted in CV definitions (these are potentially invoked by eval)
     delete_traj_name = False  # so we don't delete the traj_name file later unless we created it below
     if frame in [0, 'all']:
-        traj = pytraj.iterload(filename, settings.topology)
-        mtraj = mdtraj.load(filename, top=settings.topology)
+        full_traj = pytraj.iterload(filename, settings.topology)
+        full_mtraj = mdtraj.load(filename, top=settings.topology)
         traj_name = filename
     elif frame < 0:
         raise RuntimeError('frame must be >= 0')
     else:
-        traj = pytraj.iterload(filename, settings.topology, frame_slice=[(frame - 1, frame)])
-        mtraj = mdtraj.load_frame(filename, frame - 1, top=settings.topology)
+        full_traj = pytraj.iterload(filename, settings.topology, frame_slice=[(frame - 1, frame)])
+        full_mtraj = mdtraj.load_frame(filename, frame - 1, top=settings.topology)
         if True in ['traj_name' in cv for cv in settings.cvs]:  # if True, need .rst7 formatted file to operate on
             mdengine = factory.mdengine_factory(settings.md_engine)
             traj_name = mdengine.get_frame(filename, frame, settings)
@@ -213,11 +213,14 @@ def get_cvs(filename, settings, reduce=False, frame=0):
     sigfigs = '%.' + str(settings.sigfigs) + 'f'
 
     if frame == 'all':
-        n_iter = traj.n_frames
+        n_iter = full_traj.n_frames
     else:
         n_iter = 1
 
-    for iter in range(n_iter):
+    for iter in range(n_iter):  # iterate over all frames
+        # set traj and mtraj to only the desired frame; has no (important) effect if there's only one frame anyway
+        traj = full_traj[iter:iter+1:1]
+        mtraj = full_mtraj[iter]
         for cv in settings.cvs:
             local_index += 1
             evaluation = eval(cv)       # evaluate the CV definition code (potentially using traj, mtraj, and/or traj_name)
@@ -527,7 +530,7 @@ def resample(settings, partial=False, full_cvs=False):
         else:   # affinity > 1
             # Map partial_full_cvs calls to available processes
             with Pool(affinity) as p:
-                p.starmap(main_loop, zip(allthreads, ['partial_full_cvs_' + str(thread_index) + '.out' for thread_index in range(len(allthreads))], itertools.repeat(temp_settings)))
+                p.starmap(partial_full_cvs, zip(allthreads, ['partial_full_cvs_' + str(thread_index) + '.out' for thread_index in range(len(allthreads))], itertools.repeat(temp_settings)))
             # Finally, combine the partial files into the full file
             with open(settings.working_directory + '/as_full_cvs.out', 'w') as outfile:
                 for fname in ['partial_full_cvs_' + str(thread_index) + '.out' for thread_index in range(len(allthreads))]:
