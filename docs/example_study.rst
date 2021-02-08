@@ -89,7 +89,9 @@ Once a model has been set up near the transition state, aimless shooting can pro
 	prod_walltime = '00:30:00'
 	prod_ppn = 1
 	
-Note that the absence of any specific CVs in this file results in the default behavior, which is building CVs automatically based on the atoms indicated in the commitment definitions. In this case, ATESA derived 156 CVs to sample at each shooting point. We also set the number of steps between assessments of the information error termination criterion 10 times higher than the default since our system is very small and we'll accumulate hundreds of simulations very rapidly. Similarly, we set a short walltime and allocate only a single core to the production simulations to reflect their low computational requirements.
+	cleanup = False
+	
+Note that the absence of any specific CVs in this file results in the default behavior, which is building CVs automatically based on the atoms indicated in the commitment definitions. In this case, ATESA derived 156 CVs to sample at each shooting point. We also set the number of steps between assessments of the information error termination criterion 10 times higher than the default since our system is very small and we'll accumulate hundreds of simulations very rapidly. Similarly, we set a short walltime and allocate only a single core to the production simulations to reflect their low computational requirements. We also set ``cleanup = False`` so that ATESA does not delete trajectory files for completed moves; this will take up dramatically more storage space in the working directory, but it leaves us the option to use pathway restrained umbrella sampling later on should we need it.
 
 Note that because the simulations for this job are so short, it is best to take advantage of ATESA's built-in multiprocessing support for this task. The optimal number of cores to allocate will depend greatly on your platform, but using roughly as many cores as you have aimless shooting threads is a reasonable starting point. In this case, we selected 24 aimless shooting threads (12 for each initial coordinate file) to make optimal use of one 24-core node.
 

@@ -402,17 +402,17 @@ These settings are specific to aimless shooting runs only.
 
 	A boolean. If True, aimless shooting will NOT be performed, and instead the existing aimless shooting data found in *working_directory* are used to produce new output files based on the settings of the current ATESA job. The primary usage of this option is to add additional CVs to the output files without needing to repeat any simulations. Default = False
 	
-``resample_full_cvs``
+``full_cvs``
 
-	A boolean, used only if *resample = True*. If both are *True*, resampling also produces the output file "as_full_cvs.out", which is used as an input for the umbrella sampling option "us_pathway_restraints_file". This file is produced using every trajectory in the working directory, which will only be the most recently accepted trajectories in each thread unless *cleanup = False* was set during aimless shooting (which is *not* the default.) Note that depending on the number of trajectory files, resampling with this option can take a very long time. Default = False
+	A boolean. If *True*, resampling and aimless shooting also produce the output file "as_full_cvs.out", which is used as an input for the umbrella sampling option "us_pathway_restraints_file". When this option is set to *True* for resampling, this file is produced using every accepted trajectory in the working directory, which will only be the most recently accepted trajectories in each thread unless *cleanup = False* was set during aimless shooting (which is **not** the default.) When this option is set to *True* during an aimless shooting job, the file is written to after each successful aimless shooting move, regardless of the *cleanup* setting, although be warned that this can slow down aimless shooting somewhat, especially when processing and/or I/O performed directly by ATESA is a significant bottleneck for your particular resources and simulations. Default = False
 	
 ``degeneracy`` **‡**
 
 	An integer number of "degenerate" threads to begin from each given initial coordinate file. This option is merely a shortcut for increasing the degree of parallelization in the sampling process, but keep in mind that higher values sample less efficiently, especially for systems that decorrelate slowly and/or when *min_dt* and *max_dt* are small. Default = 1 (no degeneracy, only one thread per initial coordinate file)
 	
-``cleanup``
+``cleanup`` **‡**
 
-	A boolean. If True, trajectory files for each shooting move are deleted after they no longer represent the last accepted trajectory in a thread. The initial coordinate files from each shooting move are always retained for resampling. This option is useful to reduce the amount of storage space consumed in the course of aimless shooting; however, note that when this option is used, you will not be able to produce as complete an output file "as_full_cvs.out" (produced only when *resample* and *resample_full_cvs* are both *True*). This file is only used for an optional setting in umbrella sampling, so if you don't plan to use umbrella sampling or if you're sure you don't need that option, you can safely leave this on True. Default = True
+	A boolean. If True, trajectory files for each shooting move are deleted after they no longer represent the most recent accepted trajectory in a thread. The initial coordinate files from each shooting move are always retained for resampling. This option is useful to greatly reduce the amount of storage space consumed in the course of aimless shooting; however, note that when *cleanup = True*, you will not be able to resample the full set of aimless shooting trajectories to produce a new "as_full_cvs.out" file when *resample* and *full_cvs* are both *True* (although it will still be produced as usual during aimless shooting if *full_cvs = True* is declared in the aimless shooting configuration file). The "as_full_cvs.out" file is only used for the optional "pathway restraints" setting in umbrella sampling, so if you don't plan to use umbrella sampling or if you're sure you don't need that option, you can safely leave this on True. Default = True
 	
 ``max_moves``
 
@@ -430,15 +430,15 @@ The following options concern the information error convergence criterion in aim
 	
 ``information_error_threshold``
 
-	The threshold of mean parameter standard error below which the information error termination criterion is satisfied and aimless shooting ends. Error generally diminishes as the square root of the number of samples, so an order of magnitude lower threshold requires a hundred times more sampling (assuming that the CVs constituting the maximum likelihood model remain the same throughout). It is a good practice to manually inspect the *info_err.out* file in the working directory after termination to ensure that it appears to be converged to within the user's desired tolerance. Default = 0.1
+	The threshold of mean parameter standard error below which the information error termination criterion is satisfied and aimless shooting ends. Error generally diminishes as roughly the square root of the number of samples, so an order of magnitude lower threshold requires approximately a hundred times more sampling (assuming that the CVs constituting the maximum likelihood model remain the same throughout). It is a good practice to manually inspect the *info_err.out* file in the working directory after termination to ensure that it appears to be converged to within the user's desired tolerance. Default = 0.1
 	
 ``information_error_freq``
 
-	An integer number of shooting moves between each check of the information error convergence criterion. Too-small values can cause some significant overhead in the main ATESA process, but this does not significantly affect aimless shooting sampling efficiency. Aimless shooting runs with *resample = True* or *restart = True* will reassess information error if this option has changed since the last run. Default = 250
+	An integer number of shooting moves between each check of the information error convergence criterion. Too-small values can cause some significant overhead in the main ATESA process, but this usually does not significantly affect aimless shooting sampling efficiency. Aimless shooting runs with *resample = True* or *restart = True* will reassess information error if this option has changed since the last run. Default = 250
 	
 ``information_error_lmax_string``
 
-	Part of the command string passed to lmax.py when assessing information error. Information error is based on the reaction coordinate model produced using ``lmax.py`` on the decorrelated aimless shooting output files, with options for the `-o`, `-i`, and `-q` flags set automatically. All other options (most importantly, `-k`, `-f`, `-r`, `--two_line_test`, and `--two_line_threshold`) can be set using this option in the configuration file. See :ref:`LikelihoodMaximization` for documentation on ``lmax.py``. You should use this option if you have a preference for tying your aimless shooting termination criterion to a particular model building strategy other than the default. Aimless shooting runs with *resample = True* or *restart = True* will reassess information error if this option has changed since the last run. Default = '--two_line_test'
+	Part of the command string passed to lmax.py when assessing information error. Information error is based on the reaction coordinate model produced using ``lmax.py`` on the decorrelated aimless shooting output files, with options for the `-o`, `-i`, and `-q` flags set automatically. All other options (most importantly, `-k`, `-f`, `-r`, `--two_line_test`, and `--two_line_threshold`) can be set using this option in the configuration file. See :ref:`LikelihoodMaximization` for documentation on ``lmax.py``. You should use this option if you have a preference for tying your aimless shooting termination criterion to a particular model building strategy other than the default, but keep in mind that certain settings (especially those depending on the `-k` option) may take a very long time to assess. Aimless shooting runs with *resample = True* or *restart = True* will reassess information error if this option has changed since the last run. Default = '--two_line_test'
 	
 ``information_error_max_dims``
 
@@ -464,13 +464,13 @@ These options are specific to committor analysis runs only.
 
 ``committor_analysis_n``
 
-	The number of independent simulations to run *for each initial structure* during committor analysis. This number should be large enough to distinguish confidently between structures that make good and poor transition states. The default choice is safe. Default = 10.
+	The number of independent simulations to run *for each initial structure* during committor analysis. This number should be large enough to distinguish confidently between structures that make good and poor transition states. The default choice is safe, but increasing it may smooth out the result in some cases. Default = 10.
 	
-``committor_analysis_use_rc_out``
+``committor_analysis_use_rc_out`` **‡**
 
 	A boolean. If True, the choice of initial coordinates is based not on the *initial_coordinates* option in the configuration file, but on the contents of an RC output file, based on the following two options. Default = False
 	
-``path_to_rc_out``
+``path_to_rc_out`` **‡**
 
 	The path to the RC output file, given as a string. This file should contain the name of each shooting move file (aimless shooting files ending in '*_init_fwd.rst7') followed by a colon, a space, and then the value of the reaction coordinate at that point. For example::
 		
@@ -479,7 +479,7 @@ These options are specific to committor analysis runs only.
 
 	Files of this sort can be automatically generated using the auxiliary script :ref:`RCEval`. No default.
 	
-``rc_threshold``
+``rc_threshold`` **‡**
 
 	The threshold of *absolute value* of reaction coordinate below which shooting moves in the indicated *path_to_rc_out* file will be included in committor analysis. For example, if the above example contents of such a file were used and *rc_threshold* were set to 0.1, only the first of the two files (initial_coords_1_1_init_fwd.rst7) would be used for committor analysis. The user is encouraged to check the RC output file manually before using this option to ensure that they will have enough unique initial coordinate files to produce a useful committor analysis result (200 files is a good target). Default = 0.05
 
@@ -500,13 +500,13 @@ Keep in mind that if you perform a large amount of sampling and then discover th
 
 	The maximum value of the reaction coordinate to sample during US. It can be useful to manually evaluate the RC of an equilibrated product state structure, and then add some small fraction of that number again (say, 10%) to select the value for this option. Default = 12
 	
-``us_rc_step``
+``us_rc_step`` **‡**
 
 	The step size between the centers of adjacent windows during US. Window boundaries are assigned from the left, such that the first window always begins exactly at *us_rc_min*, and then steps of size *us_rc_step* delineate further windows until the next step would be equal to or greater than *us_rc_max*. Default = 0.25
 	
-``us_restraint``
+``us_restraint`` **‡**
 
-	The weight of the energetic restraint applied in each US window, measured in kcal/(mol-units^2), where "units" is the dimensionality of the reaction coordinate. Too-low values sample inefficiently, but too-high values necessitate more windows along the RC so as not to leave gaps. In general, you should select a value that produces about 10-to-20% overlap in sampling with neighboring windows on either side, which may require some trial-and-error, as the appropriate values to choose will depend on the underlying free energy profile and the simulation parameters. The default values are a good starting point for most systems (at 300 K -- significantly lower temperatures require weaker restraints and *vice versa*). Default = 50
+	The weight of the energetic restraint applied in each US window, measured in kcal/(mol-units^2), where "units" is the dimensionality of the reaction coordinate. Too-low values sample inefficiently, but too-high values necessitate more windows along the RC so as not to leave gaps. The appropriate values to choose will depend on the underlying free energy profile and the simulation parameters. The default values are a good starting point for most systems (at 300 K -- significantly lower temperatures require weaker restraints and *vice versa*). Default = 50
 	
 ``us_degeneracy``
 
@@ -518,7 +518,7 @@ Keep in mind that if you perform a large amount of sampling and then discover th
 	
 ``us_pathway_restraints_file``
 
-	Implements pathway restrained umbrella sampling. This is a string giving the path to the full CVs output file (default name "as_full_cvs.out", produced only when *resample* and *resample_full_cvs* are both *True*) in the desired aimless shooting working directory.
+	Implements pathway restrained umbrella sampling. This is a string giving the path to the full CVs output file (default name "as_full_cvs.out", produced during aimless shooting or resampling (*resample = True*) when *full_cvs = True*) in the desired aimless shooting working directory.
 	By default, the restraints applied during umbrella sampling are only along the reaction coordinate, with all other degrees of freedom left unrestrained. In some cases, this can result in errant sampling of regions of state space that technically have the desired reaction coordinate value, but do not actually fall within the transition path ensemble. Such errors are usually visible in umbrella sampling output data as discontinuities or unsmoothness in the mean value plot produced by the mbar.py analysis script; see the :ref:`UmbrellaSamplingTroubleshooting` section of the :ref:`Troubleshooting` page for more information. One possible way to fix this is by rerunning umbrella sampling with this option set, which will apply restraints to every CV included in the aimless shooting output files. These restraints are flat and equal to zero within the range of values observed during any accepted aimless shooting trajectory, and then increase in energy steeply outside this range. In this way, and to the extent that aimless shooting explored the relevant phase space of each CV and that the included CVs cover the relevant dimensions, this option requires the umbrella sampling simulations to remain within the reaction pathway ensemble, producing much better results.
 	Because of the risk that important regions of state space are errantly gated off, this option should only be used as necessary, not as a first-resort. **Important:** If this option is set, you must include 'nmropt=1,' in the &cntrl namelist of the 'umbrella_sampling_prod_amber.in' file in the input_files directory. Default = ''
 	

@@ -565,16 +565,15 @@ class AimlessShooting(JobType):
                 open(settings.working_directory + '/as_raw.out', 'a').write(utilities.get_cvs(local_thread.history.init_coords[-1][0], settings) + '\n')
                 open(settings.working_directory + '/as_raw.out', 'a').close()
 
-                ## Turns out this really slows things down; better left to resampling as needed
-                # # Implement writing to full CVs output file, 'as_full_cvs.out'
-                # if not os.path.exists(settings.working_directory + '/as_full_cvs.out'):
-                #     open(settings.working_directory + '/as_full_cvs.out', 'w').close()
-                # with open(settings.working_directory + '/as_full_cvs.out', 'a') as f:
-                #     for job_index in range(len(local_thread.current_type)):
-                #         for frame_index in range(pytraj.iterload(local_thread.history.prod_trajs[-1][job_index], settings.topology).n_frames):
-                #             frame_to_check = local_thread.get_frame(local_thread.history.prod_trajs[-1][job_index], frame_index + 1, settings)
-                #             f.write(utilities.get_cvs(frame_to_check, settings) + '\n')
-                #             os.remove(frame_to_check)
+                if full_cvs:
+                    # Implement writing to full CVs output file, 'as_full_cvs.out'
+                    temp_settings = copy.deepcopy(settings)
+                    temp_settings.include_qdot = False  # never want to include_qdot in this upcoming call to get_cvs
+                    if not os.path.exists(settings.working_directory + '/as_full_cvs.out'):
+                        open(settings.working_directory + '/as_full_cvs.out', 'w').close()
+                    with open(settings.working_directory + '/as_full_cvs.out', 'a') as f:
+                        for job_index in range(len(local_thread.current_type)):
+                            f.write(utilities.get_cvs(local_thread.history.prod_trajs[-1][job_index], temp_settings, False, 'all') + '\n')
 
             # This block is necessary to update the local thread in the multiprocess-managed list allthreads.
             # In cases where allthreads is already literal, this block has no effect.
@@ -1700,12 +1699,12 @@ class UmbrellaSampling(JobType):
             # Build min_max.pkl file if it doesn't already exist
             if not os.path.exists('min_max.pkl'):
                 # Partition each line in as_full_cvs.out into the nearest US window
-                as_full_cvs_lines = open(settings.us_pathway_restraints_file, 'r').readlines()
-                open(settings.us_pathway_restraints_file, 'r').close()
+                as_full_cvs = open(settings.us_pathway_restraints_file, 'r')    # load file as an iterator
+                as_full_cvs_line = next(as_full_cvs)    # get first line
 
                 # Initialize results list; first index is window, second index is CV, third index is 0 for min and 1 for max
                 # E.g., min_max[12][5][1] is the max value of CV6 in the 13th window
-                min_max = [[[None, None] for null in range(len(as_full_cvs_lines[0].split()))] for null in
+                min_max = [[[None, None] for null in range(len(as_full_cvs_line.split()))] for null in
                            range(len(window_centers))]
 
                 rc_minmax = [[], []]  # this minmax is for passing to utilities.get_cvs.reduce_cv
@@ -1724,25 +1723,32 @@ class UmbrellaSampling(JobType):
                         this_max = rc_minmax[1][local_index]
                         return (float(unreduced_value) - this_min) / (this_max - this_min)
 
-                for line in as_full_cvs_lines:
-                    this_line = line.split()
-                    if settings.rc_reduced_cvs:
-                        this_line_temp = []
+                while True:     # loop can only end via 'break'
+                    try:
+                        # Evaluate the reaction coordinate value for this line
+                        this_line = as_full_cvs_line.split()
+                        if settings.rc_reduced_cvs:
+                            this_line_temp = []
+                            for cv_index in range(len(this_line)):
+                                this_line_temp.append(reduce_cv(this_line[cv_index], cv_index, rc_minmax))
+                            this_line = copy.copy(this_line_temp)
+                        rc = utilities.evaluate_rc(settings.rc_definition, this_line)
+                        window_index = closest(window_centers, rc)
+
+                        # Add to min and max as appropriate
                         for cv_index in range(len(this_line)):
-                            this_line_temp.append(reduce_cv(this_line[cv_index], cv_index, rc_minmax))
-                        this_line = copy.copy(this_line_temp)
-                    rc = utilities.evaluate_rc(settings.rc_definition, this_line)
-                    window_index = closest(window_centers, rc)
+                            if min_max[window_index][cv_index][0] is None or float(
+                                    min_max[window_index][cv_index][0]) > float(this_line[cv_index]):
+                                min_max[window_index][cv_index][0] = this_line[cv_index]  # set new min
+                            if min_max[window_index][cv_index][1] is None or float(
+                                    min_max[window_index][cv_index][1]) < float(this_line[cv_index]):
+                                min_max[window_index][cv_index][1] = this_line[cv_index]  # set new max
 
-                    # Add min and max as appropriate
-                    for cv_index in range(len(line.split())):
-                        if min_max[window_index][cv_index][0] is None or float(
-                                min_max[window_index][cv_index][0]) > float(line.split()[cv_index]):
-                            min_max[window_index][cv_index][0] = line.split()[cv_index]  # set new min
-                        if min_max[window_index][cv_index][1] is None or float(
-                                min_max[window_index][cv_index][1]) < float(line.split()[cv_index]):
-                            min_max[window_index][cv_index][1] = line.split()[cv_index]  # set new max
+                        as_full_cvs_line = next(as_full_cvs)    # get next line for next iteration
+                    except StopIteration:   # raised by next(as_full_cvs) when trying to read past the end
+                        break
 
+                # Dump as a .pkl file so we don't have to do this againZ
                 pickle.dump(min_max, open('min_max.pkl', 'wb'), protocol=2)
 
             # Now build the actual DISANG file.
@@ -1774,7 +1780,7 @@ class UmbrellaSampling(JobType):
         # Build restraint file that implements us_pathway_restraints_file, if applicable
         if settings.us_pathway_restraints_file:
             if settings.md_engine.lower() == 'amber':
-                add_pathway_restraints(self, thread, settings)
+                self.add_pathway_restraints(thread, settings)
             else:
                 raise RuntimeError(
                     'The us_pathway_restraints_file option is only compatible with md_engine = amber')
@@ -1926,22 +1932,22 @@ class UmbrellaSampling(JobType):
                         if optype == 'distance':
                             f.write('DISTANCE LABEL=CV' + str(cv_index) + ' ATOMS=' + str(atoms[0]) + ',' + str(atoms[1]) + '\n')
                             labels.append('CV' + str(cv_index))
-                            cv_str = 'cv' + str(cv_index)
+                            cv_str = '(cv' + str(cv_index) + '-' + str(this_min) + ')'
                         elif optype == 'angle':
                             f.write('ANGLE LABEL=CV' + str(cv_index) + ' ATOMS=' + str(atoms[0]) + ',' + str(atoms[1]) + ',' + str(atoms[2]) + '\n')
                             labels.append('CV' + str(cv_index))
-                            cv_str = 'cv' + str(cv_index) + '*180/(pi)'
+                            cv_str = '((cv' + str(cv_index) + '*180/(pi))' + '-' + str(this_min) + ')'
                         elif optype == 'dihedral':
                             f.write('TORSION LABEL=CV' + str(cv_index) + ' ATOMS=' + str(atoms[0]) + ',' + str(
                                 atoms[1]) + ',' + str(atoms[2]) + ',' + str(atoms[3]) + '\n')
                             labels.append('CV' + str(cv_index))
-                            cv_str = 'cv' + str(cv_index) + '*180/(pi)'
+                            cv_str = '((cv' + str(cv_index) + '*180/(pi))' + '-' + str(this_min) + ')'
                         elif optype == 'diffdistance':
                             f.write('DISTANCE LABEL=CV' + str(cv_index) + 'A ATOMS=' + str(atoms[0]) + ',' + str(atoms[1]) + '\n')
                             f.write('DISTANCE LABEL=CV' + str(cv_index) + 'B ATOMS=' + str(atoms[2]) + ',' + str(atoms[3]) + '\n')
                             labels.append('CV' + str(cv_index) + 'A')
                             labels.append('CV' + str(cv_index) + 'B')
-                            cv_str = '(cv' + str(cv_index) + 'a-cv' + str(cv_index) + 'b)'
+                            cv_str = '((cv' + str(cv_index) + 'a-cv' + str(cv_index) + 'b)' + '-' + str(this_min) + ')'
                         else:
                             raise RuntimeError('unrecognized CV type: ' + optype)
 
