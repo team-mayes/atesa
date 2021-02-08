@@ -1961,7 +1961,7 @@ class UmbrellaSampling(JobType):
                     f.write('  FUNC=' + RCfunc + '\n')
                     f.write('  PERIODIC=NO\n')
                     f.write('... CUSTOM\n')
-                    f.write('restraint-rc: RESTRAINT ARG=RC KAPPA=' + str(settings.us_restraint) + ' AT=' + str(thread.history.window) + '\n')
+                    f.write('restraint-rc: RESTRAINT ARG=RC KAPPA=' + str(2 * float(settings.us_restraint)) + ' AT=' + str(thread.history.window) + '\n')
                     f.write('PRINT ARG=RC FILE=rcwin_' + str(thread.history.window) + '_' + str(thread.history.index) + '_us.dat')
 
         else:

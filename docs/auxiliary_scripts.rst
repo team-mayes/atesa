@@ -3,6 +3,8 @@
 Auxiliary Scripts
 ==================
 
+This page documents the various other python scripts packaged with ATESA that can be called directly (i.e., not through the primary ``atesa`` executable).
+
 .. _LikelihoodMaximization:
 
 lmax.py: Likelihood Maximization
@@ -110,7 +112,7 @@ The produced output file `rc.out` is (optionally) used as input for a committor 
 mbar.py: Energy Profiles from US
 --------------------------------
 
-The output files from an umbrella sampling (US) run can be converted into a free energy profile by any number of methods, but one of the most ideal is the Multistate Bennett Acceptance Ratio", or "MBAR". ATESA comes with a suitable implementation of MBAR using the `pymbar <https://github.com/choderalab/pymbar>`_ package available from the Chodera lab. If you publish work making use of this script, be sure to cite the appropriate papers described on that page; at minimum, you should cite::
+The output files from an umbrella sampling (US) run can be converted into a free energy profile by any number of methods, but one of the most ideal is the Multistate Bennett Acceptance Ratio", or "MBAR". ATESA comes with a suitable implementation of MBAR using the `pymbar <https://github.com/choderalab/pymbar>`_ package available from the Chodera lab. If you publish work making use of this script, be sure to cite the appropriate papers described on that page; at minimum, you should cite:
 
 	Shirts M. R. and Chodera, J. D. Statistically optimal analysis of samples from multiple equilibrium states. J. Chem. Phys. 129:124105 (2008). DOI: 10.1063/1.2978177
 
@@ -118,7 +120,7 @@ The basic task in interpreting umbrella sampling data is to "subtract" the effec
 
 If supported by the local python environment, mbar.py produces several plots: first, a "mean value" plot that shows the derivation from the window center in each data file. This is a diagnostic tool to help identify any problematic regions; if there is no issue, the plot should be a smooth waveform passing through 0 near the middle. Then, it produces a histogram to show the coverage of sampling over the range of the reaction coordinate. There should be no gaps in this plot, or else additional data must be collected to cover the gaps. Finally, it plots the free energy profile itself. All of the data for these plots is also printed the the output file (see the `-o` option below) regardless of whether the plots are shown. In cases where the data exists on a remote server, it may be convenient to copy the necessary files (see following paragraph) to a local directory before running ``mbar.py`` in order to produce these plots automatically.
 
-mbar.py looks for and uses all data files in the present directory whose names begin with "rcwin_" and end with "_us.dat". This matches the output files produced by umbrella sampling with ATESA. The script is called directly in the command line from within the desired working directory as follows:
+mbar.py looks for and uses all data files in the present directory whose names begin with "rcwin\_" and end with "_us.dat". This matches the output files produced by umbrella sampling with ATESA. The script is called directly in the command line from within the desired working directory as follows:
 
 ::
 
@@ -148,7 +150,7 @@ mbar.py looks for and uses all data files in the present directory whose names b
 
 	If this option is given, then the built-in pymbar.timeseries.detectEquilibration and pymbar.timeseries.subsampleCorrelatedData functions are used to attempt to automatically pare the data in each data file down to equilibrated and decorrelated samples. If you don't know what this means, you probably *should* use it. If you publish work that makes use of this option, you must cite (in addition to the aforementioned paper)::
 	
-	Chodera, J. D. A simple method for automated equilibration detection in molecular simulations. J. Chem. Theor. Comput. 12:1799, 2016. DOI: 10.1021/acs.jctc.5b00784
+		Chodera, J. D. A simple method for automated equilibration detection in molecular simulations. J. Chem. Theor. Comput. 12:1799, 2016. DOI: 10.1021/acs.jctc.5b00784
 	
 `\\-\\-rc_min min`
 

@@ -67,8 +67,7 @@ If this is your first time performing simulations with ATESA for this particular
 Find Transition State
 ~~~~~~~~~~~~~~~~~~~~~
 
-If you want to perform aimless shooting but don't have a candidate transition state structure from which to begin (or just want to obtain more), ATESA can automatically build
-them from a given product or reactant state structure. If you do already have a transition state candidate to begin with, you can skip this step. In addition to the :ref:`CoreSettings`, such a job should be set up as:
+If you want to perform aimless shooting but don't have a candidate transition state structure from which to begin (or just want to obtain more), ATESA can automatically build them from a given product or reactant state structure. If you do already have a transition state candidate to begin with, you can skip this step. In addition to the :ref:`CoreSettings`, such a job should be set up as:
 
 .. code-block:: python
 
@@ -134,7 +133,7 @@ The conditions under which equilibrium path sampling should be used instead are 
 
 	* The desired reaction coordinate contains unusual CV types. The supported CV types are: distances, angles, dihedrals, and differences of distances. ATESA's automatically generated CVs are only ever of these types; or
 	
-	* Umbrella Sampling (even when pathway-restrained, see :ref:`UmbrellaSamplingPathwayRestraints`_) is unable to produce a reasonable free energy profile.
+	* Umbrella Sampling (even when pathway-restrained, see :ref:`UmbrellaSamplingPathwayRestraints`) is unable to produce a reasonable free energy profile.
 
 Umbrella Sampling can be called in ATESA through the main executable using the following settings (in addition to the :ref:`CoreSettings` above):
 
@@ -456,11 +455,6 @@ The following options concern the information error convergence criterion in aim
 ``two_line_threshold``
 
 	A float defining the maximum ratio of the slopes of the lines constituting one of the likelihood maximization "two_line_test" algorithm's convergence criteria. See :ref:`Two_line_test` for details. Default = 0.5
-	
-``sigfigs``
-
-	An integer defining the number of digits after the decimal to report for CVs in aimless shooting output files. In general, there should be no need to modify this option unless you have defined a custom CV that requires greater than the default precision. Default = 3
-
 
 Committor Analysis Settings
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -477,7 +471,7 @@ These options are specific to committor analysis runs only.
 	
 ``path_to_rc_out`` **‡**
 
-	The path to the RC output file, given as a string. This file should contain the name of each shooting move file (aimless shooting files ending in '*_init_fwd.rst7') followed by a colon, a space, and then the value of the reaction coordinate at that point. For example::
+	The path to the RC output file, given as a string. This file should contain the name of each shooting move file (aimless shooting files ending in '\*_init_fwd.rst7') followed by a colon, a space, and then the value of the reaction coordinate at that point. For example::
 		
 		initial_coords_1_1_init_fwd.rst7: -0.0913
 		initial_coords_1_2_init_fwd.rst7: -0.1125
@@ -511,7 +505,11 @@ Keep in mind that if you perform a large amount of sampling and then discover th
 	
 ``us_restraint`` **‡**
 
-	The weight of the energetic restraint applied in each US window, measured in kcal/(mol-units^2), where "units" is the dimensionality of the reaction coordinate. Too-low values sample inefficiently, but too-high values necessitate more windows along the RC so as not to leave gaps. The appropriate values to choose will depend on the underlying free energy profile and the simulation parameters. The default values are a good starting point for most systems (at 300 K -- significantly lower temperatures require weaker restraints and *vice versa*). Default = 50
+	The weight of the energetic restraint applied in each US window, measured in kcal/(mol-units^2), where "units" is the dimension of the reaction coordinate.  Restraints are applied according to the equation::
+	
+		U = (us_restraint) * (RC - RC_0)^2
+	
+	where RC_0 is the window center. Too-low values of *us_restraint* sample inefficiently and may leave gaps in the sampling, but too-high values necessitate more windows along the RC. The appropriate values to choose will depend on the underlying free energy profile and the simulation parameters. The default values are a good starting point for most systems (at 300 K -- significantly lower temperatures require weaker restraints and *vice versa*). Default = 50
 	
 ``us_degeneracy``
 
@@ -524,14 +522,19 @@ Keep in mind that if you perform a large amount of sampling and then discover th
 ``us_pathway_restraints_file``
 
 	Implements pathway restrained umbrella sampling. This is a string giving the path to the full CVs output file (default name "as_full_cvs.out", produced during aimless shooting or resampling (*resample = True*) when *full_cvs = True*) in the desired aimless shooting working directory.
+	
 	By default, the restraints applied during umbrella sampling are only along the reaction coordinate, with all other degrees of freedom left unrestrained. In some cases, this can result in errant sampling of regions of state space that technically have the desired reaction coordinate value, but do not actually fall within the transition path ensemble. Such errors are usually visible in umbrella sampling output data as discontinuities or unsmoothness in the mean value plot produced by the mbar.py analysis script; see the :ref:`UmbrellaSamplingTroubleshooting` section of the :ref:`Troubleshooting` page for more information. One possible way to fix this is by rerunning umbrella sampling with this option set, which will apply restraints to every CV included in the aimless shooting output files. These restraints are flat and equal to zero within the range of values observed during any accepted aimless shooting trajectory, and then increase in energy steeply outside this range. In this way, and to the extent that aimless shooting explored the relevant phase space of each CV and that the included CVs cover the relevant dimensions, this option requires the umbrella sampling simulations to remain within the reaction pathway ensemble, producing much better results.
+	
 	Because of the risk that important regions of state space are errantly gated off, this option should only be used as necessary, not as a first-resort. **Important:** If this option is set, you must include 'nmropt=1,' in the &cntrl namelist of the 'umbrella_sampling_prod_amber.in' file in the input_files directory. Default = ''
 	
 ``us_implementation``
 
 	A string, supported options are "plumed" or "amber_rxncor".
+	
 	If "plumed" is selected, umbrella sampling restraints are automatically generated and applied using PLUMED, which must be installed and available for use with Amber. Also requires that both "plumed=1" and "plumedfile={{ plumedfile }}" are declared in the umbrella sampling input file.
+	
 	If "amber_rxncor" is selected, umbrella sampling restraints are implemented directly in Amber using the "irxncor" option. The version of Amber being used must support it (at time of writing, no publicly available version of Amber yet supports this option). Also requires that both "irxncor=1" and "nmropt=1" are declared in the umbrella sampling input file.
+	
 	Default = 'plumed'
 
 .. _EquilibriumPathSamplingSettings:
