@@ -126,13 +126,15 @@ The results of a committor analysis job are written to the file "committor_analy
 Umbrella Sampling
 ~~~~~~~~~~~~~~~~~
 
-The final analysis step after a satisfactory committor analysis run is to obtain the free energy profile along the reaction coordinate. The preferred method for this is umbrella sampling, which is automated in ATESA for users with access to a build of Amber that supports the "irxncor=1" option (not yet publicly available as of May 2020; contact Michael F. Crowley at the National Renewable Energy Laboratory in Golden, CO if interested).
+The final analysis step after a satisfactory committor analysis run is to obtain the free energy profile along the reaction coordinate. The preferred method for this is umbrella sampling, which is automated in ATESA using PLUMED by default.
 
 The conditions under which equilibrium path sampling should be used instead are as follows:
 
-	* A version of Amber that supports umbrella sampling is not available; or
+	* PLUMED is strictly not available; or
 
-	* The desired reaction coordinate contains unusual CV types. The supported CV types are: distances, angles, dihedrals, and differences of distances. ATESA's automatically generated CVs are only ever of these types.
+	* The desired reaction coordinate contains unusual CV types. The supported CV types are: distances, angles, dihedrals, and differences of distances. ATESA's automatically generated CVs are only ever of these types; or
+	
+	* Umbrella Sampling (even when pathway-restrained, see :ref:`UmbrellaSamplingPathwayRestraints`_) is unable to produce a reasonable free energy profile.
 
 Umbrella Sampling can be called in ATESA through the main executable using the following settings (in addition to the :ref:`CoreSettings` above):
 
@@ -256,7 +258,7 @@ These settings define the paths where ATESA will search for user-defined input f
 CV Settings
 ~~~~~~~~~~~
 
-These settings define the combined variables (CVs) for the job. In aimless shooting, these are the values that are written to the output file for interpretation by likelihood maximization in building the reaction coordinate (RC). In equilibrium path sampling and committor analysis, they are used to evaluate the RC (see :ref:`ReactionCoordinateDefinition`). They are not used in ``find_transition_state`` jobs.
+These settings define the combined variables (CVs) for the job. In aimless shooting, these are the values that are written to the output file for interpretation by likelihood maximization in building the reaction coordinate (RC). In umbrella sampling, equilibrium path sampling, and committor analysis, they are used to evaluate the RC (see :ref:`ReactionCoordinateDefinition`). They are not used in ``find_transition_state`` jobs.
 
 ``cvs`` **‡**
 
@@ -270,7 +272,7 @@ These settings define the combined variables (CVs) for the job. In aimless shoot
 	
 		**settings.topology**: the name of the topology file, as a string
 	
-	These CV evaluations are only ever performed on coordinate files with a single frame (not multi-frame trajectories). It is up to the user to ensure that each item in *cvs* returns exactly the desired CV value as a float or integer (and not, for example, a one-length list containing that value). For example, the following value of *cvs* would interpret the interatomic distance between atoms 1 and 2 as CV1, the difference between the distances 3-to-4 and 5-to-6 as CV2, and the angle formed by atoms 7-8-9 as CV3 (all on one line):
+	ATESA will handle making sure that the CV definitions are only ever used to evaluate a single frame at a time, but it is up to the user to ensure that each item in *cvs* returns exactly the desired CV value as a float or integer (and not, for example, a one-length list containing that value). For example, the following value of *cvs* would interpret the interatomic distance between atoms 1 and 2 as CV1, the difference between the distances 3-to-4 and 5-to-6 as CV2, and the angle formed by atoms 7-8-9 as CV3 (all on one line):
 	
         ::
 
@@ -278,13 +280,13 @@ These settings define the combined variables (CVs) for the job. In aimless shoot
 	           'pytraj.distance(traj, \'@3 @4\')[0] - pytraj.distance(traj, \'@5 @6\')[0]',
 	           'pytraj.angle(traj, \'@7 @8 @9\')[0]']
 
-	Notice in particular the usage of "traj" as the first argument in these pytraj function calls, the escaped single-quote characters within each function call, and the specification of the zero'th indexed item returned by each function call (as these pytraj functions return one-length lists). Keep in mind that by default, atoms referenced in pytraj are 1-indexed while in mdtraj they are 0-indexed. Default = ['']
+	Notice in particular the usage of "traj" as the first argument in these pytraj function calls, the escaped single-quote characters within each function call, and the specification of the zero'th indexed item returned by each function call (as these pytraj functions return one-length lists). Keep in mind that atoms referenced in pytraj are 1-indexed while in mdtraj they are 0-indexed. See the respective documentation pages for pytraj and mdtraj for more information about using these packages. Default = ['']
 	
 .. _AutoCVs:
 	
 ``auto_cvs_radius``	**‡**
 
-	Alternatively or in addition to defining explicit CVs with the *cvs* option, this option can be used to automatically obtain and use CVs representing every 2nd, 3rd, and 4th order CV (bonds, angles, and dihedrals, respectively) consisting of contiguously bonded atoms within *auto_cvs_radius* angstroms of any of the atoms present in the the *commit_fwd* or *commit_bwd* options (see :ref:`CommitmentBasinDefinitions`). In addition, difference-of-distance CVs are produced wherever an atom appears in two or more elements in the commitment definitions. For example, if the following combination of settings is provided::
+	Alternatively or in addition to defining explicit CVs with the *cvs* option, this option can be used to automatically obtain and use CVs representing every bond, angle, and dihedral, respectively, consisting of contiguously bonded atoms within *auto_cvs_radius* angstroms of any of the atoms present in the the *commit_fwd* or *commit_bwd* options (see :ref:`CommitmentBasinDefinitions`). In addition, difference-of-distance CVs are produced wherever an atom appears in two or more elements in the commitment definitions. For example, if the following combination of settings is provided::
 
 				commit_fwd = ([101, 102, 102], [103, 104, 105], [1.5, 2.0, 1.7], ['lt', 'gt', 'lt'])
 				commit_bwd = ([101, 102, 102], [103, 104, 105], [2.0, 1.5, 2.5], ['gt', 'lt', 'gt'])
@@ -292,13 +294,17 @@ These settings define the combined variables (CVs) for the job. In aimless shoot
 	
 	Then every bond, angle, and dihedral consisting of atoms within at least 5 angstroms of atoms 101, 102, 103, 104, or 105 (indexed from 1) would be included as a CV, in addition to the difference of distances 102-to-104 and 102-to-105. The index, description, and code used to evaluate each CV derived in this manner is printed to the file "cvs.txt" in the working directory. Automatic CVs can be disabled by setting *auto_cvs_radius* to 0. If *auto_cvs_radius* is greater than 0 and CVs are also defined manually using the *cvs* option, then the manually defined CVs are appended to the end of the list of automatically generated CVs.
     
-	Using *auto_cvs* treats all of the atoms in *commit_fwd* and *commit_bwd* as bonded to one another for the purposes of determining CVs, so there is no need to define these CVs manually. Examples of CVs that *should* be defined manually if desired include any distances, angles, or dihedrals defined using atoms that are not contiguously bonded to one another (*e.g.*, a distance between nearby charged particles) and also do not appear in the commitment definitions, or any other custom CVs of unique relevance to the rare event of interest. Note that although commitment basin definitions (which are interpreted internally using pytraj) are always 1-indexed, the CV definitions produced automatically with this option are defined using mdtraj and will be 0-indexed. The software handles this distinction without issue, but the user must be careful not to confuse 0-indexed atom indices from "cvs.txt" with 1-indexed atom indices in the commitment basins.
+	Using *auto_cvs* treats all of the atoms in *commit_fwd* and *commit_bwd* as bonded to one another for the purposes of determining CVs, so there is no need to define these CVs manually. Examples of CVs that *should* be defined manually if desired include any other distances, angles, or dihedrals defined using atoms that are not contiguously bonded to one another (*e.g.*, a distance between nearby charged particles), or any other custom CVs of unique relevance to the rare event of interest.
     
-	The number of CVs that are created using this option can grow very large very quickly when large radii are chosen, which in extreme cases can cause significant I/O overhead and slow down calls to :ref:`LikelihoodMaximization`. Furthermore, when using *auto_cvs* even with relatively small radii, it is unlikely that ``lmax.py`` runs to optimize models of three or more dimensions will be feasible without using either the `-r` or `--two_line_test` flags. Default = 5
+	The number of CVs that are created using this option can grow very large very quickly when large radii are chosen, which in extreme cases can cause significant I/O overhead and slow down calls to :ref:`LikelihoodMaximization` (which is used internally when evaluating the information error termination criterion). Furthermore, when using *auto_cvs* even with relatively small radii, it is unlikely that ``lmax.py`` runs to optimize models of three or more dimensions will be feasible without using either the `-r` or `--two_line_test` flags. Default = 5
 
 ``auto_cvs_exclude_water``
 	
 	A boolean. By default, the behavior where *auto_cvs_radius* is greater than zero includes any water molecules within the given radius of the commitment-defining atoms. If *auto_cvs_exclude_water* is set to True, water molecules are excluded. They may still be included in CVs defined using the *cvs* option if desired. Default = False
+
+``auto_cvs_type``
+
+	A string, either 'pytraj' or 'mdtraj'. This controls the package used to define the CVs built by auto_cvs. pytraj is generally faster, but if it evaluating the CVs poses some sort of problem for you when using it, try switching to mdtraj. Note that you are free to use both pytraj and mdtraj with the *cvs* option regardless of this setting; it only controls the CVs built automatically. Default = 'pytraj'
 
 ``include_qdot``
 
@@ -319,7 +325,6 @@ These settings define the combined variables (CVs) for the job. In aimless shoot
 		commit_bwd
 		include_qdot
 		auto_cvs_radius
-		auto_cvs_exclude_water
 	
 	Use of this option is recommended in particular for committor analysis, umbrella sampling, and equilibrium path sampling jobs following an aimless shooting job. In this case, the *as_settings_file* should point to the settings.pkl file from that aimless shooting job. Default = ''
 

@@ -38,6 +38,9 @@ def main(settings):
 
     """
 
+    if settings.auto_cvs_type not in ['pytraj', 'mdtraj']:
+        raise RuntimeError('unsupported auto_cvs_type setting: ' + settings.auto_cvs_type)
+
     # Initialize cvs list to eventually return, plus descriptions to pass to the user
     cvs = []
     descriptions = []
@@ -88,8 +91,12 @@ def main(settings):
 
     # Append code to obtain each bond length as a string to cvs
     for bond in bonds:
-        cvs.append('mdtraj.compute_distances(mtraj, numpy.array([' + str(bond) + ']))[0][0] * 10')
-        descriptions.append('distance between atoms ' + str(bond))
+        if settings.auto_cvs_type == 'mdtraj':
+            cv_str = 'mdtraj.compute_distances(mtraj, numpy.array([' + str(bond) + ']))[0][0] * 10'
+        else:
+            cv_str = 'pytraj.distance(traj, \'@' + ' @'.join([str(int(atom + 1)) for atom in bond]) + '\')[0]'
+        cvs.append(cv_str)
+        descriptions.append('distance between atoms ' + str([str(int(atom + 1)) for atom in bond]))
 
     # Repeat previous process for angles; only difference is added logic to find bonded triplets since there is no
     # equivalent to topology._bonds for angles
@@ -103,8 +110,12 @@ def main(settings):
 
     # Append code to obtain each angle as a string to cvs
     for angle in angles:
-        cvs.append('mdtraj.compute_angles(mtraj, numpy.array([' + str(angle) + ']))[0][0] * 180 / numpy.pi')
-        descriptions.append('angle between atoms ' + str(angle))
+        if settings.auto_cvs_type == 'mdtraj':
+            cv_str = 'mdtraj.compute_angles(mtraj, numpy.array([' + str(angle) + ']))[0][0] * 180 / numpy.pi'
+        else:
+            cv_str = 'pytraj.angle(traj, \'@' + ' @'.join([str(int(atom + 1)) for atom in angle]) + '\')[0]'
+        cvs.append(cv_str)
+        descriptions.append('angle between atoms ' + str([str(int(atom + 1)) for atom in angle]))
 
     # Repeat for dihedrals
     dihedrals = []
@@ -123,9 +134,12 @@ def main(settings):
 
     # Append code to obtain each dihedral as a string to cvs
     for dihedral in dihedrals:
-        cvs.append(
-            'mdtraj.compute_dihedrals(mtraj, numpy.array([' + str(dihedral) + ']))[0][0] * 180 / numpy.pi')
-        descriptions.append('dihedral between atoms ' + str(dihedral))
+        if settings.auto_cvs_type == 'mdtraj':
+            cv_str = 'mdtraj.compute_dihedrals(mtraj, numpy.array([' + str(dihedral) + ']))[0][0] * 180 / numpy.pi'
+        else:
+            cv_str = 'pytraj.dihedral(traj, \'@' + ' @'.join([str(int(atom + 1)) for atom in dihedral]) + '\')[0]'
+        cvs.append(cv_str)
+        descriptions.append('dihedral between atoms ' + str([str(int(atom + 1)) for atom in dihedral]))
 
     # And finally, difference-of-distance terms for atoms that appear in bonds with at least two other atoms in the
     # commitment definitions
@@ -151,14 +165,19 @@ def main(settings):
                                ' without a partner.')
         if len(partners[partners_index]) > 1:   # add difference-of-distance terms for this atom
             for combination in itertools.combinations(partners[partners_index], 2):
-                cvs.append('(mdtraj.compute_distances(mtraj, numpy.array([[' + str(commit_atoms[partners_index]) + ', ' + str(combination[0]) + ']]))[0][0] * 10) - '
-                            + '(mdtraj.compute_distances(mtraj, numpy.array([[' + str(commit_atoms[partners_index]) + ', ' + str(combination[1]) + ']]))[0][0] * 10)')
-                descriptions.append('difference of distances between atoms [' + str(commit_atoms[partners_index]) + ', ' + str(combination[0]) + '] and [' + str(commit_atoms[partners_index]) + ', ' + str(combination[1]) + ']')
+                if settings.auto_cvs_type == 'mdtraj':
+                    cv_str = '(mdtraj.compute_distances(mtraj, numpy.array([[' + str(commit_atoms[partners_index]) + ', ' + str(combination[0]) + ']]))[0][0] * 10) - ' +\
+                             '(mdtraj.compute_distances(mtraj, numpy.array([[' + str(commit_atoms[partners_index]) + ', ' + str(combination[1]) + ']]))[0][0] * 10)'
+                else:
+                    cv_str = 'pytraj.distance(traj, \'@' + str(int(commit_atoms[partners_index] + 1)) + ' @' + str(int(combination[0] + 1)) + '\')[0] - ' + \
+                             'pytraj.distance(traj, \'@' + str(int(commit_atoms[partners_index] + 1)) + ' @' + str(int(combination[1] + 1)) + '\')[0]'
+                cvs.append(cv_str)
+                descriptions.append('difference of distances between atoms [' + str(int(commit_atoms[partners_index] + 1)) + ', ' + str(int(combination[0] + 1)) + '] and [' + str(int(commit_atoms[partners_index] + 1)) + ', ' + str(int(combination[1] + 1)) + ']')
 
     # Now just create the output text document and return
     if not os.path.exists(settings.working_directory):
         os.mkdir(settings.working_directory)
-    open(settings.working_directory + '/cvs.txt', 'w').write('CV name: description of CV (atoms are indexed from 0, unlike in commitment definitions); code to evaluate CV\n')
+    open(settings.working_directory + '/cvs.txt', 'w').write('CV name: description of CV (atoms are indexed from 1); code to evaluate CV\n')
     cv_index = 0    # initialize CV index
     with open(settings.working_directory + '/cvs.txt', 'a') as f:
         for cv in cvs:

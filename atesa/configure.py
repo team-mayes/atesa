@@ -72,6 +72,7 @@ def configure(input_file, user_working_directory=''):
         cvs: typing.List[str] = ['']
         auto_cvs_radius: float = 5
         auto_cvs_exclude_water: bool = False
+        auto_cvs_type: str = 'pytraj'   # pytraj or mdtraj used in auto_cvs
         include_qdot: bool = True
         as_settings_file: str = ''
 

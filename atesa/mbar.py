@@ -158,7 +158,7 @@ def main(**kwargs):
                 alldata[center_index] += list(A_n)
 
             N_k.append(len(A_n))        # number of decorrelated samples in this window
-            K_k.append(kconst)          # constant 20 kcal/mol spring constant
+            K_k.append(kconst)          # constant spring constant
             rc0_k.append(float(pattern.findall(data_files[k])[0]))  # window center from file name
             for n in range(len(A_n)):
                 rc_kn[k,n] = A_n[n]        # list of all decorrelated samples in this window
