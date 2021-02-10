@@ -10,15 +10,15 @@ ATESA should be installed directly on the high-performance computing (HPC) resou
 
 	pip install atesa
 	
-You may need to append the `--user` option depending on how your HPC resource is configured. ATESA requires Python 3, and the above pip command may fail if your active python environment defaults to Python 2.
+You may need to append the ``--user`` option depending on how your HPC resource is configured. ATESA requires Python 3, and the above pip command may fail if your active python environment defaults to Python 2.
 
-Alternatively, you can download or clone ATESA directly from `GitHub <https://github.com/team-mayes/atesa>` and install using the ``setup.py`` script in its root directory directly::
+Alternatively, you can download or clone ATESA directly from `GitHub <https://github.com/team-mayes/atesa>`_ and install using the ``setup.py`` script in its root directory directly::
 
 	python setup.py install --user
 	
 If you're using a custom python environment, remember to activate it before installing!
 
-If you want to perform umbrella sampling simulations with ATESA, you need to make sure that PLUMED is available. Versions of Amber released since 2015 have native PLUMED support, so once it has been installed (see `this link <https://www.plumed.org/doc-v2.5/user-doc/html/_installation.html>` for instructions), all you need to do is set the PLUMED_KERNEL environment variable to the appropriate path for ``libplumedKernel.so``, like so::
+If you want to perform umbrella sampling simulations with ATESA, you need to make sure that PLUMED is available. Versions of Amber released since 2015 have native PLUMED support, so once it has been installed (see `this link <https://www.plumed.org/doc-v2.5/user-doc/html/_installation.html>`_ for instructions), all you need to do is set the PLUMED_KERNEL environment variable to the appropriate path for ``libplumedKernel.so``, like so::
 
 	export PLUMED_KERNEL=/path/to/libplumedKernel.so
 
