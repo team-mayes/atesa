@@ -26,14 +26,14 @@ class Tests(object):
         """Tests mbar.py with basic (default) settings, except quiet = True"""
         for file in glob.glob('../test_data/rcwin_*_us.dat'):
             shutil.copy(file, './')
-        kwargs = {'t': [300], 'k': [50], 'o': ['mbar.out'], 'min_data': [0], 'ignore': [1], 'decorr': False, 'rc_min': [''], 'rc_max': [''], 'quiet': True}
+        kwargs = {'t': [300], 'k': [50], 'o': ['mbar.out'], 'min_data': [0], 'ignore': [1], 'decorr': False, 'rc_min': [''], 'rc_max': [''], 'quiet': True, 'i': ['./']}
         mbar.main(**kwargs)
         assert filecmp.cmp('../test_data/mbar.out', 'mbar.out')
 
     def test_no_data(self):
         """Tests mbar.py with no valid files in the working directory"""
         kwargs = {'t': [300], 'k': [50], 'o': ['mbar.out'], 'min_data': [0], 'ignore': [1], 'decorr': False,
-                  'rc_min': [''], 'rc_max': [''], 'quiet': True}
+                  'rc_min': [''], 'rc_max': [''], 'quiet': True, 'i': ['./']}
         with pytest.raises(RuntimeError):
             mbar.main(**kwargs)
 

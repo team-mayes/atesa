@@ -169,6 +169,8 @@ def get_cvs(filename, settings, reduce=False, frame=0):
         # Returns a reduced value for a CV given an unreduced value and the index within as.out corresponding to that CV
         this_min = rc_minmax[0][local_index]
         this_max = rc_minmax[1][local_index]
+        if this_min == this_max:
+            return unreduced_value      # can't reduce when a CV only has a single value across rc_minmax
         return (float(unreduced_value) - this_min) / (this_max - this_min)
 
     if frame == 'all' and settings.include_qdot:

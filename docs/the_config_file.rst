@@ -505,11 +505,13 @@ Keep in mind that if you perform a large amount of sampling and then discover th
 	
 ``us_restraint`` **‡**
 
-	The weight of the energetic restraint applied in each US window, measured in kcal/(mol-units^2), where "units" is the dimension of the reaction coordinate.  Restraints are applied according to the equation::
+	The weight of the energetic restraint applied in each US window, measured in kcal/(mol-units^2), where "units" is the dimension of the reaction coordinate.  Restraints are applied according to the equation:
 	
-		U = (us_restraint) * (RC - RC_0)^2
+	.. math::
 	
-	where RC_0 is the window center. Too-low values of *us_restraint* sample inefficiently and may leave gaps in the sampling, but too-high values necessitate more windows along the RC. The appropriate values to choose will depend on the underlying free energy profile and the simulation parameters. The default values are a good starting point for most systems (at 300 K -- significantly lower temperatures require weaker restraints and *vice versa*). Default = 50
+		U = (us\_restraint) * (RC - RC_0)^2
+	
+	where :math:`U` is the restraint energy and :math:`RC_0` is the window center. Note that PLUMED calculates the restraint internally with an additional factor of 1/2, so *us_restraint* is doubled when building PLUMED input files to compensate. Too-low values of *us_restraint* sample inefficiently and may leave gaps in the sampling, but too-high values necessitate more windows along the RC and may prevent sampling from the full ensemble of appropriate configurations. The best values to choose will depend on the underlying free energy profile and the simulation parameters. The default values are a good starting point for most systems (at 300 K -- significantly lower temperatures require weaker restraints and *vice versa*). Default = 50
 	
 ``us_degeneracy``
 

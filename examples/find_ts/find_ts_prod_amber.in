@@ -1,0 +1,48 @@
+Example find_ts input file to pull initial structure from one basin to the other
+ &cntrl
+  imin=0,
+  ioutfm=1,						!netCDF output format
+  ntx=1,
+  ntxo=1,
+  nstlim=1000,
+  dt=0.001,
+  ntf=2,
+  ntc=2,						! SHAKE. 1 = no, 2 = hydrogen bonds, 3 = all bonds
+  tempi=300.0,
+  temp0=300.0,
+  ntpr=10,  					! Steps between writes to out
+  ntwx=1,						! Steps between writes to mdcrd. 0 = no mdcrd
+  cut=9999,
+  ntb=0,						! Periodicity. = 2 for ntp > 0
+  ntp=0,
+  ntt=2,						! Temperature control scheme. 2 = Anderson, 3 = Langevin
+  vrand=100,					! Steps between redistribution of velocities according to Boltzmann distribution
+  ig=-1,
+  ifqnt=1,
+  nmropt=1,						! THIS OPTION AND THE DISANG LINE BELOW ARE REQUIRED FOR FIND_TS
+ &end
+ &qmmm
+  qmmask='@1-5,7,8',
+  qmcharge=0,
+  qm_theory='PM3',
+  qmshake=0,
+  qmcut=8.0,
+ &end
+ &wt
+  type="REST",
+  istep1=0,
+  istep2=1000,
+  value1=0,
+  value2=1,
+ &end
+ &wt
+  type="REST",
+  istep1=1001,
+  istep2=2000,
+  value1=1,
+  value2=1,
+ &end
+ &wt
+  type="END",
+ &end
+DISANG=find_ts_restraints.disang

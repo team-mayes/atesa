@@ -13,6 +13,7 @@ import argparse
 import numpy
 import shutil
 import time
+import math
 import pytraj
 import mdtraj
 import warnings
@@ -1725,23 +1726,27 @@ class UmbrellaSampling(JobType):
 
                 while True:     # loop can only end via 'break'
                     try:
-                        # Evaluate the reaction coordinate value for this line
+                        # Split line into cvs
                         this_line = as_full_cvs_line.split()
+
+                        # Evaluate the reaction coordinate value for this line
                         if settings.rc_reduced_cvs:
                             this_line_temp = []
                             for cv_index in range(len(this_line)):
-                                this_line_temp.append(reduce_cv(this_line[cv_index], cv_index, rc_minmax))
-                            this_line = copy.copy(this_line_temp)
-                        rc = utilities.evaluate_rc(settings.rc_definition, this_line)
+                                if 'cv' + str(int(cv_index + 1)) in settings.rc_definition.lower():     # this catches some errant CVs (e.g., CV22 gets 2 and 22) but it's okay
+                                    this_line_temp.append(reduce_cv(this_line[cv_index], cv_index, rc_minmax))
+                                else:
+                                    this_line_temp.append(None)
+                            rc = utilities.evaluate_rc(settings.rc_definition, this_line_temp)
+                        else:
+                            rc = utilities.evaluate_rc(settings.rc_definition, this_line)
                         window_index = closest(window_centers, rc)
 
                         # Add to min and max as appropriate
                         for cv_index in range(len(this_line)):
-                            if min_max[window_index][cv_index][0] is None or float(
-                                    min_max[window_index][cv_index][0]) > float(this_line[cv_index]):
+                            if (min_max[window_index][cv_index][0] is None or float(min_max[window_index][cv_index][0]) > float(this_line[cv_index])) and not math.isnan(float(this_line[cv_index])):
                                 min_max[window_index][cv_index][0] = this_line[cv_index]  # set new min
-                            if min_max[window_index][cv_index][1] is None or float(
-                                    min_max[window_index][cv_index][1]) < float(this_line[cv_index]):
+                            if (min_max[window_index][cv_index][1] is None or float(min_max[window_index][cv_index][1]) < float(this_line[cv_index])) and not math.isnan(float(this_line[cv_index])):
                                 min_max[window_index][cv_index][1] = this_line[cv_index]  # set new max
 
                         as_full_cvs_line = next(as_full_cvs)    # get next line for next iteration

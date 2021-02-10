@@ -270,6 +270,7 @@ def main(**kwargs):
     quiet = kwargs['quiet']
     two_line_threshold = kwargs['two_line_threshold'][0]
     skip = kwargs['s']    # this one also a list
+    hist_bins = kwargs['hist_bins'][0]
 
     if not fixed == [None] and running == 0 and not two_line_test and len(fixed) > dims:
         raise RuntimeError('value of k must be less than or equal to number of fixed (-f) dimensions.')
@@ -507,7 +508,7 @@ def main(**kwargs):
         B_results = []
         for obs in current_best[3]:  # iterate over B observations
             B_results.append(eval_rc(current_best[0].x, obs))
-        hist_result = numpy.histogram(A_results + B_results, 10)  # this step just to bin, not the final histogram
+        hist_result = numpy.histogram(A_results + B_results, hist_bins)  # this step just to bin, not the final histogram
         rc_values = []      # initialize results list
         probs = []          # initialize results list
         for bin_index in range(len(hist_result[0])):
@@ -524,9 +525,10 @@ def main(**kwargs):
             else:
                 raise RuntimeError('attempted to build sigmoid plot, but one or more histogram bins is empty. This '
                                    'may indicate insufficient data in the input file. All other results from this call '
-                                   'to lmax.py have been written, but proceed with caution. This error can also occur '
-                                   'when one or more of the CVs making up the final RC takes on discrete values instead'
-                                   ' of continuous ones.')
+                                   'to lmax.py have been written, but proceed with caution, and consider trying again '
+                                   'with a smaller value given for --hist_bins (the default is 10). This error can also'
+                                   ' occur when one or more of the CVs making up the final RC takes on discrete values '
+                                   'instead of continuous ones.')
             rc_values.append(numpy.mean([hist_result[1][bin_index + 1], hist_result[1][bin_index]]))
             probs.append(count_ratio)
 
@@ -584,6 +586,11 @@ if __name__ == "__main__":
     parser.add_argument('--two_line_threshold', metavar='two_line_threshold', type=float, nargs=1, default=[0.5],
                         help='If this option is given alongside two_line_test, sets the maximum ratio of slopes in the'
                              'two-line test. See the documentation for two_line_test for details. Default=0.5')
+    parser.add_argument('--hist_bins', metavar='hist_bins', type=int, nargs=1, default=[10],
+                        help='If this option is given alongside plots, sets the number of reaction coordinate bins for'
+                             'the sigmoid committor histogram. Production of the histogram will fail if any of the '
+                             'bins have zero samples in them, which is more likely for larger values of hist_bins. '
+                             'Default = 10')
 
     arguments = vars(parser.parse_args())  # Retrieves arguments as a dictionary object
 

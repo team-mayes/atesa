@@ -1,0 +1,157 @@
+CV name: description of CV (atoms are indexed from 0, unlike in commitment definitions); code to evaluate CV
+CV1: distance between atoms [0, 1]; mdtraj.compute_distances(mtraj, numpy.array([[0, 1]]))[0][0] * 10
+CV2: distance between atoms [1, 2]; mdtraj.compute_distances(mtraj, numpy.array([[1, 2]]))[0][0] * 10
+CV3: distance between atoms [1, 3]; mdtraj.compute_distances(mtraj, numpy.array([[1, 3]]))[0][0] * 10
+CV4: distance between atoms [2, 4]; mdtraj.compute_distances(mtraj, numpy.array([[2, 4]]))[0][0] * 10
+CV5: distance between atoms [4, 6]; mdtraj.compute_distances(mtraj, numpy.array([[4, 6]]))[0][0] * 10
+CV6: distance between atoms [4, 7]; mdtraj.compute_distances(mtraj, numpy.array([[4, 7]]))[0][0] * 10
+CV7: distance between atoms [4, 5]; mdtraj.compute_distances(mtraj, numpy.array([[4, 5]]))[0][0] * 10
+CV8: distance between atoms [8, 5]; mdtraj.compute_distances(mtraj, numpy.array([[8, 5]]))[0][0] * 10
+CV9: distance between atoms [9, 5]; mdtraj.compute_distances(mtraj, numpy.array([[9, 5]]))[0][0] * 10
+CV10: distance between atoms [10, 5]; mdtraj.compute_distances(mtraj, numpy.array([[10, 5]]))[0][0] * 10
+CV11: distance between atoms [0, 2]; mdtraj.compute_distances(mtraj, numpy.array([[0, 2]]))[0][0] * 10
+CV12: distance between atoms [0, 4]; mdtraj.compute_distances(mtraj, numpy.array([[0, 4]]))[0][0] * 10
+CV13: distance between atoms [1, 4]; mdtraj.compute_distances(mtraj, numpy.array([[1, 4]]))[0][0] * 10
+CV14: angle between atoms [0, 2, 1]; mdtraj.compute_angles(mtraj, numpy.array([[0, 2, 1]]))[0][0] * 180 / numpy.pi
+CV15: angle between atoms [0, 4, 1]; mdtraj.compute_angles(mtraj, numpy.array([[0, 4, 1]]))[0][0] * 180 / numpy.pi
+CV16: angle between atoms [0, 1, 2]; mdtraj.compute_angles(mtraj, numpy.array([[0, 1, 2]]))[0][0] * 180 / numpy.pi
+CV17: angle between atoms [0, 4, 2]; mdtraj.compute_angles(mtraj, numpy.array([[0, 4, 2]]))[0][0] * 180 / numpy.pi
+CV18: angle between atoms [0, 1, 3]; mdtraj.compute_angles(mtraj, numpy.array([[0, 1, 3]]))[0][0] * 180 / numpy.pi
+CV19: angle between atoms [0, 1, 4]; mdtraj.compute_angles(mtraj, numpy.array([[0, 1, 4]]))[0][0] * 180 / numpy.pi
+CV20: angle between atoms [0, 2, 4]; mdtraj.compute_angles(mtraj, numpy.array([[0, 2, 4]]))[0][0] * 180 / numpy.pi
+CV21: angle between atoms [0, 4, 5]; mdtraj.compute_angles(mtraj, numpy.array([[0, 4, 5]]))[0][0] * 180 / numpy.pi
+CV22: angle between atoms [0, 4, 6]; mdtraj.compute_angles(mtraj, numpy.array([[0, 4, 6]]))[0][0] * 180 / numpy.pi
+CV23: angle between atoms [0, 4, 7]; mdtraj.compute_angles(mtraj, numpy.array([[0, 4, 7]]))[0][0] * 180 / numpy.pi
+CV24: angle between atoms [1, 0, 2]; mdtraj.compute_angles(mtraj, numpy.array([[1, 0, 2]]))[0][0] * 180 / numpy.pi
+CV25: angle between atoms [1, 4, 2]; mdtraj.compute_angles(mtraj, numpy.array([[1, 4, 2]]))[0][0] * 180 / numpy.pi
+CV26: angle between atoms [1, 0, 4]; mdtraj.compute_angles(mtraj, numpy.array([[1, 0, 4]]))[0][0] * 180 / numpy.pi
+CV27: angle between atoms [1, 2, 4]; mdtraj.compute_angles(mtraj, numpy.array([[1, 2, 4]]))[0][0] * 180 / numpy.pi
+CV28: angle between atoms [1, 4, 5]; mdtraj.compute_angles(mtraj, numpy.array([[1, 4, 5]]))[0][0] * 180 / numpy.pi
+CV29: angle between atoms [1, 4, 6]; mdtraj.compute_angles(mtraj, numpy.array([[1, 4, 6]]))[0][0] * 180 / numpy.pi
+CV30: angle between atoms [1, 4, 7]; mdtraj.compute_angles(mtraj, numpy.array([[1, 4, 7]]))[0][0] * 180 / numpy.pi
+CV31: angle between atoms [2, 1, 3]; mdtraj.compute_angles(mtraj, numpy.array([[2, 1, 3]]))[0][0] * 180 / numpy.pi
+CV32: angle between atoms [2, 0, 4]; mdtraj.compute_angles(mtraj, numpy.array([[2, 0, 4]]))[0][0] * 180 / numpy.pi
+CV33: angle between atoms [2, 1, 4]; mdtraj.compute_angles(mtraj, numpy.array([[2, 1, 4]]))[0][0] * 180 / numpy.pi
+CV34: angle between atoms [2, 4, 5]; mdtraj.compute_angles(mtraj, numpy.array([[2, 4, 5]]))[0][0] * 180 / numpy.pi
+CV35: angle between atoms [2, 4, 6]; mdtraj.compute_angles(mtraj, numpy.array([[2, 4, 6]]))[0][0] * 180 / numpy.pi
+CV36: angle between atoms [2, 4, 7]; mdtraj.compute_angles(mtraj, numpy.array([[2, 4, 7]]))[0][0] * 180 / numpy.pi
+CV37: angle between atoms [3, 1, 4]; mdtraj.compute_angles(mtraj, numpy.array([[3, 1, 4]]))[0][0] * 180 / numpy.pi
+CV38: angle between atoms [4, 5, 8]; mdtraj.compute_angles(mtraj, numpy.array([[4, 5, 8]]))[0][0] * 180 / numpy.pi
+CV39: angle between atoms [4, 5, 9]; mdtraj.compute_angles(mtraj, numpy.array([[4, 5, 9]]))[0][0] * 180 / numpy.pi
+CV40: angle between atoms [4, 5, 10]; mdtraj.compute_angles(mtraj, numpy.array([[4, 5, 10]]))[0][0] * 180 / numpy.pi
+CV41: angle between atoms [5, 4, 6]; mdtraj.compute_angles(mtraj, numpy.array([[5, 4, 6]]))[0][0] * 180 / numpy.pi
+CV42: angle between atoms [5, 4, 7]; mdtraj.compute_angles(mtraj, numpy.array([[5, 4, 7]]))[0][0] * 180 / numpy.pi
+CV43: angle between atoms [6, 4, 7]; mdtraj.compute_angles(mtraj, numpy.array([[6, 4, 7]]))[0][0] * 180 / numpy.pi
+CV44: angle between atoms [8, 5, 9]; mdtraj.compute_angles(mtraj, numpy.array([[8, 5, 9]]))[0][0] * 180 / numpy.pi
+CV45: angle between atoms [8, 5, 10]; mdtraj.compute_angles(mtraj, numpy.array([[8, 5, 10]]))[0][0] * 180 / numpy.pi
+CV46: angle between atoms [9, 5, 10]; mdtraj.compute_angles(mtraj, numpy.array([[9, 5, 10]]))[0][0] * 180 / numpy.pi
+CV47: dihedral between atoms [0, 2, 1, 3]; mdtraj.compute_dihedrals(mtraj, numpy.array([[0, 2, 1, 3]]))[0][0] * 180 / numpy.pi
+CV48: dihedral between atoms [4, 0, 2, 1]; mdtraj.compute_dihedrals(mtraj, numpy.array([[4, 0, 2, 1]]))[0][0] * 180 / numpy.pi
+CV49: dihedral between atoms [0, 2, 1, 4]; mdtraj.compute_dihedrals(mtraj, numpy.array([[0, 2, 1, 4]]))[0][0] * 180 / numpy.pi
+CV50: dihedral between atoms [0, 4, 1, 2]; mdtraj.compute_dihedrals(mtraj, numpy.array([[0, 4, 1, 2]]))[0][0] * 180 / numpy.pi
+CV51: dihedral between atoms [0, 4, 1, 3]; mdtraj.compute_dihedrals(mtraj, numpy.array([[0, 4, 1, 3]]))[0][0] * 180 / numpy.pi
+CV52: dihedral between atoms [2, 0, 4, 1]; mdtraj.compute_dihedrals(mtraj, numpy.array([[2, 0, 4, 1]]))[0][0] * 180 / numpy.pi
+CV53: dihedral between atoms [0, 1, 2, 4]; mdtraj.compute_dihedrals(mtraj, numpy.array([[0, 1, 2, 4]]))[0][0] * 180 / numpy.pi
+CV54: dihedral between atoms [4, 0, 1, 2]; mdtraj.compute_dihedrals(mtraj, numpy.array([[4, 0, 1, 2]]))[0][0] * 180 / numpy.pi
+CV55: dihedral between atoms [1, 0, 4, 2]; mdtraj.compute_dihedrals(mtraj, numpy.array([[1, 0, 4, 2]]))[0][0] * 180 / numpy.pi
+CV56: dihedral between atoms [0, 4, 2, 1]; mdtraj.compute_dihedrals(mtraj, numpy.array([[0, 4, 2, 1]]))[0][0] * 180 / numpy.pi
+CV57: dihedral between atoms [2, 0, 1, 3]; mdtraj.compute_dihedrals(mtraj, numpy.array([[2, 0, 1, 3]]))[0][0] * 180 / numpy.pi
+CV58: dihedral between atoms [4, 0, 1, 3]; mdtraj.compute_dihedrals(mtraj, numpy.array([[4, 0, 1, 3]]))[0][0] * 180 / numpy.pi
+CV59: dihedral between atoms [0, 1, 4, 2]; mdtraj.compute_dihedrals(mtraj, numpy.array([[0, 1, 4, 2]]))[0][0] * 180 / numpy.pi
+CV60: dihedral between atoms [0, 1, 4, 6]; mdtraj.compute_dihedrals(mtraj, numpy.array([[0, 1, 4, 6]]))[0][0] * 180 / numpy.pi
+CV61: dihedral between atoms [0, 1, 4, 7]; mdtraj.compute_dihedrals(mtraj, numpy.array([[0, 1, 4, 7]]))[0][0] * 180 / numpy.pi
+CV62: dihedral between atoms [0, 1, 4, 5]; mdtraj.compute_dihedrals(mtraj, numpy.array([[0, 1, 4, 5]]))[0][0] * 180 / numpy.pi
+CV63: dihedral between atoms [2, 0, 1, 4]; mdtraj.compute_dihedrals(mtraj, numpy.array([[2, 0, 1, 4]]))[0][0] * 180 / numpy.pi
+CV64: dihedral between atoms [1, 0, 2, 4]; mdtraj.compute_dihedrals(mtraj, numpy.array([[1, 0, 2, 4]]))[0][0] * 180 / numpy.pi
+CV65: dihedral between atoms [0, 2, 4, 6]; mdtraj.compute_dihedrals(mtraj, numpy.array([[0, 2, 4, 6]]))[0][0] * 180 / numpy.pi
+CV66: dihedral between atoms [0, 2, 4, 7]; mdtraj.compute_dihedrals(mtraj, numpy.array([[0, 2, 4, 7]]))[0][0] * 180 / numpy.pi
+CV67: dihedral between atoms [0, 2, 4, 5]; mdtraj.compute_dihedrals(mtraj, numpy.array([[0, 2, 4, 5]]))[0][0] * 180 / numpy.pi
+CV68: dihedral between atoms [0, 2, 4, 1]; mdtraj.compute_dihedrals(mtraj, numpy.array([[0, 2, 4, 1]]))[0][0] * 180 / numpy.pi
+CV69: dihedral between atoms [1, 0, 4, 5]; mdtraj.compute_dihedrals(mtraj, numpy.array([[1, 0, 4, 5]]))[0][0] * 180 / numpy.pi
+CV70: dihedral between atoms [0, 4, 5, 8]; mdtraj.compute_dihedrals(mtraj, numpy.array([[0, 4, 5, 8]]))[0][0] * 180 / numpy.pi
+CV71: dihedral between atoms [0, 4, 5, 9]; mdtraj.compute_dihedrals(mtraj, numpy.array([[0, 4, 5, 9]]))[0][0] * 180 / numpy.pi
+CV72: dihedral between atoms [0, 4, 5, 10]; mdtraj.compute_dihedrals(mtraj, numpy.array([[0, 4, 5, 10]]))[0][0] * 180 / numpy.pi
+CV73: dihedral between atoms [2, 0, 4, 5]; mdtraj.compute_dihedrals(mtraj, numpy.array([[2, 0, 4, 5]]))[0][0] * 180 / numpy.pi
+CV74: dihedral between atoms [1, 0, 4, 6]; mdtraj.compute_dihedrals(mtraj, numpy.array([[1, 0, 4, 6]]))[0][0] * 180 / numpy.pi
+CV75: dihedral between atoms [2, 0, 4, 6]; mdtraj.compute_dihedrals(mtraj, numpy.array([[2, 0, 4, 6]]))[0][0] * 180 / numpy.pi
+CV76: dihedral between atoms [1, 0, 4, 7]; mdtraj.compute_dihedrals(mtraj, numpy.array([[1, 0, 4, 7]]))[0][0] * 180 / numpy.pi
+CV77: dihedral between atoms [2, 0, 4, 7]; mdtraj.compute_dihedrals(mtraj, numpy.array([[2, 0, 4, 7]]))[0][0] * 180 / numpy.pi
+CV78: dihedral between atoms [3, 1, 0, 2]; mdtraj.compute_dihedrals(mtraj, numpy.array([[3, 1, 0, 2]]))[0][0] * 180 / numpy.pi
+CV79: dihedral between atoms [1, 0, 2, 4]; mdtraj.compute_dihedrals(mtraj, numpy.array([[1, 0, 2, 4]]))[0][0] * 180 / numpy.pi
+CV80: dihedral between atoms [4, 1, 0, 2]; mdtraj.compute_dihedrals(mtraj, numpy.array([[4, 1, 0, 2]]))[0][0] * 180 / numpy.pi
+CV81: dihedral between atoms [0, 1, 4, 2]; mdtraj.compute_dihedrals(mtraj, numpy.array([[0, 1, 4, 2]]))[0][0] * 180 / numpy.pi
+CV82: dihedral between atoms [3, 1, 4, 2]; mdtraj.compute_dihedrals(mtraj, numpy.array([[3, 1, 4, 2]]))[0][0] * 180 / numpy.pi
+CV83: dihedral between atoms [1, 4, 2, 0]; mdtraj.compute_dihedrals(mtraj, numpy.array([[1, 4, 2, 0]]))[0][0] * 180 / numpy.pi
+CV84: dihedral between atoms [2, 1, 0, 4]; mdtraj.compute_dihedrals(mtraj, numpy.array([[2, 1, 0, 4]]))[0][0] * 180 / numpy.pi
+CV85: dihedral between atoms [3, 1, 0, 4]; mdtraj.compute_dihedrals(mtraj, numpy.array([[3, 1, 0, 4]]))[0][0] * 180 / numpy.pi
+CV86: dihedral between atoms [1, 0, 4, 2]; mdtraj.compute_dihedrals(mtraj, numpy.array([[1, 0, 4, 2]]))[0][0] * 180 / numpy.pi
+CV87: dihedral between atoms [1, 0, 4, 6]; mdtraj.compute_dihedrals(mtraj, numpy.array([[1, 0, 4, 6]]))[0][0] * 180 / numpy.pi
+CV88: dihedral between atoms [1, 0, 4, 7]; mdtraj.compute_dihedrals(mtraj, numpy.array([[1, 0, 4, 7]]))[0][0] * 180 / numpy.pi
+CV89: dihedral between atoms [1, 0, 4, 5]; mdtraj.compute_dihedrals(mtraj, numpy.array([[1, 0, 4, 5]]))[0][0] * 180 / numpy.pi
+CV90: dihedral between atoms [0, 1, 2, 4]; mdtraj.compute_dihedrals(mtraj, numpy.array([[0, 1, 2, 4]]))[0][0] * 180 / numpy.pi
+CV91: dihedral between atoms [3, 1, 2, 4]; mdtraj.compute_dihedrals(mtraj, numpy.array([[3, 1, 2, 4]]))[0][0] * 180 / numpy.pi
+CV92: dihedral between atoms [1, 2, 4, 6]; mdtraj.compute_dihedrals(mtraj, numpy.array([[1, 2, 4, 6]]))[0][0] * 180 / numpy.pi
+CV93: dihedral between atoms [1, 2, 4, 7]; mdtraj.compute_dihedrals(mtraj, numpy.array([[1, 2, 4, 7]]))[0][0] * 180 / numpy.pi
+CV94: dihedral between atoms [1, 2, 4, 5]; mdtraj.compute_dihedrals(mtraj, numpy.array([[1, 2, 4, 5]]))[0][0] * 180 / numpy.pi
+CV95: dihedral between atoms [1, 2, 4, 0]; mdtraj.compute_dihedrals(mtraj, numpy.array([[1, 2, 4, 0]]))[0][0] * 180 / numpy.pi
+CV96: dihedral between atoms [0, 1, 4, 5]; mdtraj.compute_dihedrals(mtraj, numpy.array([[0, 1, 4, 5]]))[0][0] * 180 / numpy.pi
+CV97: dihedral between atoms [2, 1, 4, 5]; mdtraj.compute_dihedrals(mtraj, numpy.array([[2, 1, 4, 5]]))[0][0] * 180 / numpy.pi
+CV98: dihedral between atoms [3, 1, 4, 5]; mdtraj.compute_dihedrals(mtraj, numpy.array([[3, 1, 4, 5]]))[0][0] * 180 / numpy.pi
+CV99: dihedral between atoms [1, 4, 5, 8]; mdtraj.compute_dihedrals(mtraj, numpy.array([[1, 4, 5, 8]]))[0][0] * 180 / numpy.pi
+CV100: dihedral between atoms [1, 4, 5, 9]; mdtraj.compute_dihedrals(mtraj, numpy.array([[1, 4, 5, 9]]))[0][0] * 180 / numpy.pi
+CV101: dihedral between atoms [1, 4, 5, 10]; mdtraj.compute_dihedrals(mtraj, numpy.array([[1, 4, 5, 10]]))[0][0] * 180 / numpy.pi
+CV102: dihedral between atoms [0, 1, 4, 6]; mdtraj.compute_dihedrals(mtraj, numpy.array([[0, 1, 4, 6]]))[0][0] * 180 / numpy.pi
+CV103: dihedral between atoms [2, 1, 4, 6]; mdtraj.compute_dihedrals(mtraj, numpy.array([[2, 1, 4, 6]]))[0][0] * 180 / numpy.pi
+CV104: dihedral between atoms [3, 1, 4, 6]; mdtraj.compute_dihedrals(mtraj, numpy.array([[3, 1, 4, 6]]))[0][0] * 180 / numpy.pi
+CV105: dihedral between atoms [0, 1, 4, 7]; mdtraj.compute_dihedrals(mtraj, numpy.array([[0, 1, 4, 7]]))[0][0] * 180 / numpy.pi
+CV106: dihedral between atoms [2, 1, 4, 7]; mdtraj.compute_dihedrals(mtraj, numpy.array([[2, 1, 4, 7]]))[0][0] * 180 / numpy.pi
+CV107: dihedral between atoms [3, 1, 4, 7]; mdtraj.compute_dihedrals(mtraj, numpy.array([[3, 1, 4, 7]]))[0][0] * 180 / numpy.pi
+CV108: dihedral between atoms [4, 2, 1, 3]; mdtraj.compute_dihedrals(mtraj, numpy.array([[4, 2, 1, 3]]))[0][0] * 180 / numpy.pi
+CV109: dihedral between atoms [0, 2, 1, 3]; mdtraj.compute_dihedrals(mtraj, numpy.array([[0, 2, 1, 3]]))[0][0] * 180 / numpy.pi
+CV110: dihedral between atoms [1, 2, 0, 4]; mdtraj.compute_dihedrals(mtraj, numpy.array([[1, 2, 0, 4]]))[0][0] * 180 / numpy.pi
+CV111: dihedral between atoms [2, 0, 4, 6]; mdtraj.compute_dihedrals(mtraj, numpy.array([[2, 0, 4, 6]]))[0][0] * 180 / numpy.pi
+CV112: dihedral between atoms [2, 0, 4, 7]; mdtraj.compute_dihedrals(mtraj, numpy.array([[2, 0, 4, 7]]))[0][0] * 180 / numpy.pi
+CV113: dihedral between atoms [2, 0, 4, 5]; mdtraj.compute_dihedrals(mtraj, numpy.array([[2, 0, 4, 5]]))[0][0] * 180 / numpy.pi
+CV114: dihedral between atoms [2, 0, 4, 1]; mdtraj.compute_dihedrals(mtraj, numpy.array([[2, 0, 4, 1]]))[0][0] * 180 / numpy.pi
+CV115: dihedral between atoms [2, 1, 4, 6]; mdtraj.compute_dihedrals(mtraj, numpy.array([[2, 1, 4, 6]]))[0][0] * 180 / numpy.pi
+CV116: dihedral between atoms [2, 1, 4, 7]; mdtraj.compute_dihedrals(mtraj, numpy.array([[2, 1, 4, 7]]))[0][0] * 180 / numpy.pi
+CV117: dihedral between atoms [2, 1, 4, 5]; mdtraj.compute_dihedrals(mtraj, numpy.array([[2, 1, 4, 5]]))[0][0] * 180 / numpy.pi
+CV118: dihedral between atoms [0, 2, 1, 4]; mdtraj.compute_dihedrals(mtraj, numpy.array([[0, 2, 1, 4]]))[0][0] * 180 / numpy.pi
+CV119: dihedral between atoms [2, 1, 4, 0]; mdtraj.compute_dihedrals(mtraj, numpy.array([[2, 1, 4, 0]]))[0][0] * 180 / numpy.pi
+CV120: dihedral between atoms [1, 2, 4, 5]; mdtraj.compute_dihedrals(mtraj, numpy.array([[1, 2, 4, 5]]))[0][0] * 180 / numpy.pi
+CV121: dihedral between atoms [2, 4, 5, 8]; mdtraj.compute_dihedrals(mtraj, numpy.array([[2, 4, 5, 8]]))[0][0] * 180 / numpy.pi
+CV122: dihedral between atoms [2, 4, 5, 9]; mdtraj.compute_dihedrals(mtraj, numpy.array([[2, 4, 5, 9]]))[0][0] * 180 / numpy.pi
+CV123: dihedral between atoms [2, 4, 5, 10]; mdtraj.compute_dihedrals(mtraj, numpy.array([[2, 4, 5, 10]]))[0][0] * 180 / numpy.pi
+CV124: dihedral between atoms [0, 2, 4, 5]; mdtraj.compute_dihedrals(mtraj, numpy.array([[0, 2, 4, 5]]))[0][0] * 180 / numpy.pi
+CV125: dihedral between atoms [1, 2, 4, 6]; mdtraj.compute_dihedrals(mtraj, numpy.array([[1, 2, 4, 6]]))[0][0] * 180 / numpy.pi
+CV126: dihedral between atoms [0, 2, 4, 6]; mdtraj.compute_dihedrals(mtraj, numpy.array([[0, 2, 4, 6]]))[0][0] * 180 / numpy.pi
+CV127: dihedral between atoms [1, 2, 4, 7]; mdtraj.compute_dihedrals(mtraj, numpy.array([[1, 2, 4, 7]]))[0][0] * 180 / numpy.pi
+CV128: dihedral between atoms [0, 2, 4, 7]; mdtraj.compute_dihedrals(mtraj, numpy.array([[0, 2, 4, 7]]))[0][0] * 180 / numpy.pi
+CV129: dihedral between atoms [3, 1, 4, 2]; mdtraj.compute_dihedrals(mtraj, numpy.array([[3, 1, 4, 2]]))[0][0] * 180 / numpy.pi
+CV130: dihedral between atoms [3, 1, 4, 6]; mdtraj.compute_dihedrals(mtraj, numpy.array([[3, 1, 4, 6]]))[0][0] * 180 / numpy.pi
+CV131: dihedral between atoms [3, 1, 4, 7]; mdtraj.compute_dihedrals(mtraj, numpy.array([[3, 1, 4, 7]]))[0][0] * 180 / numpy.pi
+CV132: dihedral between atoms [3, 1, 4, 5]; mdtraj.compute_dihedrals(mtraj, numpy.array([[3, 1, 4, 5]]))[0][0] * 180 / numpy.pi
+CV133: dihedral between atoms [3, 1, 4, 0]; mdtraj.compute_dihedrals(mtraj, numpy.array([[3, 1, 4, 0]]))[0][0] * 180 / numpy.pi
+CV134: dihedral between atoms [2, 4, 5, 8]; mdtraj.compute_dihedrals(mtraj, numpy.array([[2, 4, 5, 8]]))[0][0] * 180 / numpy.pi
+CV135: dihedral between atoms [6, 4, 5, 8]; mdtraj.compute_dihedrals(mtraj, numpy.array([[6, 4, 5, 8]]))[0][0] * 180 / numpy.pi
+CV136: dihedral between atoms [7, 4, 5, 8]; mdtraj.compute_dihedrals(mtraj, numpy.array([[7, 4, 5, 8]]))[0][0] * 180 / numpy.pi
+CV137: dihedral between atoms [0, 4, 5, 8]; mdtraj.compute_dihedrals(mtraj, numpy.array([[0, 4, 5, 8]]))[0][0] * 180 / numpy.pi
+CV138: dihedral between atoms [1, 4, 5, 8]; mdtraj.compute_dihedrals(mtraj, numpy.array([[1, 4, 5, 8]]))[0][0] * 180 / numpy.pi
+CV139: dihedral between atoms [2, 4, 5, 9]; mdtraj.compute_dihedrals(mtraj, numpy.array([[2, 4, 5, 9]]))[0][0] * 180 / numpy.pi
+CV140: dihedral between atoms [6, 4, 5, 9]; mdtraj.compute_dihedrals(mtraj, numpy.array([[6, 4, 5, 9]]))[0][0] * 180 / numpy.pi
+CV141: dihedral between atoms [7, 4, 5, 9]; mdtraj.compute_dihedrals(mtraj, numpy.array([[7, 4, 5, 9]]))[0][0] * 180 / numpy.pi
+CV142: dihedral between atoms [0, 4, 5, 9]; mdtraj.compute_dihedrals(mtraj, numpy.array([[0, 4, 5, 9]]))[0][0] * 180 / numpy.pi
+CV143: dihedral between atoms [1, 4, 5, 9]; mdtraj.compute_dihedrals(mtraj, numpy.array([[1, 4, 5, 9]]))[0][0] * 180 / numpy.pi
+CV144: dihedral between atoms [2, 4, 5, 10]; mdtraj.compute_dihedrals(mtraj, numpy.array([[2, 4, 5, 10]]))[0][0] * 180 / numpy.pi
+CV145: dihedral between atoms [6, 4, 5, 10]; mdtraj.compute_dihedrals(mtraj, numpy.array([[6, 4, 5, 10]]))[0][0] * 180 / numpy.pi
+CV146: dihedral between atoms [7, 4, 5, 10]; mdtraj.compute_dihedrals(mtraj, numpy.array([[7, 4, 5, 10]]))[0][0] * 180 / numpy.pi
+CV147: dihedral between atoms [0, 4, 5, 10]; mdtraj.compute_dihedrals(mtraj, numpy.array([[0, 4, 5, 10]]))[0][0] * 180 / numpy.pi
+CV148: dihedral between atoms [1, 4, 5, 10]; mdtraj.compute_dihedrals(mtraj, numpy.array([[1, 4, 5, 10]]))[0][0] * 180 / numpy.pi
+CV149: dihedral between atoms [8, 5, 4, 6]; mdtraj.compute_dihedrals(mtraj, numpy.array([[8, 5, 4, 6]]))[0][0] * 180 / numpy.pi
+CV150: dihedral between atoms [9, 5, 4, 6]; mdtraj.compute_dihedrals(mtraj, numpy.array([[9, 5, 4, 6]]))[0][0] * 180 / numpy.pi
+CV151: dihedral between atoms [10, 5, 4, 6]; mdtraj.compute_dihedrals(mtraj, numpy.array([[10, 5, 4, 6]]))[0][0] * 180 / numpy.pi
+CV152: dihedral between atoms [8, 5, 4, 7]; mdtraj.compute_dihedrals(mtraj, numpy.array([[8, 5, 4, 7]]))[0][0] * 180 / numpy.pi
+CV153: dihedral between atoms [9, 5, 4, 7]; mdtraj.compute_dihedrals(mtraj, numpy.array([[9, 5, 4, 7]]))[0][0] * 180 / numpy.pi
+CV154: dihedral between atoms [10, 5, 4, 7]; mdtraj.compute_dihedrals(mtraj, numpy.array([[10, 5, 4, 7]]))[0][0] * 180 / numpy.pi
+CV155: difference of distances between atoms [0, 4] and [0, 1]; (mdtraj.compute_distances(mtraj, numpy.array([[0, 4]]))[0][0] * 10) - (mdtraj.compute_distances(mtraj, numpy.array([[0, 1]]))[0][0] * 10)
+CV156: difference of distances between atoms [4, 2] and [4, 0]; (mdtraj.compute_distances(mtraj, numpy.array([[4, 2]]))[0][0] * 10) - (mdtraj.compute_distances(mtraj, numpy.array([[4, 0]]))[0][0] * 10)

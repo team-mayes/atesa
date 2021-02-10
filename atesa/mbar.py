@@ -72,8 +72,13 @@ def main(**kwargs):
 
     """
 
+    # Format input directory string to ensure it has a trailing '/'
+    input_path = kwargs['i'][0]
+    if not input_path[-1] == '/':
+        input_path += '/'
+
     # Compile and sort data files
-    data_files = [name for name in glob.glob('rcwin_*_us.dat') if (len(open(name, 'r').readlines()) - 1) > kwargs['min_data'][0]]
+    data_files = [name.replace(input_path, '') for name in glob.glob(input_path + 'rcwin_*_us.dat') if (len(open(name, 'r').readlines()) - 1) > kwargs['min_data'][0]]
     pattern = re.compile('[-0-9.]+')
     data_files = sorted(data_files, key=lambda x: float(pattern.findall(x)[0]))
 
@@ -98,7 +103,7 @@ def main(**kwargs):
 
     # Refresh data files to reflect new min and max, if necessary
     if not rc_max == float(pattern.findall(data_files[-1])[0]) or not rc_min == float(pattern.findall(data_files[0])[0]):
-        data_files = [name for name in glob.glob('rcwin_*_us.dat') if rc_min <= float(pattern.findall(name)[0]) <= rc_max]
+        data_files = [name.replace(input_path, '') for name in glob.glob(input_path + 'rcwin_*_us.dat') if rc_min <= float(pattern.findall(name)[0]) <= rc_max]
         data_files = sorted(data_files, key=lambda x: float(pattern.findall(x)[0]))
 
     # Combine data from identical states into temp files, implementing decorr and ignore in the process
@@ -269,14 +274,14 @@ def main(**kwargs):
     df_i /= beta
 
     if not kwargs['quiet']:
-        print('Final results. This analysis was based on the pyMBAR package. If you publish work based on this output,'
-              'please cite:\n')
+        print('\nFinal results. This analysis was based on the pyMBAR package. If you publish work based on this '
+              'output, in addition to ATESA please cite:\n')
         print('Shirts MR and Chodera JD. Statistically optimal analysis of samples from multiple equilibrium states. J.'
               ' Chem. Phys. 129:124105 (2008). DOI: 10.1063/1.2978177\n')
         if kwargs['decorr']:
-            print('\nSince this run also included the "decorr" option, you also need to cite:\n')
+            print('Since this run also included the "decorr" option, you also need to cite:\n')
             print('Chodera JD. A simple method for automated equilibration detection in molecular simulations. J. Chem.'
-                  ' Theor. Comput. 12:1799, 2016. DOI: 10.1021/acs.jctc.5b00784\n')
+                  ' Theor. Comput. 12:1799, 2016. DOI: 10.1021/acs.jctc.5b00784')
         print("\nPMF (kcal/mol)")
         print("%8s %8s %8s" % ('bin', 'f', 'df'))
         for i in range(nbins):
@@ -291,14 +296,14 @@ def main(**kwargs):
         plt.xlabel('Reaction Coordinate', weight='bold')
         plt.show()
     with open(kwargs['o'][0], 'a') as f:
-        f.write('Final results. This analysis was based on the pyMBAR package. If you publish work based on this '
-                'output, please cite:\n')
+        f.write('\nFinal results. This analysis was based on the pyMBAR package. If you publish work based on this '
+                'output, in addition to ATESA please cite:\n')
         f.write('Shirts MR and Chodera JD. Statistically optimal analysis of samples from multiple equilibrium states.'
                 ' J. Chem. Phys. 129:124105 (2008). DOI: 10.1063/1.2978177\n')
         if kwargs['decorr']:
-            f.write('\nSince this run also included the "decorr" option, you also need to cite:\n')
+            f.write('Since this run also included the "decorr" option, you also need to cite:\n')
             f.write('Chodera JD. A simple method for automated equilibration detection in molecular simulations. J. '
-                    'Chem. Theor. Comput. 12:1799, 2016. DOI: 10.1021/acs.jctc.5b00784\n')
+                    'Chem. Theor. Comput. 12:1799, 2016. DOI: 10.1021/acs.jctc.5b00784')
         f.write('\n~~Free Energy Profile~~\nReaction coordinate    Free energy (kcal/mol)    Error (kcal/mol)\n')
         for i in range(nbins):
             f.write('%.3f' % bin_center_i[i] + '    ' + '%.3f' % f_i[i] + '    ' + '%.3f' % df_i[i] + '\n')
@@ -315,6 +320,9 @@ if __name__ == '__main__':
     parser.add_argument('-o', metavar='output', type=str, nargs=1, default=['mbar.out'],
                         help='the name of the output file containing the data for the histogram, mean value, and free '
                              'energy plots. This file will be overwritten if it exists. Default=mbar.out')
+    parser.add_argument('-i', metavar='input_path', type=str, nargs=1, default=['./'],
+                        help='the path to the directory containing the data files. Both relative and absolute paths are'
+                             ' accepted. Default=./')
     parser.add_argument('--min_data', metavar='min_data', type=int, nargs=1, default=[0],
                         help='minimum number of lines in a given data file for it to be eligible for inclusion in mbar.'
                              ' Default=0')
@@ -324,7 +332,7 @@ if __name__ == '__main__':
                              'manner with the --decorr option. Default=1')
     parser.add_argument('--decorr', action='store_true', default=False,
                         help='use pymbar.timeseries.detectEquilibration and pymbar.timeseries.subsampleCorrelatedData '
-                             'to attempt to automatically use only equilibrated and decorrelated data in the analysis.')
+                             'to attempt to automatically use only equilibrated and decorrelated data in the analysis.')    # todo: make decorr the default, change this to --no-decorr?
     parser.add_argument('--rc_min', metavar='rc_min', nargs=1, default=[''],
                         help='lower bound for range of RC values to include in the energy profile. The default setting '
                              'automatically uses the smallest window center value available, so only set this option if'

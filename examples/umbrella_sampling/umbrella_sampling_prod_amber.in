@@ -1,0 +1,33 @@
+Example of aimless shooting prod input file
+ &cntrl
+  imin=0,
+  ioutfm=1,						!netCDF output format
+  ntx=1,
+  ntxo=1,
+  nstlim=10000,
+  dt=0.001,
+  ntf=2,
+  ntc=2,						! SHAKE. 1 = no, 2 = hydrogen bonds, 3 = all bonds
+  tempi=300.0,
+  temp0=300.0,
+  ntpr=10,  					! Steps between writes to out
+  ntwx=10,						! Steps between writes to mdcrd. 0 = no mdcrd
+  cut=9999,
+  ntb=0,						! Periodicity. = 2 for ntp > 0
+  ntp=0,
+  ntt=2,						! Temperature control scheme. 2 = Anderson, 3 = Langevin
+  vrand=100,					! Steps between redistribution of velocities according to Boltzmann distribution
+  ig=-1,                        ! Psuedorandom seed (-1 = different each time)
+  ifqnt=1,                      ! turn on qmmm namelist
+  nmropt=1,
+  plumed=1,
+  plumedfile={{ plumedfile }},
+ &end
+ &qmmm
+  qmmask='@1-5,7,8',
+  qmcharge=0,
+  qm_theory='DFTB3',
+  qmshake=0,
+  qmcut=8.0,
+ &end
+

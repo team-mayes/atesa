@@ -21,7 +21,7 @@ Likelihood maximization is invoked from the command line as:
 	lmax.py -i input_file [-k dimensions | -r dimensions | --two_line_test [--two_line_threshold ratio]] [-f fixed_cvs] [-s skip] [-q qdot_setting] [-o output_file] [--plots] [--quiet]
 	
 `-i input_file`
-	The only strictly required argument for lmax.py, `input_file` should point to the aimless shooting output file of interest. Usually, this should be the longest "decorrelated" aimless shooting output file in the target working directory (named as "as_decorr_<length>.out", where <length> is the number of shooting points included before decorrelating). Decorrelated output files are produced automatically when using the information error convergence criterion criterion with aimless shooting, but otherwise they can be produced by running a new aimless shooting job with *resample* = True.
+	The only strictly required argument for lmax.py, `input_file` should point to the aimless shooting output file of interest. Usually, this should be the longest "decorrelated" aimless shooting output file in the target working directory (named as "as_decorr_<length>.out", where <length> is the number of shooting points included before decorrelating). Decorrelated output files include only the shooting points after the point where all of the CVs have no correlation with their initial values for that thread with at least 95% confidence, or in other words when the autocorrelation across all CVs is less than or equal to 1.96 / sqrt(n) for n shooting moves in the thread. These files are produced automatically when using the information error convergence criterion criterion with aimless shooting, but otherwise they can be produced by running a new aimless shooting job with *resample* = True.
 	
 `-k dimensions`
 	This option mutually exclusive with `-r` and `\\-\\-two_line_test`. The `dimensions` argument should be an integer number of dimensions to include in the final reaction coordinate. This options will always return a reaction coordinate with "k" dimensions (assuming there are at least "k" CVs in the input file), and will arrive at that number of dimensions by comparing every possible k-dimensional combination of CVs. Note that this can take a prohibitively long time when there are a large number of CVs and/or shooting moves to consider, in which case use of either the `-r` or `\\-\\-two_line_test` option is encouraged instead. When using this option, the order that the CVs appear in the final RC is arbitrary.
@@ -128,11 +128,17 @@ mbar.py looks for and uses all data files in the present directory whose names b
 	
 `-k kconst`
 
-	The harmonic restraint weight used during umbrella sampling in kcal/mol. This particular implementation of MBAR requires that all of the restraints be identical. The default is equal to the default setting during an ATESA umbrella sampling job. Default = 50
+	The harmonic restraint weight used during umbrella sampling in kcal/mol, according to the equation:
+	
+	.. math::
+	
+		U = k (RC - RC_0)^2
+	
+	Where :math:`RC_0` is the position of the restraint along the reaction coordinate. This particular implementation of MBAR requires that all of the restraints have the same weight. The default is equal to the default setting during an ATESA umbrella sampling job, so if you didn't change it there, don't change it here. Default = 50
 	
 `-t temp`
 
-	The temperature at which the simulations were performed, in K. This implementation of MBAR requires that all of the temperatures be identical. The default is equal to the default setting during an ATESA umbrella sampling job. Default = 300
+	The temperature at which to perform the analysis, in K. This implementation of MBAR requires that the temperatures across all the samples be identical. Default = 300
 	
 `-o output`
 
@@ -144,11 +150,11 @@ mbar.py looks for and uses all data files in the present directory whose names b
 	
 `\\-\\-ignore threshold`
 
-	The number of samples from the beginning of each data file to ignore during analysis. This is useful for manually specifying a decorrelation time from the initial coordinates in each window, if desired. Probably should not be used in combination with `\\-\\-decorr`. Default = 1
+	The number of samples from the beginning of each data file to ignore during analysis. This is useful for manually specifying a decorrelation time from the initial coordinates in each window, if desired. Probably should not be used in combination with `\\-\\-decorr` unless you know what you're doing. Default = 1
 	
 `\\-\\-decorr`
 
-	If this option is given, then the built-in pymbar.timeseries.detectEquilibration and pymbar.timeseries.subsampleCorrelatedData functions are used to attempt to automatically pare the data in each data file down to equilibrated and decorrelated samples. If you don't know what this means, you probably *should* use it. If you publish work that makes use of this option, you must cite (in addition to the aforementioned paper)::
+	If this option is given, then the built-in pymbar.timeseries.detectEquilibration and pymbar.timeseries.subsampleCorrelatedData functions are used to attempt to automatically pare down the data in each data file to only equilibrated and decorrelated samples. The decorrelation is performed before the program produces any plots or results. If you don't know what this means, you probably *should* use it. If you publish work that makes use of this option, you must cite (in addition to the aforementioned MBAR paper)::
 	
 		Chodera, J. D. A simple method for automated equilibration detection in molecular simulations. J. Chem. Theor. Comput. 12:1799, 2016. DOI: 10.1021/acs.jctc.5b00784
 	
