@@ -310,7 +310,10 @@ def main(**kwargs):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Evaluate free energy profile from the given umbrella sampling data')
+    parser = argparse.ArgumentParser(description='Evaluate free energy profile from the given umbrella sampling data',
+                                     epilog='For more detailed documentation, see:\n'
+                                            'https://atesa.readthedocs.io/en/latest/auxiliary_scripts.html'
+                                            '#mbar-py-energy-profiles-from-us')
 
     parser.add_argument('-t', metavar='temp', type=int, nargs=1, default=[300],
                         help='temperature in Kelvin to evaluate energy at. Default=300')
