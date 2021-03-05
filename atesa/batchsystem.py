@@ -104,9 +104,9 @@ class AdaptSlurm(BatchSystem):
                 output = output.split('\n')[1]
             except IndexError:
                 output = 'C'        # job isn't in the queue; so it's 'C'omplete
-        if output == 'PD':
+        if output  in ['PD', 'CF']:
             output = 'Q'
-        elif output == ('CG' or 'ST') or 'Invalid job id' in output or not output:  # 'Invalid job id' or empty output returned when job is finished in Slurm
+        elif output in ['CG', 'ST'] or 'Invalid job id' in output or not output:  # 'Invalid job id' or empty output returned when job is finished in Slurm
             output = 'C'
         elif output == 'R':
             output = 'R'            # just to be really explicit I guess
