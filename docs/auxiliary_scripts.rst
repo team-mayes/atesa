@@ -50,7 +50,7 @@ Likelihood maximization is invoked from the command line as:
 	<basin> <- <CV1> <CV2> ... <CVn> <qdot1> <qdot2> ... <qdotn>
 	
 	This format is the one created by aimless shooting runs in ATESA when called with the `include_qdot = True` option (which is the default, as is this setting).
-	`absent` specifies that the input file does NOT contain rate-of-change values for its CVs; that is, every number in every row of the input file is a separate CV.
+	`absent` specifies that the input file does NOT contain rate-of-change values for its CVs; that is, every number in every column of the input file is a separate CV.
 	`ignore` specifies that the input file DOES contain rate-of-change values, but that they should be ignored.
 	
 `-o output_file`
