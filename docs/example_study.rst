@@ -16,6 +16,17 @@ Finally, we have included the approximate computational resources consumed durin
 	Cores/node	24
 	DRAM/node	128 GB
 	SSD memory/node	320 GB
+	
+.. _BasicWorkflow:
+
+Basic Workflow
+--------------
+
+The following sections will go through each part of a standard ATESA workflow. Following these steps will allow you to start with only a definition of each stable state and a model of one of them (or with a hypothesized transition state model, if preferred), and end with a validated reaction coordinate and a free energy profile along that coordinate connecting the two basins. The workflow of a complete transition path sampling workflow with ATESA is outlined graphically here.
+
+.. figure:: _images/ATESA_workflow.png
+
+Specifically, in this example we will be following the branch at top left (using ATESA's ``find_ts`` jobtype to identify an initial transition state hypothesis) and using umbrella sampling to obtain the free energy profile.
 
 Initial Setup and the Model
 ---------------------------
@@ -62,7 +73,7 @@ ATESA automates the discovery of suitable initial transition state models using 
 	prod_ppn = 1
 	
 
-If you're adapting this configuration file for your own system, the most important changes to make (besides changing the names of files and directories to match your own) are to the commitment definitions ("commit_fwd" and "commit_bwd") and the Amber input files contained in the directory pointed to by the "path_to_input_files" line (see :ref:`SettingUpSimulationFiles`). The commitment definitions need to be selected to uniquely match the two stable states you wish your pathways to connect, and the Amber input files need to be have appropriate settings for your specific model. It will also be important to set the computational resources (at the bottom of this configuration file) to something that is efficient for your particular model.
+If you're adapting this configuration file for your own system, the most important changes to make (besides changing the names of files and directories to match your own) are to the commitment definitions (``commit_fwd`` and ``commit_bwd``) and the Amber input files contained in the directory pointed to by the ``path_to_input_files`` line (see :ref:`SettingUpSimulationFiles`). The commitment definitions need to be selected to uniquely match the two stable states you wish your pathways to connect, and the Amber input files need to be have appropriate settings for your specific model. It will also be important to set the computational resources (at the bottom of this configuration file) to something that is efficient for your particular model.
 
 As for the example study, based on the five aimless shooting moves with which each candidate transition state frame from the forced trajectory was tested, two frames were selected as suitable aimless shooting initial coordinate files, as indicated in ATESA's output following this job. The coordinates for those frames, along with the input and coordinate files, can be found in `examples/find_ts <https://github.com/team-mayes/atesa/tree/master/examples/find_ts>`_. These transition states (they are nearly identical) are very close to the one proposed by Schreiner *et al.* Under our test conditions, this job took 18 minutes to complete.
 
@@ -107,7 +118,7 @@ Note that the we don't define any specific CVs in this file. Instead, we allow A
 
 Note that because the simulations for this job are so short, it is best to take advantage of ATESA's built-in multiprocessing support for this task. The optimal number of cores to allocate will depend greatly on your platform, but using roughly as many cores as you have aimless shooting threads is a reasonable starting point. In this case, we selected 24 aimless shooting threads (12 for each initial coordinate file) to make optimal use of one 24-core node. You should choose the number of threads based on your own available resources.
 
-During our testing, this job collected data at the rate of approximately 410 shooting moves per hour; the bottleneck in this case was waiting for the batch system to allocate resources for individual simulations, but this will not be the case for larger (slower) models. Remember that aimless shooting jobs that end for any reason can be restarted from where they left off by resubmitting the same job with the configuration file setting *restart = True*.
+During our testing, this job collected data at the rate of approximately 410 shooting moves per hour; the bottleneck in this case was waiting for the batch system to allocate resources for individual simulations, but this will not be the case for larger (slower) models. Remember that aimless shooting jobs that end for any reason can be restarted from where they left off by resubmitting the same job with the configuration file setting ``restart = True``.
 
 This job collected 15,142 shooting moves before terminating automatically using based on the :ref:`InformationError` termination criterion with the default settings. An average acceptance ratio of 31.76% (per "status.txt" in the working directory) reflects a very healthy level of efficiency (10-30% is about average). ATESA also automatically generates a version of the aimless shooting file that has been decorrelated from the initial state(s) when assessing the information error termination criterion. Both the raw and decorrelated output files (compressed to save space), in addition to the input and configuration files, can be found in `examples/aimless_shooting <https://github.com/team-mayes/atesa/tree/master/examples/aimless_shooting>`_.
 
@@ -135,7 +146,7 @@ The reaction coordinate that ATESA selects contains three CVs (the intersection 
 The identities of these CVs are given in the "cvs.txt" file that ATESA produces in the aimless shooting working directory. In this case, these CVs are as follows:
 
 	.. figure:: _images/ts_atom_indices.png
-	  :width: 600
+	  :width: 400
 
 	CV156: difference of distances between atoms [5, 3] and [5, 1]
 	
@@ -202,7 +213,7 @@ This completes in a matter of seconds, and simply returns the ending RC values o
 
 The first line indicates the shooting move that was selected, and the second indicates the RC extrema. To be sure to include the full stable state energy basins, we suggest extending umbrella sampling past these values by about 10%.
 
-Finally, we need to select appropriate spacing (*us_rc_step*, the space from one window to the next) and restraint weights for our umbrella sampling windows. Since the applied restraints are harmonic, the expected width of the sampled distribution is approximately proportional to the inverse square root of the restraint weight. In practice the appropriate restraint weight and spacing is something you'll have to come to through some trial and error depending on your specific reaction coordinate and energy profile, but ATESA's defaults (50 kcal/mol, spaced every 0.5 units along the RC) are usually a reasonable starting point. If you're unsure of how to choose restraint weights and spacing for your system, it is usually wise to run a pilot study with only two or three windows located just a bit to either side of the transition state to measure the approximate width of the sampling histogram for your particular settings (in general each window will be approximately even in width, though they may be shifted from their centers somewhat). It's no problem if your windows overlap too much (other than being an inefficient use of resources), but if there are any gaps, the analysis could be badly incorrect.
+Finally, we need to select appropriate spacing (``us_rc_step``, the space from one window to the next) and restraint weights for our umbrella sampling windows. Since the applied restraints are harmonic, the expected width of the sampled distribution is approximately proportional to the inverse square root of the restraint weight. In practice the appropriate restraint weight and spacing is something you'll have to come to through some trial and error depending on your specific reaction coordinate and energy profile, but ATESA's defaults (50 kcal/mol, spaced every 0.5 units along the RC) are usually a reasonable starting point. If you're unsure of how to choose restraint weights and spacing for your system, it is usually wise to run a pilot study with only two or three windows located just a bit to either side of the transition state to measure the approximate width of the sampling histogram for your particular settings (in general each window will be approximately even in width, though they may be shifted from their centers somewhat). It's no problem if your windows overlap too much (other than being an inefficient use of resources), but if there are any gaps, the analysis could be badly incorrect.
 
 In the case of our example, we already know from other studies that the reaction we're looking at has a fairly high activation energy (about 50 kcal/mol), so we'll err on the side of tighter restraints spaced more closely together::
 
@@ -274,13 +285,13 @@ In order to correct this, we'll try to apply pathway restraints. Because we spec
 	commit_fwd = ([3,1,1],[5,5,2],[2.2,2.0,3.0],['gt','lt','gt'])
 	commit_bwd = ([3,1,1],[5,5,2],[1.5,3.5,2.4],['lt','gt','lt'])
 	
-	information_error_freq = 2500	# this won't be used
+	information_error_freq = 2500
 	
-This file is just the same as the aimless shooting configuration file (with some extraneous options removed for clarity, though leaving them in would not cause errors), but with the addition of the *resample* and *full_cvs* options. This job won't actually perform aimless shooting; it will just reanalyze the existing aimless shooting data in the specified working directory. Be careful to specify ``overwrite = False`` to ensure that your aimless shooting data is not deleted! This configuration file can also be found in `examples/umbrella_sampling <https://github.com/team-mayes/atesa/tree/master/examples/umbrella_sampling>`_.
+This file is just the same as the aimless shooting configuration file (with some extraneous options removed for clarity, though leaving them in would not cause errors), but with the addition of the ``resample`` and ``full_cvs`` options. This job won't actually perform aimless shooting; it will just reanalyze the existing aimless shooting data in the specified working directory. Be careful to specify ``overwrite = False`` to ensure that your aimless shooting data is not deleted! This configuration file can also be found in `examples/umbrella_sampling <https://github.com/team-mayes/atesa/tree/master/examples/umbrella_sampling>`_.
 
 Because there's a lot of data to analyze, we suggest making use of ATESA's multiprocessing support when resampling with ``full_cvs = True``. In this case we allocated 24 cores, and this job finished after 1 hour and 19 minutes.
 
-Having finished that, we're ready to try umbrella sampling again, using our freshly resampled data to construct pathway restraints. The configuration file for this job is just the same as the previous umbrella sampling file, with a single addition, the *us_pathway_restraints_file* option::
+Having finished that, we're ready to try umbrella sampling again, using our freshly resampled data to construct pathway restraints. The configuration file for this job is just the same as the previous umbrella sampling file, with a single addition, the ``us_pathway_restraints_file`` option::
 
 	# examples/umbrella_sampling/restrained_umbrella_sampling.config
 
@@ -331,10 +342,10 @@ Conclusion
 
 We have illustrated a full workflow with ATESA, beginning with only a SMILES string and definitions for two stable states, and ending with a validated reaction mechanism and full free energy profile. This same workflow can be adapted with minimal changes for almost any rare event you may want to study. To summarize what was described above, the primary changes that would have to be made are simply:
 
-- Replacing the Amber input files in the specified *input_files* directory with ones appropriate for the desired simulations;
+- Replacing the Amber input files in the specified ``path_to_input_files`` directory with ones appropriate for the desired simulations;
 
-- Identifying appropriate definitions for the desired stable states to use for *commit_fwd* and *commit_bwd*; and
+- Identifying appropriate definitions for the desired stable states to use for ``commit_fwd`` and ``commit_bwd``; and
 
 - Modifying the configuration file's :ref:`BatchTemplateSettings` to make efficient use of available computational resources when running the desired simulations.
 
-Also note that although we studied a single-step reaction here, ATESA can also be used for multi-step reactions. Simply set *commit_bwd* to identify the reactant state and *commit_fwd* to the first stable intermediate, and perform the workflow as above; then repeat with *commit_bwd* set to the first stable intermediate and *commit_fwd* set to the second stable intermediate (if any) and repeat; and so on, until the products state is reached. The resulting free energy profiles from each step can be stitched together to obtain the full reaction energy pathway.
+Also note that although we studied a single-step reaction here, ATESA can also be used for multi-step reactions. Simply set ``commit_bwd`` to identify the reactant state and ``commit_fwd`` to the first stable intermediate, and perform the workflow as above; then repeat with ``commit_bwd`` set to the first stable intermediate and *commit_fwd* set to the second stable intermediate (if any) and repeat; and so on, until the products state is reached. The resulting free energy profiles from each step can be stitched together to obtain the full reaction energy pathway.

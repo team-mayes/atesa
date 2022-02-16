@@ -27,9 +27,9 @@ The batch systems and molecular simulations packages currently supported by ATES
 
    theory_of_operation
    getting_started
+   example_study
    the_config_file
    auxiliary_scripts
-   example_study
    on_termination_criteria
    troubleshooting
    
