@@ -65,10 +65,12 @@ If you are getting *zero* acceptance despite the simulations themselves looks re
 
 Finally, if simulations seem to be going fine but are simply taking a very long time, the issue is probably with the setup of individual jobs. As always when running a new model on a high performance cluster, you should first run a series of short jobs to assess how your simulation speed scales with the resources allocated. Keep in mind that certain settings are much more computationally expensive (and thus slow), such as large quantum mechanics regions. Also ensure that you have allocated sufficient memory for each job and for ATESA itself; at least a few gigabytes is safe.
 
+.. _CommittorAnalysisTroubleshooting:
+
 Committor Analysis
 ~~~~~~~~~~~~~~~~~~
 
-The "ideal" committor analysis result is a perfectly narrow peak of exactly 50% probability of going to each stable state. In practice however, the best result we can hope for is a roughly gaussian distribution peaked somewhere close to 50%. The rest of this section will be organized in terms of other possible distributions with advice about how to interpret them.
+The "ideal" committor analysis result is a perfectly narrow peak of exactly 50% probability of going to each stable state. In practice however, the best result we can hope for is a roughly gaussian distribution peaked somewhere close to 50%, and a roughly flat distribution is also generally acceptable. The rest of this section will be organized in terms of other possible distributions with advice about how to interpret them, and then ending with some examples of real published committor analysis results.
 
 	.. figure:: _images/comana_good.png
 	
@@ -84,11 +86,25 @@ The "ideal" committor analysis result is a perfectly narrow peak of exactly 50% 
 	
 	.. figure:: _images/comana_flat.png
 	
-	A roughly flat distribution, this result can arise either from insufficient sampling, missing candidate dimensions, or the use of a lower-dimensional model than is truly appropriate for the system. Similarly to the previous example, this is still a reasonably strong result.
+	A roughly flat distribution, this result can arise either from insufficient sampling during aimless shooting or committor analysis, missing candidate dimensions, or the use of a lower-dimensional model than is truly appropriate for the system. Similarly to the previous example, this is still a reasonably strong result and may indicate a strong enough model, depending on your purposes.
 	
 	.. figure:: _images/comana_edge_only.png
 	
 	All or nearly all of the simulations are grouped along one edge (either one). This should be a rare result, and is the only one here that represents a fundamental failure somewhere in the workflow. The underlying cause is either: (a) that the settings or other important features of the simulations or ATESA have changed significantly between aimless shooting and committor analysis (for example, a different quantum mechanics model, or a change in the definition of the commitment basins); or (b) that the aimless shooting data has been misinterpreted in some way, due to some unnoticed error. If after carefully verifying that the settings have not changed (remember to check the simulation input files, batch file templates, and ATESA configuration files) you still cannot find the source of this error, please raise an issue on `our GitHub page <https://github.com/team-mayes/atesa>`_ with the "bug" label. Please also be sure to include a thorough description of your problem and attach the files "settings.pkl" and "restart.pkl" from the aimless shooting working directory.
+	
+Here are some examples of real committor analysis results in published manuscripts. Though none are perfect, all of these results were deemed acceptable within the context of their work by their authors and passed peer review.
+	
+	.. figure:: _images/Joswiak2018_comana.png
+	
+	﻿Joswiak, M. N., Doherty, M. F., & Peters, B. (2018). Ion dissolution mechanism and kinetics at kink sites on NaCl surfaces. Proceedings of the National Academy of Sciences, 115(4), 656–661. https://doi.org/10.1073/pnas.1713452115
+	
+		.. figure:: _images/Mayes2016_comana.png
+	
+	﻿Mayes, H. B., Knott, B. C., Crowley, M. F., Broadbelt, L. J., Ståhlberg, J., & Beckham, G. T. (2016). Who’s on base? Revealing the catalytic mechanism of inverting Family 6 glycoside hydrolase. Chemical Science, 5955–5968. https://doi.org/10.1039/C6SC00571C
+	
+	.. figure:: _images/Silveira2021_comana.png
+	
+	﻿Silveira, R. L., Knott, B. C., Pereira, C. S., Crowley, M. F., Skaf, M. S., & Beckham, G. T. (2021). Transition Path Sampling Study of the Feruloyl Esterase Mechanism. Journal of Physical Chemistry B, 125(8), 2018–2030. https://doi.org/10.1021/acs.jpcb.0c09725
 
 .. _UmbrellaSamplingTroubleshooting:
 
