@@ -3,6 +3,8 @@
 On Termination Criteria
 =======================
 
+Along with ATESA, I have introduced a novel termination criterion for aimless shooting that I believe should be used in all cases. In summary, the idea is to estimate the error in the reaction coordinate produced with likelihood maximization using the diagonal terms of the Godambe Information matrix. Use of this termination criterion prevents wasted simulations and adds confidence to the final result. For more details and context, see the rest of this page.
+
 .. _TheSamplingProblem:
 
 The Sampling Problem
@@ -22,7 +24,7 @@ The process of aimless shooting can be thought of as constrained sampling -- spe
 Choosing When to Stop with Committor Analysis
 ---------------------------------------------
 
-To date, the most common method of determining when to stop aimless shooting has been :ref:`CommittorAnalysis`. This requires that the aimless shooting data be mined for a reaction coordinate that describes the reaction progress (usually via :ref:`LikelihoodMaximizationTheory`), and then that that reaction coordinate be verified by showing that unbiased simulations beginning from its center are (approximately) equally as likely to proceed to the reactants as to the products. This method is invaluable and should certainly be used to affirm the correctness of the final reaction coordinate, but as a termination criterion it suffers from two major issues:
+To date, the most common method of determining when to stop aimless shooting has been committor analysis (:ref:`CommittorAnalysis`). This requires that the aimless shooting data be mined for a reaction coordinate that describes the reaction progress (usually via likelihood maximization (:ref:`LikelihoodMaximizationTheory`)), and then that that reaction coordinate be verified by showing that unbiased simulations beginning from its center are (approximately) equally as likely to proceed to the reactants as to the products. This method is invaluable and should certainly be used to affirm the correctness of the final reaction coordinate, but as a termination criterion it suffers from two major issues:
 
 #. It requires an extensive amount of additional simulation, which is expensive and time consuming; and
 
