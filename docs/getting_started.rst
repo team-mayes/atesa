@@ -18,6 +18,8 @@ Alternatively, you can download or clone ATESA directly from `GitHub <https://gi
 	
 If you're using a custom python environment, remember to activate it before installing!
 
+Once you've installed ATESA, you may want to head over to the :ref:`ExampleStudy` page to take a look at what ATESA can do and get a feel for its basic operation.
+
 If you want to perform umbrella sampling simulations with ATESA, you need to make sure that PLUMED is available. Versions of Amber released since 2015 have native PLUMED support, so once it has been installed (see `this link <https://www.plumed.org/doc-v2.5/user-doc/html/_installation.html>`_ for instructions), all you need to do is set the PLUMED_KERNEL environment variable to the appropriate path for ``libplumedKernel.so``, like so::
 
 	export PLUMED_KERNEL=/path/to/libplumedKernel.so
@@ -31,7 +33,7 @@ ATESA is designed to dynamically handle jobs on a PBS/Torque or Slurm batch syst
 
    atesa <config_file> [<working_directory>]
    
-The config_file parameter is required and supports absolute or relative paths. The working_directory parameter is optional, but if it is provided it overrides the value in the configuration file. This option is made available for use on systems that only allocate working space for jobs after they have been initialized. For details on the contents of the configuration file, see :ref:`TheConfigFile`.
+The config_file parameter is required and supports absolute or relative paths. The working_directory parameter is optional, but if it is provided it overrides the value in the configuration file. This option is made available for use on systems that only allocate working space for jobs after they have been initialized. For detailed documentation on the contents of the configuration file, see :ref:`TheConfigFile` (but it's easier to get started by modifying the examples in the :ref:`ExampleStudy`).
 
 Although ATESA can be run directly from the command line, because its process continues for the entirety of the job it is usually best to submit it as its own batch job, or to run it on an interactive resource allocation. A single core and a modest allocation of memory should be sufficient to run ATESA on most platforms (it is typically neither memory- nor processor-intensive, although many features involve a significant amount of I/O). ATESA supports multiprocessing during aimless shooting on UNIX-based systems; this may improve performance in some cases, depending on ATESA settings, simulation speed, and the batch queue. Simply allocate the desired number of cores and ATESA will use them as efficiently as it can.
 

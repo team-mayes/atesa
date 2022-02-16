@@ -81,6 +81,8 @@ def main(**kwargs):
     data_files = [name.replace(input_path, '') for name in glob.glob(input_path + 'rcwin_*_us.dat') if (len(open(name, 'r').readlines()) - 1) > kwargs['min_data'][0]]
     pattern = re.compile('[-0-9.]+')
     data_files = sorted(data_files, key=lambda x: float(pattern.findall(x)[0]))
+    
+    os.chdir(input_path)
 
     if len(data_files) == 0:
         raise RuntimeError('did not find any data files matching the expected naming convention and with length of at '
@@ -178,22 +180,26 @@ def main(**kwargs):
     # print([scipy.stats.sem([item for item in rc_kn[k,:] if not item == 0]) for k in range(K)])
 
     if not kwargs['quiet']:
+        from textwrap import wrap
         fig, ax = plt.subplots()
         ax.errorbar([rc0_k[k] for k in range(K)], [numpy.mean([item for item in rc_kn[k,:] if not item == 0]) - rc0_k[k] for k in range(K)], yerr=[scipy.stats.tstd([item for item in rc_kn[k,:] if not item == 0]) for k in range(K)], color='#0072BD', lw=1)
         plt.ylabel('Mean Value', weight='bold')
         plt.xlabel('Reaction Coordinate', weight='bold')
-        plt.title('THIS IS NOT YOUR FREE ENERGY PROFILE\nThis plot should probably be smooth.\nOtherwise, you may have some'
-                  ' sampling abnormalities.')
+        title = ax.set_title('Diagnostic Mean Value Plot. Should probably be smooth.\n'
+                'See ATESA\'s troubleshooting documentation\nfor further '
+                'information (Umbrella Sampling > Mean Value Plot).\n')
+        fig.tight_layout()
+        title.set_y(1.05)
+        fig.subplots_adjust(top=0.8)
         plt.show()
 
     open(kwargs['o'][0], 'w').close()   # initialize output file (and overwrite it if it exists)
     with open(kwargs['o'][0], 'a') as f:
         f.write('ATESA mbar.py output file. Skip to the end for the free energy profile if desired.\n')
         f.write('\n~~Mean Value Plot~~\n')
-        f.write('THIS IS NOT YOUR FREE ENERGY PROFILE\nThis plot should probably be smooth.'
-                '\nOtherwise, you may have some sampling abnormalities.\nSee ATESA\'s documentation for further '
-                'information.\n')
-        f.write('Reaction coordinate    Mean value\n')
+        f.write('Diagnostic Mean Value Plot. Should probably be smooth.\n'
+                'See ATESA\'s troubleshooting documentation\nfor further '
+                'information (Umbrella Sampling > Mean Value Plot).\n')
         for k in range(K):
             f.write(str(rc0_k[k]) + '   ' + '%.3f' % numpy.mean([item for item in rc_kn[k,:] if not item == 0]) + '\n')
 

@@ -130,7 +130,7 @@ def main(working_directory, rc_definition, as_out_file, extrema=False):
                     cvs = utilities.get_cvs(thread.history.prod_trajs[thread.history.last_accepted][job_index], settings, reduce=True).split(' ')
                     result.append(utilities.evaluate_rc(rc_definition, cvs))
                 print(' Shooting move name: ' + thread.history.init_coords[thread.history.last_accepted][0])
-                print(' extrema: ' + str(result))
+                print(' extrema: ' + str([float('%.4f' % float(item)) for item in result]))
                 return None   # to exit the script after returning extrema
         raise RuntimeError('none of the shooting moves in the working directory appear to contain any accepted moves.')
 
