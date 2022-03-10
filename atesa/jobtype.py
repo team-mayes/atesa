@@ -566,7 +566,7 @@ class AimlessShooting(JobType):
                 open(settings.working_directory + '/as_raw.out', 'a').write(utilities.get_cvs(local_thread.history.init_coords[-1][0], settings) + '\n')
                 open(settings.working_directory + '/as_raw.out', 'a').close()
 
-                if full_cvs:
+                if settings.full_cvs:
                     # Implement writing to full CVs output file, 'as_full_cvs.out'
                     temp_settings = copy.deepcopy(settings)
                     temp_settings.include_qdot = False  # never want to include_qdot in this upcoming call to get_cvs
