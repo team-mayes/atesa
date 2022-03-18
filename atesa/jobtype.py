@@ -562,8 +562,7 @@ class AimlessShooting(JobType):
                     this_basin = 'B'
                 else:   # 'bwd'
                     this_basin = 'A'
-                open(settings.working_directory + '/as_raw.out', 'a').write(this_basin + ' <- ')
-                open(settings.working_directory + '/as_raw.out', 'a').write(utilities.get_cvs(local_thread.history.init_coords[-1][0], settings) + '\n')
+                open(settings.working_directory + '/as_raw.out', 'a').write(this_basin + ' <- ' + utilities.get_cvs(local_thread.history.init_coords[-1][0], settings) + '\n')
                 open(settings.working_directory + '/as_raw.out', 'a').close()
 
                 if settings.full_cvs:

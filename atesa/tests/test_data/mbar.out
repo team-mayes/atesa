@@ -1,11 +1,9 @@
 ATESA mbar.py output file. Skip to the end for the free energy profile if desired.
 
 ~~Mean Value Plot~~
-THIS IS NOT YOUR FREE ENERGY PROFILE
-This plot should probably be smooth.
-Otherwise, you may have some sampling abnormalities.
-See ATESA's documentation for further information.
-Reaction coordinate    Mean value
+Diagnostic Mean Value Plot. Should probably be smooth.
+See ATESA's troubleshooting documentation
+for further information (Umbrella Sampling > Mean Value Plot).
 -1.0   -1.140
 -0.75   -0.903
 -0.5   -0.499

@@ -8,6 +8,7 @@ import os
 import sys
 import warnings
 from atesa import factory
+from django.conf import settings as django_settings
 
 def process(thread, running, settings):
     """
@@ -29,6 +30,9 @@ def process(thread, running, settings):
         The updated list of currently running threads after this process step
 
     """
+
+    if not django_settings.configured:  # need to configure just once per thread
+        django_settings.configure()
 
     ### Determine next step and, if appropriate, build corresponding list of batch files ###
     if not thread.skip_update:

@@ -288,15 +288,19 @@ These settings define the combined variables (CVs) for the job. In aimless shoot
 
 ``auto_cvs_exclude_water``
 	
-	A boolean. By default, the behavior where *auto_cvs_radius* is greater than zero includes any water molecules within the given radius of the commitment-defining atoms. If *auto_cvs_exclude_water* is set to True, water molecules are excluded. They may still be included in CVs defined using the *cvs* option if desired. Default = False
+	A boolean. If False, the behavior where *auto_cvs_radius* is greater than zero includes any atoms belonging to water molecules within the given radius of the commitment-defining atoms. Otherwise, water molecules are excluded. Atoms that are part of a commitment definition are never excluded in this way and water atoms may still be included in CVs defined using the *cvs* option if desired. Default = True
+	
+``auto_cvs_exclude_hydrogen``
+	
+	A boolean. If False, the behavior where *auto_cvs_radius* is greater than zero includes any hydrogen atoms within the given radius of the commitment-defining atoms. Otherwise, hydrogens are excluded. Atoms that are part of a commitment definition are never excluded in this way and hydrogen atoms may still be included in CVs defined using the *cvs* option if desired. Default = True
 
 ``auto_cvs_type``
 
-	A string, either 'pytraj' or 'mdtraj'. This controls the package used to define the CVs built by auto_cvs. pytraj is generally faster, but if it evaluating the CVs poses some sort of problem for you when using it, try switching to mdtraj. Note that you are free to use both pytraj and mdtraj with the *cvs* option regardless of this setting; it only controls the CVs built automatically. Default = 'pytraj'
+	A string, either 'pytraj' or 'mdtraj'. This controls the package used to define the CVs built by auto_cvs. Note that you are free to use both pytraj and mdtraj with the *cvs* option regardless of this setting; it only controls the CVs built automatically. WARNING: there appears to be a memory leak associated with using pytraj, so mdtraj is recommended for now. Default = 'mdtraj'
 
 ``include_qdot``
 
-	A boolean indicating whether the instantaneous rate of change of each CV defined in *cvs* should also be counted as a CV. These values can be used in inertial likelihood maximization to favor reaction coordinates with high transmission coefficients (see `Peters 2012 <https://doi.org/10.1016/j.cplett.2012.10.051>`_ and/or :ref:`LikelihoodMaximization`). Rate of change CVs come after the rest of the CVs in the aimless shooting output file, as in:
+	A boolean indicating whether the rate of change of each CV defined in *cvs* should also be counted as a CV. These values can be used in inertial likelihood maximization to favor reaction coordinates with high transmission coefficients (see `Peters 2012 <https://doi.org/10.1016/j.cplett.2012.10.051>`_ and/or :ref:`LikelihoodMaximization`). Rate of change CVs come after the rest of the CVs in the aimless shooting output file, as in:
 	
 	::
 	
@@ -312,9 +316,9 @@ These settings define the combined variables (CVs) for the job. In aimless shoot
 		commit_fwd
 		commit_bwd
 		include_qdot
-		auto_cvs_radius
+		auto_cvs_radius (and associated options)
 	
-	Use of this option is recommended in particular for committor analysis, umbrella sampling, and equilibrium path sampling jobs following an aimless shooting job. In this case, the *as_settings_file* should point to the settings.pkl file from that aimless shooting job. Default = ''
+	Use of this option is recommended in particular for committor analysis, umbrella sampling, and equilibrium path sampling jobs following an aimless shooting job. In this case, *as_settings_file* should point to the settings.pkl file from that aimless shooting job. Default = ''
 
 ``sigfigs``
 
@@ -423,7 +427,7 @@ The following options concern the information error convergence criterion in aim
 	
 ``information_error_threshold``
 
-	The threshold of mean parameter standard error below which the information error termination criterion is satisfied and aimless shooting ends. Error generally diminishes as roughly the square root of the number of samples, so an order of magnitude lower threshold requires approximately a hundred times more sampling (assuming that the CVs constituting the maximum likelihood model remain the same throughout). It is a good practice to manually inspect the *info_err.out* file in the working directory after termination to ensure that it appears to be converged to within the user's desired tolerance. Default = 0.1
+	The threshold of mean parameter standard error below which the information error termination criterion is satisfied and aimless shooting ends. Error generally diminishes as roughly the square root of the number of samples, so an order of magnitude lower threshold requires approximately a hundred times more sampling (assuming that the CVs constituting the maximum likelihood model remain the same throughout). It is a good practice to manually inspect the *info_err.out* file in the working directory after termination to ensure that it appears to be converged to within the user's desired tolerance (*i.e.*, that it did not terminate for some other reason). Default = 0.1
 	
 ``information_error_freq``
 
@@ -452,7 +456,7 @@ These options are specific to committor analysis runs only.
 
 ``committor_analysis_n``
 
-	The number of independent simulations to run *for each initial structure* during committor analysis. This number should be large enough to distinguish confidently between structures that make good and poor transition states. The default choice is safe, but increasing it may smooth out the result in some cases. Default = 10.
+	The number of independent simulations to run *for each initial structure* during committor analysis. This number should be large enough to distinguish confidently between structures that make good and poor transition states. The default choice is fairly safe, but increasing it may smooth out the result in some cases. It should probably never be decreased. Default = 10.
 	
 ``committor_analysis_use_rc_out`` **‡**
 

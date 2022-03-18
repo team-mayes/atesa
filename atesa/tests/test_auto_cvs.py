@@ -39,6 +39,7 @@ class Tests(object):
         settings.working_directory = './'
         settings.auto_cvs_radius = 5
         settings.auto_cvs_exclude_water = True
+        settings.auto_cvs_exclude_hydrogen = True
 
         mtraj = mdtraj.load(settings.initial_coordinates[0], top=settings.topology)  # for testing third assert
 
@@ -61,6 +62,7 @@ class Tests(object):
         settings.working_directory = './'
         settings.auto_cvs_radius = 5
         settings.auto_cvs_exclude_water = True
+        settings.auto_cvs_exclude_hydrogen = False
 
         traj = pytraj.load(settings.initial_coordinates[0], settings.topology)  # for testing third assert
 

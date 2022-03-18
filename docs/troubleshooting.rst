@@ -33,6 +33,8 @@ Amber has its own output file for each job, usually given by the suffix “.out�
 Issues with ATESA
 ~~~~~~~~~~~~~~~~~
 
+Sometimes, especially during aimless shooting, ATESA may hang, neither crashing nor apparently doing anything for a long time. In this case the easiest option is usually to restart the job with "restart = True" as appropriate.
+
 Errors encountered by ATESA itself will be outputted into the command line in the event that the program has been called directly, or else into the batch output file in the event that it has been called in a batch job. Hopefully, most errors of this type will be self-explanatory. There may, however, be unforeseen errors that are not handled in a useful way. Errors of this sort could have to do with improperly installed dependencies, especially pytraj. One possible troubleshooting option is to retry the job with as many default settings as possible to see if the error persists — if it does not, add on custom settings one-by-one (starting with those you are least confident in) until the culprit is found.
 
 If ATESA outputs an error message that confuses you, especially if it happens very early on in the job, double-check that the simulations that have been run so far (if there are any) appear to have behaved properly. For example, the error::
@@ -46,6 +48,12 @@ Another common issue is::
 	EOFError: Ran out of input
 	
 while trying to open the restart pickle file ("restart.pkl"). This occurs because the restart file has been errantly emptied due to an interrupted write attempt. ATESA automatically generates a backup file called "restart.pkl.bak" in the working directory, so if you get this error, simply copy the backup file over the empty original.
+
+Repeated "errors" with messages like these while running simulations are normal and not an issue so long as ATESA continues to run::
+
+	Internal Error: Global index 0 is out of range.
+	Error: NetCDF file has no frames.
+	Error: Could not set up '<trajectory file>' for reading.
 
 Although the user is of course permitted under the license to attempt to debug the code themselves (and to use the modified code in whatever manner they see fit), no one finds it easy to read someone else’s code. If you encounter an issue with ATESA that you cannot resolve, I encourage you to raise an issue on `our GitHub page <https://github.com/team-mayes/atesa>`_. And if you encounter an error that you did resolve by modifying the code, please submit a pull request so that everyone can benefit!
 

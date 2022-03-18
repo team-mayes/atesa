@@ -183,7 +183,8 @@ def get_cvs(filename, settings, reduce=False, frame=0):
     delete_traj_name = False  # so we don't delete the traj_name file later unless we created it below
     if frame in [0, 'all']:
         full_traj = pytraj.iterload(filename, settings.topology)
-        full_mtraj = mdtraj.load(filename, top=settings.topology)
+        if any(['mtraj' in cv for cv in settings.cvs]):  # only load mtraj if it's needed
+            full_mtraj = mdtraj.load(filename, top=settings.topology)
         traj_name = filename
     elif frame < 0:
         raise RuntimeError('frame must be >= 0')
@@ -222,7 +223,8 @@ def get_cvs(filename, settings, reduce=False, frame=0):
     for iter in range(n_iter):  # iterate over all frames
         # set traj and mtraj to only the desired frame; has no (important) effect if there's only one frame anyway
         traj = full_traj[iter:iter+1:1]
-        mtraj = full_mtraj[iter]
+        if any(['mtraj' in cv for cv in settings.cvs]):     # only load mtraj if it's needed
+            mtraj = full_mtraj[iter]
         for cv in settings.cvs:
             local_index += 1
             evaluation = eval(cv)       # evaluate the CV definition code (potentially using traj, mtraj, and/or traj_name)
@@ -238,7 +240,8 @@ def get_cvs(filename, settings, reduce=False, frame=0):
             # corresponding velocity values, load it as a new iterload object, and then rerun our analysis on that.
             incremented_filename = increment_coords()
             traj = pytraj.iterload(incremented_filename, settings.topology)
-            mtraj = mdtraj.load(incremented_filename, top=settings.topology)
+            if any(['mtraj' in cv for cv in settings.cvs]):  # only load mtraj if it's needed
+                mtraj = mdtraj.load(incremented_filename, top=settings.topology)
             local_index = -1
             for cv in settings.cvs:
                 local_index += 1

@@ -71,8 +71,9 @@ def configure(input_file, user_working_directory=''):
         # CV options; required only for aimless shooting, equilibrium path sampling, and committor analysis
         cvs: typing.List[str] = ['']
         auto_cvs_radius: float = 5
-        auto_cvs_exclude_water: bool = False
-        auto_cvs_type: str = 'pytraj'   # pytraj or mdtraj used in auto_cvs
+        auto_cvs_exclude_water: bool = True
+        auto_cvs_exclude_hydrogen: bool = True
+        auto_cvs_type: str = 'mdtraj'   # pytraj or mdtraj used in auto_cvs
         include_qdot: bool = True
         as_settings_file: str = ''
 

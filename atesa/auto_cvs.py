@@ -68,16 +68,25 @@ def main(settings):
         temp = copy.deepcopy(neighbors)
         waters = mtraj.topology.select('water')
         for atom_index in neighbors:
-            if atom_index in waters:
+            if atom_index in waters and atom_index not in commit_atoms:
                 temp.remove(atom_index)
         neighbors = copy.deepcopy(temp)
 
-    # Assemble list of each 2nd order term
+    # Remove non-reactive hydrogens, if necessary
+    if settings.auto_cvs_exclude_hydrogen:
+        temp = copy.deepcopy(neighbors)
+        hydrogens = mtraj.topology.select('element H')
+        for atom_index in neighbors:
+            if atom_index in hydrogens and atom_index not in commit_atoms:
+                temp.remove(atom_index)
+        neighbors = copy.deepcopy(temp)
+
+    # Assemble list of each 2nd order term consisting only of atoms completely within the radius
     bonds = []
     table, all_bonds = mtraj.topology.to_dataframe()
     formatted_all_bonds = [[int(item[0]), int(item[1])] for item in all_bonds]
     for atom_index in neighbors:
-        bonds += [item for item in formatted_all_bonds if atom_index in item]
+        bonds += [item for item in formatted_all_bonds if atom_index in item and all([ite in neighbors for ite in item])]
     unq_lst = collections.OrderedDict()
     for item in bonds:
         unq_lst.setdefault(frozenset(item), []).append(item)

@@ -24,7 +24,7 @@ from atesa import process
 from atesa import interpret
 from atesa import utilities
 from atesa import information_error
-from multiprocess import Pool, Manager
+from multiprocess import Pool, Manager, get_context
 
 class Thread(object):
     """
@@ -275,7 +275,8 @@ def main(settings, rescue_running=[]):
 
     Returns
     -------
-    None
+    exit_message : str
+        A message indicating the status of ATESA at the end of main
 
     """
 
@@ -363,6 +364,11 @@ def main(settings, rescue_running=[]):
 
     try:
         if settings.job_type == 'aimless_shooting' and len(os.sched_getaffinity(0)) > 1:
+            # todo: fix
+            warnings.warn('Multiprocessing in ATESA sometimes gets tripped up and threads hang indefinitely without '
+                          'crashing. The best way to account for this might be to submit a series of ATESA jobs with '
+                          'walltimes on the order of a couple hours each. I don\'t know why this happens, I\'m sorry.')
+
             # Initialize Manager for shared data across processes; this is necessary because multiprocessing is being
             # retrofitted to code designed for serial processing, but it works!
             manager = Manager()
@@ -388,7 +394,7 @@ def main(settings, rescue_running=[]):
                 exec('managed_settings.' + key + ' = settings_dict[key]')
 
             # Distribute processes among available core Pool
-            with Pool(len(os.sched_getaffinity(0))) as p:
+            with get_context("spawn").Pool(len(os.sched_getaffinity(0))) as p:
                 p.starmap(main_loop, zip(itertools.repeat(managed_settings), itertools.repeat(allthreads), [[thread] for thread in allthreads]))
         else:
             main_loop(settings, allthreads, running)
@@ -449,6 +455,10 @@ def main_loop(settings, allthreads, running):
 
 
 def run_main():
+    # todo: remove
+    from hanging_threads import start_monitoring
+    start_monitoring(seconds_frozen=20, test_interval=100)
+
     # Obtain settings namespace, initialize threads, and move promptly into main.
     try:
         working_directory = sys.argv[2]
