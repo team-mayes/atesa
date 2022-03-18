@@ -455,10 +455,6 @@ def main_loop(settings, allthreads, running):
 
 
 def run_main():
-    # todo: remove
-    from hanging_threads import start_monitoring
-    start_monitoring(seconds_frozen=20, test_interval=100)
-
     # Obtain settings namespace, initialize threads, and move promptly into main.
     try:
         working_directory = sys.argv[2]

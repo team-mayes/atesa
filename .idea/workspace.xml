@@ -2,20 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="55679143-7654-431c-aee1-71d5375f0f66" name="Default" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/atesa.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/atesa.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atesa/auto_cvs.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/auto_cvs.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atesa/configure.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/configure.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atesa/jobtype.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/jobtype.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/atesa/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atesa/process.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/process.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atesa/tests/test_auto_cvs.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/tests/test_auto_cvs.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atesa/tests/test_data/cvs_mdtraj.txt" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/tests/test_data/cvs_mdtraj.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atesa/tests/test_data/cvs_pytraj.txt" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/tests/test_data/cvs_pytraj.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atesa/tests/test_data/mbar.out" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/tests/test_data/mbar.out" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atesa/utilities.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/utilities.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/troubleshooting.rst" beforeDir="false" afterPath="$PROJECT_DIR$/docs/troubleshooting.rst" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
