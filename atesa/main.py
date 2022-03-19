@@ -364,11 +364,6 @@ def main(settings, rescue_running=[]):
 
     try:
         if settings.job_type == 'aimless_shooting' and len(os.sched_getaffinity(0)) > 1:
-            # todo: fix
-            warnings.warn('Multiprocessing in ATESA sometimes gets tripped up and threads hang indefinitely without '
-                          'crashing. The best way to account for this might be to submit a series of ATESA jobs with '
-                          'walltimes on the order of a couple hours each. I don\'t know why this happens, I\'m sorry.')
-
             # Initialize Manager for shared data across processes; this is necessary because multiprocessing is being
             # retrofitted to code designed for serial processing, but it works!
             manager = Manager()
