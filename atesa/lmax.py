@@ -271,6 +271,7 @@ def main(**kwargs):
     two_line_threshold = kwargs['two_line_threshold'][0]
     skip = kwargs['s']    # this one also a list
     hist_bins = kwargs['hist_bins'][0]
+    prefilter = kwargs['p'][0]
 
     if not fixed == [None] and running == 0 and not two_line_test and len(fixed) > dims:
         raise RuntimeError('value of k must be less than or equal to number of fixed (-f) dimensions.')
@@ -339,9 +340,6 @@ def main(**kwargs):
                                ' you sure it includes rate-of-change data?')
         num_cvs = int(num_cvs / 2)
 
-    if two_line_test and not quiet:
-        print('Two line test requires at least five optimizations, so there will be five progress bars before testing.')
-
     # Prepare for and then enter optimization loop
     termination = False     # initialize primary termination criterion flag
     termination_2 = False   # additional termination flag for use with qdot = 'present', to perform final optimization
@@ -349,13 +347,16 @@ def main(**kwargs):
     two_line_result = -1    # initialize current model dimensionality for two_line_test
     cv_combs = [[]]         # initialize list of CV combinations to iterate through
     results = []  # initialize for two_line_test
+    prefiltered = []    # initialize results list for prefiltering
     while not termination and len(cv_combs[0]) <= N:
         # Initialize current best result
         current_best = [argparse.Namespace(), [0], [], []]
         current_best[0].fun = math.inf
 
         # Assemble list of RCs to optimize
-        if not fixed == [None] and len(fixed) == dims:
+        if prefilter < 1:
+            cv_combs = [[item] for item in range(1, num_cvs + 1)]
+        elif not fixed == [None] and len(fixed) == dims:
             cv_combs = [fixed]
         elif running or two_line_test:
             cv_combs = [fixed + [new] for new in range(1, num_cvs + 1) if (not new in fixed) and (not new in skip)]
@@ -392,13 +393,26 @@ def main(**kwargs):
             this_B = list(map(list, zip(*this_B)))
             this_result = optimize.minimize(objective_function, numpy.asarray(start_params), (this_A, this_B),
                                             method='BFGS', options={"disp": False, "maxiter": 20000 * (len(comb) + 1)}) # try SR1?
-            if this_result.fun < current_best[0].fun:
+            if prefilter < 1:
+                prefiltered.append([this_result.fun, comb[0]])  # append only comb[0] to ignore qdot terms
+            elif this_result.fun < current_best[0].fun:
                 current_best = [this_result, comb, this_A, this_B]
             this_speed = time.time() - t
             speed_data = [(speed_data[1] * speed_data[0] + this_speed) / (speed_data[1] + 1), speed_data[1] + 1]
             count += 1
             eta = (count_to - count) * speed_data[0]
             update_progress(count / count_to, 'Optimizing ' + str(count_to) + ' combination(s) of CVs', eta, quiet=quiet)
+
+        # If prefiltering, set 'skip' and step back out to while loop
+        if prefilter < 1:
+            prefiltered = sorted(prefiltered, key=lambda x: x[0])   # sort by ascending log likelihood
+            skip = []
+            skip += [entry[1] for entry in prefiltered[int(len(prefiltered) * prefilter):]]
+            for fix in fixed:   # add fixed dimensions back in after prefiltering
+                if fix in skip:
+                    skip.remove(fix)
+            prefilter = 1   # so we don't prefilter again
+            continue        # go back to the start of the while loop
 
         # Update fixed and results parameters as needed
         if two_line_test:
@@ -552,23 +566,26 @@ def main(**kwargs):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Perform LMAX on the given input data')
     parser.add_argument('-i', metavar='input_file', type=str, nargs=1, default=['as_decorr.out'],
-                        help='input filename (output from aimless shooting). Default=as_decorr.out')
+                        help='Input filename (output from aimless shooting). Default=as_decorr.out')
     parser.add_argument('-k', metavar='dimensionality', type=int, nargs=1, default=[1],
-                        help='number of CVs to include in RC. Default=1')
+                        help='Number of CVs to include in RC. Default=1')
     parser.add_argument('-f', metavar='fixed', type=int, nargs='*', default=[None],
                         help='CVs to require inside the RC. Default=none')
     parser.add_argument('-s', metavar='skip', type=int, nargs='*', default=[None],
                         help='CVs to skip (not consider in RC). Default=none')
     parser.add_argument('-q', metavar='include_qdot', type=str, nargs=1, default=['present'],
-                        help='valid options are: "present", "absent", and "ignore" (quotes excluded). If "present" or '
+                        help='Valid options are: "present", "absent", and "ignore" (quotes excluded). If "present" or '
                              '"ignore", the input file is assumed to include rate-of-change ("q") data for each CV '
                              '(formatted as in e.g., "A <- CV0 CV1 q0 q1"); in the former case, q terms will be used to'
                              'select the RC (but will not appear in the final RC), implementing inertial likelihood '
                              'maximization. In the latter, rate of change terms are not used. Finally, if "absent", the'
                              ' q data will be assumed not to be present in the input file at all. Default=present')
     parser.add_argument('-r', metavar='running', type=int, nargs=1, default=[0],
-                        help='if > 0, runs from k = 1 to "running" using the previously obtained k - 1 results as the '
+                        help='If > 0, runs from k = 1 to "running" using the previously obtained k - 1 results as the '
                              'argument for f, ignoring the arguments passed for k and f. Default=0')
+    parser.add_argument('-p', metavar='prefilter', type=float, nargs=1, default=[1],
+                        help='A number between 0 and 1. If < 1, every one-term RC is tested before anything else and '
+                             'then only the top \'prefilter\' fraction of CVs are considered moving forward. Default=1')
     parser.add_argument('-o', metavar='output_file', type=str, nargs=1, default=[''],
                         help='Prints output to a new file whose name is given with this argument, instead of directly '
                              'to the terminal. The file will be overwritten if it exists. Default=none')

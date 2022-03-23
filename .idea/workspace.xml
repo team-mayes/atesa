@@ -3,6 +3,11 @@
   <component name="ChangeListManager">
     <list default="true" id="55679143-7654-431c-aee1-71d5375f0f66" name="Default" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/lmax.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/lmax.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/tests/test_lmax.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/tests/test_lmax.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/the_config_file.rst" beforeDir="false" afterPath="$PROJECT_DIR$/docs/the_config_file.rst" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -387,15 +392,15 @@
   <component name="PropertiesComponent">
     <property name="SearchEverywhereHistoryKey" value="&#9;FILE&#9;file:///Users/tburgin/Documents/PycharmProjects/atesa_v2/atesa_v2/atesa_v2.py" />
     <property name="WebServerToolWindowFactoryState" value="false" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/atesa/tests" />
     <property name="run.code.analysis.last.selected.profile" value="pProject Default" />
     <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
   </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/atesa/tests" />
       <recent name="$PROJECT_DIR$/atesa/tests/test_data" />
       <recent name="$PROJECT_DIR$/docs/_images" />
-      <recent name="$PROJECT_DIR$/atesa/tests" />
       <recent name="$PROJECT_DIR$/atesa/data/input_files" />
       <recent name="$PROJECT_DIR$/atesa" />
     </key>
@@ -407,7 +412,7 @@
       <recent name="$PROJECT_DIR$/atesa_v2/data" />
     </key>
   </component>
-  <component name="RunManager" selected="Python.test">
+  <component name="RunManager" selected="Python tests.py.test in tests">
     <configuration default="true" type="DjangoTestsConfigurationType" factoryName="Django tests">
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -511,28 +516,6 @@
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" enabled="false" sample_coverage="true" runner="coverage.py" />
       <option name="SCRIPT_NAME" value="$PROJECT_DIR$/test.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
-      <method v="2" />
-    </configuration>
-    <configuration name="test_utilities" type="PythonConfigurationType" factoryName="Python" temporary="true">
-      <module name="atesa" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/atesa/tests" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <EXTENSION ID="PythonCoverageRunConfigurationExtension" enabled="false" sample_coverage="true" runner="coverage.py" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/atesa/tests/test_utilities.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -708,20 +691,37 @@
       <option name="_new_target" value="&quot;$PROJECT_DIR$/atesa/tests/&quot;" />
       <option name="_new_targetType" value="&quot;PATH&quot;" />
     </configuration>
+    <configuration name="pytest for test_resample_committor_analysis.Tests.test_resample_committor_analysis" type="tests" factoryName="py.test" temporary="true" nameIsGenerated="true">
+      <module name="atesa" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/atesa/tests" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" enabled="false" sample_coverage="true" runner="coverage.py" />
+      <option name="_new_keywords" value="&quot;&quot;" />
+      <option name="_new_parameters" value="&quot;&quot;" />
+      <option name="_new_additionalArguments" value="&quot;&quot;" />
+      <option name="_new_target" value="&quot;test_resample_committor_analysis.Tests.test_resample_committor_analysis&quot;" />
+      <option name="_new_targetType" value="&quot;PYTHON&quot;" />
+      <method v="2" />
+    </configuration>
     <list>
-      <item itemvalue="Python.test_utilities" />
       <item itemvalue="Python.utilities" />
       <item itemvalue="Python.auto_cvs" />
-      <item itemvalue="Python tests.py.test in tests" />
       <item itemvalue="Python.test" />
+      <item itemvalue="Python tests.py.test in tests" />
+      <item itemvalue="Python tests.pytest for test_resample_committor_analysis.Tests.test_resample_committor_analysis" />
     </list>
     <recent_temporary>
       <list>
-        <item itemvalue="Python.test" />
         <item itemvalue="Python tests.py.test in tests" />
+        <item itemvalue="Python tests.pytest for test_resample_committor_analysis.Tests.test_resample_committor_analysis" />
+        <item itemvalue="Python.test" />
         <item itemvalue="Python.auto_cvs" />
         <item itemvalue="Python.utilities" />
-        <item itemvalue="Python.test_utilities" />
       </list>
     </recent_temporary>
   </component>
@@ -825,6 +825,7 @@
         </entry>
       </map>
     </option>
+    <option name="oldMeFiltersMigrated" value="true" />
   </component>
   <component name="editorHistoryManager">
     <entry file="file://$PROJECT_DIR$/setup.cfg">

@@ -397,7 +397,7 @@ These settings are specific to aimless shooting runs only.
 	
 ``resample``
 
-	A boolean. If True, aimless shooting will NOT be performed, and instead the existing aimless shooting data found in *working_directory* are used to produce new output files based on the settings of the current ATESA job. The primary usage of this option is to add additional CVs to the output files without needing to repeat any simulations. Default = False
+	A boolean. If True, aimless shooting will NOT be performed, and instead the existing aimless shooting data found in *working_directory* are used to produce new output files based on the settings of the current ATESA job. The primary usage of this option is to add additional CVs to the output files without needing to repeat any simulations. This option can also be used with committor analysis (see below). Default = False
 	
 ``full_cvs``
 
@@ -473,7 +473,12 @@ These options are specific to committor analysis runs only.
 	
 ``rc_threshold`` **‡**
 
-	The threshold of *absolute value* of reaction coordinate below which shooting moves in the indicated *path_to_rc_out* file will be included in committor analysis. For example, if the above example contents of such a file were used and *rc_threshold* were set to 0.1, only the first of the two files (initial_coords_1_1_init_fwd.rst7) would be used for committor analysis. The user is encouraged to check the RC output file manually before using this option to ensure that they will have enough unique initial coordinate files to produce a useful committor analysis result (200 files is a good target). Default = 0.05
+	The threshold of *absolute value* of reaction coordinate below which shooting moves in the indicated *path_to_rc_out* file will be included in committor analysis. For example, if the above example contents of such a file were used and *rc_threshold* were set to 0.1, only the first of the two files (initial_coords_1_1_init_fwd.rst7) would be used for committor analysis. The user is encouraged to check the RC output file manually before using this option to ensure that they will have enough unique initial coordinate files to produce a useful committor analysis result (roughly 200 files is a good target). Default = 0.05
+	
+``resample``
+
+	A boolean. If True, committor analysis will NOT be performed, and instead the existing committor analysis trajectories found in *working_directory* are used to produce a new output file based on the settings of the current ATESA job. The primary usage of this option is to regenerate results from completed simulations when ATESA has failed to produce them in the first place (*e.g.*, due to a crash) or when some other mistake has been made. In other words, this option is supported "just in case". Please note that in general committor analysis simulations performed to test one RC are not applicable to testing any other RC, meaning this option cannot be used to simply recycle simulations to test a newly selected RC. This option can also be used with aimless shooting, where it will be more common (see above). Default = False
+
 
 .. _UmbrellaSamplingSettings:	
 	

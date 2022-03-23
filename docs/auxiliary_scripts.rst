@@ -53,6 +53,9 @@ Likelihood maximization is invoked from the command line as:
 	`absent` specifies that the input file does NOT contain rate-of-change values for its CVs; that is, every number in every column of the input file is a separate CV.
 	`ignore` specifies that the input file DOES contain rate-of-change values, but that they should be ignored.
 	
+`-p prefilter`
+	An option to "filter out" the apparently worst terms from the model first in order to reduce the search space during optimization and get results faster. A fraction between 0 and 1 should be given, and then a one-term RC is optimized for every CV in the input file and only that fraction of the CVs that perform best in this test are considered going forward. This step is skipped (as it would have no effect) when `-p` is 1 (which is the default). This option can save huge amounts of time in some conditions, especially when the input file contains large numbers of irrelevant CVs, but it is not strictly "safe" in that it may result in a worse RC than would have been produced otherwise in the case that it filters out CVs that might have been useful when considered in the context of other CVs.
+	
 `-o output_file`
 	If this option is given, a new file named `output_file` is written containing the results of the optimization. If this option is not given, the results are instead written directly to the terminal. This option will overwrite existing files.
 	

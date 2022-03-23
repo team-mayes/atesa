@@ -24,6 +24,7 @@ from atesa import process
 from atesa import interpret
 from atesa import utilities
 from atesa import information_error
+from atesa import resample_committor_analysis
 from multiprocess import Pool, Manager, get_context
 
 class Thread(object):
@@ -282,17 +283,20 @@ def main(settings, rescue_running=[]):
 
     if not rescue_running:
         # Implement resample
-        if settings.job_type == 'aimless_shooting' and settings.resample:
+        if settings.job_type in ['aimless_shooting', 'committor_analysis'] and settings.resample:
             # Store settings object in the working directory for compatibility with analysis/utility scripts
             if not settings.dont_dump:
                 temp_settings = copy.deepcopy(settings)  # initialize temporary copy of settings to modify
                 temp_settings.__dict__.pop('env')  # env attribute is not picklable
                 pickle.dump(temp_settings, open(settings.working_directory + '/settings.pkl', 'wb'), protocol=2)
-            # Run resample
-            utilities.resample(settings, partial=False, full_cvs=settings.full_cvs)
-            if settings.information_error_checking:     # update info_err.out if called for by settings
-                information_error.main()
-            sys.exit()
+            # Run resampling
+            if settings.job_type == 'aimless_shooting':
+                utilities.resample(settings, partial=False, full_cvs=settings.full_cvs)
+                if settings.information_error_checking:     # update info_err.out if called for by settings
+                    information_error.main()
+            elif settings.job_type == 'committor_analysis':
+                resample_committor_analysis.resample_committor_analysis(settings)
+            return 'Resampling complete'
 
         # Make working directory if it does not exist, handling overwrite and restart as needed
         if os.path.exists(settings.working_directory):
