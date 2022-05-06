@@ -1,7 +1,7 @@
 <img src="docs/_images/atesa_logo.png" alt="ATESA_logo" width="400"/>
 
 [//]: # (Badges)
-[![Travis Build Status](https://travis-ci.org/team-mayes/atesa.svg?branch=master)](https://travis-ci.org/team-mayes/atesa)
+[![Continuous Integration Status](https://github.com/team-mayes/atesa/actions/workflows/python-package-conda.yml/badge.svg)](https://github.com/team-mayes/atesa/actions/workflows/python-package-conda.yml)
 [![codecov](https://codecov.io/gh/team-mayes/atesa/branch/master/graph/badge.svg)](https://codecov.io/gh/team-mayes/atesa/branch/master)
 [![Documentation Status](https://readthedocs.org/projects/atesa/badge/?version=latest)](https://atesa.readthedocs.io/en/latest/?badge=latest)
 
