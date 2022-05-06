@@ -510,11 +510,6 @@ def main(**kwargs):
     else:
         print(output_string)
 
-    ## Deprecated development tool
-    # if not os.path.exists('rc_stderr.out'):
-    #     open('rc_stderr.out', 'w').close()
-    # open('rc_stderr.out', 'a').write(str(input_file) + ' ' + str(mean_std) + '\n')
-
     if plots:
         A_results = []
         for obs in current_best[2]:  # iterate over A observations
@@ -537,12 +532,11 @@ def main(**kwargs):
             if A_count or B_count:  # if there is data in this bin
                 count_ratio = B_count / (A_count + B_count)
             else:
-                raise RuntimeError('attempted to build sigmoid plot, but one or more histogram bins is empty. This '
-                                   'may indicate insufficient data in the input file. All other results from this call '
-                                   'to lmax.py have been written, but proceed with caution, and consider trying again '
-                                   'with a smaller value given for --hist_bins (the default is 10). This error can also'
-                                   ' occur when one or more of the CVs making up the final RC takes on discrete values '
-                                   'instead of continuous ones.')
+                count_ratio = 0
+                warnings.warn('One or more histogram bins is empty and is being reported errantly as having a committor'
+                              ' probability of zero. This indicates either insufficient data in the input file, too '
+                              'many histogram bins (the default is 10), or that a CV included in the final RC takes on '
+                              'discrete values instead of continuous ones (which is usually inappropriate for lmax).')
             rc_values.append(numpy.mean([hist_result[1][bin_index + 1], hist_result[1][bin_index]]))
             probs.append(count_ratio)
 

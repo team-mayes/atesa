@@ -47,7 +47,7 @@ def main(settings):
 
     # Load topology and coordinates as mdtraj "trajectory" object
     if settings.initial_coordinates[0] == '':
-        raise RuntimeError('it appears that you forgot to provide an initial coordinate file for use with auto_cvs.py.')
+        raise RuntimeError('it appears that you forgot to provide an initial coordinate file for use with auto_cvs.')
     mtraj = mdtraj.load(settings.initial_coordinates[0], top=settings.topology)
 
     # Identify atoms within settings.auto_cvs_radius of each atom in either commitment basin definition
@@ -133,12 +133,12 @@ def main(settings):
             if angle[0] in bond and not angle[1] in bond:
                 temp = copy.deepcopy(bond)
                 temp.remove(angle[0])
-                if not reversed(temp + angle) in dihedrals and not temp in angle:
+                if not reversed(temp + angle) in dihedrals and not temp + angle in dihedrals and not temp in angle:
                     dihedrals.append(temp + angle)
             if angle[2] in bond and not angle[1] in bond:
                 temp = copy.deepcopy(bond)
                 temp.remove(angle[2])
-                if not reversed(angle + temp) in dihedrals and not temp in angle:
+                if not reversed(angle + temp) in dihedrals and not temp + angle in dihedrals and not temp in angle:
                     dihedrals.append(angle + temp)
 
     # Append code to obtain each dihedral as a string to cvs

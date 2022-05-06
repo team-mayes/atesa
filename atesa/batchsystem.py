@@ -100,11 +100,16 @@ class AdaptSlurm(BatchSystem):
             process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                                        close_fds=True, shell=True)
             output = process.stdout.read().decode()     # decode converts from bytes-like to string
-            try:
-                output = output.split('\n')[1]
-            except IndexError:
-                output = 'C'        # job isn't in the queue; so it's 'C'omplete
-        if output  in ['PD', 'CF']:
+
+        # Raise error if anything other than a status or invalid job id
+        if not output.split('\n')[0] == 'ST' and not 'Invalid job id' in output:
+            raise ValueError('Queried Slurm system status for jobid ' + str(jobid) + ' but got unexpected status: ' + output)
+
+        try:
+            output = output.split('\n')[1]  # get status code; if invalid job id, this is an empty string
+        except IndexError:
+            output = output     # should never happen but if it does somehow then this makes the error message useful
+        if output in ['PD', 'CF']:
             output = 'Q'
         elif output in ['CG', 'ST'] or 'Invalid job id' in output or not output:  # 'Invalid job id' or empty output returned when job is finished in Slurm
             output = 'C'

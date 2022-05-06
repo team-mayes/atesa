@@ -608,8 +608,15 @@ class AimlessShooting(JobType):
         # Write updated restart.pkl
         unpacked_allthreads = [item for item in allthreads]     # unpack managed reference list into literal list
         pickle.dump(unpacked_allthreads, open('restart.pkl.bak', 'wb'), protocol=2)  # if the code crashes while dumping it could delete the contents of the pkl file
-        if not os.path.getsize('restart.pkl.bak') == 0:
-            shutil.copy('restart.pkl.bak', 'restart.pkl')                   # copying after is safer
+        try:
+            _ = pickle.load(open('restart.pkl.bak', 'rb'))
+        except Exception as e:
+            raise RuntimeError('Unable to write uncorrupted pickle file to working directory. This may be caused by '
+                               'disk quota issues. Traceback from attempting to load pickle file that I just tried to '
+                               'write:\n' + str(e))
+        if os.path.exists('restart.pkl'):
+            shutil.copy('restart.pkl', 'restart_previous.pkl')
+        shutil.copy('restart.pkl.bak', 'restart.pkl')                   # copying after is safer
 
     def algorithm(self, thread, allthreads, running, settings):
         # In aimless shooting, algorithm should decide whether or not a new shooting point is needed, obtain it if so,
@@ -873,7 +880,16 @@ class CommittorAnalysis(JobType):
             open('committor_analysis.out', 'a').write(str(int(fwds)) + '/' + str(int(fwds + bwds)) + '\n')
 
         # Write updated restart.pkl
-        pickle.dump(allthreads, open('restart.pkl', 'wb'), protocol=2)
+        pickle.dump(allthreads, open('restart.pkl.bak', 'wb'), protocol=2)  # if the code crashes while dumping it could delete the contents of the pkl file
+        try:
+            _ = pickle.load(open('restart.pkl.bak', 'rb'))
+        except Exception as e:
+            raise RuntimeError('Unable to write uncorrupted pickle file to working directory. This may be caused by '
+                               'disk quota issues. Traceback from attempting to load pickle file that I just tried to '
+                               'write:\n' + str(e))
+        if os.path.exists('restart.pkl'):
+            shutil.copy('restart.pkl', 'restart_previous.pkl')
+        shutil.copy('restart.pkl.bak', 'restart.pkl')                   # copying after is safer
 
     def algorithm(self, thread, allthreads, running, settings):
         return running    # nothing to set because there is no next step
@@ -1095,7 +1111,16 @@ class EquilibriumPathSampling(JobType):
                 file.close()
 
         # Write updated restart.pkl
-        pickle.dump(allthreads, open('restart.pkl', 'wb'), protocol=2)
+        pickle.dump(allthreads, open('restart.pkl.bak', 'wb'), protocol=2)  # if the code crashes while dumping it could delete the contents of the pkl file
+        try:
+            _ = pickle.load(open('restart.pkl.bak', 'rb'))
+        except Exception as e:
+            raise RuntimeError('Unable to write uncorrupted pickle file to working directory. This may be caused by '
+                               'disk quota issues. Traceback from attempting to load pickle file that I just tried to '
+                               'write:\n' + str(e))
+        if os.path.exists('restart.pkl'):
+            shutil.copy('restart.pkl', 'restart_previous.pkl')
+        shutil.copy('restart.pkl.bak', 'restart.pkl')                   # copying after is safer
 
     def algorithm(self, thread, allthreads, running, settings):
         # In equilibrium path sampling, algorithm should decide whether or not a new shooting point is needed, obtain it
@@ -2195,7 +2220,16 @@ class UmbrellaSampling(JobType):
                                            if len(item.split()) > 1]
 
         # Write updated restart.pkl
-        pickle.dump(allthreads, open('restart.pkl', 'wb'), protocol=2)
+        pickle.dump(allthreads, open('restart.pkl.bak', 'wb'), protocol=2)  # if the code crashes while dumping it could delete the contents of the pkl file
+        try:
+            _ = pickle.load(open('restart.pkl.bak', 'rb'))
+        except Exception as e:
+            raise RuntimeError('Unable to write uncorrupted pickle file to working directory. This may be caused by '
+                               'disk quota issues. Traceback from attempting to load pickle file that I just tried to '
+                               'write:\n' + str(e))
+        if os.path.exists('restart.pkl'):
+            shutil.copy('restart.pkl', 'restart_previous.pkl')
+        shutil.copy('restart.pkl.bak', 'restart.pkl')                   # copying after is safer
 
     def algorithm(self, thread, allthreads, running, settings):
         return running    # nothing to set because there is no next step
