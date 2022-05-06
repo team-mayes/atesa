@@ -1,6 +1,7 @@
 name: test
 channels:
   - ambermd
+  - conda-forge
 dependencies:
     # Base depends
   - python
