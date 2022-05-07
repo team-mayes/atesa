@@ -23,7 +23,8 @@ jobs:
         # conda env update --file devtools/conda-envs/test_env.yaml --name base
         python devtools/scripts/create_conda_env.py -n=test -p=$PYTHON_VER devtools/conda-envs/test_env.yaml
         conda info
-        $CONDA/bin/activate test
+        source $CONDA/bin/activate test
+        conda env list
         python setup.py develop --no-deps
     - name: Test and generate coverage report
       run: |
