@@ -20,7 +20,10 @@ jobs:
         echo $CONDA/bin >> $GITHUB_PATH
     - name: Install dependencies
       run: |
-        conda env update --file devtools/conda-envs/test_env.yaml --name base
+        # conda env update --file devtools/conda-envs/test_env.yaml --name base
+        python devtools/scripts/create_conda_env.py -n=test -p=$PYTHON_VER devtools/conda-envs/test_env.yaml
+        conda activate test
+        python setup.py develop --no-deps
     - name: Test and generate coverage report
       run: |
         pip install pytest
