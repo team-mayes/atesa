@@ -76,6 +76,7 @@ Aimless shooting input files for the following step types are required for jobs 
 	dt=0.00001,	! extremely short time step (too small can cause velocity overflow errors)
   	tempi=300.0,	! or whatever temperature (same as temp0)
   	temp0=300.0,	! or whatever temperature (same as tempi)
+	ig=-1		! random initial velocities; should be default but may not be in some versions/patches of Amber
   		
 * **aimless_shooting_prod_amber.in**: Aimless shooting "prod" steps are the primary simulation steps for each shooting move. They take the initial coordinates and velocities from an "init" step (with velocities reversed in the case of backward trajectories) and run until the simulation commits to one of the stable states defined in the configuration file. Therefore, the time step and number of simulation steps should be much larger than in an "init" simulation. In Amber, the following settings should be specified in the &cntrl namelist, instead of the above "init" settings and in addition to any other model-specific settings::
 
