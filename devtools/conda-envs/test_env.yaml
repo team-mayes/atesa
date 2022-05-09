@@ -17,6 +17,7 @@ dependencies:
   - django
   - oslo.concurrency
   - multiprocess
+  - backports.zoneinfo
 
     # Testing
   - pytest
