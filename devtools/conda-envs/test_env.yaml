@@ -19,7 +19,7 @@ dependencies:
   - multiprocess
 
     # Testing
-  - pytest
+  - pytest =5.3.1
   - pytest-cov
   - codecov
 
