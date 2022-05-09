@@ -40,8 +40,8 @@ class Tests(object):
         line_index = 0
         for line in open('fep_test.out', 'r').readlines():
             # Compare first and second entries in each line (third is bootstrapped and so will vary)
-            assert line.split()[0] == compare_lines[line_index].split()[0]
-            assert line.split()[1] == compare_lines[line_index].split()[1]
+            assert pytest.approx(line.split()[0]) == compare_lines[line_index].split()[0]
+            assert pytest.approx(line.split()[1]) == compare_lines[line_index].split()[1]
             line_index += 1
 
     @classmethod
