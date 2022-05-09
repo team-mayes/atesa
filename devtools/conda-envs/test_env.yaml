@@ -14,10 +14,9 @@ dependencies:
   - matplotlib
   - pytraj
   - pymbar
-  - django
+  - django <4.0
   - oslo.concurrency
   - multiprocess
-  - backports.zoneinfo
 
     # Testing
   - pytest
