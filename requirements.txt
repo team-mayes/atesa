@@ -12,3 +12,4 @@ numdifftools
 psutil
 matplotlib
 pytest
+backports.zoneinfo
