@@ -442,7 +442,7 @@ def main_loop(settings, allthreads, running):
                                     proc_status = 'not_running'
                         break
                     running = thread.process(running, settings)
-                else:
+                else:   # todo: change this to only run if all running threads fail gatekeeper?
                     time.sleep(30)  # to prevent too-frequent calls to batch system by thread.gatekeeper
 
             if all([thread in interpreted for thread in running]):

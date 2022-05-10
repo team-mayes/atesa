@@ -1343,7 +1343,7 @@ class FindTS(JobType):
                 else:   # thread.history.init_basin = 'bwd'; get_inpcrd only allows for these two values
                     commit_basin = 'fwd'
                 try:  # check if it has committed to the opposite basin
-                    if utilities.check_commit(thread.history.prod_trajs[-1][job_index], settings) == commit_basin:
+                    if utilities.check_commit(thread.history.prod_trajs[-1], settings) == commit_basin:
                         thread.history.prod_result = commit_basin
                         thread.cancel_job(job_index, settings)  # cancel it
                 except RuntimeError:    # occurs if there are no frames yet in the trajectory

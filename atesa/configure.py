@@ -189,6 +189,10 @@ def configure(input_file, user_working_directory=''):
     except IndexError:  # no directory given, not a problem
         pass
 
+    # Certain functions need working_directory to be an absolute path, so we'll prepend the current path if necessary
+    if not settings.working_directory[0] == '/':
+        settings.working_directory = os.getcwd() + '/' + settings.working_directory
+
     # Set Django template environment
     if os.path.exists(settings.path_to_templates):
         settings.env = template.Engine(dirs=[settings.path_to_templates])
