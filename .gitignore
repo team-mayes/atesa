@@ -106,3 +106,4 @@ ENV/
 
 # PyCharm configuration file
 .idea/
+.idea/workspace.xml
