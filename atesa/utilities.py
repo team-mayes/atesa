@@ -44,7 +44,8 @@ def check_commit(filename, settings):
     # todo: consider adding support for angles and dihedrals
 
     try:
-        traj = pytraj.load(filename, settings.topology, frame_indices=[-1])
+        traj = mdtraj.load(filename, top=settings.topology)[-1]
+        # traj = pytraj.load(filename, settings.topology, frame_indices=[-1])
         if traj.n_frames == 0:
             raise RuntimeError('Attempted to check commitment for file: ' + filename + ' but it has no frames.')
     except ValueError as e:
@@ -54,15 +55,17 @@ def check_commit(filename, settings):
 
     for i in range(len(settings.commit_fwd[2])):
         if settings.commit_fwd[3][i] == 'lt':
-            if pytraj.distance(traj, '@' + str(settings.commit_fwd[0][i]) + ' @' + str(settings.commit_fwd[1][i]),
-                               n_frames=1)[0] <= settings.commit_fwd[2][i]:
+            if mdtraj.compute_distances(traj, numpy.array([[settings.commit_fwd[0][i] - 1, settings.commit_fwd[1][i] - 1]]))[0][0] * 10 <= settings.commit_fwd[2][i]:
+            # if pytraj.distance(traj, '@' + str(settings.commit_fwd[0][i]) + ' @' + str(settings.commit_fwd[1][i]),
+            #                    n_frames=1)[0] <= settings.commit_fwd[2][i]:
                 commit_flag = 'fwd'     # if a committor test is passed, testing moves on to the next one.
             else:
                 commit_flag = ''
                 break                   # if a committor test is not passed, all testing in this direction fails
         elif settings.commit_fwd[3][i] == 'gt':
-            if pytraj.distance(traj, '@' + str(settings.commit_fwd[0][i]) + ' @' + str(settings.commit_fwd[1][i]),
-                               n_frames=1)[0] >= settings.commit_fwd[2][i]:
+            if mdtraj.compute_distances(traj, numpy.array([[settings.commit_fwd[0][i] - 1, settings.commit_fwd[1][i] - 1]]))[0][0] * 10 >= settings.commit_fwd[2][i]:
+            # if pytraj.distance(traj, '@' + str(settings.commit_fwd[0][i]) + ' @' + str(settings.commit_fwd[1][i]),
+            #                    n_frames=1)[0] >= settings.commit_fwd[2][i]:
                 commit_flag = 'fwd'
             else:
                 commit_flag = ''
@@ -74,15 +77,17 @@ def check_commit(filename, settings):
     if commit_flag == '':               # only bother checking for bwd commitment if not fwd committed
         for i in range(len(settings.commit_bwd[2])):
             if settings.commit_bwd[3][i] == 'lt':
-                if pytraj.distance(traj, '@' + str(settings.commit_bwd[0][i]) + ' @' + str(settings.commit_bwd[1][i]),
-                                   n_frames=1)[0] <= settings.commit_bwd[2][i]:
+                if mdtraj.compute_distances(traj, numpy.array([[settings.commit_bwd[0][i] - 1, settings.commit_bwd[1][i] - 1]]))[0][0] * 10 <= settings.commit_bwd[2][i]:
+                # if pytraj.distance(traj, '@' + str(settings.commit_bwd[0][i]) + ' @' + str(settings.commit_bwd[1][i]),
+                #                    n_frames=1)[0] <= settings.commit_bwd[2][i]:
                     commit_flag = 'bwd' # if a committor test is passed, testing moves on to the next one.
                 else:
                     commit_flag = ''
                     break               # if a committor test is not passed, all testing in this direction fails
             elif settings.commit_bwd[3][i] == 'gt':
-                if pytraj.distance(traj, '@' + str(settings.commit_bwd[0][i]) + ' @' + str(settings.commit_bwd[1][i]),
-                                   n_frames=1)[0] >= settings.commit_bwd[2][i]:
+                if mdtraj.compute_distances(traj, numpy.array([[settings.commit_bwd[0][i] - 1, settings.commit_bwd[1][i] - 1]]))[0][0] * 10 >= settings.commit_bwd[2][i]:
+                # if pytraj.distance(traj, '@' + str(settings.commit_bwd[0][i]) + ' @' + str(settings.commit_bwd[1][i]),
+                #                    n_frames=1)[0] >= settings.commit_bwd[2][i]:
                     commit_flag = 'bwd'
                 else:
                     commit_flag = ''
@@ -179,12 +184,15 @@ def get_cvs(filename, settings, reduce=False, frame=0):
     if not os.getcwd() == settings.working_directory:
         os.chdir(settings.working_directory)    # make sure we're in the working directory
 
+    # boolean determining whether we need to bother loading pytraj
+    need_pytraj = any([('traj' in cv and not 'mtraj' in cv) for cv in settings.cvs])
+
     # define variables as they are expected to be interpreted in CV definitions (these are potentially invoked by eval)
     delete_traj_name = False  # so we don't delete the traj_name file later unless we created it below
     if frame in [0, 'all']:
-        full_traj = pytraj.iterload(filename, settings.topology)
-        if any(['mtraj' in cv for cv in settings.cvs]):  # only load mtraj if it's needed
-            full_mtraj = mdtraj.load(filename, top=settings.topology)
+        full_mtraj = mdtraj.load(filename, top=settings.topology)
+        if need_pytraj:  # only load pytraj if it's needed
+            full_traj = pytraj.iterload(filename, settings.topology)
         traj_name = filename
     elif frame < 0:
         raise RuntimeError('frame must be >= 0')
@@ -216,15 +224,15 @@ def get_cvs(filename, settings, reduce=False, frame=0):
     sigfigs = '%.' + str(settings.sigfigs) + 'f'
 
     if frame == 'all':
-        n_iter = full_traj.n_frames
+        n_iter = full_mtraj.n_frames
     else:
         n_iter = 1
 
     for iter in range(n_iter):  # iterate over all frames
         # set traj and mtraj to only the desired frame; has no (important) effect if there's only one frame anyway
-        traj = full_traj[iter:iter+1:1]
-        if any(['mtraj' in cv for cv in settings.cvs]):     # only load mtraj if it's needed
-            mtraj = full_mtraj[iter]
+        mtraj = full_mtraj[iter]
+        if need_pytraj:     # only load traj if it's needed
+            traj = full_traj[iter:iter + 1:1]
         for cv in settings.cvs:
             local_index += 1
             evaluation = eval(cv)       # evaluate the CV definition code (potentially using traj, mtraj, and/or traj_name)
@@ -239,9 +247,9 @@ def get_cvs(filename, settings, reduce=False, frame=0):
             # Strategy here is to write a new temporary .rst7 file by incrementing all the coordinate values by their
             # corresponding velocity values, load it as a new iterload object, and then rerun our analysis on that.
             incremented_filename = increment_coords()
-            traj = pytraj.iterload(incremented_filename, settings.topology)
-            if any(['mtraj' in cv for cv in settings.cvs]):  # only load mtraj if it's needed
-                mtraj = mdtraj.load(incremented_filename, top=settings.topology)
+            mtraj = mdtraj.load(incremented_filename, top=settings.topology)
+            if need_pytraj:  # only load traj if it's needed
+                traj = pytraj.iterload(incremented_filename, settings.topology)
             local_index = -1
             for cv in settings.cvs:
                 local_index += 1

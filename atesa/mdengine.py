@@ -79,35 +79,45 @@ class AdaptAmber(MDEngine):
             raise IndexError('invalid frame index for get_frame: ' + str(frame) + ' (must be >= 1, or exactly -1)')
 
         # Check for non-zero trajectory length
-        try:
-            with pytraj.utils.context.capture_stdout():     # suppress C++ errors if this file is empty
-                traj = pytraj.iterload(trajectory, settings.topology)
-            if traj.n_frames == 0:
-                del traj
-                return ''
-        except ValueError:      # sometimes this is the result of trying to load a trajectory too early
+        # try:  # todo: remove, deprecated
+        #     with pytraj.utils.context.capture_stdout():     # suppress C++ errors if this file is empty
+        #         traj = pytraj.iterload(trajectory, settings.topology)
+        #     if traj.n_frames == 0:
+        #         del traj
+        #         return ''
+        # except ValueError:      # sometimes this is the result of trying to load a trajectory too early
+        #     return ''
+        traj = mdtraj.load(trajectory, top=settings.topology)
+        if traj.n_frames == 0:
             return ''
 
         try:
-            pytraj.write_traj(new_restart_name, traj, format='rst7', frame_indices=[shift_frame], options='multi', overwrite=True, velocity=True)
-        except ValueError:  # pytraj raises a ValueError if frame index is out of range
+            traj[shift_frame].save_amberrst7(new_restart_name, force_overwrite=True)
+            # pytraj.write_traj(new_restart_name, traj, format='rst7', frame_indices=[shift_frame], options='multi', overwrite=True, velocity=True)
+        except IndexError:
             raise IndexError('frame index ' + str(frame) + ' is out of range for trajectory: ' + trajectory)
-        except AssertionError:  # sometimes there's an assertion error when shift_frame = -1; cause unknown, but this fixes it
-            if shift_frame == -1:
-                shift_frame = traj.n_frames - 1
-            try:
-                pytraj.write_traj(new_restart_name, traj, format='rst7', frame_indices=[shift_frame], options='multi',
-                                  overwrite=True, velocity=True)
-            except ValueError:  # pytraj raises a ValueError if frame index is out of range
-                raise IndexError('frame index ' + str(frame) + ' is out of range for trajectory: ' + trajectory)
-        try:
-            os.rename(new_restart_name + '.1', new_restart_name)
-        except OSError:
-            if not os.path.exists(new_restart_name):
-                raise OSError('expected pytraj to write either ' + new_restart_name + ' or ' + new_restart_name + '.1, '
-                              'but found neither.\nThe most likely explanation is that the ATESA process is unable to '
-                              'write to the working directory (' + settings.working_directory + '). You may have run '
-                              'out of storage space.')
+        # except ValueError:  # pytraj raises a ValueError if frame index is out of range # todo: remove, deprecated
+        #     raise IndexError('frame index ' + str(frame) + ' is out of range for trajectory: ' + trajectory)
+        # except AssertionError:  # sometimes there's an assertion error when shift_frame = -1; cause unknown, but this fixes it
+        #     if shift_frame == -1:
+        #         shift_frame = traj.n_frames - 1
+        #     try:
+        #         pytraj.write_traj(new_restart_name, traj, format='rst7', frame_indices=[shift_frame], options='multi',
+        #                           overwrite=True, velocity=True)
+        #     except ValueError:  # pytraj raises a ValueError if frame index is out of range
+        #         raise IndexError('frame index ' + str(frame) + ' is out of range for trajectory: ' + trajectory)
+        # try:
+        #     os.rename(new_restart_name + '.1', new_restart_name)
+        # except OSError:
+        #     if not os.path.exists(new_restart_name):
+        #         raise OSError('expected pytraj to write either ' + new_restart_name + ' or ' + new_restart_name + '.1, '
+        #                       'but found neither.\nThe most likely explanation is that the ATESA process is unable to '
+        #                       'write to the working directory (' + settings.working_directory + '). You may have run '
+        #                       'out of storage space.')
+        if not os.path.exists(new_restart_name):
+            raise OSError('expected mdtraj to write ' + new_restart_name + ' but it was not found.\nThe most likely '
+                          'explanation is that the ATESA process is unable to write to the working directory (' +
+                          settings.working_directory + '). You may have run out of storage space.')
 
         return new_restart_name
 
