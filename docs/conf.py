@@ -30,7 +30,7 @@ if not django_settings.configured:
 # -- Project information -----------------------------------------------------
 
 project = 'atesa'
-copyright = ("2019, Tucker Burgin. Project structure based on the "
+copyright = ("2022, Tucker Burgin. Project structure based on the "
              "Computational Molecular Science Python Cookiecutter version 1.1")
 author = 'Tucker Burgin'
 
