@@ -18,7 +18,7 @@ At present, ATESA only supports simulations with Amber, and TORQUE/PBS or Slurm 
 
 ### Copyright
 
-Copyright (c) 2019, Tucker Burgin
+Copyright © 2022, Tucker Burgin
 
 
 #### Acknowledgements
