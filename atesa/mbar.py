@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 """
 Standalone script for converting umbrella sampling output files into free energy profiles via pymbar
 """
@@ -118,7 +120,8 @@ def main(**kwargs):
         if not os.path.exists('mbar_temp_' + center + '_0.dat'):
             open('mbar_temp_' + center + '_0.dat', 'w').close()
         lines = open(data_file, 'r').readlines()[kwargs['ignore'][0] + 1:]
-        data = np.asarray([float(line.split()[1]) for line in lines if len(line.split()) > 1])
+        lines = lines[0:len(lines)]
+        data = np.asarray([float(line.split()[1]) for line in lines if len(line.split()) > 1 and not line.split()[1] == '-'])
 
         if kwargs['decorr']:
             [t0, g, Neff_max] = pymbar.timeseries.detectEquilibration(data)  # compute indices of uncorrelated timeseries

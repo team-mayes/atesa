@@ -1,12 +1,13 @@
-"""Just a quick routine for resampling committor analysis results with a new settings object and without assuming the
-existence of a restart.pkl file in the working directory."""
+"""Resampling methods for non-aimless shooting jobs"""
 
 import os
 import re
 import glob
+import copy
 import shutil
 from atesa import factory
 from atesa import main
+from atesa import utilities
 
 def resample_committor_analysis(settings):
     """
@@ -80,5 +81,32 @@ def resample_committor_analysis(settings):
     # Now we can use the extant committor analysis method for getting results for each thread
     for thread in allthreads:
         jobtype.update_results(thread, allthreads, settings)
+
+    os.chdir(original_dir)  # return to directory from which this was called
+
+
+def resample_umbrella_sampling(settings):
+    """
+    Resample umbrella sampling results to produce us_full_cvs.out file.
+
+    Parameters
+    ----------
+    settings : argparse.Namespace
+        Settings namespace object
+
+    Returns
+    -------
+    None
+
+    """
+    original_dir = os.getcwd()
+    os.chdir(settings.working_directory)  # move to working directory containing committor analysis trajectories
+    temp_settings = copy.deepcopy(settings)
+    temp_settings.include_qdot = False  # never want to include_qdot in this upcoming call to get_cvs
+
+    trajs = glob.glob('*.nc')  # all .nc trajectories in the working directory are targets
+    with open('us_full_cvs.out', 'w') as f:
+        for traj in trajs:
+            f.write(utilities.get_cvs(traj, temp_settings, False, 'all') + '\n')
 
     os.chdir(original_dir)  # return to directory from which this was called

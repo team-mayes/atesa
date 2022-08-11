@@ -103,10 +103,11 @@ Only a "prod" committor analysis input file is required for jobs with job_type "
 
 Only a "prod" umbrella sampling input file is required for jobs with job_type "umbrella_sampling":
 
-* 	**umbrella_sampling_prod_amber.in**: By default, umbrella sampling restraints are applied using PLUMED. The umbrella sampling input file can be almost identical to a committor analysis "prod" file, with the following mandatory additions::
+* 	**umbrella_sampling_prod_amber.in**: By default, umbrella sampling restraints are applied using PLUMED. The umbrella sampling input file can be almost identical to a committor analysis "prod" file, with the following changes::
 
+		nstlim=10000,	! a "large" maximum number of steps (enough for convergent sampling, may take some trial and error)
 		plumed=1,		! enable plumed backend
-		plumedfile={{ plumedfile}},		! template slot for declaring plumed file
+		plumedfile={{ plumedfile }},		! template slot for declaring plumed file
 		
 	ATESA will write the appropriate plumed file automatically and insert a reference to it into the input file as needed.
 	

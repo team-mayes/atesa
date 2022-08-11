@@ -15,7 +15,7 @@ from . import jobtype
 from . import batchsystem
 from . import utilities
 from . import taskmanager
-from . import resample_committor_analysis
+from . import resampling
 # from .configure import *
 # from .factory import *
 # from .mdengine import *

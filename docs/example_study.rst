@@ -280,6 +280,7 @@ In order to correct this, we'll try to apply pathway restraints. Because we spec
 
 	resample = True		# don't run aimless shooting again, just resample from existing simulations
 	full_cvs = True		# produce input for pathway-restrained umbrella sampling
+	only_full_cvs = True    # only produce the input for pathway-restrained umbrella sampling
 
 	# Same commitment definitions we've been using all along
 	commit_fwd = ([3,1,1],[5,5,2],[2.2,2.0,3.0],['gt','lt','gt'])
@@ -287,7 +288,7 @@ In order to correct this, we'll try to apply pathway restraints. Because we spec
 	
 	information_error_freq = 2500
 	
-This file is just the same as the aimless shooting configuration file (with some extraneous options removed for clarity, though leaving them in would not cause errors), but with the addition of the ``resample`` and ``full_cvs`` options. This job won't actually perform aimless shooting; it will just reanalyze the existing aimless shooting data in the specified working directory. Be careful to specify ``overwrite = False`` to ensure that your aimless shooting data is not deleted! This configuration file can also be found in `examples/umbrella_sampling <https://github.com/team-mayes/atesa/tree/master/examples/umbrella_sampling>`_.
+This file is just the same as the aimless shooting configuration file (with some extraneous options removed for clarity, though leaving them in would not cause errors), but with the addition of the ``resample``, ``full_cvs``, and ``only_full_cvs`` options. This job won't actually perform aimless shooting; it will just analyze the existing aimless shooting data in the specified working directory to produce the input file necessary for pathway restrained umbrella sampling. This configuration file can also be found in `examples/umbrella_sampling <https://github.com/team-mayes/atesa/tree/master/examples/umbrella_sampling>`_.
 
 Because there's a lot of data to analyze, we suggest making use of ATESA's multiprocessing support when resampling with ``full_cvs = True``. In this case we allocated 24 cores, and this job finished after 1 hour and 19 minutes.
 

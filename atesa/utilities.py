@@ -118,9 +118,8 @@ def get_cvs(filename, settings, reduce=False, frame=0):
     reduce : bool
         Boolean determining whether to reduce the CV values for use in evaluating an RC value that uses reduced values
     frame : int or str
-        Frame of trajectory filename to use (1-indexed, negatives not valid, only used if not equal to 0); or, 'all'
-        returns the CVs for each frame of the input trajectory, separated by newlines. 'all' is incompatible with
-        settings.include_qdot = True
+        Frame of trajectory filename to use (0-indexed, negatives read from end); or, 'all' returns the CVs for each
+        frame of the input trajectory, separated by newlines. 'all' is incompatible with settings.include_qdot = True
 
     Returns
     -------
@@ -194,11 +193,15 @@ def get_cvs(filename, settings, reduce=False, frame=0):
         if need_pytraj:  # only load pytraj if it's needed
             full_traj = pytraj.iterload(filename, settings.topology)
         traj_name = filename
-    elif frame < 0:
-        raise RuntimeError('frame must be >= 0')
     else:
-        full_traj = pytraj.iterload(filename, settings.topology, frame_slice=[(frame - 1, frame)])
-        full_mtraj = mdtraj.load_frame(filename, frame - 1, top=settings.topology)
+        if need_pytraj:
+            if frame < 0:
+                full_traj = pytraj.iterload(filename, settings.topology)
+                pframe = full_traj.n_frames + frame
+                full_traj = pytraj.iterload(filename, settings.topology, frame_slice=[(pframe, pframe + 1)])
+            else:
+                full_traj = pytraj.iterload(filename, settings.topology, frame_slice=[(frame, frame + 1)])
+        full_mtraj = mdtraj.load(filename, top=settings.topology)[frame]
         if True in ['traj_name' in cv for cv in settings.cvs]:  # if True, need .rst7 formatted file to operate on
             mdengine = factory.mdengine_factory(settings.md_engine)
             traj_name = mdengine.get_frame(filename, frame, settings)
@@ -220,7 +223,6 @@ def get_cvs(filename, settings, reduce=False, frame=0):
 
     output = ''
     values = []
-    local_index = -1
     sigfigs = '%.' + str(settings.sigfigs) + 'f'
 
     if frame == 'all':
@@ -229,6 +231,7 @@ def get_cvs(filename, settings, reduce=False, frame=0):
         n_iter = 1
 
     for iter in range(n_iter):  # iterate over all frames
+        local_index = -1
         # set traj and mtraj to only the desired frame; has no (important) effect if there's only one frame anyway
         mtraj = full_mtraj[iter]
         if need_pytraj:     # only load traj if it's needed
@@ -354,7 +357,7 @@ def evaluate_rc(rc_definition, cv_list):
     return eval(rc_definition)
 
 
-def resample(settings, partial=False, full_cvs=False):
+def resample(settings, partial=False, full_cvs=False, only_full_cvs=False):
     """
     Resample each shooting point in each thread with different CV definitions to produce new output files with extant
     aimless shooting data.
@@ -386,11 +389,6 @@ def resample(settings, partial=False, full_cvs=False):
     # This function is sometimes called from outside the working directory, so make sure we're there
     os.chdir(settings.working_directory)
 
-    # Remove pre-existing output files if any, initialize new one
-    open(settings.working_directory + '/as_raw_resample.out', 'w').close()
-    if settings.information_error_checking:
-        open(settings.working_directory + '/as_raw_timestamped.out', 'w').close()
-
     # Load in allthreads from restart.pkl
     try:
         allthreads = pickle.load(open('restart.pkl', 'rb'))
@@ -398,130 +396,140 @@ def resample(settings, partial=False, full_cvs=False):
         raise FileNotFoundError('resample = True requires restart.pkl, but could not find one in working directory: '
                                 + settings.working_directory)
 
-    # Open files for writing outside loop (much faster than opening/closing for each write)
-    f1 = open(settings.working_directory + '/as_raw_resample.out', 'a')
-    if settings.information_error_checking:
-        f2 = open(settings.working_directory + '/as_raw_timestamped.out', 'a')
+    if not only_full_cvs:
+        # Remove pre-existing output files if any, initialize new one
+        open(settings.working_directory + '/as_raw_resample.out', 'w').close()
+        if settings.information_error_checking:
+            open(settings.working_directory + '/as_raw_timestamped.out', 'w').close()
 
-    # Iterate through each thread's history.init_coords list and obtain CV values as needed
-    for thread in allthreads:
-        thread.this_cvs_list = []       # initialize full nested list of CV values for this thread
-        thread.cvs_for_later = []       # need this one with empty lists for failed moves, for indexing reasons
-        for step_index in range(len(thread.history.prod_results)):
-            if thread.history.prod_results[step_index][0] in ['fwd', 'bwd']:
-                if thread.history.prod_results[step_index][0] == 'fwd':
-                    this_basin = 'B'
-                else:  # 'bwd'
-                    this_basin = 'A'
+        # Open files for writing outside loop (much faster than opening/closing for each write)
+        f1 = open(settings.working_directory + '/as_raw_resample.out', 'a')
+        if settings.information_error_checking:
+            f2 = open(settings.working_directory + '/as_raw_timestamped.out', 'a')
 
-                # Get CVs for this shooting point   # todo: a bit sloppy... can I clean this up?
-                try:
-                    if not os.path.exists(thread.history.init_coords[step_index][0]):
-                        warnings.warn('attempted to resample ' + thread.history.init_coords[step_index][0] + ' but no such '
-                                      'file exists in the working directory\nSkipping and continuing', RuntimeWarning)
+        # Iterate through each thread's history.init_coords list and obtain CV values as needed
+        for thread in allthreads:
+            thread.this_cvs_list = []       # initialize full nested list of CV values for this thread
+            thread.cvs_for_later = []       # need this one with empty lists for failed moves, for indexing reasons
+            for step_index in range(len(thread.history.prod_results)):
+                if thread.history.prod_results[step_index][0] in ['fwd', 'bwd']:
+                    if thread.history.prod_results[step_index][0] == 'fwd':
+                        this_basin = 'B'
+                    else:  # 'bwd'
+                        this_basin = 'A'
+
+                    # Get CVs for this shooting point   # todo: a bit sloppy... can I clean this up?
+                    try:
+                        if not os.path.exists(thread.history.init_coords[step_index][0]):
+                            warnings.warn('attempted to resample ' + thread.history.init_coords[step_index][0] + ' but no such '
+                                          'file exists in the working directory\nSkipping and continuing', RuntimeWarning)
+                            thread.cvs_for_later.append([])
+                            continue        # skip to next step_index
+                    except IndexError:  # getting cv's failed (maybe corrupt coordinate file) so consider this step failed
                         thread.cvs_for_later.append([])
                         continue        # skip to next step_index
-                except IndexError:  # getting cv's failed (maybe corrupt coordinate file) so consider this step failed
-                    thread.cvs_for_later.append([])
-                    continue        # skip to next step_index
-                try:
-                    this_cvs = get_cvs(thread.history.init_coords[step_index][0], settings)
-                except IndexError:  # getting cv's failed (maybe corrupt coordinate file) so consider this step failed
-                    thread.cvs_for_later.append([])
-                    continue        # skip to next step_index
+                    try:
+                        this_cvs = get_cvs(thread.history.init_coords[step_index][0], settings)
+                    except IndexError:  # getting cv's failed (maybe corrupt coordinate file) so consider this step failed
+                        thread.cvs_for_later.append([])
+                        continue        # skip to next step_index
 
-                # Write CVs to as_raw_resample.out
-                f1.write(this_basin + ' <- ' + this_cvs + '\n')
-                f1.flush()
-                if settings.information_error_checking:
-                    f2.write(str(thread.history.timestamps[step_index]) + ' ' + this_basin + ' <- ' + this_cvs + '\n')
-                    f2.flush()
+                    # Write CVs to as_raw_resample.out
+                    f1.write(this_basin + ' <- ' + this_cvs + '\n')
+                    f1.flush()
+                    if settings.information_error_checking:
+                        f2.write(str(thread.history.timestamps[step_index]) + ' ' + this_basin + ' <- ' + this_cvs + '\n')
+                        f2.flush()
 
-                # Append this_cvs to running list for evaluating decorrelation time
-                thread.this_cvs_list.append([[float(item) for item in this_cvs.split(' ')], thread.history.timestamps[step_index]])
-                thread.cvs_for_later.append([float(item) for item in this_cvs.split(' ')])
-            else:
-                thread.cvs_for_later.append([])
-
-    # Close files just to be sure
-    f1.close()
-    if settings.information_error_checking:
-        f2.close()
-
-    if settings.information_error_checking:   # sort timestamped output file
-        shutil.copy(settings.working_directory + '/as_raw_timestamped.out', settings.working_directory + '/as_raw_timestamped_copy.out')
-        open(settings.working_directory + '/as_raw_timestamped.out', 'w').close()
-        with open(settings.working_directory + '/as_raw_timestamped_copy.out', 'r') as f:
-            for line in sorted(f):
-                open(settings.working_directory + '/as_raw_timestamped.out', 'a').write(line)
-            open(settings.working_directory + '/as_raw_timestamped.out', 'a').close()
-        os.remove(settings.working_directory + '/as_raw_timestamped_copy.out')
-
-    # Construct list of data lengths to perform decorrelation for
-    if settings.information_error_checking:
-        if not partial:
-            lengths = [leng for leng in range(settings.information_error_freq, len(open(settings.working_directory + '/as_raw_timestamped.out', 'r').readlines()) + 1, settings.information_error_freq)]
-        else:   # if partial
-            lengths = [leng for leng in range(settings.information_error_freq, len(open(settings.working_directory + '/as_raw_timestamped.out', 'r').readlines()) + 1, settings.information_error_freq) if not leng in [int(line.split(' ')[0]) for line in open(settings.working_directory + '/info_err.out', 'r').readlines()]]
-        pattern = re.compile('[0-9]+')  # pattern for reading out timestamp from string
-    else:
-        lengths = [len(open(settings.working_directory + '/as_raw_resample.out', 'r').readlines())]
-        pattern = None
-
-    # Assess decorrelation and write as_decorr.out
-    for length in lengths:
-        if settings.information_error_checking:
-            suffix = '_' + str(length)     # only use-case with multiple lengths, so this keeps them from stepping on one another's toes
-            cutoff_timestamp = int(pattern.findall(open(settings.working_directory + '/as_raw_timestamped.out', 'r').readlines()[length - 1])[0])
-        else:
-            cutoff_timestamp = math.inf
-            suffix = ''
-        open(settings.working_directory + '/as_decorr' + suffix + '.out', 'w').close()
-        f3 = open(settings.working_directory + '/as_decorr' + suffix + '.out', 'a')
-        for thread in allthreads:
-            if thread.this_cvs_list:       # if there were any 'fwd' or 'bwd' results in this thread
-                mapped = list(map(list, zip(*[item[0] for item in thread.this_cvs_list if item[1] <= cutoff_timestamp])))   # list of lists of values of each CV
-
-                slowest_lag = -1    # initialize running tally of slowest autocorrelation time among CVs in this thread
-                if settings.include_qdot:
-                    ndims = len(thread.this_cvs_list[0]) / 2   # number of non-rate-of-change CVs
-                    if not ndims % 1 == 0:
-                        raise ValueError('include_qdot = True, but an odd number of dimensions were found in the '
-                                         'threads in restart.pkl, so they can\'t contain inertial terms.')
-                    ndims = int(ndims)
+                    # Append this_cvs to running list for evaluating decorrelation time
+                    thread.this_cvs_list.append([[float(item) for item in this_cvs.split(' ')], thread.history.timestamps[step_index]])
+                    thread.cvs_for_later.append([float(item) for item in this_cvs.split(' ')])
                 else:
-                    ndims = len(thread.this_cvs_list[0])
+                    thread.cvs_for_later.append([])
 
-                for dim_index in range(ndims):
-                    slowest_lag = -1
-                    if mapped:
-                        this_cv = mapped[dim_index]
-                    if len(this_cv) > 1:
-                        this_autocorr = stattools.acf(this_cv, nlags=len(this_cv) - 1, fft=True)
-                        for lag in range(len(this_cv) - 1):
-                            corr = this_autocorr[lag]
-                            if abs(corr) <= 1.96 / numpy.sqrt(len(this_cv)):
-                                slowest_lag = lag + 1
-                                break
+        # Close files just to be sure
+        f1.close()
+        if settings.information_error_checking:
+            f2.close()
 
-                if slowest_lag > 0:     # only proceed to writing decorrelated output file if a slowest_lag was found
-                    # Write the same way as to as_raw_resample.out above, but starting the range at slowest_lag
-                    for step_index in range(slowest_lag, len(thread.history.prod_results)):
-                        if thread.history.prod_results[step_index][0] in ['fwd', 'bwd'] and thread.history.timestamps[step_index] <= cutoff_timestamp:
-                            if thread.history.prod_results[step_index][0] == 'fwd':
-                                this_basin = 'B'
-                            else:  # 'bwd'
-                                this_basin = 'A'
+        if settings.information_error_checking:   # sort timestamped output file
+            shutil.copy(settings.working_directory + '/as_raw_timestamped.out', settings.working_directory + '/as_raw_timestamped_copy.out')
+            open(settings.working_directory + '/as_raw_timestamped.out', 'w').close()
+            with open(settings.working_directory + '/as_raw_timestamped_copy.out', 'r') as f:
+                for line in sorted(f):
+                    open(settings.working_directory + '/as_raw_timestamped.out', 'a').write(line)
+                open(settings.working_directory + '/as_raw_timestamped.out', 'a').close()
+            os.remove(settings.working_directory + '/as_raw_timestamped_copy.out')
 
-                            # Get CVs for this shooting point and write them to the decorrelated output file
-                            if thread.cvs_for_later[step_index]:
-                                this_cvs = thread.cvs_for_later[step_index]    # retrieve CVs from last evaluation
-                                f3.write(this_basin + ' <- ' + ' '.join([str(item) for item in this_cvs]) + '\n')
+        # Construct list of data lengths to perform decorrelation for
+        if settings.information_error_checking:
+            if not partial:
+                lengths = [leng for leng in range(settings.information_error_freq, len(open(settings.working_directory + '/as_raw_timestamped.out', 'r').readlines()) + 1, settings.information_error_freq)]
+            else:   # if partial
+                lengths = [leng for leng in range(settings.information_error_freq, len(open(settings.working_directory + '/as_raw_timestamped.out', 'r').readlines()) + 1, settings.information_error_freq) if not leng in [int(line.split(' ')[0]) for line in open(settings.working_directory + '/info_err.out', 'r').readlines()]]
+            pattern = re.compile('[0-9]+')  # pattern for reading out timestamp from string
+        else:
+            lengths = [len(open(settings.working_directory + '/as_raw_resample.out', 'r').readlines())]
+            pattern = None
 
-        f3.close()
+        # Assess decorrelation and write as_decorr.out
+        for length in lengths:
+            if settings.information_error_checking:
+                suffix = '_' + str(length)     # only use-case with multiple lengths, so this keeps them from stepping on one another's toes
+                cutoff_timestamp = int(pattern.findall(open(settings.working_directory + '/as_raw_timestamped.out', 'r').readlines()[length - 1])[0])
+            else:
+                cutoff_timestamp = math.inf
+                suffix = ''
+            open(settings.working_directory + '/as_decorr' + suffix + '.out', 'w').close()
+            f3 = open(settings.working_directory + '/as_decorr' + suffix + '.out', 'a')
+            for thread in allthreads:
+                if thread.this_cvs_list:       # if there were any 'fwd' or 'bwd' results in this thread
+                    mapped = list(map(list, zip(*[item[0] for item in thread.this_cvs_list if item[1] <= cutoff_timestamp])))   # list of lists of values of each CV
 
-    # Move resample raw output file to take its place as the only raw output file
-    shutil.move(settings.working_directory + '/as_raw_resample.out', settings.working_directory + '/as_raw.out')
+                    slowest_lag = -1    # initialize running tally of slowest autocorrelation time among CVs in this thread
+                    if settings.include_qdot:
+                        ndims = len(thread.this_cvs_list[0]) / 2   # number of non-rate-of-change CVs
+                        if not ndims % 1 == 0:
+                            raise ValueError('include_qdot = True, but an odd number of dimensions were found in the '
+                                             'threads in restart.pkl, so they can\'t contain inertial terms.')
+                        ndims = int(ndims)
+                    else:
+                        ndims = len(thread.this_cvs_list[0])
+
+                    for dim_index in range(ndims):
+                        slowest_lag = -1
+                        if mapped:
+                            this_cv = mapped[dim_index]
+                        if len(this_cv) > 1:
+                            this_autocorr = stattools.acf(this_cv, nlags=len(this_cv) - 1, fft=True)
+                            for lag in range(len(this_cv) - 1):
+                                corr = this_autocorr[lag]
+                                if abs(corr) <= 1.96 / numpy.sqrt(len(this_cv)):
+                                    slowest_lag = lag + 1
+                                    break
+
+                    if slowest_lag > 0:     # only proceed to writing decorrelated output file if a slowest_lag was found
+                        # Write the same way as to as_raw_resample.out above, but starting the range at slowest_lag
+                        for step_index in range(slowest_lag, len(thread.history.prod_results)):
+                            if thread.history.prod_results[step_index][0] in ['fwd', 'bwd'] and thread.history.timestamps[step_index] <= cutoff_timestamp:
+                                if thread.history.prod_results[step_index][0] == 'fwd':
+                                    this_basin = 'B'
+                                else:  # 'bwd'
+                                    this_basin = 'A'
+
+                                # Get CVs for this shooting point and write them to the decorrelated output file
+                                if thread.cvs_for_later[step_index]:
+                                    this_cvs = thread.cvs_for_later[step_index]    # retrieve CVs from last evaluation
+                                    f3.write(this_basin + ' <- ' + ' '.join([str(item) for item in this_cvs]) + '\n')
+
+            f3.close()
+
+        # Move resample raw output file to take its place as the only raw output file
+        shutil.move(settings.working_directory + '/as_raw_resample.out', settings.working_directory + '/as_raw.out')
+    else:
+        if not full_cvs:
+            raise RuntimeError('resample called with only_full_cvs = True but full_cvs = False, so this does nothing. '
+                               'Change one of them!')
 
     # Implement full_cvs
     if full_cvs:
@@ -679,3 +687,95 @@ def interpret_cv(cv_index, settings):
         atoms.remove('')  # remove empty list elements if present
 
     return atoms, optype, nat
+
+
+def plot_cvs_vs_rc(full_cvs_file, rc_definition, as_output_file):
+    """
+    Produce a plot of the values of each CV in the RC as a function of RC value from either aimless shooting or umbrella
+    sampling data.
+
+    The plot is made in matplotlib but also printed as text to an output file.
+
+    Parameters
+    ----------
+    full_cvs_file : str
+        Path to full_cvs output file (produced by utilities.resample or resampling.resample_umbrella_sampling)
+    rc_definition : str
+        String representing the definition of the reaction coordinate
+    as_output_file : str
+        Path to the as_output_file file passed to lmax.py when generating the reaction coordinate
+
+    Returns
+    -------
+    None
+
+    """
+    # Identify relevant CVs
+    pattern = re.compile('CV[0-9]+')
+    cv_names = pattern.findall(rc_definition)    # get list of CV names, e.g., ['CV6', 'CV35', ...]
+    cvs = [int(cv[2:]) - 1 for cv in cv_names]   # get zero-indexed CV indices
+
+    # Get values of relevant CVs from each line in full_cvs_file
+    values = [[] for _ in range(len(cvs))]
+    for line in open(full_cvs_file, 'r').readlines():
+        ii = -1
+        for cv in cvs:
+            ii += 1
+            values[ii].append(float(line.split()[cv]))     # [[obs1cv1, obs2cv1], [obs1cv2, obs2cv2]]
+
+    # Get data from input file, and determine minimum and maximum values for each CV, get reduced CV values
+    input_data = [[float(item) for item in
+                   line.replace('A <- ', '').replace('B <- ', '').replace(' \n', '').replace('\n', '').split(' ')]
+                  for line in open(as_output_file, 'r').readlines()]       # [[obs1cv1, obs1cv2], [obs2cv1, obs2cv2]]
+    mapped = list(map(list, zip(*input_data)))                  # [[obs1cv1, obs2cv1], [obs1cv2, obs2cv2]]
+    minmax = [[numpy.min(item) for item in mapped], [numpy.max(item) for item in mapped]]    # [[mincv1, mincv2], [maxcv1, maxcv2]]
+    n_cvs = len(minmax[0])  # number of CVs total in as_output_file, for use later
+    minmax = [[minmax[0][ii] for ii in cvs], [minmax[1][ii] for ii in cvs]]     # cut down to just the relevant values
+    reduced_values = [[(values[ii][jj] - minmax[0][ii]) / (minmax[1][ii] - minmax[0][ii]) for ii in range(len(values))] for jj in range(len(values[0]))]
+    reduced_values = list(map(list, zip(*reduced_values)))  # transpose to match shape of values
+
+    rcs = []     # list of RC values for each sample
+    for jj in range(len(reduced_values[0])):    # iterate over samples
+        cvs_list = [0 for ii in range(n_cvs)]    # evaluate_rc expects an entry for every CV, not just those in the RC
+        for kk in range(len(cvs)):
+            cvs_list[cvs[kk]] = reduced_values[kk][jj]
+        rcs.append(evaluate_rc(rc_definition, cvs_list))
+
+    # Bin each RC value and evaluate average and stdev of each CV value in each bin
+    bins = numpy.linspace(min(rcs), max(rcs), 20) # todo: should the number of bins be a setting?
+
+    assert len(values[0]) == len(rcs)   # sanity check
+
+    means = [[numpy.mean([values[cv][jj] for jj in range(len(rcs)) if bins[bin_ii] <= rcs[jj] <= bins[bin_ii + 1]]) for
+              bin_ii in range(len(bins) - 1)] for cv in range(len(values))]
+    stds = [[numpy.std([values[cv][jj] for jj in range(len(rcs)) if bins[bin_ii] <= rcs[jj] <= bins[bin_ii + 1]]) for
+              bin_ii in range(len(bins) - 1)] for cv in range(len(values))]
+    reduced_means = [[numpy.mean([reduced_values[cv][jj] for jj in range(len(rcs)) if bins[bin_ii] <= rcs[jj] <= bins[bin_ii + 1]]) for
+              bin_ii in range(len(bins) - 1)] for cv in range(len(values))]
+    reduced_stds = [[numpy.std([reduced_values[cv][jj] for jj in range(len(rcs)) if bins[bin_ii] <= rcs[jj] <= bins[bin_ii + 1]]) for
+              bin_ii in range(len(bins) - 1)] for cv in range(len(values))]
+
+    # Write results to output file and plot in both reduced and non-reduced forms
+    with open('cvs_vs_rc.out', 'w') as f:
+        f.write('RC value')
+        for name in cv_names:
+            f.write('; ' + name + ' mean')
+            f.write('; ' + name + ' st.dev.')
+        for name in cv_names:
+            f.write('; reduced ' + name + ' mean')
+            f.write('; reduced ' + name + ' st.dev.')
+        f.write('\n')
+        for ii in range(len(bins) - 1):
+            f.write('%.3f' % numpy.mean([bins[ii], bins[ii + 1]]))
+            for jj in range(len(means)):
+                f.write('\t' + '%.3f' % float(means[jj][ii]))
+                f.write('\t' + '%.3f' % float(stds[jj][ii]))
+            for jj in range(len(means)):
+                f.write('\t' + '%.3f' % float(reduced_means[jj][ii]))
+                f.write('\t' + '%.3f' % float(reduced_stds[jj][ii]))
+            f.write('\n')
+
+    # todo: optionally, finish implementing with matplotlib
+    # rc_means = [numpy.mean([bins[ii], bins[ii + 1]]) for ii in range(len(bins) - 1)]
+    # for ii in range(len(bins) - 1):
+    #     plt.plot(rc_means, means)

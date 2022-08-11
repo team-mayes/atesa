@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+
 """
 rc_eval.py
 Standalone script to evaluate RC values given an aimless shooting working directory and reaction coordinate definition
@@ -128,11 +129,11 @@ def main(working_directory, rc_definition, as_out_file, extrema=False):
         for thread in allthreads:
             if thread.history.last_accepted > -1:   # if accepted move exists in thread
                 for job_index in range(2):
-                    cvs = utilities.get_cvs(thread.history.prod_trajs[thread.history.last_accepted][job_index], settings, reduce=True).split(' ')
+                    cvs = utilities.get_cvs(thread.history.prod_trajs[thread.history.last_accepted][job_index], settings, reduce=True, frame=-1).split(' ')
                     result.append(utilities.evaluate_rc(rc_definition, cvs))
                 print(' Shooting move name: ' + thread.history.init_coords[thread.history.last_accepted][0])
                 print(' extrema: ' + str([float('%.4f' % float(item)) for item in result]))
-                return None   # to exit the script after returning extrema
+                return [float('%.4f' % float(item)) for item in result]   # to exit the script after returning extrema
         raise RuntimeError('none of the shooting moves in the working directory appear to contain any accepted moves.')
 
     # Obtain list of shooting point coordinate files

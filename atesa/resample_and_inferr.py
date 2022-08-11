@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 """
 Helper file to call utilities.resample and then information_error.main in sequence in a single process.
 """

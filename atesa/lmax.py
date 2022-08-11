@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+
 """
 Likelihood maximization script. This program is designed to be entirely separable from ATESA in that it can be called
 manually to perform likelihood maximization to user specifications and with arbitrary input files; however, it is

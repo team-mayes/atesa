@@ -1,5 +1,5 @@
 """
-Unit and regression test for auto_cvs.py.
+Unit and regression test for resampling.py.
 """
 
 # Import package, test suite, and other packages as needed
@@ -14,7 +14,8 @@ import filecmp
 import argparse
 from atesa.configure import configure
 from atesa import main
-from atesa.resample_committor_analysis import resample_committor_analysis
+from atesa.resampling import resample_committor_analysis
+from atesa.resampling import resample_umbrella_sampling
 
 class Tests(object):
     def setup_method(self, test_method):
@@ -62,6 +63,31 @@ class Tests(object):
         assert os.path.exists('committor_analysis.out')
         assert len(allthreads) == 1     # just one thread
         assert allthreads[0].history.prod_results == ['fwd', 'fwd', 'fwd']
+
+    def test_resample_umbrella_sampling(self):
+        """Tests resample_umbrella_sampling"""
+        # First spoof trajectories in working directory
+        shutil.copy('../test_data/test.nc', 'test.rst7_0_0.nc')
+        shutil.copy('../test_data/test.nc', 'test.rst7_0_1.nc')
+        shutil.copy('../test_data/test.nc', 'test.rst7_0_2.nc')
+
+        # Now make settings for resampling
+        settings = configure('../../data/atesa.config')
+        settings.job_type = 'umbrella_sampling'
+        settings.resample = True
+        settings.topology = '../test_data/test.prmtop'
+        settings.cvs = ['pytraj.distance(traj, \'@1 @2\')[0]', 'pytraj.angle(traj, \'@2 @3 @4\')[0]']
+        settings.rc_definition = '1.00 + 2.34*CV1 - 0.67*CV2'
+
+        # Finally, call resample
+        resample_umbrella_sampling(settings)
+
+        assert os.path.exists('us_full_cvs.out')
+
+        lines = open('us_full_cvs.out', 'r').readlines()
+
+        assert len(lines) == 6
+        assert len(lines[0].split()) == 2
 
     @classmethod
     def teardown_method(self, method):

@@ -438,7 +438,7 @@ class AimlessShooting(JobType):
                     try:
                         if utilities.check_commit(thread.history.prod_trajs[-1][job_index], settings):  # if committed
                             thread.cancel_job(job_index, settings)        # cancel it
-                    except RuntimeError:    # occurs if trajectory doesn't have any frames yet
+                    except (RuntimeError, OSError):    # occurs if trajectory doesn't have any frames or hasn't been created yet
                         pass
 
         # if every job in this thread has status 'C'ompleted/'C'anceled...
@@ -487,6 +487,13 @@ class AimlessShooting(JobType):
                 open('info_err.out', 'w').close()
             if settings.information_error_checking:
                 len_data = len(open('as_raw.out', 'r').readlines())     # number of shooting points to date
+
+                # Get last value of len_data for which there's an info_err entry
+                try:
+                    last_len_data = int(open('info_err.out', 'r').readlines()[-1].split()[0])
+                except IndexError:  # info_err.out is empty
+                    last_len_data = 0
+
                 if settings.pid == -1:
                     proc_status = 'not_running'     # default value for new process, no process running
                 else:
@@ -502,12 +509,12 @@ class AimlessShooting(JobType):
                             proc_status = 'error'
                     except (psutil.NoSuchProcess, ProcessLookupError):
                         proc_status = 'not_running'
-                if (len_data % settings.information_error_freq == 0 and len_data > 0 and proc_status == 'not_running') or (settings.information_error_overdue and proc_status == 'not_running'):
+                if (len_data - last_len_data >= settings.information_error_freq and len_data > 0 and proc_status == 'not_running') or (settings.information_error_overdue and proc_status == 'not_running'):
                     # Start separate process calling resample and then information_error
                     process = subprocess.Popen(['resample_and_inferr.py'], stdout=sys.stdout, stderr=sys.stderr, preexec_fn=os.setsid)
                     settings.pid = process.pid  # store process ID in settings
                     settings.information_error_overdue = False
-                elif len_data % settings.information_error_freq == 0 and len_data > 0 and not proc_status == 'not_running':
+                elif len_data - last_len_data >= settings.information_error_freq and len_data > 0 and not proc_status == 'not_running':
                     settings.information_error_overdue = True   # so that information error will be checked next time proc_status == 'not_running' regardless of len_data
 
                 # Compare latest information error value to threshold
@@ -826,7 +833,7 @@ class CommittorAnalysis(JobType):
                     commit = utilities.check_commit(thread.history.prod_trajs[job_index], settings)
                     if commit:
                         thread.cancel_job(job_index, settings)        # cancel it
-                except RuntimeError:    # occurs if trajectory has no frames yet
+                except (RuntimeError, OSError):  # occurs if trajectory doesn't have any frames or hasn't been created yet
                     pass
 
         # if every job in this thread has status 'C'ompleted/'C'anceled...
@@ -1346,7 +1353,7 @@ class FindTS(JobType):
                     if utilities.check_commit(thread.history.prod_trajs[-1], settings) == commit_basin:
                         thread.history.prod_result = commit_basin
                         thread.cancel_job(job_index, settings)  # cancel it
-                except RuntimeError:    # occurs if there are no frames yet in the trajectory
+                except (RuntimeError, OSError):  # occurs if trajectory doesn't have any frames or hasn't been created yet
                     pass
 
         # if every job in this thread has status 'C'ompleted/'C'anceled...
@@ -2095,16 +2102,27 @@ class UmbrellaSampling(JobType):
         # Here, we need to convert the provided trajectory file(s) into single-frame coordinate files to use as the
         # initial coordinates of each thread.
         # This line loads more than one trajectory file together if len(settings.initial_coordinates) > 1
-        traj = pytraj.load(settings.initial_coordinates, settings.topology)
+        # traj = pytraj.load(settings.initial_coordinates, settings.working_directory + '/' + settings.topology)
+        traj = mdtraj.load(settings.initial_coordinates, top=settings.working_directory + '/' + settings.topology)
 
+        try:
+            assert traj.n_frames > 0
+        except AssertionError:
+            raise AssertionError('Somehow umbrella sampling attempted to build initial coordinates from a pair of '
+                                 'trajectories containing zero frames between them. The trajectories in question were: '
+                                 + str(settings.initial_coordinates) + '\nThis should not be possible. The trajectory '
+                                 'must have been modified after aimless shooting completed. If you\'re sure this is not'
+                                 ' the case, please raise this as an issue on the ATESA github page.')
+
+        temp_settings = copy.deepcopy(settings)  # always exclude qdot here (not supported by US anyway)
+        temp_settings.include_qdot = False
         frame_rcs = []
         for frame in range(traj.n_frames):
             new_restart_name = settings.working_directory + '/input_trajectory_frame_' + str(frame) + '.rst7'
-            pytraj.write_traj(new_restart_name, traj, format='rst7', frame_indices=[frame], options='multi',
-                              overwrite=True, velocity=True)
-            os.rename(new_restart_name + '.1', new_restart_name)
-            temp_settings = copy.deepcopy(settings)     # always exclude qdot here (not supported by US anyway)
-            temp_settings.include_qdot = False
+            traj[frame].save_amberrst7(new_restart_name, force_overwrite=True)
+            # pytraj.write_traj(new_restart_name, traj, format='rst7', frame_indices=[frame], options='multi',
+            #                   overwrite=True, velocity=True)
+            # os.rename(new_restart_name + '.1', new_restart_name)
             cvs = utilities.get_cvs(new_restart_name, temp_settings, reduce=settings.rc_reduced_cvs)
             rc = utilities.evaluate_rc(temp_settings.rc_definition, cvs.split(' '))
             frame_rcs.append([new_restart_name, rc])
@@ -2114,6 +2132,13 @@ class UmbrellaSampling(JobType):
         # whereas safe_arange(-6,12,0.1)[-1] = 11.9
         def safe_arange(start, stop, step):
             return step * numpy.arange(start / step, stop / step)
+
+        try:
+            assert settings.us_rc_min < settings.us_rc_max
+        except AssertionError:
+            raise AssertionError('us_rc_min >= us_rc_max; this is not permitted. If you\'re trying to specify a single '
+                                 'window value, set us_rc_min to that value and us_rc_max to a value greater than that '
+                                 'but less than (us_rc_min + us_rc_step).')
 
         window_centers = safe_arange(settings.us_rc_min, settings.us_rc_max, settings.us_rc_step)
 
@@ -2214,10 +2239,17 @@ class UmbrellaSampling(JobType):
             offset = 1
         else:
             raise RuntimeError('unrecognized us_implementation setting: ' + settings.us_implementation)
-        thread.history.prod_results += [float(item.split()[1]) for item in
+        try:
+            thread.history.prod_results += [float(item.split()[1]) for item in
                                       open('rcwin_' + str(thread.history.window) + '_' + str(thread.history.index) +
                                            '_us.dat', 'r').readlines()[offset + len(thread.history.prod_results):]
-                                           if len(item.split()) > 1]
+                                           if len(item.split()) > 1 and not item.split()[1] == '-']
+        except FileNotFoundError:
+            raise RuntimeError('Unable to find expected output file rcwin_' + str(thread.history.window) + '_' +
+                               str(thread.history.index) + '_us.dat. Most likely this means that the simulation '
+                               'terminated early or crashed. Check the corresponding output files in the working '
+                               'directory (those with "' + str(thread.history.window) + '_' + str(thread.history.index)
+                               + '" in their names).')
 
         # Write updated restart.pkl
         pickle.dump(allthreads, open('restart.pkl.bak', 'wb'), protocol=2)  # if the code crashes while dumping it could delete the contents of the pkl file

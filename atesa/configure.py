@@ -95,6 +95,7 @@ def configure(input_file, user_working_directory=''):
         always_new: bool = True
         resample: bool = False
         full_cvs: bool = False
+        only_full_cvs: bool = False
         degeneracy: int = 1
         cleanup: bool = True   # todo: implement asking the user what they want this to be at install time; OR make it a required option (no default); OR add a warning when it's set to False about what that entails for resampling
         # todo: make a script that implements cleanup and that can be called separately so users can cleanup manually whenever desired

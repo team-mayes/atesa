@@ -1,7 +1,8 @@
+#!/usr/bin/env python3
+
 """
 main.py
-Version 2 of Aimless Transition Ensemble Sampling and Analysis refactors the code to make it portable, extensible, and 
-flexible.
+Aimless Transition Ensemble Sampling and Analysis (ATESA)
 
 This script handles the primary loop of building and submitting jobs in independent Threads, using the methods thereof 
 to execute various interfaced/abstracted commands.
@@ -24,7 +25,7 @@ from atesa import process
 from atesa import interpret
 from atesa import utilities
 from atesa import information_error
-from atesa import resample_committor_analysis
+from atesa import resampling
 from multiprocess import Pool, Manager, get_context
 
 class Thread(object):
@@ -283,7 +284,7 @@ def main(settings, rescue_running=[]):
 
     if not rescue_running:
         # Implement resample
-        if settings.job_type in ['aimless_shooting', 'committor_analysis'] and settings.resample:
+        if settings.job_type in ['aimless_shooting', 'committor_analysis', 'umbrella_sampling'] and settings.resample:
             # Store settings object in the working directory for compatibility with analysis/utility scripts
             if not settings.dont_dump:
                 temp_settings = copy.deepcopy(settings)  # initialize temporary copy of settings to modify
@@ -291,11 +292,13 @@ def main(settings, rescue_running=[]):
                 pickle.dump(temp_settings, open(settings.working_directory + '/settings.pkl', 'wb'), protocol=2)
             # Run resampling
             if settings.job_type == 'aimless_shooting':
-                utilities.resample(settings, partial=False, full_cvs=settings.full_cvs)
+                utilities.resample(settings, partial=False, full_cvs=settings.full_cvs, only_full_cvs=settings.only_full_cvs)
                 if settings.information_error_checking:     # update info_err.out if called for by settings
                     information_error.main()
             elif settings.job_type == 'committor_analysis':
-                resample_committor_analysis.resample_committor_analysis(settings)
+                resampling.resample_committor_analysis(settings)
+            elif settings.job_type == 'umbrella_sampling':
+                resampling.resample_umbrella_sampling(settings)
             return 'Resampling complete'
 
         # Make working directory if it does not exist, handling overwrite and restart as needed

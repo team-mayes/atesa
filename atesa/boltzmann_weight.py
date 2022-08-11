@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 """
 Standalone script for converting equilibrium path sampling output files into free energy profiles via Boltzmann
 weighting.
