@@ -13,7 +13,7 @@ dependencies:
   - pydantic
   - matplotlib
   - pytraj
-  - pymbar
+  - pymbar <4.0
   - django <4.0
   - oslo.concurrency
   - multiprocess

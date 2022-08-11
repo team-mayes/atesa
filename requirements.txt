@@ -13,3 +13,4 @@ psutil
 matplotlib
 pytest
 backports.zoneinfo
+pymbar<4.0

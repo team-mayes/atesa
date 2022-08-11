@@ -3,21 +3,9 @@
   <component name="ChangeListManager">
     <list default="true" id="55679143-7654-431c-aee1-71d5375f0f66" name="Default" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atesa/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atesa/boltzmann_weight.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/boltzmann_weight.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atesa/configure.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/configure.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atesa/jobtype.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/jobtype.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atesa/lmax.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/lmax.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atesa/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atesa/mbar.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/mbar.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atesa/rc_eval.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/rc_eval.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atesa/resample_and_inferr.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/resample_and_inferr.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atesa/resample_committor_analysis.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/resampling.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atesa/tests/test_rc_eval.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/tests/test_rc_eval.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atesa/tests/test_resample_committor_analysis.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/tests/test_resampling.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atesa/utilities.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/utilities.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/example_study.rst" beforeDir="false" afterPath="$PROJECT_DIR$/docs/example_study.rst" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/getting_started.rst" beforeDir="false" afterPath="$PROJECT_DIR$/docs/getting_started.rst" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/devtools/conda-envs/test_env.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/devtools/conda-envs/test_env.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/setup.py" beforeDir="false" afterPath="$PROJECT_DIR$/setup.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -404,7 +392,7 @@
     <property name="WebServerToolWindowFactoryState" value="false" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$/atesa/tests/test_data" />
     <property name="run.code.analysis.last.selected.profile" value="pProject Default" />
-    <property name="settings.editor.selected.configurable" value="vcs.Git" />
+    <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
   </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
