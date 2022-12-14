@@ -2,7 +2,17 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="55679143-7654-431c-aee1-71d5375f0f66" name="Default" comment="">
-      <change beforePath="$PROJECT_DIR$/setup.py" beforeDir="false" afterPath="$PROJECT_DIR$/setup.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/configure.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/configure.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/jobtype.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/jobtype.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/mbar.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/mbar.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/resampling.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/resampling.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/tests/test_data/mbar.out" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/tests/test_data/mbar.out" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/tests/test_mbar.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/tests/test_mbar.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/tests/test_resampling.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/tests/test_resampling.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/utilities.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/utilities.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/example_study.rst" beforeDir="false" afterPath="$PROJECT_DIR$/docs/example_study.rst" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/the_config_file.rst" beforeDir="false" afterPath="$PROJECT_DIR$/docs/the_config_file.rst" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -400,14 +410,14 @@
       <recent name="$PROJECT_DIR$/atesa" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/examples/umbrella_sampling" />
       <recent name="$PROJECT_DIR$" />
       <recent name="$PROJECT_DIR$/atesa/tests/test_data" />
       <recent name="$PROJECT_DIR$/atesa_v2" />
       <recent name="$PROJECT_DIR$/atesa_v2/tests/test_data" />
-      <recent name="$PROJECT_DIR$/atesa_v2/data" />
     </key>
   </component>
-  <component name="RunManager" selected="Python tests.pytest in tests">
+  <component name="RunManager" selected="Python tests.py.test in tests">
     <configuration default="true" type="DjangoTestsConfigurationType" factoryName="Django tests">
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -475,7 +485,7 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="test" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+    <configuration name="mbar" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="atesa" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -483,12 +493,12 @@
         <env name="PYTHONUNBUFFERED" value="1" />
       </envs>
       <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/atesa" />
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" enabled="false" sample_coverage="true" runner="coverage.py" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/test.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/atesa/mbar.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -593,7 +603,7 @@
       <option name="_new_targetType" value="&quot;PATH&quot;" />
       <method v="2" />
     </configuration>
-    <configuration name="py.test in tests" type="tests" factoryName="py.test" temporary="true" nameIsGenerated="true">
+    <configuration name="py.test in tests" type="tests" factoryName="py.test" temporary="true">
       <module name="atesa" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -606,25 +616,9 @@
       <option name="_new_keywords" value="&quot;&quot;" />
       <option name="_new_parameters" value="&quot;&quot;" />
       <option name="_new_additionalArguments" value="&quot;&quot;" />
-      <option name="_new_target" value="&quot;$PROJECT_DIR$/atesa/tests&quot;" />
-      <option name="_new_targetType" value="&quot;PATH&quot;" />
-      <method v="2" />
-    </configuration>
-    <configuration name="py.test in tests" type="tests" factoryName="py.test" temporary="true">
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs />
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/atesa/tests/test_temp/" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <module name="atesa" />
-      <EXTENSION ID="PythonCoverageRunConfigurationExtension" enabled="false" sample_coverage="true" runner="coverage.py" />
-      <option name="_new_keywords" value="&quot;&quot;" />
-      <option name="_new_additionalArguments" value="&quot;&quot;" />
       <option name="_new_target" value="&quot;$PROJECT_DIR$/atesa/tests/&quot;" />
       <option name="_new_targetType" value="&quot;PATH&quot;" />
+      <method v="2" />
     </configuration>
     <configuration name="pytest for atesa.tests.test_resampling.Tests.test_resample_committor_analysis" type="tests" factoryName="py.test" temporary="true" nameIsGenerated="true">
       <module name="atesa" />
@@ -695,7 +689,7 @@
       <method v="2" />
     </configuration>
     <list>
-      <item itemvalue="Python.test" />
+      <item itemvalue="Python.mbar" />
       <item itemvalue="Python tests.py.test in tests" />
       <item itemvalue="Python tests.pytest for test_rc_eval.Tests.test_extrema_mdtraj" />
       <item itemvalue="Python tests.pytest in test_rc_eval.py" />
@@ -704,11 +698,11 @@
     </list>
     <recent_temporary>
       <list>
+        <item itemvalue="Python tests.py.test in tests" />
+        <item itemvalue="Python.mbar" />
         <item itemvalue="Python tests.pytest in tests" />
         <item itemvalue="Python tests.pytest in test_rc_eval.py" />
         <item itemvalue="Python tests.pytest for test_rc_eval.Tests.test_extrema_mdtraj" />
-        <item itemvalue="Python tests.pytest for atesa.tests.test_resampling.Tests.test_resample_committor_analysis" />
-        <item itemvalue="Python.test" />
       </list>
     </recent_temporary>
   </component>

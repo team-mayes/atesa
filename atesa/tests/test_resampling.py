@@ -55,6 +55,10 @@ class Tests(object):
         settings.topology = '../test_data/test.prmtop'
         settings.commit_fwd = [[1, 2], [3, 4], [1.1, 1.6], ['lt', 'gt']]    # DOES match test.nc
         settings.commit_bwd = [[1, 2], [3, 4], [1.6, 1.1], ['gt', 'lt']]    # doesn't match test.nc
+        settings.transmission_coefficient = True
+        settings.rc_reduced_cvs = False
+        settings.cvs = ['pytraj.distance(traj, \'@1 @2\')[0]', 'pytraj.angle(traj, \'@2 @3 @4\')[0]']
+        settings.rc_definition = '1 + 3*CV1 - 0.3*CV2'
 
         # Finally, call resample
         resample_committor_analysis(settings)

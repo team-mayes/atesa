@@ -13,6 +13,7 @@ import glob
 import re
 import copy
 import argparse
+import warnings
 import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
@@ -107,21 +108,45 @@ def main(**kwargs):
 
     # Refresh data files to reflect new min and max, if necessary
     if not rc_max == float(pattern.findall(data_files[-1])[0]) or not rc_min == float(pattern.findall(data_files[0])[0]):
-        data_files = [name.replace(input_path, '') for name in glob.glob(input_path + 'rcwin_*_us.dat') if rc_min <= float(pattern.findall(name)[0]) <= rc_max]
+        data_files = [name.replace(input_path, '') for name in glob.glob(input_path + 'rcwin_*_us.dat') if rc_min <= float(pattern.findall(name.replace(input_path, ''))[0]) <= rc_max]
         data_files = sorted(data_files, key=lambda x: float(pattern.findall(x)[0]))
 
-    # Combine data from identical states into temp files, implementing decorr and ignore in the process
+    # # Combine data from identical states into temp files, implementing decorr and ignore in the process
+    def reject_outliers(data, m=4):
+        # Helper function to remove outliers (more than m stdevs from median) from datasets
+        d = np.abs(data - np.median(data))
+        mdev = np.median(d)
+        s = d / mdev if mdev else 0.
+        return data[s < m]
+
+    count = 0
     if not kwargs['quiet']:
-        count = 0
         update_progress(0, 'Collecting data')
     data_files_temp = []
-    for data_file in data_files:
+    old_temp_files = glob.glob('mbar_temp_*_0.dat')     # collect leftover temp files, if any, to delete
+    for file in old_temp_files:
+        os.remove(file)
+    for data_file in data_files:    # combine all data in a single window into one temp file for that window
         center = str(pattern.findall(data_file)[0])
         if not os.path.exists('mbar_temp_' + center + '_0.dat'):
             open('mbar_temp_' + center + '_0.dat', 'w').close()
         lines = open(data_file, 'r').readlines()[kwargs['ignore'][0] + 1:]
-        lines = lines[0:len(lines)]
-        data = np.asarray([float(line.split()[1]) for line in lines if len(line.split()) > 1 and not line.split()[1] == '-'])
+        lines = lines[0:len(lines):20]  # for debugging, not for production
+        data = []
+        for line in lines:
+            try:
+                if (len(line.split()) > 1
+                        and not line.split()[1] == '-'
+                        and line.split()[1].count('.') <= 1
+                        and line.split()[0].count('.') <= 1
+                        ):
+                    data.append(float(line.split()[1]))
+            except ValueError:
+                warnings.warn('misformated data file: ' + str(data_file) + ', skipping a line...')
+                # count += 1
+                # continue
+        data = np.asarray(data)
+        data = reject_outliers(data)
 
         if kwargs['decorr']:
             [t0, g, Neff_max] = pymbar.timeseries.detectEquilibration(data)  # compute indices of uncorrelated timeseries
@@ -203,8 +228,11 @@ def main(**kwargs):
         f.write('Diagnostic Mean Value Plot. Should probably be smooth.\n'
                 'See ATESA\'s troubleshooting documentation\nfor further '
                 'information (Umbrella Sampling > Mean Value Plot).\n')
+        f.write('Reaction Coordinate    Mean Value    Standard Deviation of Mean Value\n')
         for k in range(K):
-            f.write(str(rc0_k[k]) + '   ' + '%.3f' % numpy.mean([item for item in rc_kn[k,:] if not item == 0]) + '\n')
+            f.write(str(rc0_k[k]) + '\t' +
+                    '%.3f' % numpy.mean([item for item in rc_kn[k,:] if not item == 0]) + '\t' +
+                    '%.3f' % scipy.stats.tstd([item for item in rc_kn[k,:] if not item == 0]) + '\n')
 
     # Deprecated first-value plot
     # fig, ax = plt.subplots()
@@ -230,7 +258,7 @@ def main(**kwargs):
 
         for this_data in alldata:
             nextcolor = list(colors.to_rgb(next(ax._get_patches_for_fill.prop_cycler).get('color'))) + [0.75]
-            n, bins, null = ax.hist(this_data, list(numpy.arange(min(this_data), max(this_data) + 0.05, 0.05)), color=nextcolor)
+            n, bins, null = ax.hist(this_data, list(numpy.arange(min(this_data), max(this_data) + 0.05, 0.05)), color=nextcolor)    # todo: fixed bin width of 0.05 is unwise
             if not kwargs['quiet']:
                 fig.canvas.draw()
             f.write(' '.join(['%.3f' % item for item in bins]) + '\n')
@@ -253,7 +281,14 @@ def main(**kwargs):
     bin_kn = numpy.zeros([K,N_max], numpy.int32)
     for k in range(K):
         for n in range(N_k[k]):
-            bin_kn[k,n] = int((rc_kn[k][n] - rc_min) / delta)   # compute bin assignment
+            bin_kn[k,n] = list(bin_center_i).index(min(bin_center_i, key=lambda x: abs(x - rc_kn[k][n])))
+            # bin_kn[k,n] = int((rc_kn[k][n] - rc_min) / delta)   # compute bin assignment
+
+    # print(nbins)
+    # print(np.min(bin_kn))
+    # print(np.max(bin_kn))
+    # print(bin_center_i)
+    # sys.exit()
 
     # Evaluate reduced energies in all umbrellas
     count = 0
@@ -277,6 +312,13 @@ def main(**kwargs):
         verbose = False
     mbar = pymbar.mbar.MBAR(u_kln, N_k, verbose=verbose, maximum_iterations=1000)
     (f_i, df_i) = mbar.computePMF(u_kn, bin_kn, nbins)
+
+    # I have no idea why the first and last bins always get ludicrous values, but they can be ignored
+    f_i = f_i[1:len(f_i) - 1]
+    f_i = np.array([f - min(f_i) for f in f_i])
+    df_i = df_i[1:len(df_i) - 1]
+    bin_center_i = bin_center_i[1:len(bin_center_i) - 1]
+    nbins -= 2
 
     # Normalize by beta to convert from kT's of energy to kcal/mol of energy
     f_i /= beta
@@ -340,8 +382,7 @@ if __name__ == '__main__':
                              ' Default=0')
     parser.add_argument('--ignore', metavar='ignore', type=int, nargs=1, default=[1],
                         help='Number of samples from beginning of each data file to ignore in the analysis, as time to '
-                             'decorrelate from initial coordinates. Generally should be used in a mutually exclusive '
-                             'manner with the --decorr option. Default=1')
+                             'decorrelate from initial coordinates or allow for equilibration. Default=1')
     parser.add_argument('--decorr', action='store_true', default=False,
                         help='use pymbar.timeseries.detectEquilibration and pymbar.timeseries.subsampleCorrelatedData '
                              'to attempt to automatically use only equilibrated and decorrelated data in the analysis.')    # todo: make decorr the default, change this to --no-decorr?

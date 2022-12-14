@@ -93,7 +93,6 @@ def configure(input_file, user_working_directory=''):
         min_dt: int = 1
         max_dt: int = 10
         always_new: bool = True
-        resample: bool = False
         full_cvs: bool = False
         only_full_cvs: bool = False
         degeneracy: int = 1
@@ -114,6 +113,7 @@ def configure(input_file, user_working_directory=''):
         committor_analysis_use_rc_out: bool = False
         path_to_rc_out: str = sys.path[0] + '/atesa/tests/test_data/rc.out'
         rc_threshold: float = 0.05
+        transmission_coefficient: int = 1
 
         # Required only for equilibrium path sampling
         eps_rc_min: float = -12
@@ -134,6 +134,9 @@ def configure(input_file, user_working_directory=''):
         us_degeneracy: int = 5
         us_auto_coords_directory: str = ''
         us_pathway_restraints_file: str = ''
+
+        # Resampling
+        resample: bool = False
 
         # Required only if restart = True
         restart_terminated_threads: bool = False

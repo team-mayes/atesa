@@ -469,7 +469,7 @@ These options are specific to committor analysis runs only.
 		initial_coords_1_1_init_fwd.rst7: -0.0913
 		initial_coords_1_2_init_fwd.rst7: -0.1125
 
-	Files of this sort can be automatically generated using the auxiliary script :ref:`RCEval`. No default.
+	Note that ATESA expects the RC output file to be in the same directory as the coordinate files (i.e., the aimless shooting working directory). A file of this sort can be automatically generated using the auxiliary script :ref:`RCEval` if ATESA did not create it automatically at the end of aimless shooting. No default.
 	
 ``rc_threshold`` **‡**
 
@@ -477,7 +477,11 @@ These options are specific to committor analysis runs only.
 	
 ``resample``
 
-	A boolean. If True, committor analysis will NOT be performed, and instead the existing committor analysis trajectories found in *working_directory* are used to produce a new output file based on the settings of the current ATESA job. The primary usage of this option is to regenerate results from completed simulations when ATESA has failed to produce them in the first place (*e.g.*, due to a crash) or when some other mistake has been made. In other words, this option is supported "just in case". Please note that in general committor analysis simulations performed to test one RC are not applicable to testing any other RC, meaning this option cannot be used to simply recycle simulations to test a newly selected RC. This option can also be used with aimless shooting, where it will be more common (see above). Default = False
+	A boolean. If True, committor analysis will NOT be performed, and instead the existing committor analysis trajectories found in *working_directory* are used to produce new output files based on the settings of the current ATESA job. Resampling will also estimate the transmission coefficient if the *transmission_coefficient* setting is set to 1 or 2. Please note that in general committor analysis simulations performed to test one RC are not applicable to testing any other RC, meaning this option cannot be used to simply recycle simulations to test a newly selected RC. Default = False
+
+``transmission_coefficient``
+
+    An integer equal to 0, 1, or 2. No effect if set to 0. If set to 1 or 2, resampling committor analysis simulations (*job_type* = 'committor_analysis' and *resample* = True) will estimate the transmission coefficient for the reaction coordinate used to generate the committor analysis initial coordinates. Output will be printed to a file called "transmission_coefficient.out" in the committor analysis working directory. If set to 2, resampling will terminate after calculating the transmission coefficient and not produce a new "committor_analysis.out" file. Note that this option can be very time consuming, but can be efficiently and automatically parallelized by allotting ATESA more CPU cores (we recommend at least 6 cores, but the more the better). Default = 1
 
 
 .. _UmbrellaSamplingSettings:	

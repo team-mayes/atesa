@@ -197,6 +197,8 @@ Plotting the contents of the output file produced by this job (``/scratch/tburgi
 
 	.. figure:: _images/ethyl_chlorosulfite_comana.png
 
+Although not shown here, if desired we could also compute an estimate of the transmission coefficient at this stage by resubmitting the above job with *resample* set to True and *transmission_coefficient* set to 1 or 2 (1 is the default value). The transmission coefficient is a value that measures recrossing of trajectories back through the separatrix and is used as part of the pre-exponential factor for estimates of reaction rate constants based on the Eyring–Polanyi equation. The inertial likelihood maximization scheme (which is used by ATESA by default) is designed to produce reaction coordinates with high transmission coefficients. Note that calculations of transmission coefficients support parallel processing, so it can be helpful to supply ATESA with several cores (we recommend at least 6 or so, but the more the better).
+
 Umbrella Sampling
 -----------------
 

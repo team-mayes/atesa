@@ -885,6 +885,7 @@ class CommittorAnalysis(JobType):
                 bwds += 1
         if int(fwds + bwds) > 0:
             open('committor_analysis.out', 'a').write(str(int(fwds)) + '/' + str(int(fwds + bwds)) + '\n')
+            open('committor_analysis.out', 'a').close()
 
         # Write updated restart.pkl
         pickle.dump(allthreads, open('restart.pkl.bak', 'wb'), protocol=2)  # if the code crashes while dumping it could delete the contents of the pkl file

@@ -99,7 +99,7 @@ def check_commit(filename, settings):
     return commit_flag
 
 
-def get_cvs(filename, settings, reduce=False, frame=0):
+def get_cvs(filename, settings, reduce=False, frame=0, only_in_rc=False):
     """
     Get CV values for a coordinate file given by filename, as well as rates of change if settings.include_qdot = True.
 
@@ -120,6 +120,10 @@ def get_cvs(filename, settings, reduce=False, frame=0):
     frame : int or str
         Frame of trajectory filename to use (0-indexed, negatives read from end); or, 'all' returns the CVs for each
         frame of the input trajectory, separated by newlines. 'all' is incompatible with settings.include_qdot = True
+    only_in_rc : bool
+        If this is True, then do not evaluate and return 0 for all CVs not present in the RC defined by
+        settings.rc_definition. This is useful to speed up evaluation when all CVs are not necessary. Applies also to
+        corresponding qdot values as appropriate.
 
     Returns
     -------
@@ -176,6 +180,17 @@ def get_cvs(filename, settings, reduce=False, frame=0):
         if this_min == this_max:
             return unreduced_value      # can't reduce when a CV only has a single value across rc_minmax
         return (float(unreduced_value) - this_min) / (this_max - this_min)
+
+    def cv_is_in_rc(cv_index):
+        # Helper function checks if the zero-indexed cv_index corresponds to a CV in settings.rc_definition
+        if settings.rc_definition == '':
+            raise RuntimeError('utilities.get_cvs was called with only_in_rc=True, but rc_definition was empty. You '
+                               'must provide the RC definition in the configuration file to use this option.')
+        # Have to be careful here not to interpret, e.g., "CV10" as matching "CV1", so we need to be a bit clever
+        pattern = re.compile('CV[0-9]+')
+        cvs_in_rc = pattern.findall(settings.rc_definition)
+        cv_to_look_for = 'CV' + str(int(cv_index) + 1)   # cv_index is zero-indexed, but CVs in RCs are 1-indexed
+        return cv_to_look_for in cvs_in_rc
 
     if frame == 'all' and settings.include_qdot:
         raise RuntimeError('utilities.get_cvs cannot be called with frame=all if settings.include_qdot == True')
@@ -238,11 +253,14 @@ def get_cvs(filename, settings, reduce=False, frame=0):
             traj = full_traj[iter:iter + 1:1]
         for cv in settings.cvs:
             local_index += 1
-            evaluation = eval(cv)       # evaluate the CV definition code (potentially using traj, mtraj, and/or traj_name)
-            if settings.include_qdot:   # want to save values for later
-                values.append(float(evaluation))
-            if reduce:                  # reduce values if necessary
-                evaluation = reduce_cv(evaluation, local_index, rc_minmax)
+            if (not only_in_rc) or cv_is_in_rc(local_index):
+                evaluation = eval(cv)       # evaluate the CV definition code (potentially using traj, mtraj, and/or traj_name)
+                if settings.include_qdot:   # want to save values for later
+                    values.append(float(evaluation))
+                if reduce:                  # reduce values if necessary
+                    evaluation = reduce_cv(evaluation, local_index, rc_minmax)
+            else:
+                evaluation = 0
             output += sigfigs % float(evaluation) + ' '
         if n_iter > 1:
             output += '\n'
@@ -256,17 +274,20 @@ def get_cvs(filename, settings, reduce=False, frame=0):
             local_index = -1
             for cv in settings.cvs:
                 local_index += 1
-                evaluation = eval(cv) - values[local_index]  # Subtract value 1/20.455 ps earlier from value of cv
-                if reduce:
-                    try:
-                        evaluation = reduce_cv(evaluation, local_index + len(settings.cvs), rc_minmax)
-                    except IndexError:
-                        raise RuntimeError('attempted to obtain a reduced value for the rate-of-change ("qdot") of CV' +
-                                           str(local_index) + ', but the corresponding column appears to be missing from '
-                                           'the aimless shooting output file: ' + settings.as_out_file + '. If this is the '
-                                           'wrong file, please specify the right one with the "as_out_file" option in the '
-                                           'configuration file. If this is the right file but it does not contain qdot '
-                                           'terms, please add "include_qdot = False" to the configuration file.')
+                if (not only_in_rc) or cv_is_in_rc(local_index):
+                    evaluation = eval(cv) - values[local_index]  # Subtract value 1/20.455 ps earlier from value of cv
+                    if reduce:
+                        try:
+                            evaluation = reduce_cv(evaluation, local_index + len(settings.cvs), rc_minmax)
+                        except IndexError:
+                            raise RuntimeError('attempted to obtain a reduced value for the rate-of-change ("qdot") of CV' +
+                                               str(local_index) + ', but the corresponding column appears to be missing from '
+                                               'the aimless shooting output file: ' + settings.as_out_file + '. If this is the '
+                                               'wrong file, please specify the right one with the "as_out_file" option in the '
+                                               'configuration file. If this is the right file but it does not contain qdot '
+                                               'terms, please add "include_qdot = False" to the configuration file.')
+                else:
+                    evaluation = 0
                 output += sigfigs % float(evaluation) + ' '
             os.remove(incremented_filename)     # clean up temporary file
 
@@ -701,7 +722,7 @@ def plot_cvs_vs_rc(full_cvs_file, rc_definition, as_output_file):
     full_cvs_file : str
         Path to full_cvs output file (produced by utilities.resample or resampling.resample_umbrella_sampling)
     rc_definition : str
-        String representing the definition of the reaction coordinate
+        String representing the definition of the reduced reaction coordinate
     as_output_file : str
         Path to the as_output_file file passed to lmax.py when generating the reaction coordinate
 

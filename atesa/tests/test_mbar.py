@@ -37,8 +37,8 @@ class Tests(object):
         with pytest.raises(RuntimeError):
             mbar.main(**kwargs)
 
-    @classmethod
-    def teardown_method(self, method):
-        "Runs at end of class"
-        for filename in glob.glob(sys.path[0] + '/atesa/tests/test_temp/*'):
-            os.remove(filename)
+    # @classmethod
+    # def teardown_method(self, method):
+    #     "Runs at end of class"
+    #     for filename in glob.glob(sys.path[0] + '/atesa/tests/test_temp/*'):
+    #         os.remove(filename)
