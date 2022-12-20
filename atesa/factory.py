@@ -23,7 +23,8 @@ def mdengine_factory(mdengine_toolkit):
 
     """
 
-    mdengine_toolkits = {'amber': mdengine.AdaptAmber()}
+    mdengine_toolkits = {'amber': mdengine.AdaptAmber(),
+                         'cp2k' : mdengine.AdaptCP2K()}
 
     if mdengine_toolkit not in mdengine_toolkits.keys():
         raise ValueError('unsupported MDEngine name: ' + mdengine_toolkit)

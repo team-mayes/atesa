@@ -645,8 +645,8 @@ class Tests(object):
         jobtype.algorithm(allthreads[0], allthreads, allthreads, settings)
         assert filecmp.cmp(allthreads[0].history.init_inpcrd[1], '../test_data/test.rst7') # test.rst7 is last frame of test.nc
 
-    def test_get_input_file_aimless_shooting(self):
-        """Tests get_input_file with job_type = 'aimless_shooting'"""
+    def test_get_input_file_amber_aimless_shooting(self):
+        """Tests get_input_file with md_engine = 'amber' and job_type = 'aimless_shooting'"""
         settings = configure('../../data/atesa.config')
         settings.job_type = 'aimless_shooting'
         settings.degeneracy = 1
@@ -656,8 +656,8 @@ class Tests(object):
         jobtype = factory.jobtype_factory(settings.job_type)
         assert jobtype.get_input_file(allthreads[0], 0, settings) == settings.path_to_input_files + '/' + settings.job_type + '_' + allthreads[0].current_type[0] + '_' + settings.md_engine + '.in'
 
-    def test_get_input_file_committor_analysis(self):
-        """Tests get_input_file with job_type = 'committor_analysis'"""
+    def test_get_input_file_amber_committor_analysis(self):
+        """Tests get_input_file with md_engine = 'amber' and job_type = 'committor_analysis'"""
         settings = configure('../../data/atesa.config')
         settings.job_type = 'committor_analysis'
         settings.committor_analysis_use_rc_out = False
@@ -667,8 +667,8 @@ class Tests(object):
         jobtype = factory.jobtype_factory(settings.job_type)
         assert jobtype.get_input_file(allthreads[0], 0, settings) == settings.path_to_input_files + '/' + settings.job_type + '_' + allthreads[0].current_type[0] + '_' + settings.md_engine + '.in'
 
-    def test_get_input_file_equilibrium_path_sampling(self):
-        """Tests get_input_file with job_type = 'equilibrium_path_sampling'"""
+    def test_get_input_file_amber_equilibrium_path_sampling(self):
+        """Tests get_input_file with md_engine = 'amber' and job_type = 'equilibrium_path_sampling'"""
         settings = config_equilibrium_path_sampling()
         allthreads = main.init_threads(settings)
         allthreads[0].current_type = ['init']
@@ -681,8 +681,8 @@ class Tests(object):
         new_file = jobtype.get_input_file(allthreads[0], 1, settings)
         assert os.path.exists(new_file)
 
-    def test_get_input_file_rxncor_umbrella_sampling(self):
-        """Tests get_input_file with job_type = 'umbrella_sampling'"""
+    def test_get_input_file_amber_rxncor_umbrella_sampling(self):
+        """Tests get_input_file with md_engine = 'amber' and job_type = 'umbrella_sampling'"""
         settings = configure('../../data/atesa.config')
         settings.cvs = ['pytraj.distance(traj, \'@1 @2\')[0]', '(mdtraj.compute_distances(mtraj, numpy.array([[7177, 7178]]))[0][0] * 10) - (mdtraj.compute_distances(mtraj, numpy.array([[4272, 7178]]))[0][0] * 10)']
         settings.us_rc_min = -2
@@ -699,6 +699,38 @@ class Tests(object):
         jobtype = factory.jobtype_factory(settings.job_type)
         assert jobtype.get_input_file(allthreads[0], 0, settings) == 'umbrella_sampling_2.5_1.in'
         assert filecmp.cmp('umbrella_sampling_2.5_1.in', '../test_data/umbrella_sampling_2.5_1.in')
+
+    def test_get_input_file_cp2k_aimless_shooting(self):
+        """Tests get_input_file with md_engine = 'cp2k' and job_type = 'aimless_shooting'"""
+        settings = configure('../../data/atesa.config')
+        settings.md_engine = 'cp2k'
+        settings.job_type = 'aimless_shooting'
+        settings.degeneracy = 1
+        settings.initial_coordinates = ['../test_data/test_velocities.rst7']
+        allthreads = main.init_threads(settings)
+        thread = allthreads[0]
+        thread.current_type = ['init']
+        thread.current_name = ['init']
+        jobtype = factory.jobtype_factory(settings.job_type)
+        job_index = 0
+        type = thread.current_type[job_index]
+        name = thread.current_name[job_index]
+        this_inpcrd = ['../test_data/test_velocities.rst7']
+        inp_kwargs = {'name': thread.name + '_' + name,
+                         'nodes': eval('settings.' + type + '_nodes'),
+                         'taskspernode': eval('settings.' + type + '_ppn'),
+                         'walltime': eval('settings.' + type + '_walltime'),
+                         'mem': eval('settings.' + type + '_mem'),
+                         'solver': eval('settings.' + type + '_solver'),
+                         'out': thread.name + '_' + name + '.out',
+                         'prmtop': thread.topology,
+                         'inpcrd': this_inpcrd[job_index],
+                         'rst': thread.name + '_' + name + '.rst7',
+                         'nc': thread.name + '_' + name + '.nc',
+                         'working_directory': settings.working_directory,
+                         'extra': eval('settings.' + type + '_extra')}
+        inp = jobtype.get_input_file(thread, job_index, settings, **inp_kwargs) # todo: fails for unclear reason having to do with template filling
+        assert False
 
     @classmethod
     def teardown_method(self, method):

@@ -53,23 +53,25 @@ def process(thread, running, settings):
     for job_index in range(len(thread.current_type)):
         type = thread.current_type[job_index]
         name = thread.current_name[job_index]
-        inp = jobtype.get_input_file(thread, job_index, settings)
-        template = settings.env.get_template(thread.get_batch_template(type, settings))
 
-        these_kwargs = { 'name': thread.name + '_' + name,
+        these_kwargs = {'name': thread.name + '_' + name,
                          'nodes': eval('settings.' + type + '_nodes'),
                          'taskspernode': eval('settings.' + type + '_ppn'),
                          'walltime': eval('settings.' + type + '_walltime'),
                          'mem': eval('settings.' + type + '_mem'),
                          'solver': eval('settings.' + type + '_solver'),
-                         'inp': inp,
                          'out': thread.name + '_' + name + '.out',
                          'prmtop': thread.topology,
                          'inpcrd': this_inpcrd[job_index],
                          'rst': thread.name + '_' + name + '.rst7',
                          'nc': thread.name + '_' + name + '.nc',
                          'working_directory': settings.working_directory,
-                         'extra': eval('settings.' + type + '_extra') }
+                         'extra': eval('settings.' + type + '_extra')}
+
+        inp = jobtype.get_input_file(thread, job_index, settings, **these_kwargs)
+
+        template = settings.env.get_template(thread.get_batch_template(type, settings))
+        these_kwargs.update({'inp': inp})
 
         filled = template.render(django.template.Context(these_kwargs))
         newfilename = thread.name + '_' + name + '.' + settings.batch_system

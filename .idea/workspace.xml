@@ -4,15 +4,15 @@
     <list default="true" id="55679143-7654-431c-aee1-71d5375f0f66" name="Default" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/atesa/configure.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/configure.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/factory.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/factory.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/atesa/jobtype.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/jobtype.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/atesa/mbar.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/mbar.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/mdengine.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/mdengine.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/process.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/process.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/atesa/resampling.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/resampling.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/atesa/tests/test_data/mbar.out" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/tests/test_data/mbar.out" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/tests/test_jobtype.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/tests/test_jobtype.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/atesa/tests/test_mbar.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/tests/test_mbar.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atesa/tests/test_resampling.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/tests/test_resampling.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atesa/utilities.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/utilities.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/example_study.rst" beforeDir="false" afterPath="$PROJECT_DIR$/docs/example_study.rst" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/the_config_file.rst" beforeDir="false" afterPath="$PROJECT_DIR$/docs/the_config_file.rst" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -397,17 +397,17 @@
   <component name="PropertiesComponent">
     <property name="SearchEverywhereHistoryKey" value="&#9;FILE&#9;file:///Users/tburgin/Documents/PycharmProjects/atesa_v2/atesa_v2/atesa_v2.py" />
     <property name="WebServerToolWindowFactoryState" value="false" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/atesa/tests/test_data" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/atesa/data/input_files" />
     <property name="run.code.analysis.last.selected.profile" value="pProject Default" />
     <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
   </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/atesa/data/input_files" />
+      <recent name="$PROJECT_DIR$/atesa/data/templates" />
       <recent name="$PROJECT_DIR$/atesa/tests/test_data" />
       <recent name="$PROJECT_DIR$/atesa/tests" />
       <recent name="$PROJECT_DIR$/docs/_images" />
-      <recent name="$PROJECT_DIR$/atesa/data/input_files" />
-      <recent name="$PROJECT_DIR$/atesa" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$/examples/umbrella_sampling" />

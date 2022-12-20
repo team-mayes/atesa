@@ -131,7 +131,7 @@ def main(**kwargs):
         if not os.path.exists('mbar_temp_' + center + '_0.dat'):
             open('mbar_temp_' + center + '_0.dat', 'w').close()
         lines = open(data_file, 'r').readlines()[kwargs['ignore'][0] + 1:]
-        lines = lines[0:len(lines):20]  # for debugging, not for production
+        # lines = lines[0:len(lines):20]  # for debugging, not for production
         data = []
         for line in lines:
             try:
