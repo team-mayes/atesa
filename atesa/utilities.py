@@ -10,6 +10,7 @@ import fileinput
 import re
 import os
 import sys
+import glob
 import math
 import numpy
 import pickle
@@ -42,6 +43,18 @@ def check_commit(filename, settings):
     """
 
     # todo: consider adding support for angles and dihedrals
+
+    # Need check_commit to be able to check the status of CP2K trajectories before they've been renamed
+    # todo: come up with something better than this kludge
+    if settings.md_engine.lower() == 'cp2k':
+        if not os.path.exists(filename):
+            files = glob.glob('*-' + filename + '-*')
+            if len(files) == 1:
+                filename = files[0]
+            else:
+                raise RuntimeError('Could not identify file: ' + filename + '\nIt does not exist and there is no single'
+                                   ' unique file matching the pattern \'*-' + filename + '-*\'. This probably indicates'
+                                   ' a problem with the simulation that should have created this file.')
 
     try:
         traj = mdtraj.load(filename, top=settings.topology)[-1]

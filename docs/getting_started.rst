@@ -46,8 +46,8 @@ Setting Up Simulation Files
 
 Beyond the installation of ATESA itself and the creation of the configuration file, the only other step required before performing simulations is to provide the program with the necessary input files and batch script templates for those simulations. ATESA looks for two directories:
 
-* 'input_files', which contains input files for various types of Amber simulations; and
-* 'templates', which contains files formatted for use as templates, mostly batch scripts
+* 'input_files', which contains input files for various types of simulations; and
+* 'templates', which contains batch script files formatted for use as templates
 
 ATESA comes packaged with examples of both of these directories, located inside the 'atesa/data' directory in the ATESA installation folder. The contents of these directories will be used by ATESA by default, although the user can specify other directories instead (see :ref:`FilePathSettings`). Note that the default scripts are certainly **not** appropriate for any given user's needs; they are provided as examples only. It is suggested that the user take a look at these files and the following documentation on this page before beginning to construct their own versions, in order to better understand what each file is for.
 
@@ -58,11 +58,11 @@ The 'input_files' directory contains input files for molecular simulations. Each
 
 	<job_type>_<step_type>_<md_engine>.in
 	
-Each of the bracketed values should be replaced by the appropriate name. The "job_type" is identical to the chosen value of the option of the same name in the configuration file (see :ref:`CoreSettings`). The step type is either "init" or "prod": "prod" is used in every job type and is the primary simulation step, while "init" is used only in aimless shooting and equilibrium path sampling. Finally, "md_engine" should be the name of the simulations engine to be used (at this time, only "amber" is supported). For example, the file for the "prod" step of an "aimless_shooting" job performed with Amber would be::
+Each of the bracketed values should be replaced by the appropriate name. The "job_type" is identical to the chosen value of the option of the same name in the configuration file (see :ref:`CoreSettings`). The step type is either "init" or "prod": "prod" is used in every job type and is the primary simulation step, while "init" is used only in aimless shooting and equilibrium path sampling. Finally, "md_engine" should be the name of the simulations engine to be used (same as the option of the same name in the configuration file). For example, the file for the "prod" step of an "aimless_shooting" job performed with Amber would be::
 
 	aimless_shooting_prod_amber.in
 
-Every input file must be appropriate for your specific molecular model, and also for the specific job and step types. As Amber is the only simulation software currently supported, prospective users who are not familiar with Amber are directed to the `relevant tutorials <https://ambermd.org/tutorials/>`_. Following are details for each job type describing what each input file is used for in that job, and any necessary characteristics of that input file. This may seem daunting at first, but once you are comfortable with the basic usage of Amber it should be quite straightforward to construct input files appropriate for your model!
+Every input file must be appropriate for your specific molecular model, and also for the specific job and step types. Following are details for each job type describing what each input file is used for in that job, and any necessary characteristics of that input file. This may seem daunting at first, but once you are comfortable with the basic usage of the MD engine you wish to use, it should be quite straightforward to construct input files appropriate for your model!
 
 ``aimless_shooting``
 
@@ -77,7 +77,36 @@ Aimless shooting input files for the following step types are required for jobs 
   	tempi=300.0,	! or whatever temperature (same as temp0)
   	temp0=300.0,	! or whatever temperature (same as tempi)
 	ig=-1		! random initial velocities; should be default but may not be in some versions/patches of Amber
-  		
+
+* **aimless_shooting_init_cp2k.in**: Unlike in Amber, CP2K input files specify the names of input and output files directly (this is done in the batch script/on the command line with Amber). As such template slots for these are required in the CP2K input files. The box dimensions are also templated. Unless otherwise described, the following lines are required (note that depending on use-case, you may need additional settings within these sections)::
+
+    &CELL   ! within the &FORCE_EVAL > &SUBSYS section
+      ABC [angstrom] {{ box_xyz }}
+      ALPHA_BETA_GAMMA {{ box_abc }}
+    &END CELL
+    &TOPOLOGY   ! within the &FORCE_EVAL > &SUBSYS section
+      COORD_FILE_FORMAT pdb     ! ATESA will convert input files to .pdb format
+      COORD_FILE_NAME {{ inpcrd }}
+      CONN_FILE_FORMAT amber    ! ATESA may support other topology formats for use with CP2K, but only Amber has been tested
+      CONN_FILE_NAME {{ prmtop }}
+    &END TOPOLOGY
+    [...]
+    &MD     ! within the &MOTION > &MD section
+      STEPS 1   ! one simulation step for initialization jobs
+      TIMESTEP 0.001    ! extremely short timestep
+    &END MD
+    [...]
+    &TRAJECTORY   ! within the &MOTION > &PRINT section
+      FILENAME {{ nc }}
+      FORMAT DCD    ! ATESA expects output files from CP2K to be in DCD format
+    &END TRAJECTORY
+    &RESTART   ! within the &MOTION > &PRINT section
+      FILENAME {{ rst }}
+      &EACH
+        MD 1    ! so that a restart file is produced after the first (and only) simulation step
+      &END
+    &END RESTART
+
 * **aimless_shooting_prod_amber.in**: Aimless shooting "prod" steps are the primary simulation steps for each shooting move. They take the initial coordinates and velocities from an "init" step (with velocities reversed in the case of backward trajectories) and run until the simulation commits to one of the stable states defined in the configuration file. Therefore, the time step and number of simulation steps should be much larger than in an "init" simulation. In Amber, the following settings should be specified in the &cntrl namelist, instead of the above "init" settings and in addition to any other model-specific settings::
 
 	ntx=5,		! read coordinates AND velocities from input coordinate file
@@ -88,7 +117,33 @@ Aimless shooting input files for the following step types are required for jobs 
   	temp0=300.0,	! or whatever temperature
   	ntwx=1,		! or whatever trajectory write frequency, but not only at the end of the simulation
   	ntwv=-1,	! include velocities in trajectory files (required if the option "include_qdot" is True (which is default)
-  	
+
+* **aimless_shooting_prod_cp2k.in**: In addition to template slots for box dimensions and input and output files, aimless shooting "prod" steps require initial velocities, which in CP2K are given explicitly by-atom in the input file. ATESA handles this with a velocities template slot::
+
+    &CELL   ! within the &FORCE_EVAL > &SUBSYS section
+      ABC [angstrom] {{ box_xyz }}
+      ALPHA_BETA_GAMMA {{ box_abc }}
+    &END CELL
+    &TOPOLOGY   ! within the &FORCE_EVAL > &SUBSYS section
+      COORD_FILE_FORMAT pdb     ! ATESA will convert input files to .pdb format
+      COORD_FILE_NAME {{ inpcrd }}
+      CONN_FILE_FORMAT amber    ! ATESA may support other topology formats for use with CP2K, but only Amber has been tested
+      CONN_FILE_NAME {{ prmtop }}
+    &END TOPOLOGY
+    &VELOCITY   ! within the &FORCE_EVAL > &SUBSYS section
+      {{ velocities }}
+    &END VELOCITY
+    [...]
+    &MD     ! within the &MOTION > &MD section
+      STEPS 1000   ! one simulation step for initialization jobs
+      TIMESTEP 1    ! or whatever desired simulation timestep
+    &END MD
+    [...]
+    &TRAJECTORY   ! within the &MOTION > &PRINT section
+      FILENAME {{ nc }}
+      FORMAT DCD    ! ATESA expects output files from CP2K to be in DCD format
+    &END TRAJECTORY
+
 ``committor_analysis``
 
 Only a "prod" committor analysis input file is required for jobs with job_type "committor_analysis":
@@ -117,17 +172,10 @@ Equilibrium path sampling input files for the following step types are required 
 
 * **equilibrium_sampling_init_amber.in**: Equilibrium path sampling "init" steps are functionally identical to aimless shooting "init" steps and can use an identical input file.
 
-*
-	**equilibrium_sampling_prod_amber.in**: Equilibrium path sampling "prod" steps are the only type of job currently supported by ATESA that does *not* take its input file from the "input_files" directory. Instead, the input file is constructed from the file in the "templates" directory named as:
+* **equilibrium_sampling_prod_amber.in**: This input file can be functionally identical to an aimless shooting "prod" input file, with two key exceptions: the number of simulation steps must be replaced with the exact string ``{{ nstlim }}`` and the frequency of writes to the output trajectory must be replaced with the exact string ``{{ ntwx }}``. In Amber::
 	
-		::
-			
-			<md_engine>_eps_in.tpl
-	
-	This input file can be functionally identical to an aimless shooting "prod" input file, with two key exceptions: the number of simulation steps must be replaced with the exact string ``{{ nstlim }}`` and the frequency of writes to the output trajectory must be replaced with the exact string ``{{ ntwx }}``. In Amber::
-	
-		nstlim={{ nstlim }},
-		ntwx={{ ntwx }},
+    nstlim={{ nstlim }},
+    ntwx={{ ntwx }},
 		
 ``find_ts``
 
@@ -136,7 +184,7 @@ In addition to making sure that appropriate input files for aimless shooting are
 * **find_ts_prod_amber.in** This file can be mostly identical to the "aimless_shooting" prod input file, with two key additions: there must be a restraint specified using the file "find_ts_restraints.disang", and the weight of the restraint must be set to steadily increase over time (beginning from zero). An example of a working implementation of this in Amber is as follows. Options in the &cntrl namelist that can be the same as in aimless shooting are here replaced by an elipse (...) for brevity, but they must still be explicitly specified in the input file. Other than that, it should be quite safe to copy the rest of this exactly into your Amber "find_ts" input file, or customize it as you see fit::
 
 	 &cntrl
-	  ...
+	  [...]
 	  nmropt=1,		! turn on restraints
 	 &end
 	 &wt
@@ -157,23 +205,32 @@ In addition to making sure that appropriate input files for aimless shooting are
   	  type="END",
  	 &end
 	DISANG=find_ts_restraints.disang
-	
+
+* **find_ts_prod_cp2k.in** This file can be mostly identical to the "aimless_shooting" prod input file, with two key additions: template slots are required to define collective variables ("colvars") and constraints ("collective")::
+
+    {{ colvars|safe }}   ! within the &FORCE_EVAL > &SUBSYS section
+    [...]
+    &CONSTRAINT     ! within the &MOTION section
+      CONSTRAINT_INIT TRUE
+      {{ collective|safe }}
+    &END CONSTRAINT
+
 Templates
 ~~~~~~~~~
 
-The 'templates' directory contains files that ATESA will automatically customize for each individual simulation. It is primarily used for templated batch scripts that will be filled using the :ref:`BatchTemplateSettings` in the configuration file, in addition to several other keywords, described below.
+The 'templates' directory contains files that ATESA will automatically customize for each individual simulation. It is used for templated batch scripts that will be filled using the :ref:`BatchTemplateSettings` in the configuration file, in addition to several other keywords, described below.
 
 Batch script templates should be named according to the scheme::
 
 	<md_engine>_<batch_system>.tpl
 	
-Each of the bracketed values should be replaced by the appropriate name. The "md_engine" should be the name of the simulations engine to be used (at this time, only "amber" is supported). The "batch_system" should be the same as the setting picked for the option of the same name in the configuration file (either "slurm" or "pbs" are currently supported). For example, the Slurm batch template for a simulation with Amber would be named::
+Each of the bracketed values should be replaced by the appropriate name. The "md_engine" and "batch_system" should each be the same as the setting picked for the option of the same name in the configuration file. For example, the Slurm batch template for a simulation with Amber would be named::
 
 	amber_slurm.tpl
 	
-In general, the overwrite flag ("-O") should always be present when using Amber with ATESA, or certain features may not work.
+In general, the overwrite flag ("-O") should always be present in the command invoking Amber with ATESA, or certain features may not work.
 
-Template slots are delimited by double curly braces, as in "{{ example }}". Anything not delimited in this way will be taken as literal. The user should provide batch files that will work for their particular software environment, making use of the templates wherever the batch file might differ between simulations -- please refer to the 'atesa/data/templates' directory for examples. In addition to the relevant configuration file settings (again, see :ref:`BatchTemplateSettings`), the following keywords should be included in batch script templates for ATESA to fill out automatically. It is safe to omit any of these keywords if you are sure that a fixed value (or no value at all) is appropriate instead.
+Template slots are delimited by double curly braces, as in "{{ example }}". Anything not delimited in this way will be taken as literal. The user should provide batch files that will work for their particular software environment, making use of the templates wherever the batch file might differ between simulations -- please refer to the 'atesa/data/templates' directory for examples. In addition to the relevant configuration file settings (again, see :ref:`BatchTemplateSettings`), the following keywords should be included in batch script templates for ATESA to fill out automatically. It is safe to omit any of these keywords if you are sure that a fixed value (or no value at all) is appropriate instead. These values are also used to fill the template slots in input files for CP2K.
 
 ``{{ name }}``
 
@@ -197,10 +254,8 @@ The initial coordinate file for this simulation.
 
 ``{{ rst }}``
 
-The output coordinate file from this simulation.
+The output coordinate or restart file from this simulation.
 
 ``{{ nc }}``
 
 The output trajectory file from this simulation.
-
-As indicated in the preceding section, if you wish to use equilibrium path sampling, the 'templates' directory should also include a template file for the equilibrium path sampling "prod" step input file.

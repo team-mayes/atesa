@@ -12,7 +12,7 @@
       ALPHA_BETA_GAMMA {{ box_abc }}
     &END CELL
     &TOPOLOGY
-      COORD_FILE_FORMAT crd
+      COORD_FILE_FORMAT pdb
       COORD_FILE_NAME {{ inpcrd }}
       CONNECTIVITY OFF
     &END TOPOLOGY
@@ -49,14 +49,10 @@
       FORMAT DCD                                ! Format of the output trajectory is DCD
     &END TRAJECTORY
     &RESTART                                    ! This section controls the printing of restart files
+      FILENAME {{ rst }}
       &EACH                                     ! A restart file will be printed every 100 md steps
-        MD 100
+        MD 1
       &END
     &END RESTART
-    &RESTART_HISTORY                            ! This section controls dumping of unique restart files during the run keeping all of them. Most useful if recovery is needed at a later point.
-      &EACH                                     ! A restart file will be printed every 100 md steps
-        MD 250
-      &END
-    &END RESTART_HISTORY
   &END PRINT
 &END MOTION

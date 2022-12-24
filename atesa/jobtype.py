@@ -444,6 +444,9 @@ class AimlessShooting(JobType):
 
         # if every job in this thread has status 'C'ompleted/'C'anceled...
         if all(item == 'C' for item in [thread.get_status(job_index, settings) for job_index in range(len(thread.jobids))]):
+            if thread.current_type == ['prod', 'prod']:
+                mdengine = factory.mdengine_factory(settings.md_engine)
+                mdengine.simulation_cleanup(thread.history, settings)
             return True
         else:
             return False
@@ -1331,6 +1334,8 @@ class FindTS(JobType):
         # if every job in this thread has status 'C'ompleted/'C'anceled...
         if all(item == 'C' for item in
                [thread.get_status(job_index, settings) for job_index in range(len(thread.jobids))]):
+            mdengine = factory.mdengine_factory(settings.md_engine)
+            mdengine.simulation_cleanup(thread.history, settings)
             return True
         else:
             return False
@@ -1404,24 +1409,25 @@ class FindTS(JobType):
                     output.best_bounds = bounds
             return output
 
-        # We'll also want a helper function for writing the potential transition state frames to individual files
-        def write_ts_guess_frames(traj, frame_indices):
-            ts_guesses = []  # initialize list of transition state guesses to test
-            for frame_index in frame_indices:
-                pytraj.write_traj(thread.name + '_ts_guess_' + str(frame_index) + '.rst7', traj,
-                                  frame_indices=[frame_index - 1], options='multi', overwrite=True, velocity=True)
-                try:
-                    os.rename(thread.name + '_ts_guess_' + str(frame_index) + '.rst7.1',
-                              thread.name + '_ts_guess_' + str(frame_index) + '.rst7')
-                except FileNotFoundError:
-                    if not os.path.exists(thread.name + '_ts_guess_' + str(frame_index) + '.rst7'):
-                        raise RuntimeError(
-                            'Error: attempted to write file ' + thread.name + '_ts_guess_' + str(frame_index)
-                            + '.rst7, but was unable to. Please ensure that you have '
-                              'permission to write to the working directory: ' + settings.working_directory)
-                ts_guesses.append(thread.name + '_ts_guess_' + str(frame_index) + '.rst7')
-
-            return ts_guesses
+        ### Deprecated
+        # # We'll also want a helper function for writing the potential transition state frames to individual files
+        # def write_ts_guess_frames(traj, frame_indices):
+        #     ts_guesses = []  # initialize list of transition state guesses to test
+        #     for frame_index in frame_indices:
+        #         pytraj.write_traj(thread.name + '_ts_guess_' + str(frame_index) + '.rst7', traj,
+        #                           frame_indices=[frame_index - 1], options='multi', overwrite=True, velocity=True)
+        #         try:
+        #             os.rename(thread.name + '_ts_guess_' + str(frame_index) + '.rst7.1',
+        #                       thread.name + '_ts_guess_' + str(frame_index) + '.rst7')
+        #         except FileNotFoundError:
+        #             if not os.path.exists(thread.name + '_ts_guess_' + str(frame_index) + '.rst7'):
+        #                 raise RuntimeError(
+        #                     'Error: attempted to write file ' + thread.name + '_ts_guess_' + str(frame_index)
+        #                     + '.rst7, but was unable to. Please ensure that you have '
+        #                       'permission to write to the working directory: ' + settings.working_directory)
+        #         ts_guesses.append(thread.name + '_ts_guess_' + str(frame_index) + '.rst7')
+        #
+        #     return ts_guesses
 
         # Now we measure the relevant bond lengths for each frame in the trajectory
         traj = pytraj.iterload(thread.history.prod_trajs[0], settings.topology)
@@ -1466,7 +1472,9 @@ class FindTS(JobType):
 
         print('First attempt. Testing the following frames from the forced trajectory ' + thread.history.prod_trajs[0] +
               ': ' + ', '.join([str(item) for item in frame_indices]))
-        ts_guesses = write_ts_guess_frames(traj, frame_indices)
+        # ts_guesses = write_ts_guess_frames(traj, frame_indices)
+        mdengine = factory.mdengine_factory(settings.md_engine)
+        ts_guesses = [mdengine.get_frame(thread.history.prod_trajs[0], frame, settings) for frame in frame_indices]
 
         ### Here, we do something pretty weird. We want to test the transition state guesses in the ts_guesses list
         ### using aimless shooting, but this isn't an aimless shooting job. So we'll write a new settings object using

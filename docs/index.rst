@@ -14,12 +14,13 @@ ATESA implements automation for obtaining a suitable initial transition state, f
 
 The batch systems and molecular simulations packages currently supported by ATESA (please raise an issue with the "enhancement" label on `our GitHub page <https://github.com/team-mayes/atesa>`_ if you'd like to see something added to this list!):
 
+**Simulations Packages**
+	* Amber
+	* CP2K (experimental)
+
 **Batch Systems**
 	* Slurm
 	* PBS/TORQUE
-
-**Simulations Packages**
-	* Amber
 
 .. toctree::
    :maxdepth: 2

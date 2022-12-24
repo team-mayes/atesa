@@ -12,7 +12,7 @@
       ALPHA_BETA_GAMMA {{ box_abc }}
     &END CELL
     &TOPOLOGY
-      COORD_FILE_FORMAT crd
+      COORD_FILE_FORMAT pdb
       COORD_FILE_NAME {{ inpcrd }}
       CONNECTIVITY OFF
     &END TOPOLOGY

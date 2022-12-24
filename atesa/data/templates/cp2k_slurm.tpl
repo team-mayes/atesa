@@ -10,3 +10,6 @@
 set -x
 
 srun $CP2KBIN -i {{ inp }} -o {{ out }}
+
+mv *{{ nc }}* {{ nc }}
+mv *{{ rst }}* {{ rst }}

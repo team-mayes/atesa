@@ -47,6 +47,11 @@ def process(thread, running, settings):
                 running = []       # to keep running as a list, even if empty
         return running
 
+    # Set file extention for trajectory # todo: figure out a way to do this properly
+    traj_format = '.nc'
+    if settings.md_engine == 'cp2k':
+        traj_format = '.dcd'
+
     batchfiles = []         # initialize list of batch files to fill out
     jobtype = factory.jobtype_factory(settings.job_type)    # get jobtype for calling jobtype.update_history
     this_inpcrd = jobtype.get_inpcrd(thread)
@@ -64,7 +69,7 @@ def process(thread, running, settings):
                          'prmtop': thread.topology,
                          'inpcrd': this_inpcrd[job_index],
                          'rst': thread.name + '_' + name + '.rst7',
-                         'nc': thread.name + '_' + name + '.nc',
+                         'nc': thread.name + '_' + name + traj_format,
                          'working_directory': settings.working_directory,
                          'extra': eval('settings.' + type + '_extra')}
 

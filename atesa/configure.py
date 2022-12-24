@@ -199,9 +199,9 @@ def configure(input_file, user_working_directory=''):
 
     # Set Django template environment
     if os.path.exists(settings.path_to_templates):
-        settings.env = template.Engine(dirs=[settings.path_to_templates, settings.path_to_input_files])
+        settings.env = template.Engine(dirs=[settings.path_to_templates, settings.path_to_input_files], autoescape=False)
         if not django_settings.configured:  # need to configure just once
-            django_settings.configure()
+            django_settings.configure(AUTOESCAPE=False)
     else:
         sys.exit('Error: could not locate templates folder: ' + settings.path_to_templates)
 

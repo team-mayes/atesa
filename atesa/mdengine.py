@@ -6,6 +6,8 @@ and implements its abstract methods.
 import abc
 import os
 import re
+import math
+import glob
 import numpy
 import shutil
 import django
@@ -183,6 +185,25 @@ class MDEngine(abc.ABC):
         -------
         rst7 : str
             Path to newly created .rst7 file
+
+        """
+        pass
+
+    @abc.abstractmethod
+    def simulation_cleanup(self, thread_history, settings):
+        """
+        Handle any cleanup needed after an simulation job completes but before it is interpreted.
+
+        Parameters
+        ----------
+        thread_history : argparse.Namespace
+            Thread history object
+        settings : argparse.Namespace
+            Settings namespace object
+
+        Returns
+        -------
+        None
 
         """
         pass
@@ -580,7 +601,9 @@ class AdaptAmber(MDEngine):
             input_file_name = 'eps_' + str(thread.history.prod_lens[-1][job_index]) + '.in'
 
             if not os.path.exists(input_file_name):
-                template = settings.env.get_template(settings.md_engine.lower() + '_eps_in.tpl')
+                template = settings.env.get_template(settings.path_to_input_files + '/' + settings.job_type + '_' +
+                                                     thread.current_type[job_index] + '_' + settings.md_engine.lower()
+                                                     + '.in')
                 filled = template.render(django.template.Context(
                     {'nstlim': str(thread.history.prod_lens[-1][job_index]), 'ntwx': str(settings.eps_out_freq)}))
                 with open(input_file_name, 'w') as newfile:
@@ -589,7 +612,7 @@ class AdaptAmber(MDEngine):
 
             return input_file_name
 
-    def get_input_file_find_ts(self, job_type, template, **kwargs):
+    def get_input_file_find_ts(self, settings, thread, job_index, **kwargs):
         # In find TS, not only do we want to get the input filename, we also want to store the initial basin and write
         # the restraint file to push it into the other basin. First, get the basin...
         commit = utilities.check_commit(thread.history.prod_inpcrd[0], settings)
@@ -641,6 +664,9 @@ class AdaptAmber(MDEngine):
     def control_rst_format(self, restart_file):
         return restart_file     # Amber restart files already match the desired format by default
 
+    def simulation_cleanup(self, thread_history, settings):
+        pass    # don't need to do anything for Amber
+
 
 class AdaptCP2K(MDEngine):
     """
@@ -683,10 +709,39 @@ class AdaptCP2K(MDEngine):
 
         # As appropriate, need to extract box information and velocities from inpcrd and add them to the kwargs
         mtraj = mdtraj.load(kwargs['inpcrd'], top=kwargs['prmtop'])
-        box_xyz = ' '.join([item * 10 for item in traj.unitcell_lengths[0]])    # * 10 to convert nm to Å
-        box_abc = ' '.join([item for item in traj.unitcell_angles[0]])
+        box_xyz = ' '.join([str(item * 10) for item in mtraj.unitcell_lengths[0]])    # * 10 to convert nm to Å
+        box_abc = ' '.join([str(item) for item in mtraj.unitcell_angles[0]])
 
-        filled = template.render(django.template.Context(**kwargs))
+        # Assume that the input coordinate file contains velocities
+        # Velocities begin on line ceil(0.5 * mtraj.n_atoms) + first_coord_line and end on the penultimate non-empty line
+        velocities = ''
+        lines = open(kwargs['inpcrd'], 'r').readlines()
+        # First, identify first line containing coordinates
+        first_coord_line = 0
+        for line in lines:
+            if len(line.split()) == 6:  # first coord line is always six values
+                try:    # ensure they're all numbers
+                    null = [float(item) for item in line.split()]
+                except TypeError:
+                    continue
+                break   # we're done, first_coord_line is the first coord line
+            first_coord_line += 1
+        # Now identify the last line containing velocities
+        last_vel_line = -1
+        while len(lines[last_vel_line].split()) == 0:   # ignore all blank lines at the end
+            last_vel_line -= 1
+        last_vel_line -= 1  # since it's the penultimate line
+        for ii in range((math.ceil(0.5 * mtraj.n_atoms) + first_coord_line), len(lines) + last_vel_line + 1):
+            velocities += ' '.join(lines[ii].split()[0:3]) + '\n' + ' '.join(lines[ii].split()[3:6]) + '\n'
+        velocities = velocities[:-1]    # remove trailing newline
+
+        # cast kwargs['inpcrd'] to .pdb file? As an alternative to writing elements into input files directly
+        mtraj.save_pdb(kwargs['inpcrd'] + '.pdb', force_overwrite=True)
+        kwargs['inpcrd'] = kwargs['inpcrd'] + '.pdb'
+
+        kwargs.update({ 'box_xyz': box_xyz, 'box_abc': box_abc, 'velocities': velocities})
+
+        filled = template.render(django.template.Context(kwargs))
         newfilename = kwargs['name'] + '.inp'
         with open(newfilename, 'w') as newfile:
             newfile.write(filled)
@@ -702,8 +757,67 @@ class AdaptCP2K(MDEngine):
     def get_input_file_equilibrium_path_sampling(self, settings, thread, job_index, **kwargs):
         pass
 
-    def get_input_file_find_ts(self, job_type, template, **kwargs):
-        pass
+    def get_input_file_find_ts(self, settings, thread, job_index, **kwargs):
+        templ_file = settings.path_to_input_files + '/' + settings.job_type + '_' + thread.current_type[job_index] + '_' + settings.md_engine.lower() + '.in'
+        template = settings.env.get_template(templ_file)
+
+        # As appropriate, need to extract box information and velocities from inpcrd and add them to the kwargs
+        mtraj = mdtraj.load(kwargs['inpcrd'], top=kwargs['prmtop'])
+        box_xyz = ' '.join([str(item * 10) for item in mtraj.unitcell_lengths[0]])  # * 10 to convert nm to Å
+        box_abc = ' '.join([str(item) for item in mtraj.unitcell_angles[0]])
+
+        # Need to define template fillers for colvars (definitions of dimensions to constrain) and collective
+        # (definitions of what the constraints actually are)
+        if thread.history.init_basin == 'fwd':
+            other_basin = settings.commit_bwd
+        else:  # == 'bwd', the only other valid option
+            other_basin = settings.commit_fwd
+        colvars = ''
+        collective = ''
+        for def_index in range(len(other_basin[0])):
+            extra = 0  # additional distance to add to basin definition to push *into* basin rather than to its edge
+            if other_basin[3][def_index] == 'lt':
+                extra = -0.1 * other_basin[2][def_index]  # minus 10% # todo: this doesn't work for negative angles/dihedrals (moves them towards zero instead of "more negative"), which is fine for now since angles and dihedrals are not yet supported
+            elif other_basin[3][def_index] == 'gt':
+                extra = 0.1 * other_basin[2][def_index]  # plus 10%
+            else:
+                raise RuntimeError('entries in the last list in commitment definitions (commit_fwd and commit_bwd) '
+                                   'must be either \'lt\' (less than) or \'gt\' (greater than)')
+
+            init_value = mdtraj.compute_distances(mtraj, numpy.array([[other_basin[0][def_index] - 1, other_basin[1][def_index] - 1]]))[0][0] * 10
+
+            # todo: find a solution to Django escaping ampersands that isn't just adding "|safe" in the template files
+
+            colvars += '&COLVAR\n'
+            colvars += '  &DISTANCE\n'
+            colvars += '    ATOMS ' + str(other_basin[0][def_index]) + ' ' + str(other_basin[1][def_index]) + '\n'
+            colvars += '  &END DISTANCE\n'
+            colvars += '&END COLVAR\n'
+
+            collective += '&COLLECTIVE\n'
+            collective += '  INTERMOLECULAR TRUE\n'
+            collective += '  COLVAR ' + str(def_index + 1) + '\n'
+            collective += '  TARGET [angstrom] ' + str(init_value) + '\n'
+            collective += '  TARGET_LIMIT [angstrom] ' + str(other_basin[2][def_index] + extra) + '\n'
+            collective += '  TARGET_GROWTH [angstrom/fs] ' + str(((other_basin[2][def_index] + extra) - init_value)/100) + '\n'
+            collective += '&END COLLECTIVE\n'
+
+        # Remove trailing newlines
+        colvars = colvars[:-1]
+        collective = collective[:-1]
+
+        # cast kwargs['inpcrd'] to .pdb file? As an alternative to writing elements into input files directly
+        mtraj.save_pdb(kwargs['inpcrd'] + '.pdb', force_overwrite=True)
+        kwargs['inpcrd'] = kwargs['inpcrd'] + '.pdb'
+
+        kwargs.update({'box_xyz': box_xyz, 'box_abc': box_abc, 'colvars': colvars, 'collective': collective})
+
+        filled = template.render(django.template.Context(kwargs))
+        newfilename = kwargs['name'] + '.inp'
+        with open(newfilename, 'w') as newfile:
+            newfile.write(filled)
+            newfile.close()
+        return newfilename
 
     def control_rst_format(self, restart_file):
         # CP2K restart files are actually input files with atomic coordinates and velocities in them. This method parses
@@ -725,27 +839,33 @@ class AdaptCP2K(MDEngine):
         for line in lines:
             if '&COORD' in line:
                 coords_yet = True
+                continue
             elif '&VELOCITY' in line:
                 velocs_yet = True
+                continue
             elif '&END COORD' in line:
                 coords_yet = False
+                continue
             elif '&END VELOCITY' in line:
                 velocs_yet = False
+                continue
             elif '&CELL' in line:
                 cell_yet = True
+                continue
             elif '&END CELL' in line:
                 cell_yet = False
+                continue
             if coords_yet:
-                coords.append(['%f.7' % item for item in line.split()[1:3]])
+                coords.append(['%.7f' % float(item) for item in line.split()[1:4]])
             elif velocs_yet:
-                velocs.append(['%f.7' % item for item in line.split()[0:2]])
+                velocs.append(['%.7f' % float(item) for item in line.split()[0:3]])
             elif cell_yet:
                 if line.split()[0] == 'A':
-                    cell[0] = line.split()[1]
+                    cell[0] = '%.7f' % float(line.split()[1])
                 if line.split()[0] == 'B':
-                    cell[1] = line.split()[2]
+                    cell[1] = '%.7f' % float(line.split()[2])
                 if line.split()[0] == 'C':
-                    cell[2] = line.split()[3]
+                    cell[2] = '%.7f' % float(line.split()[3])
 
 
         try:
@@ -766,7 +886,27 @@ class AdaptCP2K(MDEngine):
                 if ii % 2 == 1 or ii + 1 == len(velocs):
                     f.write('\n')
             f.write(''.join([string.rjust(12) for string in cell]))
-            f.write(''.join([string.rjust(12) for string in [90, 90, 90]]) + '\n')
+            f.write('  90.0000000  90.0000000  90.0000000\n')   # todo: any way to support other box geometries?
 
+    def simulation_cleanup(self, thread_history, settings):
+        # todo: this whole concept is pretty kludgey, can I formalize this better?
 
+        if type(thread_history.prod_trajs[-1]) == str:
+            iterable = [thread_history.prod_trajs[-1]]
+        elif type(thread_history.prod_trajs[-1]) == list:
+            iterable = thread_history.prod_trajs[-1]
+        else:
+            raise RuntimeError('Unexpected data type for thread_history.prod_trajs[-1]: ' + str(type(thread_history.prod_trajs[-1])))
 
+        for filename in iterable:
+            if not os.path.exists(filename):
+                files = glob.glob('*-' + filename + '-*')
+                if len(files) == 1:
+                    real_name = files[0]
+                else:
+                    raise RuntimeError(
+                        'Could not identify file: ' + filename + '\nIt does not exist and there is no single'
+                        ' unique file matching the pattern \'*-' + filename + '-*\'.')
+            else:
+                continue
+            os.rename(real_name, filename)

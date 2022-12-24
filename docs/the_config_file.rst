@@ -3,7 +3,7 @@
 The Configuration File
 ======================
 
-The configuration file is the primary means of controlling the behavior of ATESA. In order to support the wide array of functionality that any given user may need, the configuration file supports many options and can be quite long; however, in most cases a relatively short configuration file will be sufficient. This page provides some recommendations for building the configuration file for a handful of common use cases, and provides detailed documentation for each setting. **The easiest way to get started is to modify the relevant example config files described on the :ref:`ExampleStudy` page!**
+The configuration file is the primary means of controlling the behavior of ATESA. In order to support the wide array of functionality that any given user may need, the configuration file supports many options and can be quite long; however, in most cases a relatively short configuration file will be sufficient. This page provides some recommendations for building the configuration file for a handful of common use cases, and provides detailed documentation for each setting. **The easiest way to get started is to modify the relevant example config files described on the** :ref:`ExampleStudy` **page!**
 
 The contents of the configuration file are read line-by-line into ATESA as literal python code, which enables invocation of python built-in functions as well as methods of pytraj and numpy (and anything else you may wish to import). This means comments can be included in-line or on their own lines preceded by a '#' character, and blank lines are simply ignored. **Warning**: This input is not sanitized in any way. For this reason among others, "shutil.rmtree('/')" makes for a poor working directory!!
 
@@ -18,16 +18,17 @@ The contents of the configuration file are read line-by-line into ATESA as liter
 Core Settings
 -------------
 
-Certain settings should be given for every job. The following settings do not have valid default values and should be set in every configuration file:
+Certain settings should be given for every job. The following settings should be set in every configuration file:
 
 .. code-block:: python
 
-	job_type		# Valid options: 'find_ts', 'aimless_shooting', 'committor_analysis', 'equilibrium_path_sampling'
+	job_type		# Valid options: 'find_ts', 'aimless_shooting', 'committor_analysis', 'umbrella_sampling', 'equilibrium_path_sampling'
 	batch_system		# Valid options: 'slurm', 'pbs'
 	restart			# Valid options: True, False
 	overwrite		# Valid options: True, False
 	topology		# Valid options: Absolute or relative path as a string
 	working_directory	# Valid options: Absolute or relative path as a string
+	md_engine               # Valid options: 'amber', 'cp2k' (default = 'amber')
 	
 ``job_type``
 
@@ -52,6 +53,10 @@ Certain settings should be given for every job. The following settings do not ha
 ``working_directory``
 
 	An absolute or relative path given as a string and pointing to the desired working directory (this can be omitted if the working directory is set in the command line). This is the directory in which all of the simulations will be performed. It will be created if it does not exist.
+
+``md_engine``
+
+	The MD engine to use for running simulations. This also controls which template and input files ATESA looks for (see :ref:`SettingUpSimulationFiles` Supported options are 'amber' or 'cp2k'. Note that support for CP2K is experimental. Default = 'amber'
 
 Find Transition State
 ~~~~~~~~~~~~~~~~~~~~~
