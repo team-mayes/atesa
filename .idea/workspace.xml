@@ -3,18 +3,9 @@
   <component name="ChangeListManager">
     <list default="true" id="55679143-7654-431c-aee1-71d5375f0f66" name="Default" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atesa/configure.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/configure.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atesa/data/input_files/aimless_shooting_init_cp2k.in" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/data/input_files/aimless_shooting_init_cp2k.in" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/atesa/data/input_files/aimless_shooting_prod_cp2k.in" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/data/input_files/aimless_shooting_prod_cp2k.in" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atesa/data/templates/amber_eps_in.tpl" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/data/input_files/equilibrium_path_sampling_prod_amber.in" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atesa/data/templates/cp2k_slurm.tpl" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/data/templates/cp2k_slurm.tpl" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atesa/jobtype.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/jobtype.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/data/input_files/find_ts_prod_cp2k.in" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/data/input_files/find_ts_prod_cp2k.in" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/atesa/mdengine.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/mdengine.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atesa/process.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/process.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atesa/utilities.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/utilities.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/getting_started.rst" beforeDir="false" afterPath="$PROJECT_DIR$/docs/getting_started.rst" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/index.rst" beforeDir="false" afterPath="$PROJECT_DIR$/docs/index.rst" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/the_config_file.rst" beforeDir="false" afterPath="$PROJECT_DIR$/docs/the_config_file.rst" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

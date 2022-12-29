@@ -1,5 +1,5 @@
 &GLOBAL
-  PROJECT FIND_TS_PROD
+  PROJECT EPS_INIT
   PRINT_LEVEL LOW
   RUN_TYPE MD
 &END GLOBAL
@@ -16,7 +16,6 @@
       COORD_FILE_NAME {{ inpcrd }}
       CONNECTIVITY OFF
     &END TOPOLOGY
-    {{ colvars|safe }}
   &END SUBSYS
   &DFT
     CHARGE -1
@@ -37,17 +36,13 @@
 &MOTION
   &MD
       ENSEMBLE NVT
-      STEPS 1000
-      TIMESTEP 1
+      STEPS 1
+      TIMESTEP 0.001
       TEMPERATURE 298.15
       &THERMOSTAT
          TYPE NOSE
       &END THERMOSTAT
   &END MD
-  &CONSTRAINT
-    CONSTRAINT_INIT TRUE
-    {{ collective|safe }}
-  &END CONSTRAINT
   &PRINT
     &TRAJECTORY                                 ! Controls the output of the trajectory
       FILENAME {{ nc }}
@@ -55,8 +50,8 @@
     &END TRAJECTORY
     &RESTART                                    ! This section controls the printing of restart files
       FILENAME {{ rst }}
-      &EACH                                     ! A restart file will be printed every 1001 md steps
-        MD 1001
+      &EACH                                     ! A restart file will be printed every 100 md steps
+        MD 1
       &END
     &END RESTART
   &END PRINT

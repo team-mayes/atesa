@@ -1,5 +1,5 @@
 &GLOBAL
-  PROJECT FIND_TS_PROD
+  PROJECT EPS_PROD
   PRINT_LEVEL LOW
   RUN_TYPE MD
 &END GLOBAL
@@ -16,7 +16,9 @@
       COORD_FILE_NAME {{ inpcrd }}
       CONNECTIVITY OFF
     &END TOPOLOGY
-    {{ colvars|safe }}
+    &VELOCITY
+      {{ velocities }}
+    &END VELOCITY
   &END SUBSYS
   &DFT
     CHARGE -1
@@ -37,27 +39,30 @@
 &MOTION
   &MD
       ENSEMBLE NVT
-      STEPS 1000
+      STEPS {{ nstlim }}                        ! Number of simulation steps is templated
       TIMESTEP 1
       TEMPERATURE 298.15
       &THERMOSTAT
          TYPE NOSE
       &END THERMOSTAT
   &END MD
-  &CONSTRAINT
-    CONSTRAINT_INIT TRUE
-    {{ collective|safe }}
-  &END CONSTRAINT
   &PRINT
     &TRAJECTORY                                 ! Controls the output of the trajectory
       FILENAME {{ nc }}
       FORMAT DCD                                ! Format of the output trajectory is DCD
+      &EACH
+        MD {{ ntwx }}                           ! Frequency of writes to output is templated
+      &END
     &END TRAJECTORY
     &RESTART                                    ! This section controls the printing of restart files
-      FILENAME {{ rst }}
       &EACH                                     ! A restart file will be printed every 1001 md steps
         MD 1001
       &END
     &END RESTART
+    &RESTART_HISTORY                            ! This section controls dumping of unique restart files during the run keeping all of them. Most useful if recovery is needed at a later point.
+      &EACH                                     ! A restart file will be printed every 1001 md steps
+        MD 1001
+      &END
+    &END RESTART_HISTORY
   &END PRINT
 &END MOTION
