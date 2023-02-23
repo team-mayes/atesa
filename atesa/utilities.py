@@ -281,6 +281,8 @@ def get_cvs(filename, settings, reduce=False, frame=0, only_in_rc=False):
             # Strategy here is to write a new temporary .rst7 file by incrementing all the coordinate values by their
             # corresponding velocity values, load it as a new iterload object, and then rerun our analysis on that.
             incremented_filename = increment_coords()
+            temp_traj_name = traj_name
+            traj_name = incremented_filename    # to make available to cv evaluation code as needed
             mtraj = mdtraj.load(incremented_filename, top=settings.topology)
             if need_pytraj:  # only load traj if it's needed
                 traj = pytraj.iterload(incremented_filename, settings.topology)
@@ -303,6 +305,7 @@ def get_cvs(filename, settings, reduce=False, frame=0, only_in_rc=False):
                     evaluation = 0
                 output += sigfigs % float(evaluation) + ' '
             os.remove(incremented_filename)     # clean up temporary file
+            traj_name = temp_traj_name
 
     while output[-1] in [' ', '\n']:
         output = output[:-1]                # remove trailing space and/or newline on terminating line

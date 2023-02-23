@@ -1430,12 +1430,12 @@ class FindTS(JobType):
         #     return ts_guesses
 
         # Now we measure the relevant bond lengths for each frame in the trajectory
-        traj = pytraj.iterload(thread.history.prod_trajs[0], settings.topology)
+        traj = mdtraj.load(thread.history.prod_trajs[0], top=settings.topology)
         this_lengths = []
         for def_index in range(len(other_basin_define[0])):
             # Each iteration appends a list of the appropriate distances to this_lengths
-            this_lengths.append(pytraj.distance(traj, mask='@' + str(other_basin_define[0][def_index]) +
-                                                           ' @' + str(other_basin_define[1][def_index])))
+            this_lengths.append(mdtraj.compute_distances(traj, numpy.array([[other_basin_define[0][def_index] - 1,
+                                                                             other_basin_define[1][def_index] - 1]])))
 
         # Now look for the TS by identifying the region in the trajectory with all of the bond lengths at intermediate
         # values (which we'll define as 0.25 < X < 0.75 on a scale of 0 to 1), preferably for several frames in a row.
@@ -1672,11 +1672,6 @@ class UmbrellaSampling(JobType):
         return mdengine.get_input_file_umbrella_sampling(settings, thread, job_index, **kwargs)
 
     def get_initial_coordinates(self, settings):
-        if not settings.md_engine == 'amber':
-            raise RuntimeError('the job_type setting "umbrella_sampling" is only compatible with the md_engine setting '
-                               '"amber". If you need to use a different md_engine for evaluating an energy profile, use'
-                               ' the job_type "equilibrum_path_sampling".')
-
         # First, implement settings.us_auto_coords_directory
         if settings.us_auto_coords_directory:
             if not os.path.isdir(settings.us_auto_coords_directory):

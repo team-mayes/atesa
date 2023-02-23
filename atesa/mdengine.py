@@ -479,7 +479,6 @@ class AdaptAmber(MDEngine):
                     ordinal += 1
 
                 file.write(' &end\n')
-
         elif settings.us_implementation.lower() == 'plumed':
             # We want to add specify a plumedfile in the Amber input file, and then make that file
             # First, deal with the Amber input file.
@@ -562,7 +561,6 @@ class AdaptAmber(MDEngine):
                     f.write('... CUSTOM\n')
                     f.write('restraint-rc: RESTRAINT ARG=RC KAPPA=' + str(2 * float(settings.us_restraint)) + ' AT=' + str(thread.history.window) + '\n')
                     f.write('PRINT ARG=RC FILE=rcwin_' + str(thread.history.window) + '_' + str(thread.history.index) + '_us.dat')
-
         else:
             raise RuntimeError('unrecognized us_implementation option: ' + settings.us_implementation)
 
@@ -708,7 +706,7 @@ class AdaptCP2K(MDEngine):
         template = settings.env.get_template(templ_file)
 
         # As appropriate, need to extract box information and velocities from inpcrd and add them to the kwargs
-        mtraj = mdtraj.load(kwargs['inpcrd'], top=kwargs['prmtop'])
+        mtraj = mdtraj.load_restrt(kwargs['inpcrd'], top=kwargs['prmtop'])
         box_xyz = ' '.join([str(item * 10) for item in mtraj.unitcell_lengths[0]])    # * 10 to convert nm to Å
         box_abc = ' '.join([str(item) for item in mtraj.unitcell_angles[0]])
 
@@ -724,6 +722,9 @@ class AdaptCP2K(MDEngine):
                     null = [float(item) for item in line.split()]
                 except TypeError:
                     continue
+                except ValueError:
+                    raise RuntimeError('Got unexpected format for an input coordinate file. It should be in amber .rst7'
+                                       ' format for aimless shooting.')
                 break   # we're done, first_coord_line is the first coord line
             first_coord_line += 1
         # Now identify the last line containing velocities
@@ -754,7 +755,7 @@ class AdaptCP2K(MDEngine):
         template = settings.env.get_template(templ_file)
 
         # As appropriate, need to extract box information and velocities from inpcrd and add them to the kwargs
-        mtraj = mdtraj.load(kwargs['inpcrd'], top=kwargs['prmtop'])
+        mtraj = mdtraj.load_restrt(kwargs['inpcrd'], top=kwargs['prmtop'])
         box_xyz = ' '.join([str(item * 10) for item in mtraj.unitcell_lengths[0]])  # * 10 to convert nm to Å
         box_abc = ' '.join([str(item) for item in mtraj.unitcell_angles[0]])
 
@@ -762,7 +763,7 @@ class AdaptCP2K(MDEngine):
         mtraj.save_pdb(kwargs['inpcrd'] + '.pdb', force_overwrite=True)
         kwargs['inpcrd'] = kwargs['inpcrd'] + '.pdb'
 
-        kwargs.update({'box_xyz': box_xyz, 'box_abc': box_abc, 'velocities': velocities})
+        kwargs.update({'box_xyz': box_xyz, 'box_abc': box_abc})
 
         filled = template.render(django.template.Context(kwargs))
         newfilename = kwargs['name'] + '.inp'
@@ -784,7 +785,7 @@ class AdaptCP2K(MDEngine):
         template = settings.env.get_template(templ_file)
 
         # As appropriate, need to extract box information and velocities from inpcrd and add them to the kwargs
-        mtraj = mdtraj.load(kwargs['inpcrd'], top=kwargs['prmtop'])
+        mtraj = mdtraj.load_restrt(kwargs['inpcrd'], top=kwargs['prmtop'])
         box_xyz = ' '.join([str(item * 10) for item in mtraj.unitcell_lengths[0]])  # * 10 to convert nm to Å
         box_abc = ' '.join([str(item) for item in mtraj.unitcell_angles[0]])
 
@@ -792,7 +793,7 @@ class AdaptCP2K(MDEngine):
         mtraj.save_pdb(kwargs['inpcrd'] + '.pdb', force_overwrite=True)
         kwargs['inpcrd'] = kwargs['inpcrd'] + '.pdb'
 
-        kwargs.update({'box_xyz': box_xyz, 'box_abc': box_abc, 'velocities': velocities})
+        kwargs.update({'box_xyz': box_xyz, 'box_abc': box_abc})
 
         if settings.us_pathway_restraints_file:
             pass
@@ -1042,7 +1043,7 @@ class AdaptCP2K(MDEngine):
         template = settings.env.get_template(templ_file)
 
         # As appropriate, need to extract box information and velocities from inpcrd and add them to the kwargs
-        mtraj = mdtraj.load(kwargs['inpcrd'], top=kwargs['prmtop'])
+        mtraj = mdtraj.load_restrt(kwargs['inpcrd'], top=kwargs['prmtop'])
         box_xyz = ' '.join([str(item * 10) for item in mtraj.unitcell_lengths[0]])    # * 10 to convert nm to Å
         box_abc = ' '.join([str(item) for item in mtraj.unitcell_angles[0]])
 
@@ -1131,7 +1132,7 @@ class AdaptCP2K(MDEngine):
             collective += '  COLVAR ' + str(def_index + 1) + '\n'
             collective += '  TARGET [angstrom] ' + str(init_value) + '\n'
             collective += '  TARGET_LIMIT [angstrom] ' + str(other_basin[2][def_index] + extra) + '\n'
-            collective += '  TARGET_GROWTH [angstrom/fs] ' + str(((other_basin[2][def_index] + extra) - init_value)/100) + '\n'
+            collective += '  TARGET_GROWTH [angstrom/fs] ' + str(((other_basin[2][def_index] + extra) - init_value)/50) + '\n'
             collective += '&END COLLECTIVE\n'
 
         # Remove trailing newlines
@@ -1165,39 +1166,44 @@ class AdaptCP2K(MDEngine):
         coords = []
         velocs = []
         cell = [0, 0, 0]
+        subsys_yet = False
         coords_yet = False
         velocs_yet = False
         cell_yet = False
         for line in lines:
-            if '&COORD' in line:
-                coords_yet = True
-                continue
-            elif '&VELOCITY' in line:
-                velocs_yet = True
-                continue
-            elif '&END COORD' in line:
-                coords_yet = False
-                continue
-            elif '&END VELOCITY' in line:
-                velocs_yet = False
-                continue
-            elif '&CELL' in line:
-                cell_yet = True
-                continue
-            elif '&END CELL' in line:
-                cell_yet = False
-                continue
-            if coords_yet:
-                coords.append(['%.7f' % float(item) for item in line.split()[1:4]])
-            elif velocs_yet:
-                velocs.append(['%.7f' % float(item) for item in line.split()[0:3]])
-            elif cell_yet:
-                if line.split()[0] == 'A':
-                    cell[0] = '%.7f' % float(line.split()[1])
-                if line.split()[0] == 'B':
-                    cell[1] = '%.7f' % float(line.split()[2])
-                if line.split()[0] == 'C':
-                    cell[2] = '%.7f' % float(line.split()[3])
+            if not subsys_yet:
+                if '&SUBSYS' in line:
+                    subsys_yet = True
+            if subsys_yet:
+                if '&COORD' in line:
+                    coords_yet = True
+                    continue
+                elif '&VELOCITY' in line:
+                    velocs_yet = True
+                    continue
+                elif '&END COORD' in line:
+                    coords_yet = False
+                    continue
+                elif '&END VELOCITY' in line:
+                    velocs_yet = False
+                    continue
+                elif '&CELL' in line:
+                    cell_yet = True
+                    continue
+                elif '&END CELL' in line:
+                    cell_yet = False
+                    continue
+                if coords_yet:
+                    coords.append(['%.7f' % float(item) for item in line.split()[1:4]])
+                elif velocs_yet:
+                    velocs.append(['%.7f' % float(item) for item in line.split()[0:3]])
+                elif cell_yet:
+                    if line.split()[0] == 'A':
+                        cell[0] = '%.7f' % float(line.split()[1])
+                    if line.split()[0] == 'B':
+                        cell[1] = '%.7f' % float(line.split()[2])
+                    if line.split()[0] == 'C':
+                        cell[2] = '%.7f' % float(line.split()[3])
 
 
         try:
@@ -1236,9 +1242,11 @@ class AdaptCP2K(MDEngine):
                 if len(files) == 1:
                     real_name = files[0]
                 else:
-                    raise RuntimeError(
-                        'Could not identify file: ' + filename + '\nIt does not exist and there is no single'
-                        ' unique file matching the pattern \'*-' + filename + '-*\'.')
+                    continue
+                    # No need for error handling here -- the job will fail check_for_successful_step, which is fine.
+                    # raise RuntimeError(
+                    #     'Could not identify file: ' + filename + '\nIt does not exist and there is no single'
+                    #     ' unique file matching the pattern \'*-' + filename + '-*\'.')
             else:
                 continue
             os.rename(real_name, filename)

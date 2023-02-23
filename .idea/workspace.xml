@@ -2,10 +2,20 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="55679143-7654-431c-aee1-71d5375f0f66" name="Default" comment="">
+      <change afterPath="$PROJECT_DIR$/atesa/tests/test_data/cp2k_as_test_velocities.rst7_0_fwd.inp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/atesa/tests/test_data/cp2k_as_test_velocities.rst7_0_init.inp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/atesa/tests/test_data/cp2k_comana_test_velocities.rst7_0_prod.inp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/atesa/tests/test_data/cp2k_umbrella_sampling_2.5_1.in" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/atesa/tests/test_data/plumed_2.5_1.in" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/atesa/tests/test_mdengine.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atesa/data/input_files/aimless_shooting_prod_cp2k.in" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/data/input_files/aimless_shooting_prod_cp2k.in" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atesa/data/input_files/find_ts_prod_cp2k.in" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/data/input_files/find_ts_prod_cp2k.in" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/configure.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/configure.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/jobtype.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/jobtype.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/atesa/mdengine.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/mdengine.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/tests/test_data/test_velocities.rst7.pdb" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/tests/test_data/test_velocities.rst7.pdb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/tests/test_jobtype.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/tests/test_jobtype.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/utilities.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/utilities.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/the_config_file.rst" beforeDir="false" afterPath="$PROJECT_DIR$/docs/the_config_file.rst" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -390,16 +400,17 @@
   <component name="PropertiesComponent">
     <property name="SearchEverywhereHistoryKey" value="&#9;FILE&#9;file:///Users/tburgin/Documents/PycharmProjects/atesa_v2/atesa_v2/atesa_v2.py" />
     <property name="WebServerToolWindowFactoryState" value="false" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/atesa/data/input_files" />
+    <property name="full.screen.before.presentation.mode" value="false" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/atesa/tests/test_data" />
     <property name="run.code.analysis.last.selected.profile" value="pProject Default" />
     <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
   </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
-      <recent name="$PROJECT_DIR$/atesa/data/input_files" />
-      <recent name="$PROJECT_DIR$/atesa/data/templates" />
       <recent name="$PROJECT_DIR$/atesa/tests/test_data" />
       <recent name="$PROJECT_DIR$/atesa/tests" />
+      <recent name="$PROJECT_DIR$/atesa/data/input_files" />
+      <recent name="$PROJECT_DIR$/atesa/data/templates" />
       <recent name="$PROJECT_DIR$/docs/_images" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
@@ -613,12 +624,12 @@
       <option name="_new_targetType" value="&quot;PATH&quot;" />
       <method v="2" />
     </configuration>
-    <configuration name="pytest for atesa.tests.test_resampling.Tests.test_resample_committor_analysis" type="tests" factoryName="py.test" temporary="true" nameIsGenerated="true">
+    <configuration name="pytest for atesa.tests.test_mdengine" type="tests" factoryName="py.test" temporary="true" nameIsGenerated="true">
       <module name="atesa" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
       <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/atesa/tests" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/atesa/tests/test_temp" />
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
@@ -626,11 +637,11 @@
       <option name="_new_keywords" value="&quot;&quot;" />
       <option name="_new_parameters" value="&quot;&quot;" />
       <option name="_new_additionalArguments" value="&quot;&quot;" />
-      <option name="_new_target" value="&quot;atesa.tests.test_resampling.Tests.test_resample_committor_analysis&quot;" />
+      <option name="_new_target" value="&quot;atesa.tests.test_mdengine&quot;" />
       <option name="_new_targetType" value="&quot;PYTHON&quot;" />
       <method v="2" />
     </configuration>
-    <configuration name="pytest for test_rc_eval.Tests.test_extrema_mdtraj" type="tests" factoryName="py.test" temporary="true" nameIsGenerated="true">
+    <configuration name="pytest for test_mdengine.Tests" type="tests" factoryName="py.test" temporary="true" nameIsGenerated="true">
       <module name="atesa" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -643,25 +654,8 @@
       <option name="_new_keywords" value="&quot;&quot;" />
       <option name="_new_parameters" value="&quot;&quot;" />
       <option name="_new_additionalArguments" value="&quot;&quot;" />
-      <option name="_new_target" value="&quot;test_rc_eval.Tests.test_extrema_mdtraj&quot;" />
+      <option name="_new_target" value="&quot;test_mdengine.Tests&quot;" />
       <option name="_new_targetType" value="&quot;PYTHON&quot;" />
-      <method v="2" />
-    </configuration>
-    <configuration name="pytest in test_rc_eval.py" type="tests" factoryName="py.test" temporary="true" nameIsGenerated="true">
-      <module name="atesa" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/atesa/tests" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <EXTENSION ID="PythonCoverageRunConfigurationExtension" enabled="false" sample_coverage="true" runner="coverage.py" />
-      <option name="_new_keywords" value="&quot;&quot;" />
-      <option name="_new_parameters" value="&quot;&quot;" />
-      <option name="_new_additionalArguments" value="&quot;&quot;" />
-      <option name="_new_target" value="&quot;$PROJECT_DIR$/atesa/tests/test_rc_eval.py&quot;" />
-      <option name="_new_targetType" value="&quot;PATH&quot;" />
       <method v="2" />
     </configuration>
     <configuration name="pytest in tests" type="tests" factoryName="py.test" temporary="true" nameIsGenerated="true">
@@ -684,18 +678,17 @@
     <list>
       <item itemvalue="Python.mbar" />
       <item itemvalue="Python tests.py.test in tests" />
-      <item itemvalue="Python tests.pytest for test_rc_eval.Tests.test_extrema_mdtraj" />
-      <item itemvalue="Python tests.pytest in test_rc_eval.py" />
+      <item itemvalue="Python tests.pytest for atesa.tests.test_mdengine" />
+      <item itemvalue="Python tests.pytest for test_mdengine.Tests" />
       <item itemvalue="Python tests.pytest in tests" />
-      <item itemvalue="Python tests.pytest for atesa.tests.test_resampling.Tests.test_resample_committor_analysis" />
     </list>
     <recent_temporary>
       <list>
         <item itemvalue="Python tests.py.test in tests" />
+        <item itemvalue="Python tests.pytest for atesa.tests.test_mdengine" />
+        <item itemvalue="Python tests.pytest for test_mdengine.Tests" />
         <item itemvalue="Python.mbar" />
         <item itemvalue="Python tests.pytest in tests" />
-        <item itemvalue="Python tests.pytest in test_rc_eval.py" />
-        <item itemvalue="Python tests.pytest for test_rc_eval.Tests.test_extrema_mdtraj" />
       </list>
     </recent_temporary>
   </component>

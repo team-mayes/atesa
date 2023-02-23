@@ -162,6 +162,7 @@ def configure(input_file, user_working_directory=''):
     line_index = 0
     for line in lines:      # each line in the input file is just python code setting a variable;
         line_index += 1
+        line = line.replace('\\n', '\n')   # so as to support the explicit use of newline characters in the config file
         try:
             exec(line)      # this means that comments are supported using '#' and whitespace is ignored.
         except Exception as e:
