@@ -2,20 +2,8 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="55679143-7654-431c-aee1-71d5375f0f66" name="Default" comment="">
-      <change afterPath="$PROJECT_DIR$/atesa/tests/test_data/cp2k_as_test_velocities.rst7_0_fwd.inp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/atesa/tests/test_data/cp2k_as_test_velocities.rst7_0_init.inp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/atesa/tests/test_data/cp2k_comana_test_velocities.rst7_0_prod.inp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/atesa/tests/test_data/cp2k_umbrella_sampling_2.5_1.in" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/atesa/tests/test_data/plumed_2.5_1.in" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/atesa/tests/test_mdengine.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atesa/configure.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/configure.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/atesa/jobtype.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/jobtype.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atesa/mdengine.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/mdengine.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atesa/tests/test_data/test_velocities.rst7.pdb" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/tests/test_data/test_velocities.rst7.pdb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atesa/tests/test_jobtype.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/tests/test_jobtype.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atesa/utilities.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/utilities.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/the_config_file.rst" beforeDir="false" afterPath="$PROJECT_DIR$/docs/the_config_file.rst" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

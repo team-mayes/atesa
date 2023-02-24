@@ -1434,8 +1434,9 @@ class FindTS(JobType):
         this_lengths = []
         for def_index in range(len(other_basin_define[0])):
             # Each iteration appends a list of the appropriate distances to this_lengths
-            this_lengths.append(mdtraj.compute_distances(traj, numpy.array([[other_basin_define[0][def_index] - 1,
-                                                                             other_basin_define[1][def_index] - 1]])))
+            this_lengths.append(
+                numpy.squeeze(mdtraj.compute_distances(traj, numpy.array([[other_basin_define[0][def_index] - 1,
+                                                                           other_basin_define[1][def_index] - 1]]))))
 
         # Now look for the TS by identifying the region in the trajectory with all of the bond lengths at intermediate
         # values (which we'll define as 0.25 < X < 0.75 on a scale of 0 to 1), preferably for several frames in a row.
