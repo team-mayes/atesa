@@ -1380,102 +1380,110 @@ class FindTS(JobType):
                                'modify the basin definition(s) or the input file (' + settings.path_to_input_files +
                                '/find_ts_prod_' + settings.md_engine + '.in) accordingly.')
 
-        # Now harvest TSs by inspecting values of target-basin-defining bond lengths vs. frame number
-
-        # We need two helper functions to optimize for the portion of the trajectory most likely to contain the TS
-        # There is no need for these functions to be performance-optimized; they will only be used sparingly
-
-        # First just a numerical integrator
-        def my_integral(params, my_list):
-            # Evaluate a numerical integral of the data in list my_list on the range (params[0],params[1]), where the
-            # values in params should be integers referring to indices of my_list.
-            partial_list = my_list[int(params[0]):int(params[1])]
-            return numpy.trapz(partial_list)
-
-        # And then an optimizer to find the bounds (params) of my_integral that maximize its output
-        def my_bounds_opt(objective, data):
-            list_of_bounds = []
-            for left_bound in range(len(data) - 1):
-                for right_bound in range(left_bound + 1, len(data) + 1):
-                    if right_bound - left_bound > 1:
-                        list_of_bounds.append([left_bound, right_bound])
-            output = argparse.Namespace()
-            output.best_max = objective(list_of_bounds[0], data)
-            output.best_bounds = list_of_bounds[0]
-            for bounds in list_of_bounds:
-                this_result = objective(bounds, data)
-                if this_result > output.best_max:
-                    output.best_max = this_result
-                    output.best_bounds = bounds
-            return output
-
-        ### Deprecated
-        # # We'll also want a helper function for writing the potential transition state frames to individual files
-        # def write_ts_guess_frames(traj, frame_indices):
-        #     ts_guesses = []  # initialize list of transition state guesses to test
-        #     for frame_index in frame_indices:
-        #         pytraj.write_traj(thread.name + '_ts_guess_' + str(frame_index) + '.rst7', traj,
-        #                           frame_indices=[frame_index - 1], options='multi', overwrite=True, velocity=True)
-        #         try:
-        #             os.rename(thread.name + '_ts_guess_' + str(frame_index) + '.rst7.1',
-        #                       thread.name + '_ts_guess_' + str(frame_index) + '.rst7')
-        #         except FileNotFoundError:
-        #             if not os.path.exists(thread.name + '_ts_guess_' + str(frame_index) + '.rst7'):
-        #                 raise RuntimeError(
-        #                     'Error: attempted to write file ' + thread.name + '_ts_guess_' + str(frame_index)
-        #                     + '.rst7, but was unable to. Please ensure that you have '
-        #                       'permission to write to the working directory: ' + settings.working_directory)
-        #         ts_guesses.append(thread.name + '_ts_guess_' + str(frame_index) + '.rst7')
-        #
-        #     return ts_guesses
-
-        # Now we measure the relevant bond lengths for each frame in the trajectory
         traj = mdtraj.load(thread.history.prod_trajs[0], top=settings.topology)
-        this_lengths = []
-        for def_index in range(len(other_basin_define[0])):
-            # Each iteration appends a list of the appropriate distances to this_lengths
-            this_lengths.append(
-                numpy.squeeze(mdtraj.compute_distances(traj, numpy.array([[other_basin_define[0][def_index] - 1,
-                                                                           other_basin_define[1][def_index] - 1]]))))
+        test_frames = int(traj.n_frames * 0.1)  # number of test frames is equal to 10% of length of trajectory
 
-        # Now look for the TS by identifying the region in the trajectory with all of the bond lengths at intermediate
-        # values (which we'll define as 0.25 < X < 0.75 on a scale of 0 to 1), preferably for several frames in a row.
-        norm_lengths = []       # initialize list of normalized (between 0 and 1) lengths
-        scored_lengths = []     # initialize list of scores based on lengths
-        for lengths in this_lengths:
-            normd = [(this_len - min(lengths)) / (max(lengths) - min(lengths)) for this_len in lengths]
-            norm_lengths.append(normd)
-            scored_lengths.append([(-(this_len - 0.5) ** 2 + 0.0625) for this_len in normd])  # scored on parabola
-        sum_of_scores = []
-        for frame_index in range(len(scored_lengths[0])):  # sum together scores from each distance at each frame
-            sum_of_scores.append(sum([[x[i] for x in scored_lengths] for i in range(len(scored_lengths[0]))][frame_index]))
+        if settings.find_ts_strategy.lower() == 'middle':
+            # Now harvest TSs by inspecting values of target-basin-defining bond lengths vs. frame number
 
-        # Now I want to find the boundaries between which the TS is most likely to reside. To do this I'll perform a 2D
-        # optimization on the integral to find the continuous region that is most positively scored
-        opt_result = my_bounds_opt(my_integral, sum_of_scores)
+            # We need two helper functions to optimize for the portion of the trajectory most likely to contain the TS
+            # There is no need for these functions to be performance-optimized; they will only be used sparingly
 
-        # If all of sum_of_scores is negative we still want to find a workable max. Also, if there are fewer than five
-        # candidate frames we want to test more than that. Either way, shift scores up by 0.1 and try again:
-        while opt_result.best_max <= 0 or int(opt_result.best_bounds[1] - opt_result.best_bounds[0]) < 5:
-            sum_of_scores = [(item + 0.1) for item in sum_of_scores]
+            # First just a numerical integrator
+            def my_integral(params, my_list):
+                # Evaluate a numerical integral of the data in list my_list on the range (params[0],params[1]), where the
+                # values in params should be integers referring to indices of my_list.
+                partial_list = my_list[int(params[0]):int(params[1])]
+                return numpy.trapz(partial_list)
+
+            # And then an optimizer to find the bounds (params) of my_integral that maximize its output
+            def my_bounds_opt(objective, data):
+                list_of_bounds = []
+                for left_bound in range(len(data) - 1):
+                    for right_bound in range(left_bound + 1, len(data) + 1):
+                        if right_bound - left_bound > 1:
+                            list_of_bounds.append([left_bound, right_bound])
+                output = argparse.Namespace()
+                output.best_max = objective(list_of_bounds[0], data)
+                output.best_bounds = list_of_bounds[0]
+                for bounds in list_of_bounds:
+                    this_result = objective(bounds, data)
+                    if this_result > output.best_max:
+                        output.best_max = this_result
+                        output.best_bounds = bounds
+                return output
+
+            ### Deprecated
+            # # We'll also want a helper function for writing the potential transition state frames to individual files
+            # def write_ts_guess_frames(traj, frame_indices):
+            #     ts_guesses = []  # initialize list of transition state guesses to test
+            #     for frame_index in frame_indices:
+            #         pytraj.write_traj(thread.name + '_ts_guess_' + str(frame_index) + '.rst7', traj,
+            #                           frame_indices=[frame_index - 1], options='multi', overwrite=True, velocity=True)
+            #         try:
+            #             os.rename(thread.name + '_ts_guess_' + str(frame_index) + '.rst7.1',
+            #                       thread.name + '_ts_guess_' + str(frame_index) + '.rst7')
+            #         except FileNotFoundError:
+            #             if not os.path.exists(thread.name + '_ts_guess_' + str(frame_index) + '.rst7'):
+            #                 raise RuntimeError(
+            #                     'Error: attempted to write file ' + thread.name + '_ts_guess_' + str(frame_index)
+            #                     + '.rst7, but was unable to. Please ensure that you have '
+            #                       'permission to write to the working directory: ' + settings.working_directory)
+            #         ts_guesses.append(thread.name + '_ts_guess_' + str(frame_index) + '.rst7')
+            #
+            #     return ts_guesses
+
+            # Now we measure the relevant bond lengths for each frame in the trajectory
+            this_lengths = []
+            for def_index in range(len(other_basin_define[0])):
+                # Each iteration appends a list of the appropriate distances to this_lengths
+                this_lengths.append(
+                    numpy.squeeze(mdtraj.compute_distances(traj, numpy.array([[other_basin_define[0][def_index] - 1,
+                                                                               other_basin_define[1][def_index] - 1]]))))
+
+            # Now look for the TS by identifying the region in the trajectory with all of the bond lengths at intermediate
+            # values (which we'll define as 0.25 < X < 0.75 on a scale of 0 to 1), preferably for several frames in a row.
+            norm_lengths = []       # initialize list of normalized (between 0 and 1) lengths
+            scored_lengths = []     # initialize list of scores based on lengths
+            for lengths in this_lengths:
+                normd = [(this_len - min(lengths)) / (max(lengths) - min(lengths)) for this_len in lengths]
+                norm_lengths.append(normd)
+                scored_lengths.append([(-(this_len - 0.5) ** 2 + 0.0625) for this_len in normd])  # scored on parabola
+            sum_of_scores = []
+            for frame_index in range(len(scored_lengths[0])):  # sum together scores from each distance at each frame
+                sum_of_scores.append(sum([[x[i] for x in scored_lengths] for i in range(len(scored_lengths[0]))][frame_index]))
+
+            # Now I want to find the boundaries between which the TS is most likely to reside. To do this I'll perform a 2D
+            # optimization on the integral to find the continuous region that is most positively scored
             opt_result = my_bounds_opt(my_integral, sum_of_scores)
 
-        # opt_result.best_bounds now contains the frame indices bounding the region of interest. I want to use pytraj to
-        # extract each of these frames as a .rst7 coordinate file and return their names. I'll put a cap on the number
-        # of frames that this is done for at, say, 50, so as to avoid somehow ending up with a huge number of candidate
-        # TS structures to test.
+            # If all of sum_of_scores is negative we still want to find a workable max. Also, if there are fewer than five
+            # candidate frames we want to test more than that. Either way, shift scores up by 0.1 and try again:
+            while opt_result.best_max <= 0 or int(opt_result.best_bounds[1] - opt_result.best_bounds[0]) < 5:
+                sum_of_scores = [(item + 0.1) for item in sum_of_scores]
+                opt_result = my_bounds_opt(my_integral, sum_of_scores)
 
-        if int(opt_result.best_bounds[1] - opt_result.best_bounds[0] + 1) > 50:
-            # The best-fit for evenly spacing 50 frames from the bounded region
-            frame_indices = [int(ii) for ii in numpy.linspace(opt_result.best_bounds[0], opt_result.best_bounds[1], 50)]
-        else:   # number of frames in bounds <= 50, so we'll take all of them
-            frame_indices = [int(ii) for ii in range(opt_result.best_bounds[0], opt_result.best_bounds[1]+1)]
+            # opt_result.best_bounds now contains the frame indices bounding the region of interest. Now extract the
+            # best test_frames frames for testing
 
-        print('First attempt. Testing the following frames from the forced trajectory ' + thread.history.prod_trajs[0] +
-              ': ' + ', '.join([str(item) for item in frame_indices]))
-        # ts_guesses = write_ts_guess_frames(traj, frame_indices)
-        mdengine = factory.mdengine_factory(settings.md_engine)
-        ts_guesses = [mdengine.get_frame(thread.history.prod_trajs[0], frame, settings) for frame in frame_indices]
+            if int(opt_result.best_bounds[1] - opt_result.best_bounds[0] + 1) > test_frames:
+                # The best-fit for evenly spacing test_frames frames from the bounded region
+                frame_indices = [int(ii) for ii in numpy.linspace(opt_result.best_bounds[0], opt_result.best_bounds[1], test_frames)]
+            else:   # number of frames in bounds <= test_frames, so we'll take all of them
+                frame_indices = [int(ii) for ii in range(opt_result.best_bounds[0], opt_result.best_bounds[1]+1)]
+
+            print('First attempt. Testing the following frames from the forced trajectory ' + thread.history.prod_trajs[0] +
+                  ': ' + ', '.join([str(item) for item in frame_indices]))
+            # ts_guesses = write_ts_guess_frames(traj, frame_indices)
+            mdengine = factory.mdengine_factory(settings.md_engine)
+            ts_guesses = [mdengine.get_frame(thread.history.prod_trajs[0], frame, settings) for frame in frame_indices]
+        elif settings.find_ts_strategy.lower() == 'end':
+            # Take the last test_frames frames
+            frame_indices = numpy.arange(traj.n_frames - test_frames, traj.n_frames)
+            ts_guesses = [mdengine.get_frame(thread.history.prod_trajs[0], frame, settings) for frame in frame_indices]
+        else:
+            raise RuntimeError('invalid option for find_ts_strategy: ' + str(settings.find_ts_strategy) + '\nValid'
+                               ' options are \'middle\' and \'end\'')
 
         ### Here, we do something pretty weird. We want to test the transition state guesses in the ts_guesses list
         ### using aimless shooting, but this isn't an aimless shooting job. So we'll write a new settings object using

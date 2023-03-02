@@ -1132,7 +1132,7 @@ class AdaptCP2K(MDEngine):
             collective += '  COLVAR ' + str(def_index + 1) + '\n'
             collective += '  TARGET [angstrom] ' + str(init_value) + '\n'
             collective += '  TARGET_LIMIT [angstrom] ' + str(other_basin[2][def_index] + extra) + '\n'
-            collective += '  TARGET_GROWTH [angstrom/fs] ' + str(((other_basin[2][def_index] + extra) - init_value)/50) + '\n'
+            collective += '  TARGET_GROWTH [angstrom/fs] ' + str(((other_basin[2][def_index] + extra) - init_value)/100) + '\n'
             collective += '&END COLLECTIVE\n'
 
         # Remove trailing newlines

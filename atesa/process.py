@@ -71,6 +71,7 @@ def process(thread, running, settings):
                          'rst': thread.name + '_' + name + '.rst7',
                          'nc': thread.name + '_' + name + traj_format,
                          'working_directory': settings.working_directory,
+                         'thread_name': thread.name,
                          'extra': eval('settings.' + type + '_extra')}
 
         inp = jobtype.get_input_file(thread, job_index, settings, **these_kwargs)

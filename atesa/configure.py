@@ -135,6 +135,9 @@ def configure(input_file, user_working_directory=''):
         us_auto_coords_directory: str = ''
         us_pathway_restraints_file: str = ''
 
+        # Required only for find_ts
+        find_ts_strategy: str = 'middle'   # 'end' or 'middle'
+
         # Resampling
         resample: bool = False
 
