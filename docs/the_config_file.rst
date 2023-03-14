@@ -7,6 +7,15 @@ The configuration file is the primary means of controlling the behavior of ATESA
 
 The contents of the configuration file are read line-by-line into ATESA as literal python code, which enables invocation of python built-in functions as well as methods of pytraj and numpy (and anything else you may wish to import). This means comments can be included in-line or on their own lines preceded by a '#' character, and blank lines are simply ignored. **Warning**: This input is not sanitized in any way. For this reason among others, "shutil.rmtree('/')" makes for a poor working directory!!
 
+Note that ATESA can also handle user-defined functions in the configuration file. These can be useful for, for example, defining custom CV terms. One limitation is that all function definitions need to take place on a single line. In order to invoke a function defined in the configuration file elsewhere in the configuration file, simply prepend "``settings.``" before the function handle. For example:
+
+.. code-block:: python
+
+    def myfunc(x): print(x + 1)
+    cvs = ['settings.myfunc(2)']
+
+(See :ref:`CVDefinitions` below for more information on how the `cvs` option is defined.)
+
 .. toctree::
    :maxdepth: 3
    :caption: Contents of this page:
@@ -253,7 +262,7 @@ These settings define the paths where ATESA will search for user-defined input f
 CV Settings
 ~~~~~~~~~~~
 
-These settings define the combined variables (CVs) for the job. In aimless shooting, these are the values that are written to the output file for interpretation by likelihood maximization in building the reaction coordinate (RC). In umbrella sampling, equilibrium path sampling, and committor analysis, they are used to evaluate the RC (see :ref:`ReactionCoordinateDefinition`). They are not used in ``find_transition_state`` jobs.
+These settings define the collective variables (CVs) for the job. In aimless shooting, these are the values that are written to the output file for interpretation by likelihood maximization in building the reaction coordinate (RC). In umbrella sampling, equilibrium path sampling, and committor analysis, they are used to evaluate the RC (see :ref:`ReactionCoordinateDefinition`). They are not used in ``find_transition_state`` jobs.
 
 ``cvs`` **‡**
 
@@ -382,6 +391,19 @@ The options define the reaction coordinate (RC) in terms of the CVs in the *cvs*
 ``as_out_file`` **‡**
 
 	Path to an aimless shooting output file. The minimum and maximum values of each CV contained herein are used to reduce the CV values in the RC if *rc_reduced_cvs = True* (otherwise this option is unused). The CVs must be given in the same order in this file as they are in the *cvs* option (as is the case if the same *cvs* option was used in the aimless shooting run that produced this file). This option must be set explicitly if the aimless shooting output file is not present in the working directory, as is usually the case by default in committor analysis and equilibrium path sampling. Default = 'as_raw.out'
+
+Find Transition State Settings
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This option is specific to find transition state (find_ts) runs only.
+
+``find_ts_strategy``
+
+    Strategy for selecting frames to use as initial shooting points to test for suitability as a transition state model. Valid selections are 'middle' and 'end'. 'middle' tries to select frames from the middle of the trajectory with the most average interatomic distances compared to the starting and ending coordinates. 'end' selects frames at the end, with the rationale that because the find_ts trajectory is terminated as soon as it commits to the opposite basin, the appropriate transition state ought to be near the end of the trajectory. In general, 'middle' is better, but 'end' can be preferable in cases where conditions other than atomic distances (such as electronic polarization effects from nearby atoms) are expected to contribute significantly. Default = 'middle'
+
+``find_ts_test_threads``
+
+    The number of threads used for aimless shooting testing of candidate transition states. If this is set to 0, then the number of threads is equal to 10% of the number of frames in the biased find_ts trajectory. Default = 0
 
 .. _AimlessShootingSettings:
 

@@ -1212,6 +1212,12 @@ class AdaptCP2K(MDEngine):
             raise RuntimeError('Error when parsing CP2K restart file: ' + restart_file + '.bak\n'
                                'Mismatch in number of atoms and number of atomic velocities')
 
+        try:
+            assert all([type(item) == str for item in cell])
+        except AssertionError:
+            raise RuntimeError('Error when parsing CP2K restart file: ' + restart_file + '.bak\n'
+                               'Unable to read cell dimensions')
+
         with open(restart_file, 'a') as f:
             f.write('.rst7 format restart file built by ATESA based on contents of ' + restart_file + '.bak\n')
             f.write(str(len(coords)) + '\n')

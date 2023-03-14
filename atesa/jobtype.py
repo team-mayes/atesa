@@ -642,7 +642,16 @@ class AimlessShooting(JobType):
             if thread.history.prod_results[-1] in [['fwd', 'bwd'], ['bwd', 'fwd']]:    # accepted move
                 job_index = int(numpy.round(random.random()))    # randomly select a trajectory (there are only ever two in aimless shooting)
                 frame = random.randint(settings.min_dt, settings.max_dt)
-                new_point = thread.get_frame(thread.history.prod_trajs[-1][job_index], frame, settings)
+                try:
+                    new_point = thread.get_frame(thread.history.prod_trajs[-1][job_index], frame, settings)
+                except IndexError as e: # some fault tolerance here for when frame > number of frames in trajectory
+                    # Load in the trajectory to check its length and modify frame selection accordingly
+                    traj = mdtraj.load(thread.history.prod_trajs[-1][job_index], top=settings.topology)
+                    if traj.n_frames >= settings.min_dt:
+                        frame = random.randint(settings.min_dt, traj.n_frames)
+                    else:
+                        frame = random.randint(1, traj.n_frames)
+                    new_point = thread.get_frame(thread.history.prod_trajs[-1][job_index], frame, settings)
                 if not os.path.exists(new_point):
                     try:
                         traj = mdtraj.load(thread.history.prod_trajs[-1][job_index], top=settings.topology)
@@ -1381,7 +1390,11 @@ class FindTS(JobType):
                                '/find_ts_prod_' + settings.md_engine + '.in) accordingly.')
 
         traj = mdtraj.load(thread.history.prod_trajs[0], top=settings.topology)
-        test_frames = int(traj.n_frames * 0.1)  # number of test frames is equal to 10% of length of trajectory
+        if settings.find_ts_test_threads == 0:
+            test_frames = int(traj.n_frames * 0.1)  # number of test frames is equal to 10% of length of trajectory
+        else:
+            test_frames = settings.find_ts_test_threads
+        mdengine = factory.mdengine_factory(settings.md_engine)     # need this for later
 
         if settings.find_ts_strategy.lower() == 'middle':
             # Now harvest TSs by inspecting values of target-basin-defining bond lengths vs. frame number
@@ -1475,11 +1488,10 @@ class FindTS(JobType):
             print('First attempt. Testing the following frames from the forced trajectory ' + thread.history.prod_trajs[0] +
                   ': ' + ', '.join([str(item) for item in frame_indices]))
             # ts_guesses = write_ts_guess_frames(traj, frame_indices)
-            mdengine = factory.mdengine_factory(settings.md_engine)
             ts_guesses = [mdengine.get_frame(thread.history.prod_trajs[0], frame, settings) for frame in frame_indices]
         elif settings.find_ts_strategy.lower() == 'end':
             # Take the last test_frames frames
-            frame_indices = numpy.arange(traj.n_frames - test_frames, traj.n_frames)
+            frame_indices = numpy.arange(traj.n_frames - (3 * test_frames) + 3, traj.n_frames + 3, 3)
             ts_guesses = [mdengine.get_frame(thread.history.prod_trajs[0], frame, settings) for frame in frame_indices]
         else:
             raise RuntimeError('invalid option for find_ts_strategy: ' + str(settings.find_ts_strategy) + '\nValid'
@@ -1577,7 +1589,7 @@ class FindTS(JobType):
                           ' frames from the forced trajectory ' + thread.history.prod_trajs[0] + ': ' +
                           ', '.join([str(item) for item in frame_indices]))
                     sys.stdout.flush()
-                    ts_guesses = write_ts_guess_frames(traj, frame_indices)
+                    ts_guesses = [mdengine.get_frame(thread.history.prod_trajs[0], frame, settings) for frame in frame_indices]
 
                 elif 'bwd' in reformatted_results and not 'fwd' in reformatted_results:     # went to 'bwd' only
                     ts_guesses = []  # re-initialize list of transition state guesses to test
@@ -1590,23 +1602,24 @@ class FindTS(JobType):
                           ' frames from the forced trajectory ' + thread.history.prod_trajs[0] + ': ' +
                           ', '.join([str(int(item)) for item in frame_indices]))
                     sys.stdout.flush()
-                    ts_guesses = write_ts_guess_frames(traj, frame_indices)
+                    ts_guesses = [mdengine.get_frame(thread.history.prod_trajs[0], frame, settings) for frame in frame_indices]
 
                 # Final option: two possibilities remain here...
                 else:
                     if not 'fwd' in reformatted_results and not 'bwd' in reformatted_results:   # no commitment at all
                         raise RuntimeError('No commitments to either basin were observed during aimless shooting.\n'
-                                           'The restraint in the barrier crossing simulation appears to have broken the'
-                                           ' system in some way, so either try changing your target commitment basin '
-                                           'definition and restarting, or you’ll have to use another method to obtain '
-                                           'an initial transition state.')
+                                           'Either your aimless shooting simulation input file is inappropriate or the '
+                                           'restraint in the barrier crossing simulation appears to have broken the'
+                                           ' system in some way. In the latter case try changing your target commitment'
+                                           ' basin definition and restarting, or you’ll have to use another method to '
+                                           'obtain an initial transition state.')
                     else:   # 'fwd' and 'bwd' were both found, but not within a single thread
                         # Two sub-possibilities here: either there was a 'fwd' and a 'bwd' starting from adjacent
                         # frames, in which case we can't continue and raise an error; or the frames were non-adjacent,
                         # in which case we want to focus in on the space between them. First case first:
                         as_allthreads = pickle.load(open(as_settings.working_directory + '/restart.pkl', 'rb'))
-                        pattern = re.compile(r"ts_guess_[0-9]+(?!.*ts_guess_[0-9]+)")   # for identifying frame
-                        sorted_allthreads = sorted(as_allthreads, key=lambda thread: float(pattern.findall(thread.history.prod_trajs[0][0])[0].replace('ts_guess_', '')))
+                        pattern = re.compile(r"frame_[0-9]+(?!.*frame_[0-9]+)")   # for identifying frame
+                        sorted_allthreads = sorted(as_allthreads, key=lambda thread: float(pattern.findall(thread.history.prod_trajs[0][0])[0].replace('frame_', '')))
                         current_result = ''
                         previous_index = -1
                         current_index = -1
@@ -1623,21 +1636,21 @@ class FindTS(JobType):
                             else:
                                 continue
                             if not previous_result == '' and not current_index == '' and not previous_result == current_result:   # found the threads between which to focus
-                                previous_index = float(pattern.findall(as_allthreads[this_index - 1].history.prod_trajs[0][0])[0].replace('ts_guess_', ''))
-                                current_index = float(pattern.findall(as_allthreads[this_index].history.prod_trajs[0][0])[0].replace('ts_guess_', ''))
+                                previous_index = float(pattern.findall(as_allthreads[this_index - 1].history.prod_trajs[0][0])[0].replace('frame_', ''))
+                                current_index = float(pattern.findall(as_allthreads[this_index].history.prod_trajs[0][0])[0].replace('frame_', ''))
                                 break
                         if previous_index == -1:
                             raise RuntimeError('failed to find frames between which commitment changes during find_ts; '
                                                'this message should not be accessible.')
                         if not previous_index == -1 and not current_index == -1 and not abs(previous_index - current_index) == 1:    # if these aren't adjacent frames
-                            frame_indices = numpy.arange(previous_index, current_index)
+                            frame_indices = [int(ii) for ii in numpy.arange(previous_index + 1, current_index)]     # frame indices in between previous and current
                             print('Previous attempt failed: trajectories starting from non-consecutive frames ' +
                                   str(int(previous_index)) + ' and ' + str(int(current_index)) + ' from the forced trajectory '
                                   'went to only \'' + previous_result + '\' and only \'' + current_result + '\' basins,'
                                   ' respectively. Now testing the following frames from the forced trajectory' +
                                   thread.history.prod_trajs[0] + ': ' + ', '.join([str(int(item)) for item in frame_indices]))
                             sys.stdout.flush()
-                            ts_guesses = write_ts_guess_frames(traj, frame_indices)
+                            ts_guesses = [mdengine.get_frame(thread.history.prod_trajs[0], frame, settings) for frame in frame_indices]
                         else:
                             raise RuntimeError('Commitments to both the forward and backward basins were observed, but not '
                                            'from any single transition state candidate.\nThe most likely explanation is'

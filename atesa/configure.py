@@ -137,6 +137,7 @@ def configure(input_file, user_working_directory=''):
 
         # Required only for find_ts
         find_ts_strategy: str = 'middle'   # 'end' or 'middle'
+        find_ts_test_threads: int = 0
 
         # Resampling
         resample: bool = False
