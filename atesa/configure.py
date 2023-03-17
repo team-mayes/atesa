@@ -179,6 +179,13 @@ def configure(input_file, user_working_directory=''):
     settings = argparse.Namespace()
     settings.__dict__.update(Settings(**config_dict))
 
+    # Also add user-defined functions in config file without requiring them to be included in the Settings base model
+    functions = [name for (name, object) in locals().items() if callable(object)]
+    for item in functions:
+        if not item in ['__loader__', 'Settings']:
+            this_dict = eval('{"' + item + '": locals().get("' + item + '")}')
+            settings.__dict__.update(this_dict)
+
     # Override working directory if provided with user_working_directory
     if user_working_directory:
         settings.working_directory = user_working_directory

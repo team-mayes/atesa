@@ -438,7 +438,11 @@ def main(**kwargs):
                 if two_line_result >= 0:
                     termination = True
                     current_best = results[two_line_result]
-        if two_line_test and len(cv_combs[0]) == information_error_max_dims and not termination_2:
+        if qdot == 'present':
+            qdot_factor = 2
+        else:
+            qdot_factor = 1
+        if two_line_test and int(len(cv_combs[0]) / qdot_factor) == information_error_max_dims and not termination_2:
             termination = True
             reached_maximum = True
             current_best = results[-1]

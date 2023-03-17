@@ -7,11 +7,11 @@ The configuration file is the primary means of controlling the behavior of ATESA
 
 The contents of the configuration file are read line-by-line into ATESA as literal python code, which enables invocation of python built-in functions as well as methods of pytraj and numpy (and anything else you may wish to import). This means comments can be included in-line or on their own lines preceded by a '#' character, and blank lines are simply ignored. **Warning**: This input is not sanitized in any way. For this reason among others, "shutil.rmtree('/')" makes for a poor working directory!!
 
-Note that ATESA can also handle user-defined functions in the configuration file. These can be useful for, for example, defining custom CV terms. One limitation is that all function definitions need to take place on a single line. In order to invoke a function defined in the configuration file elsewhere in the configuration file, simply prepend "``settings.``" before the function handle. For example:
+Note that ATESA can also handle user-defined functions in the configuration file. These can be useful for, for example, defining custom CV terms. One limitation is that all function definitions need to take place on a single line (although newline characters ("``\n``") can be included and will be treated as a line break). In order to invoke a function defined in the configuration file elsewhere in the configuration file, simply prepend "``settings.``" before the function handle. As a trivial example:
 
 .. code-block:: python
 
-    def myfunc(x): print(x + 1)
+    def myfunc(x):\n return x + 1
     cvs = ['settings.myfunc(2)']
 
 (See :ref:`CVDefinitions` below for more information on how the `cvs` option is defined.)

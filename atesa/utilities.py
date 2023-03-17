@@ -13,11 +13,13 @@ import sys
 import glob
 import math
 import numpy
+import numpy as np  # to support custom CVs that use this common alias
 import pickle
 import copy
 import subprocess
 import warnings
 import itertools
+from atesa import factory
 from multiprocess import Pool
 from statsmodels.tsa import stattools
 
@@ -217,7 +219,12 @@ def get_cvs(filename, settings, reduce=False, frame=0, only_in_rc=False):
     # define variables as they are expected to be interpreted in CV definitions (these are potentially invoked by eval)
     delete_traj_name = False  # so we don't delete the traj_name file later unless we created it below
     if frame in [0, 'all']:
-        full_mtraj = mdtraj.load(filename, top=settings.topology)
+        try:
+            full_mtraj = mdtraj.load(filename, top=settings.topology)
+        except TypeError:   # can happen during resampling if trajectory finished after controlling ATESA job did
+            mdengine = factory.mdengine_factory(settings.md_engine)
+            mdengine.control_rst_format(filename)
+            full_mtraj = mdtraj.load(filename, top=settings.topology)
         if need_pytraj:  # only load pytraj if it's needed
             full_traj = pytraj.iterload(filename, settings.topology)
         traj_name = filename
@@ -251,7 +258,7 @@ def get_cvs(filename, settings, reduce=False, frame=0, only_in_rc=False):
 
     output = ''
     values = []
-    sigfigs = '%.' + str(settings.sigfigs) + 'f'
+    sigfigs = '%.' + str(settings.sigfigs) + 'E'
 
     if frame == 'all':
         n_iter = full_mtraj.n_frames

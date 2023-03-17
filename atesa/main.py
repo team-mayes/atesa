@@ -11,7 +11,7 @@ to execute various interfaced/abstracted commands.
 import sys
 import os
 import shutil
-import pickle
+import dill as pickle   # pretty sure this is kosher
 import pytraj
 import copy
 import time
