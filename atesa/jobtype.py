@@ -355,7 +355,7 @@ class AimlessShooting(JobType):
                 if '/' in item:
                     item = item[item.rindex('/') + 1:]
                 list_to_return += [item + '_' + str(this_index) for this_index in range(settings.degeneracy)]
-                for file_to_make in list_to_return:
+                for file_to_make in [item + '_' + str(this_index) for this_index in range(settings.degeneracy)]:
                     shutil.copy(og_item, settings.working_directory + '/' + file_to_make)
             else:
                 og_item = item
