@@ -355,8 +355,9 @@ class AimlessShooting(JobType):
                 og_item = item
                 if '/' in item:
                     item = item[item.rindex('/') + 1:]
-                list_to_return += [item + '_' + str(this_index) for this_index in range(settings.degeneracy)]
-                for file_to_make in list_to_return:
+                files_to_make = [item + '_' + str(this_index) for this_index in range(settings.degeneracy)]
+                list_to_return += files_to_make
+                for file_to_make in files_to_make:
                     shutil.copy(og_item, settings.working_directory + '/' + file_to_make)
             else:
                 og_item = item
@@ -640,19 +641,53 @@ class AimlessShooting(JobType):
             thread.suffix += 1
             thread.name = thread.history.init_inpcrd[0] + '_' + str(thread.suffix)
             if thread.history.prod_results[-1] in [['fwd', 'bwd'], ['bwd', 'fwd']]:    # accepted move
-                job_index = int(numpy.round(random.random()))    # randomly select a trajectory (there are only ever two in aimless shooting)
-                frame = random.randint(settings.min_dt, settings.max_dt)
-                try:
-                    new_point = thread.get_frame(thread.history.prod_trajs[-1][job_index], frame, settings)
-                except IndexError as e: # some fault tolerance here for when frame > number of frames in trajectory
-                    # Load in the trajectory to check its length and modify frame selection accordingly
-                    traj = mdtraj.load(thread.history.prod_trajs[-1][job_index], top=settings.topology)
-                    if traj.n_frames >= settings.min_dt:
-                        frame = random.randint(settings.min_dt, traj.n_frames)
+                job_index = int(numpy.round(random.random()))  # randomly select a trajectory (there are only ever two in aimless shooting)
+                traj = mdtraj.load(thread.history.prod_trajs[-1][job_index], top=settings.topology)
+                clear = False       # for checking that the selected frame is not in a basin
+                switched = False    # for checking that both halves of the trajectory have not been tried
+                upper_bound = min(settings.max_dt, traj.n_frames - 1)
+                if upper_bound < settings.min_dt:  # error handling for too-short trajectories
+                    if job_index == 0:
+                        job_index = 1
                     else:
-                        frame = random.randint(1, traj.n_frames)
+                        job_index = 0
+                    traj = mdtraj.load(thread.history.prod_trajs[-1][job_index], top=settings.topology)
+                    upper_bound = min(settings.max_dt, traj.n_frames - 1)
+                    switched = True
+                    if upper_bound <= settings.min_dt:
+                        raise RuntimeError('Both halves of an accepted trajectory (' +
+                                           str(thread.history.prod_trajs[-1]) + ') have no frames'
+                                           ' between min_dt and the end of the trajectory. This means'
+                                           ' that your fwd_ and bwd_commit definitions are too '
+                                           'close together, min_dt is too large, or else you '
+                                           'aren\'t saving frames nearly often enough. Aimless '
+                                           'shooting is impossible under these conditions.')
+                while not clear:
+                    frame = random.randint(settings.min_dt, upper_bound)
                     new_point = thread.get_frame(thread.history.prod_trajs[-1][job_index], frame, settings)
-                if not os.path.exists(new_point):
+                    if utilities.check_commit(new_point, settings) == '':
+                        clear = True
+                    else:
+                        upper_bound = frame - 1  # new maximum frame
+                        if upper_bound <= settings.min_dt:
+                            if switched:  # if we have already tried both halves of the trajectory
+                                raise RuntimeError('Both halves of an accepted trajectory (' +
+                                                   str(thread.history.prod_trajs[-1]) + ') have no frames'
+                                                   ' between min_dt and commitment to a basin. This means'
+                                                   ' that your fwd_ and bwd_commit definitions are too '
+                                                   'close together, min_dt is too large, or else you '
+                                                   'aren\'t saving frames nearly often enough. Aimless '
+                                                   'shooting is impossible under these conditions.')
+                            else:
+                                # Switch to the other half of the trajectory and try again
+                                if job_index == 0:
+                                    job_index = 1
+                                else:
+                                    job_index = 0
+                                traj = mdtraj.load(thread.history.prod_trajs[-1][job_index], top=settings.topology)
+                                upper_bound = min(settings.max_dt, traj.n_frames - 1)
+                                switched = True
+                if not os.path.exists(new_point):   # unnecessary sanity checking
                     try:
                         traj = mdtraj.load(thread.history.prod_trajs[-1][job_index], top=settings.topology)
                         raise RuntimeError(
@@ -686,9 +721,53 @@ class AimlessShooting(JobType):
                 thread.history.init_inpcrd.append(new_point)
             else:   # not an accepted move
                 if settings.always_new and thread.history.last_accepted >= 0:  # choose a new shooting move from last accepted trajectory
-                    job_index = int(numpy.round(random.random()))  # randomly select a trajectory (there are only ever two in aimless shooting)
-                    frame = random.randint(settings.min_dt, settings.max_dt)
-                    new_point = thread.get_frame(thread.history.prod_trajs[thread.history.last_accepted][job_index], frame, settings)
+                    job_index = int(numpy.round(
+                        random.random()))  # randomly select a trajectory (there are only ever two in aimless shooting)
+                    traj = mdtraj.load(thread.history.prod_trajs[thread.history.last_accepted][job_index], top=settings.topology)
+                    clear = False  # for checking that the selected frame is not in a basin
+                    switched = False  # for checking that both halves of the trajectory have not been tried
+                    upper_bound = min(settings.max_dt, traj.n_frames - 1)
+                    if upper_bound < settings.min_dt:  # error handling for too-short trajectories
+                        if job_index == 0:
+                            job_index = 1
+                        else:
+                            job_index = 0
+                        traj = mdtraj.load(thread.history.prod_trajs[thread.history.last_accepted][job_index], top=settings.topology)
+                        upper_bound = min(settings.max_dt, traj.n_frames - 1)
+                        switched = True
+                        if upper_bound <= settings.min_dt:
+                            raise RuntimeError('Both halves of an accepted trajectory (' +
+                                               str(thread.history.prod_trajs[thread.history.last_accepted]) + ') have no frames'
+                                               ' between min_dt and the end of the trajectory. This means'
+                                               ' that your fwd_ and bwd_commit definitions are too '
+                                               'close together, min_dt is too large, or else you '
+                                               'aren\'t saving frames nearly often enough. Aimless '
+                                               'shooting is impossible under these conditions.')
+                    while not clear:
+                        frame = random.randint(settings.min_dt, upper_bound)
+                        new_point = thread.get_frame(thread.history.prod_trajs[thread.history.last_accepted][job_index], frame, settings)
+                        if utilities.check_commit(new_point, settings) == '':
+                            clear = True
+                        else:
+                            upper_bound = frame - 1  # new maximum frame
+                            if upper_bound <= settings.min_dt:
+                                if switched:  # if we have already tried both halves of the trajectory
+                                    raise RuntimeError('Both halves of an accepted trajectory (' +
+                                                       str(thread.history.prod_trajs[thread.history.last_accepted]) + ') have no frames'
+                                                       ' between min_dt and commitment to a basin. This means'
+                                                       ' that your fwd_ and bwd_commit definitions are too '
+                                                      'close together, min_dt is too large, or else you '
+                                                      'aren\'t saving frames nearly often enough. Aimless '
+                                                      'shooting is impossible under these conditions.')
+                                else:
+                                    # Switch to the other half of the trajectory and try again
+                                    if job_index == 0:
+                                        job_index = 1
+                                    else:
+                                        job_index = 0
+                                    traj = mdtraj.load(thread.history.prod_trajs[thread.history.last_accepted][job_index], top=settings.topology)
+                                    upper_bound = min(settings.max_dt, traj.n_frames - 1)
+                                    switched = True
                     if not os.path.exists(new_point):
                         try:
                             traj = mdtraj.load(thread.history.prod_trajs[thread.history.last_accepted][job_index], top=settings.topology)
@@ -738,7 +817,9 @@ class AimlessShooting(JobType):
             else:   # init step produced the desired file, so update coordinates
                 mdengine = factory.mdengine_factory(settings.md_engine)
                 mdengine.control_rst_format(thread.history.init_coords[-1][0])
-                thread.history.init_coords[-1].append(utilities.rev_vels(thread.history.init_coords[-1][0]))
+                # Add reversed trajectory in a way that enforces proper shape/length of this init_coords entry
+                thread.history.init_coords[-1] = [thread.history.init_coords[-1][-1],
+                                                  utilities.rev_vels(thread.history.init_coords[-1][0])]
 
         return running
 

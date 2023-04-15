@@ -80,6 +80,13 @@ Aimless shooting input files for the following step types are required for jobs 
 
 * **aimless_shooting_init_cp2k.in**: Unlike in Amber, CP2K input files specify the names of input and output files directly (this is done in the batch script/on the command line with Amber). As such template slots for these are required in the CP2K input files. The box dimensions are also templated. Unless otherwise described, the following lines are required (note that depending on use-case, you may need additional settings within these sections)::
 
+    &GLOBAL
+      PROJECT AS_INIT
+      PRINT_LEVEL LOW
+      RUN_TYPE MD
+      SEED {{ seed }}
+    &END GLOBAL
+    [...]
     &CELL   ! within the &FORCE_EVAL > &SUBSYS section
       ABC [angstrom] {{ box_xyz }}
       ALPHA_BETA_GAMMA {{ box_abc }}
@@ -120,6 +127,13 @@ Aimless shooting input files for the following step types are required for jobs 
 
 * **aimless_shooting_prod_cp2k.in**: In addition to template slots for box dimensions and input and output files, aimless shooting "prod" steps require initial velocities, which in CP2K are given explicitly by-atom in the input file. ATESA handles this with a velocities template slot::
 
+    &GLOBAL
+      PROJECT AS_PROD
+      PRINT_LEVEL LOW
+      RUN_TYPE MD
+      SEED {{ seed }}
+    &END GLOBAL
+    [...]
     &CELL   ! within the &FORCE_EVAL > &SUBSYS section
       ABC [angstrom] {{ box_xyz }}
       ALPHA_BETA_GAMMA {{ box_abc }}
@@ -153,7 +167,9 @@ Only a "prod" committor analysis input file is required for jobs with job_type "
 	ntx=1,		! read coordinates but not velocities from input coordinate file
 	tempi=300.0,	! or whatever temperature (same as temp0)
 	irest=0,	! do not restart, use new velocities (this is the default)
-	
+
+* **committor_analysis_prod_cp2k.in**: Identical to an aimless shooting CP2K input file, but without the *velocities* template (new velocities should be drawn each time).
+
 ``umbrella_sampling``
 
 Only a "prod" umbrella sampling input file is required for jobs with job_type "umbrella_sampling":
@@ -163,19 +179,44 @@ Only a "prod" umbrella sampling input file is required for jobs with job_type "u
 		nstlim=10000,	! a "large" maximum number of steps (enough for convergent sampling, may take some trial and error)
 		plumed=1,		! enable plumed backend
 		plumedfile={{ plumedfile }},		! template slot for declaring plumed file
-		
-	ATESA will write the appropriate plumed file automatically and insert a reference to it into the input file as needed.
+
+*   **umbrella_sampling_prod_cp2k.in**: CP2K umbrella sampling supports PLUMED only. The file can be identical to a committor analysis "prod" input file, with the following changes::
+
+        &GLOBAL
+          PROJECT US_PROD
+          PRINT_LEVEL LOW
+          RUN_TYPE MD
+          SEED {{ seed }}
+        &END GLOBAL
+        [...]
+        &METADYN    ! within the &MOTION section
+          USE_PLUMED .TRUE.
+          PLUMED_INPUT_FILE {{ plumedfile }}
+        &END METADYN
+
+In either case, ATESA will write the appropriate plumed file automatically and insert a reference to it into the input file as needed.
 	
 ``equilibrium_path_sampling``
 
 Equilibrium path sampling input files for the following step types are required for jobs with job_type "equilibrium_path_sampling":
 
-* **equilibrium_sampling_init_amber.in**: Equilibrium path sampling "init" steps are functionally identical to aimless shooting "init" steps and can use an identical input file.
+* **equilibrium_path_sampling_init_amber.in**: Equilibrium path sampling "init" steps are functionally identical to aimless shooting "init" steps and can use an identical input file.
 
-* **equilibrium_sampling_prod_amber.in**: This input file can be functionally identical to an aimless shooting "prod" input file, with two key exceptions: the number of simulation steps must be replaced with the exact string ``{{ nstlim }}`` and the frequency of writes to the output trajectory must be replaced with the exact string ``{{ ntwx }}``. In Amber::
+* **equilibrium_path_sampling_init_cp2k.in**: Equilibrium path sampling "init" steps are functionally identical to aimless shooting "init" steps and can use an identical input file.
+
+* **equilibrium_path_sampling_prod_amber.in**: This input file can be functionally identical to an aimless shooting "prod" input file, with two key exceptions: the number of simulation steps must be replaced with the exact string ``{{ nstlim }}`` and the frequency of writes to the output trajectory must be replaced with the exact string ``{{ ntwx }}``. In Amber::
 	
     nstlim={{ nstlim }},
     ntwx={{ ntwx }},
+
+* **equilibrium_path_sampling_prod_cp2k.in**: This input file can be functionally identical to an aimless shooting "prod" input file, with two key exceptions: the number of simulation steps must be replaced with the exact string ``{{ nstlim }}`` and the frequency of writes to the output trajectory must be replaced with the exact string ``{{ ntwx }}``. In CP2K::
+
+    STEPS {{ nstlim }}      ! within the &MOTION > &MD section
+    [...]
+    &EACH       ! within the &MOTION > &PRINT section
+      MD {{ ntwx }}
+    &END
+
 		
 ``find_ts``
 
@@ -206,8 +247,15 @@ In addition to making sure that appropriate input files for aimless shooting are
  	 &end
 	DISANG=find_ts_restraints.disang
 
-* **find_ts_prod_cp2k.in** This file can be mostly identical to the "aimless_shooting" prod input file, with two key additions: template slots are required to define collective variables ("colvars") and constraints ("collective")::
+* **find_ts_prod_cp2k.in** This file can be mostly identical to the "aimless_shooting" prod input file, with two key additions: template slots are required to define collective variables ("colvars") and constraints ("collective") as follows::
 
+    &GLOBAL
+      PROJECT FIND_TS_PROD
+      PRINT_LEVEL LOW
+      RUN_TYPE MD
+      SEED {{ seed }}
+    &END GLOBAL
+    [...]
     {{ colvars|safe }}   ! within the &FORCE_EVAL > &SUBSYS section
     [...]
     &CONSTRAINT     ! within the &MOTION section

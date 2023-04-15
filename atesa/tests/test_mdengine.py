@@ -10,6 +10,7 @@ import glob
 import os
 import filecmp
 import shutil
+import numpy
 from atesa.configure import configure
 from atesa import factory
 from atesa import main
@@ -111,6 +112,7 @@ class Tests(object):
                          'nc': thread.name + '_' + name + '.nc',
                          'working_directory': settings.working_directory,
                          'extra': eval('settings.' + type + '_extra')}
+        numpy.random.seed(0)
         inp = jobtype.get_input_file(thread, job_index, settings, **inp_kwargs)
         assert filecmp.cmp(inp, '../test_data/cp2k_as_test_velocities.rst7_0_init.inp')
 
@@ -143,6 +145,7 @@ class Tests(object):
                          'nc': thread.name + '_' + name + '.nc',
                          'working_directory': settings.working_directory,
                          'extra': eval('settings.' + type + '_extra')}
+        numpy.random.seed(0)
         inp = jobtype.get_input_file(thread, job_index, settings, **inp_kwargs)
         assert filecmp.cmp(inp, '../test_data/cp2k_as_test_velocities.rst7_0_fwd.inp')
 
@@ -175,6 +178,7 @@ class Tests(object):
                          'nc': thread.name + '_' + name + '.nc',
                          'working_directory': settings.working_directory,
                          'extra': eval('settings.' + type + '_extra')}
+        numpy.random.seed(0)
         inp = jobtype.get_input_file(thread, job_index, settings, **inp_kwargs)
         assert filecmp.cmp(inp, '../test_data/cp2k_comana_test_velocities.rst7_0_prod.inp')
 
@@ -217,6 +221,7 @@ class Tests(object):
                          'nc': thread.name + '_' + name + '.nc',
                          'working_directory': settings.working_directory,
                          'extra': eval('settings.' + type + '_extra')}
+        numpy.random.seed(0)
         inp = jobtype.get_input_file(thread, job_index, settings, **inp_kwargs)
         assert filecmp.cmp(inp, '../test_data/cp2k_umbrella_sampling_2.5_1.in')
 

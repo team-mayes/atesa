@@ -113,7 +113,12 @@ def init_threads(settings):
     """
 
     if settings.restart:
-        allthreads = pickle.load(open(settings.working_directory + '/restart.pkl', 'rb'))
+        try:
+            allthreads = pickle.load(open(settings.working_directory + '/restart.pkl', 'rb'))
+        except FileNotFoundError:
+            raise RuntimeError('restart = True, but the selected working directory does not contain a restart.pkl file.'
+                               ' Are you sure you meant this to be a restart? If yes, double-check your working '
+                               'directory.')
         for thread in allthreads:
             if not thread.current_type == []:
                 thread.skip_update = True

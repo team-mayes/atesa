@@ -740,7 +740,8 @@ class AdaptCP2K(MDEngine):
         mtraj.save_pdb(kwargs['inpcrd'] + '.pdb', force_overwrite=True)
         kwargs['inpcrd'] = kwargs['inpcrd'] + '.pdb'
 
-        kwargs.update({ 'box_xyz': box_xyz, 'box_abc': box_abc, 'velocities': velocities})
+        seed = ' '.join([str(numpy.random.randint(1, 9999)) for _ in range(6)])
+        kwargs.update({ 'box_xyz': box_xyz, 'box_abc': box_abc, 'velocities': velocities, 'seed': seed})
 
         filled = template.render(django.template.Context(kwargs))
         newfilename = kwargs['name'] + '.inp'
@@ -763,7 +764,8 @@ class AdaptCP2K(MDEngine):
         mtraj.save_pdb(kwargs['inpcrd'] + '.pdb', force_overwrite=True)
         kwargs['inpcrd'] = kwargs['inpcrd'] + '.pdb'
 
-        kwargs.update({'box_xyz': box_xyz, 'box_abc': box_abc})
+        seed = ' '.join([str(numpy.random.randint(1, 9999)) for _ in range(6)])
+        kwargs.update({'box_xyz': box_xyz, 'box_abc': box_abc, 'seed': seed})
 
         filled = template.render(django.template.Context(kwargs))
         newfilename = kwargs['name'] + '.inp'
@@ -793,7 +795,8 @@ class AdaptCP2K(MDEngine):
         mtraj.save_pdb(kwargs['inpcrd'] + '.pdb', force_overwrite=True)
         kwargs['inpcrd'] = kwargs['inpcrd'] + '.pdb'
 
-        kwargs.update({'box_xyz': box_xyz, 'box_abc': box_abc})
+        seed = ' '.join([str(numpy.random.randint(1, 9999)) for _ in range(6)])
+        kwargs.update({'box_xyz': box_xyz, 'box_abc': box_abc, 'seed': seed})
 
         if settings.us_pathway_restraints_file:
             pass
@@ -1078,7 +1081,8 @@ class AdaptCP2K(MDEngine):
         if not settings.eps_n_steps % settings.eps_out_freq == 0:
             raise RuntimeError('eps_n_steps must be evenly divisible by eps_out_freq')
 
-        kwargs.update({'box_xyz': box_xyz, 'box_abc': box_abc, 'velocities': velocities})
+        seed = ' '.join([str(numpy.random.randint(1, 9999)) for _ in range(6)])
+        kwargs.update({'box_xyz': box_xyz, 'box_abc': box_abc, 'velocities': velocities, 'seed': seed})
 
         if not thread.current_type == ['init']:     # i.e., this is a prod step
             kwargs.update({'nstlim': str(thread.history.prod_lens[-1][job_index]), 'ntwx': str(settings.eps_out_freq)})
@@ -1143,7 +1147,8 @@ class AdaptCP2K(MDEngine):
         mtraj.save_pdb(kwargs['inpcrd'] + '.pdb', force_overwrite=True)
         kwargs['inpcrd'] = kwargs['inpcrd'] + '.pdb'
 
-        kwargs.update({'box_xyz': box_xyz, 'box_abc': box_abc, 'colvars': colvars, 'collective': collective})
+        seed = ' '.join([str(numpy.random.randint(1, 9999)) for _ in range(6)])
+        kwargs.update({'box_xyz': box_xyz, 'box_abc': box_abc, 'colvars': colvars, 'collective': collective, 'seed': seed})
 
         filled = template.render(django.template.Context(kwargs))
         newfilename = kwargs['name'] + '.inp'

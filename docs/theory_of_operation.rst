@@ -53,7 +53,7 @@ By design, ATESA is suitable for researchers who are familiar with the basic ten
 What is Likelihood Maximization?
 --------------------------------
 
-The output of aimless shooting is a large set of combined variable (CV) values paired with corresponding commitment basins (products or reactants). In order to convert this information into a usable form, the method of likelihood maximization can be used to select a model that describes the reaction progress in terms of relatively few parameters. ATESA supports the inertial likelihood maximization procedure first published in `Peters 2012 <https://doi.org/10.1016/j.cplett.2012.10.051>`_, in addition to the original non-inertial procedure. For details on ATESA's implementation of likelihood maximization, see :ref:`LikelihoodMaximization`.
+The output of aimless shooting is a large set of collective variable (CV) values paired with corresponding commitment basins (products or reactants). In order to convert this information into a usable form, the method of likelihood maximization can be used to select a model that describes the reaction progress in terms of relatively few parameters. ATESA supports the inertial likelihood maximization procedure first published in `Peters 2012 <https://doi.org/10.1016/j.cplett.2012.10.051>`_, in addition to the original non-inertial procedure. For details on ATESA's implementation of likelihood maximization, see :ref:`LikelihoodMaximization`.
 
 .. figure:: _images/lmax_sigmoid.png
 

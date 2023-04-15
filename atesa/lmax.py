@@ -127,6 +127,11 @@ def objective_function(params, A_data, B_data):
         qb = params[0] + numpy.inner(params[1:], B_data)
         sum = numpy.sum(numpy.log((1 - erflike(qa)) / 2)) + numpy.sum(numpy.log((1 + erflike(qb)) / 2))
 
+    # if A_data and not min(qa) <= -2:
+    #     sum -= 1000
+    # if B_data and not min(qb) >= 2:
+    #     sum -= 1000
+
     return -1 * sum
 
 
@@ -231,6 +236,13 @@ def eval_rc(params, obs):
     for local_index in range(len(obs)):
         rc += params[local_index + 1] * obs[local_index]
     return rc
+
+
+def constraint(params, A_data, B_data):
+    qa = params[0] + numpy.inner(params[1:], A_data)
+    qb = params[0] + numpy.inner(params[1:], B_data)
+
+    pass
 
 
 def main(**kwargs):
@@ -394,7 +406,8 @@ def main(**kwargs):
             this_A = list(map(list, zip(*this_A)))  # transpose the matrices to get desired format
             this_B = list(map(list, zip(*this_B)))
             this_result = optimize.minimize(objective_function, numpy.asarray(start_params), (this_A, this_B),
-                                            method='BFGS', options={"disp": False, "maxiter": 20000 * (len(comb) + 1)}) # try SR1?
+                                            method='BFGS', options={"disp": False, "maxiter": 20000 * (len(comb) + 1)})
+                                            #constraints=optimize.NonlinearConstraint(lambda x: constraint(x, this_A, this_B), lb=0, ub=0)) # try SR1?
             if prefilter < 1:
                 prefiltered.append([this_result.fun, comb[0]])  # append only comb[0] to ignore qdot terms
             elif this_result.fun < current_best[0].fun:
@@ -526,6 +539,7 @@ def main(**kwargs):
         hist_result = numpy.histogram(A_results + B_results, hist_bins)  # this step just to bin, not the final histogram
         rc_values = []      # initialize results list
         probs = []          # initialize results list
+        counts = []         # initialize count list
         for bin_index in range(len(hist_result[0])):
             A_count = 0
             B_count = 0
@@ -545,12 +559,13 @@ def main(**kwargs):
                               'discrete values instead of continuous ones (which is usually inappropriate for lmax).')
             rc_values.append(numpy.mean([hist_result[1][bin_index + 1], hist_result[1][bin_index]]))
             probs.append(count_ratio)
+            counts.append(A_count + B_count)
 
         fig = plt.figure()             # initialize matplotlib figure
         ax = fig.add_subplot(111)       # add axes to the figure
         plt.ylabel('Probability of Commitment to Forward Basin', weight='bold')
         plt.xlabel('Reaction Coordinate', weight='bold')
-        ax.bar(rc_values, probs, width=0.9*(rc_values[1] - rc_values[0]), color='#00274C')
+        ax.bar(rc_values, probs, width=0.9*(rc_values[1] - rc_values[0]), edgecolor='black', color=[[0, 39/255, 76/255, (count / max(counts))] for count in counts])
         ax.plot(rc_values, (1 + erf(numpy.array([value for value in rc_values])))/2, color='#FFCB05', linewidth=3)
         ax.legend(['Ideal', 'Observed'])
 
@@ -558,6 +573,7 @@ def main(**kwargs):
         print(' RC values: ' + str(rc_values))
         print(' Observed probabilities of commitment to the forward basin: ' + str(probs))
         print(' Ideal committor sigmoid: ' + str(list((1 + erf(numpy.array([value for value in rc_values])))/2)))
+        print(' Number of observations in each bin: ' + str(counts))
 
         fig.canvas.draw()
         plt.show()
