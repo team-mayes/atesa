@@ -352,22 +352,38 @@ Initial Coordinates
 Commitment Basin Definitions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-These options define the geometric boundaries past which simulations are considered to have committed to the specified energetic basin (usually either "products" or "reactants"). In general, the basin definitions should be chosen so as to be mutually exclusive and deep enough into the state that they represent to ensure that simulations are not terminated before they have truly "committed" that a given basin. When in doubt, choose a more conservative basin definition.
+These options define the boundaries past which simulations are considered to have committed to the specified energetic basin (usually either "products" or "reactants"). In general, the basin definitions should be chosen so as to be mutually exclusive and deep enough into the state that they represent to ensure that simulations are not terminated before they have truly "committed" that a given basin. When in doubt, choose a more conservative basin definition.
 
 Commitment basin definitions are required in aimless shooting, committor analysis, and find transition state, but are not used for equilibrium path sampling.
 
 ``commit_fwd``	**‡**
 
-	The definition of the "forward" basin (usually products). The syntax for this option is as follows::
+	The definition of the "forward" basin (*e.g.*, the products in a chemical reaction). The syntax for this option is as follows::
 			
 		commit_fwd = ([index_1a, index_1b, ... index_1n], [index_2a, index_2b, ... index_2n],
 		[dist_1, dist_2, ... dist_n], ['gt'/'lt', 'gt'/'lt', ... 'gt'/'lt']
 
-	This is interpreted as: the distance between the atoms with indices *index_1a* and *index_2a* must be either greater than (*'gt'*) or less than (*'lt'*) the distance dist_1 (in Å), and so on. Atom indices are strictly 1-indexed; if the model itself is 0-indexed, you need to increment each index by one when including it in commitment basin definitions. Each item in each list sharing the same subindex (*e.g.*, index_1a, index_2a, dist_1, and the first 'gt'/'lt') is treated as a single criterion for commitment to the basin, and only once ALL the criteria are met simultaneously is the simulation considered committed. No default value.
+	This is interpreted as: the distance between the atoms with indices *index_1a* and *index_2a* must be either greater than (*'gt'*) or less than (*'lt'*) the distance dist_1 (in Å), and so on. Atom indices are strictly 1-indexed; if the model itself is 0-indexed, you need to increment each index by one when including it in commitment basin definitions. Each item in each list sharing the same subindex (*e.g.*, index_1a, index_2a, dist_1, and the first 'gt'/'lt') is treated as a single criterion for commitment to the basin, and only once ALL the criteria are met simultaneously is the simulation considered committed. 
+	
+	Alternatively, a more flexible format can be used where *commit_fwd* is simply a list of strings that evaluate to booleans. As with CV definitions (see :ref:`CVDefinitions`), the variable names traj (a pytraj trajectory object), mtraj (an mdtraj trajectory object) and traj_name (a string matching the file name) are recognized. As before, commitment is defined as occurring only when ALL of the conditions in the definition are met. For example::
+	
+		commit_fwd = ['abs((mdtraj.compute_distances(mtraj, numpy.array([[1, 2]]))[0][0] * 10) - (mdtraj.compute_distances(mtraj, numpy.array([[1, 3]]))[0][0] * 10)) >= 2', 'mdtraj.compute_distances(mtraj, numpy.array([[1, 3]]))[0][0] * 10 < 1.9']
+		
+	This definition is committed when the difference in the distances between atoms 2 and 3 and between 2 and 4 is greater than 2 Å, and also the distance between atoms 2 and 4 is less than 1.9 Å. Note the off-by-one in the atom indices in this case is due to ATESA's convention of indexing atoms from 1 while mdtraj indexes from 0. Note also that commitment definitions of this format are incompatible with *job_type = find_ts*; if you want to use this format for the automated aimless shooting tests following the biased *find_ts* trajectory, then you must also set *aux_commit_fwd* (see below).
+	
+	No default value.
 	
 ``commit_bwd`` **‡**
 
-	This options behaves just like *commit_fwd*, but for the "backward" basin (usually reactants). No default value.
+	This options behaves just like *commit_fwd*, but for the "backward" basin (*e.g.*, the reactants in a chemical reaction). No default value.
+	
+``aux_commit_fwd``
+
+	If and only if the *commit_fwd* is defined as a list of strings (see above), *find_ts* jobs will fall back on this option for building the restraints for the biased trajectory and any job using *auto_cvs* will fall back on this option for building CVs. The syntax for this option is identical to that for *commit_fwd*, but a list of strings is not supported. No default value.
+	
+``aux_commit_bwd``
+
+	As *find_ts_commit_fwd*, but for the "backward" basin. No default value.
 
 .. _ReactionCoordinateDefinition:
 
@@ -404,6 +420,10 @@ This option is specific to find transition state (find_ts) runs only.
 ``find_ts_test_threads``
 
     The number of threads used for aimless shooting testing of candidate transition states. If this is set to 0, then the number of threads is equal to 10% of the number of frames in the biased find_ts trajectory. Default = 0
+    
+``find_ts_length``
+
+	For *md_engine = cp2k* only. Controls the number of femtoseconds over which biased find_ts trajectories push coordinates from one stable state to the other. The maximum number of steps that the simulation will run for is set to 1000 times this value to safely accomodate very small step sizes, but it will be interrupted once it commits to the desired state. Ignored when *md_engine = amber*; Amber settings can be controlled by directly changing the appropriate values in the input file. Default = 1000
 
 .. _AimlessShootingSettings:
 

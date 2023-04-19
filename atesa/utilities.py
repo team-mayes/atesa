@@ -23,7 +23,7 @@ from atesa import factory
 from multiprocess import Pool
 from statsmodels.tsa import stattools
 
-def check_commit(filename, settings):
+def check_commit(filename, settings, all_frames=False):
     """
     Check commitment of coordinate file to basins defined by settings.commit_fwd and settings.commit_bwd.
 
@@ -33,18 +33,24 @@ def check_commit(filename, settings):
     ----------
     filename : str
         Name of coordinate or trajectory file to be checked. If the file has more than one frame, only the last frame
-        will be loaded.
+        will be loaded (unless all_frames is True)
     settings : argparse.Namespace
         Settings namespace object
+    all_frames : bool
+        If True, returns a list of commit_flags (one for each frame of the trajectory) instead of just one for the last
+        frame.
 
     Returns
     -------
     commit_flag : str
-        Either 'fwd' or 'bwd' if the coordinates are in the corresponding basin, or '' if in neither
+        Either 'fwd' or 'bwd' if the coordinates are in the corresponding basin, or '' if in neither. If all_frames is
+        True, then a list of such strings is returned instead.
 
     """
-
-    # todo: consider adding support for angles and dihedrals
+    # For some really weird reason I need to import these here for them to correctly be available to eval later on
+    import mdtraj
+    import pytraj
+    import numpy
 
     # Need check_commit to be able to check the status of CP2K trajectories before they've been renamed
     # todo: come up with something better than this kludge
@@ -59,57 +65,97 @@ def check_commit(filename, settings):
                                    ' a problem with the simulation that should have created this file.')
 
     try:
-        traj = mdtraj.load(filename, top=settings.topology)[-1]
-        # traj = pytraj.load(filename, settings.topology, frame_indices=[-1])
-        if traj.n_frames == 0:
+        full_mtraj = mdtraj.load(filename, top=settings.topology)
+        if full_mtraj.n_frames == 0:
             raise RuntimeError('Attempted to check commitment for file: ' + filename + ' but it has no frames.')
     except ValueError as e:
         raise RuntimeError('Unable to load file: ' + filename + ' for checking commitment with the specified topology '
-                           'file.\npytraj returned error: ' + str(e))
-    commit_flag = ''    # initialize
+                           'file.\nmdtraj returned error: ' + str(e))
+    commit_flag = []        # initialize
+    need_pytraj = False     # initialize
 
-    for i in range(len(settings.commit_fwd[2])):
-        if settings.commit_fwd[3][i] == 'lt':
-            if mdtraj.compute_distances(traj, numpy.array([[settings.commit_fwd[0][i] - 1, settings.commit_fwd[1][i] - 1]]))[0][0] * 10 <= settings.commit_fwd[2][i]:
-            # if pytraj.distance(traj, '@' + str(settings.commit_fwd[0][i]) + ' @' + str(settings.commit_fwd[1][i]),
-            #                    n_frames=1)[0] <= settings.commit_fwd[2][i]:
-                commit_flag = 'fwd'     # if a committor test is passed, testing moves on to the next one.
-            else:
-                commit_flag = ''
-                break                   # if a committor test is not passed, all testing in this direction fails
-        elif settings.commit_fwd[3][i] == 'gt':
-            if mdtraj.compute_distances(traj, numpy.array([[settings.commit_fwd[0][i] - 1, settings.commit_fwd[1][i] - 1]]))[0][0] * 10 >= settings.commit_fwd[2][i]:
-            # if pytraj.distance(traj, '@' + str(settings.commit_fwd[0][i]) + ' @' + str(settings.commit_fwd[1][i]),
-            #                    n_frames=1)[0] >= settings.commit_fwd[2][i]:
-                commit_flag = 'fwd'
-            else:
-                commit_flag = ''
-                break
+    if not all_frames:
+        full_mtraj = full_mtraj[-1]
+
+    for ii in range(full_mtraj.n_frames):
+        mtraj = full_mtraj[ii]
+        commit_flag.append('')  # initialize commit_flag for this frame
+
+        # At this point, the code bifurcates: a legacy branch for the nested list interatomic distance definitions
+        # formalism and a new branch for the more flexible boolean evaluation formalism. In order to support mixed
+        # formalisms, the bifurcation is done twice: once for commit_fwd and once for commit_bwd
+
+        # Legacy fwd
+        if len(settings.commit_fwd) == 4 and type(settings.commit_fwd[0]) == list:
+            for i in range(len(settings.commit_fwd[2])):
+                if settings.commit_fwd[3][i] == 'lt':
+                    if mdtraj.compute_distances(mtraj, numpy.array([[settings.commit_fwd[0][i] - 1, settings.commit_fwd[1][i] - 1]]))[0][0] * 10 <= settings.commit_fwd[2][i]:
+                        commit_flag[-1] = 'fwd'     # if a committor test is passed, testing moves on to the next one.
+                    else:
+                        commit_flag[-1] = ''
+                        break                   # if a committor test is not passed, all testing in this direction fails
+                elif settings.commit_fwd[3][i] == 'gt':
+                    if mdtraj.compute_distances(mtraj, numpy.array([[settings.commit_fwd[0][i] - 1, settings.commit_fwd[1][i] - 1]]))[0][0] * 10 >= settings.commit_fwd[2][i]:
+                        commit_flag[-1] = 'fwd'
+                    else:
+                        commit_flag[-1] = ''
+                        break
+                else:
+                    raise ValueError('An incorrect committor definition \"' + settings.commit_fwd[3][i] + '\" was given for '
+                                     'index ' + str(i) + ' in the \'fwd\' direction.')
+
+        # New fwd
         else:
-            raise ValueError('An incorrect committor definition \"' + settings.commit_fwd[3][i] + '\" was given for '
-                             'index ' + str(i) + ' in the \'fwd\' direction.')
-
-    if commit_flag == '':               # only bother checking for bwd commitment if not fwd committed
-        for i in range(len(settings.commit_bwd[2])):
-            if settings.commit_bwd[3][i] == 'lt':
-                if mdtraj.compute_distances(traj, numpy.array([[settings.commit_bwd[0][i] - 1, settings.commit_bwd[1][i] - 1]]))[0][0] * 10 <= settings.commit_bwd[2][i]:
-                # if pytraj.distance(traj, '@' + str(settings.commit_bwd[0][i]) + ' @' + str(settings.commit_bwd[1][i]),
-                #                    n_frames=1)[0] <= settings.commit_bwd[2][i]:
-                    commit_flag = 'bwd' # if a committor test is passed, testing moves on to the next one.
-                else:
-                    commit_flag = ''
-                    break               # if a committor test is not passed, all testing in this direction fails
-            elif settings.commit_bwd[3][i] == 'gt':
-                if mdtraj.compute_distances(traj, numpy.array([[settings.commit_bwd[0][i] - 1, settings.commit_bwd[1][i] - 1]]))[0][0] * 10 >= settings.commit_bwd[2][i]:
-                # if pytraj.distance(traj, '@' + str(settings.commit_bwd[0][i]) + ' @' + str(settings.commit_bwd[1][i]),
-                #                    n_frames=1)[0] >= settings.commit_bwd[2][i]:
-                    commit_flag = 'bwd'
-                else:
-                    commit_flag = ''
-                    break
+            # Need to set variables for evaluation: pytraj traj, and traj_name (mdtraj mtraj is already loaded)
+            # First, evaluate boolean determining whether we need to bother loading pytraj
+            need_pytraj = any([('traj' in cv and not 'mtraj' in cv) for cv in settings.commit_fwd])
+            if need_pytraj:
+                traj = pytraj.load(filename, settings.topology)
+            traj_name = filename
+            scope = locals()
+            if all([eval(item, scope) for item in settings.commit_fwd]):
+                commit_flag[-1] = 'fwd'
             else:
-                raise ValueError('An incorrect committor definition \"' + settings.commit_bwd[3][i] + '\" was given for'
-                                 ' index ' + str(i) + ' in the \'bwd\' direction.')
+                commit_flag[-1] = ''
+
+        if commit_flag[-1] == '':  # only bother checking for bwd commitment if not fwd committed
+            # Legacy bwd
+            if len(settings.commit_bwd) == 4 and type(settings.commit_bwd[0]) == list:
+                for i in range(len(settings.commit_bwd[2])):
+                    if settings.commit_bwd[3][i] == 'lt':
+                        if mdtraj.compute_distances(mtraj, numpy.array([[settings.commit_bwd[0][i] - 1, settings.commit_bwd[1][i] - 1]]))[0][0] * 10 <= settings.commit_bwd[2][i]:
+                            commit_flag[-1] = 'bwd' # if a committor test is passed, testing moves on to the next one.
+                        else:
+                            commit_flag[-1] = ''
+                            break               # if a committor test is not passed, all testing in this direction fails
+                    elif settings.commit_bwd[3][i] == 'gt':
+                        if mdtraj.compute_distances(mtraj, numpy.array([[settings.commit_bwd[0][i] - 1, settings.commit_bwd[1][i] - 1]]))[0][0] * 10 >= settings.commit_bwd[2][i]:
+                            commit_flag[-1] = 'bwd'
+                        else:
+                            commit_flag[-1] = ''
+                            break
+                    else:
+                        raise ValueError('An incorrect committor definition \"' + settings.commit_bwd[3][i] + '\" was given for'
+                                         ' index ' + str(i) + ' in the \'bwd\' direction.')
+
+            # New bwd
+            else:
+                # Need to set variables for evaluation: pytraj traj, and traj_name (mdtraj mtraj is already loaded)
+                # First, evaluate boolean determining whether we need to bother loading pytraj
+                if not need_pytraj:     # skip this if need_pytraj has already evaluated as true
+                    need_pytraj = any([('traj' in cv and not 'mtraj' in cv) for cv in settings.commit_bwd])
+                    if need_pytraj:
+                        traj = pytraj.load(filename, settings.topology)
+                traj_name = filename
+                scope = locals()
+                if all([eval(item, scope) for item in settings.commit_bwd]):
+                    commit_flag[-1] = 'bwd'
+                else:
+                    commit_flag[-1] = ''
+
+    if not all_frames:
+        assert len(commit_flag) == 1
+        commit_flag = commit_flag[0]
 
     return commit_flag
 

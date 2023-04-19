@@ -38,7 +38,7 @@
 &MOTION
   &MD
       ENSEMBLE NVT
-      STEPS 1000
+      STEPS {{ nstlim }}
       TIMESTEP 1
       TEMPERATURE 298.15
       &THERMOSTAT

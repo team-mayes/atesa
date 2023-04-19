@@ -438,7 +438,13 @@ class AimlessShooting(JobType):
             for job_index in range(len(thread.jobids)):
                 if thread.get_status(job_index, settings) == 'R':     # if the job in question is running
                     try:
-                        if utilities.check_commit(thread.history.prod_trajs[-1][job_index], settings):  # if committed
+                        commit = utilities.check_commit(thread.history.prod_trajs[-1][job_index], settings, all_frames=True)
+                        if 'fwd' in commit and 'bwd' in commit:
+                            raise RuntimeError('Trajectory ' + str(thread.history.prod_trajs[-1][job_index]) + ' has '
+                                               'frames identified as commited to both basins. This indicates that your '
+                                               'commitment definitions are inappropriate (they do not actually indicate'
+                                               ' commitment to a basin).')
+                        if 'fwd' in commit or 'bwd' in commit:  # if committed
                             thread.cancel_job(job_index, settings)        # cancel it
                     except (RuntimeError, OSError):    # occurs if trajectory doesn't have any frames or hasn't been created yet
                         pass
@@ -556,7 +562,13 @@ class AimlessShooting(JobType):
             local_thread.history.prod_results.append([])
             for job_index in range(len(local_thread.current_type)):
                 try:
-                    local_thread.history.prod_results[-1].append(utilities.check_commit(local_thread.history.prod_trajs[-1][job_index], settings))
+                    commit = utilities.check_commit(local_thread.history.prod_trajs[-1][job_index], settings, all_frames=True)
+                    this_commit = ''
+                    for ii in range(len(commit)):   # scan from right for most recent commit flag
+                        if commit[-ii - 1] in ['fwd', 'bwd']:
+                            this_commit = commit[-ii - 1]
+                            break
+                    local_thread.history.prod_results[-1].append(this_commit)
                 except RuntimeError:
                     local_thread.history.prod_results[-1].append('')    # trajectory doesn't exist for some reason, so automatically fail
             local_thread.total_moves += 1
@@ -659,8 +671,8 @@ class AimlessShooting(JobType):
                                            str(thread.history.prod_trajs[-1]) + ') have no frames'
                                            ' between min_dt and the end of the trajectory. This means'
                                            ' that your fwd_ and bwd_commit definitions are too '
-                                           'close together, min_dt is too large, or else you '
-                                           'aren\'t saving frames nearly often enough. Aimless '
+                                           'close together or don\'t actually identify commitment, min_dt is too '
+                                           'large, or else you aren\'t saving frames nearly often enough. Aimless '
                                            'shooting is impossible under these conditions.')
                 while not clear:
                     frame = random.randint(settings.min_dt, upper_bound)
@@ -737,11 +749,11 @@ class AimlessShooting(JobType):
                         switched = True
                         if upper_bound <= settings.min_dt:
                             raise RuntimeError('Both halves of an accepted trajectory (' +
-                                               str(thread.history.prod_trajs[thread.history.last_accepted]) + ') have no frames'
-                                               ' between min_dt and the end of the trajectory. This means'
+                                               str(thread.history.prod_trajs[thread.history.last_accepted]) + ') have '
+                                               'no frames between min_dt and the end of the trajectory. This means'
                                                ' that your fwd_ and bwd_commit definitions are too '
-                                               'close together, min_dt is too large, or else you '
-                                               'aren\'t saving frames nearly often enough. Aimless '
+                                               'close together or don\'t actually identify commitment, min_dt is too '
+                                               'large, or else you aren\'t saving frames nearly often enough. Aimless '
                                                'shooting is impossible under these conditions.')
                     while not clear:
                         frame = random.randint(settings.min_dt, upper_bound)
@@ -1456,10 +1468,22 @@ class FindTS(JobType):
 
         if thread.history.init_basin == 'fwd':
             dir_to_check = 'bwd'
-            other_basin_define = settings.commit_bwd
-        else:  # thread.history.init_basin = 'bwd'; get_inpcrd only allows for these two values
+            if type(settings.commit_bwd[0]) == list:
+                other_basin_define = settings.commit_bwd
+            else:
+                other_basin_define = settings.aux_commit_bwd
+                if other_basin_define[3] == ['unset']:
+                    raise RuntimeError('commit_bwd was set using booleans, but aux_commit_bwd was not defined and is'
+                                       'needed for find_ts. See ATESA documentation for aux_commit_bwd setting.')
+        else:  # == 'bwd', the only other valid option
             dir_to_check = 'fwd'
-            other_basin_define = settings.commit_fwd
+            if type(settings.commit_fwd[0]) == list:
+                other_basin_define = settings.commit_fwd
+            else:
+                other_basin_define = settings.aux_commit_fwd
+                if other_basin_define[3] == ['unset']:
+                    raise RuntimeError('commit_fwd was set using booleans, but aux_commit_fwd was not defined and is'
+                                       'needed for find_ts. See ATESA documentation for aux_commit_fwd setting.')
 
         if not thread.history.prod_result == dir_to_check:
             raise RuntimeError('find TS failed to commit to the opposite basin from its given initial coordinates. The '
@@ -1646,9 +1670,11 @@ class FindTS(JobType):
                     if 'fwd' in reformatted_results and 'bwd' in reformatted_results:
                         final_names.append(this_thread.history.init_inpcrd[0])   # to match format in status.txt and be maximally useful
                 if final_names:
-                    print('Found working transition state guess(es):\n' + '\n'.join(final_names) + '\nSee ' +
-                          as_settings.working_directory + '/status.txt for more information (acceptance probabilities '
-                          'may be very low; consider trying again with revised basin definitions for better results)')
+                    print('Found probable working transition state guess(es):\n' + '\n'.join(final_names) + '\nSee ' +
+                          as_settings.working_directory + '/status.txt for more information (NOTE: no individual '
+                          'trajectory was accepted, but each of these sets of initial coordinates produced separate '
+                          'commitments to both basins. The acceptance probabilit(y/ies) may be very low; consider '
+                          'trying again with revised basin definitions for better results)')
                     sys.stdout.flush()
                     not_finished = False
                     continue
@@ -1724,11 +1750,15 @@ class FindTS(JobType):
                             raise RuntimeError('failed to find frames between which commitment changes during find_ts; '
                                                'this message should not be accessible.')
                         if not previous_index == -1 and not current_index == -1 and not abs(previous_index - current_index) == 1:    # if these aren't adjacent frames
-                            frame_indices = [int(ii) for ii in numpy.arange(previous_index + 1, current_index)]     # frame indices in between previous and current
+                            if int(current_index - (previous_index + 1)) > test_frames:
+                                # The best-fit for evenly spacing test_frames frames from the bounded region
+                                frame_indices = [int(ii) for ii in numpy.linspace(previous_index + 1, current_index - 1, test_frames)]  # frame indices in between previous and current
+                            else:  # number of frames in bounds <= test_frames, so we'll take all of them
+                                frame_indices = [int(ii) for ii in range(previous_index + 1, current_index)]
                             print('Previous attempt failed: trajectories starting from non-consecutive frames ' +
                                   str(int(previous_index)) + ' and ' + str(int(current_index)) + ' from the forced trajectory '
                                   'went to only \'' + previous_result + '\' and only \'' + current_result + '\' basins,'
-                                  ' respectively. Now testing the following frames from the forced trajectory' +
+                                  ' respectively. Now testing the following frames from the forced trajectory ' +
                                   thread.history.prod_trajs[0] + ': ' + ', '.join([str(int(item)) for item in frame_indices]))
                             sys.stdout.flush()
                             ts_guesses = [mdengine.get_frame(thread.history.prod_trajs[0], frame, settings) for frame in frame_indices]

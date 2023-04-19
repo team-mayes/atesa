@@ -1106,9 +1106,21 @@ class AdaptCP2K(MDEngine):
         # Need to define template fillers for colvars (definitions of dimensions to constrain) and collective
         # (definitions of what the constraints actually are)
         if thread.history.init_basin == 'fwd':
-            other_basin = settings.commit_bwd
+            if type(settings.commit_bwd[0]) == list:
+                other_basin = settings.commit_bwd
+            else:
+                other_basin = settings.aux_commit_bwd
+                if other_basin[3] == ['unset']:
+                    raise RuntimeError('commit_bwd was set using booleans, but aux_commit_bwd was not defined. See'
+                                       'ATESA documentation for aux_commit_bwd setting.')
         else:  # == 'bwd', the only other valid option
-            other_basin = settings.commit_fwd
+            if type(settings.commit_fwd[0]) == list:
+                other_basin = settings.commit_fwd
+            else:
+                other_basin = settings.aux_commit_fwd
+                if other_basin[3] == ['unset']:
+                    raise RuntimeError('commit_fwd was set using booleans, but aux_commit_fwd was not defined. See'
+                                       'ATESA documentation for aux_commit_fwd setting.')
         colvars = ''
         collective = ''
         for def_index in range(len(other_basin[0])):
@@ -1136,7 +1148,7 @@ class AdaptCP2K(MDEngine):
             collective += '  COLVAR ' + str(def_index + 1) + '\n'
             collective += '  TARGET [angstrom] ' + str(init_value) + '\n'
             collective += '  TARGET_LIMIT [angstrom] ' + str(other_basin[2][def_index] + extra) + '\n'
-            collective += '  TARGET_GROWTH [angstrom/fs] ' + str(((other_basin[2][def_index] + extra) - init_value)/100) + '\n'
+            collective += '  TARGET_GROWTH [angstrom/fs] ' + str(((other_basin[2][def_index] + extra) - init_value)/settings.find_ts_length) + '\n'
             collective += '&END COLLECTIVE\n'
 
         # Remove trailing newlines
@@ -1148,7 +1160,8 @@ class AdaptCP2K(MDEngine):
         kwargs['inpcrd'] = kwargs['inpcrd'] + '.pdb'
 
         seed = ' '.join([str(numpy.random.randint(1, 9999)) for _ in range(6)])
-        kwargs.update({'box_xyz': box_xyz, 'box_abc': box_abc, 'colvars': colvars, 'collective': collective, 'seed': seed})
+        kwargs.update({'box_xyz': box_xyz, 'box_abc': box_abc, 'colvars': colvars, 'collective': collective,
+                       'nstlim': str(1000 * settings.find_ts_length), 'seed': seed})
 
         filled = template.render(django.template.Context(kwargs))
         newfilename = kwargs['name'] + '.inp'

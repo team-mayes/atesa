@@ -222,7 +222,7 @@ Equilibrium path sampling input files for the following step types are required 
 
 In addition to making sure that appropriate input files for aimless shooting are available, jobs with job_type "find_ts" require their own "prod" input file:
 
-* **find_ts_prod_amber.in** This file can be mostly identical to the "aimless_shooting" prod input file, with two key additions: there must be a restraint specified using the file "find_ts_restraints.disang", and the weight of the restraint must be set to steadily increase over time (beginning from zero). An example of a working implementation of this in Amber is as follows. Options in the &cntrl namelist that can be the same as in aimless shooting are here replaced by an elipse (...) for brevity, but they must still be explicitly specified in the input file. Other than that, it should be quite safe to copy the rest of this exactly into your Amber "find_ts" input file, or customize it as you see fit::
+* **find_ts_prod_amber.in** This file can be mostly identical to the "aimless_shooting" prod input file, with two key additions: there must be a restraint specified using the file "find_ts_restraints.disang", and the weight of the restraint must be set to steadily increase over time (beginning from zero). An example of a working implementation of this in Amber is as follows. Options in the &cntrl namelist that can be the same as in aimless shooting are here replaced by an elipse ([...]) for brevity, but they must still be explicitly specified in the input file. Other than that, it should be quite safe to copy the rest of this exactly into your Amber "find_ts" input file, or customize it as you see fit::
 
 	 &cntrl
 	  [...]
@@ -247,7 +247,7 @@ In addition to making sure that appropriate input files for aimless shooting are
  	 &end
 	DISANG=find_ts_restraints.disang
 
-* **find_ts_prod_cp2k.in** This file can be mostly identical to the "aimless_shooting" prod input file, with two key additions: template slots are required to define collective variables ("colvars") and constraints ("collective") as follows::
+* **find_ts_prod_cp2k.in** This file can be mostly identical to the "aimless_shooting" prod input file, with three changes: the number of simulation steps should be templated as "nstlim", and template slots are required to define collective variables ("colvars") and constraints ("collective") as follows::
 
     &GLOBAL
       PROJECT FIND_TS_PROD
@@ -262,6 +262,8 @@ In addition to making sure that appropriate input files for aimless shooting are
       CONSTRAINT_INIT TRUE
       {{ collective|safe }}
     &END CONSTRAINT
+    [...]
+    STEPS {{ nstlim }}  ! within the &MOTION > &MD section
 
 Templates
 ~~~~~~~~~

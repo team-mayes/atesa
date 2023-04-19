@@ -80,9 +80,11 @@ def configure(input_file, user_working_directory=''):
         # Required only for aimless shooting and equilibrium path sampling
         initial_coordinates: typing.List[str] = ['']
 
-        # Required only for aimless shooting and committor analysis
-        commit_fwd: typing.Tuple[typing.List[int], typing.List[int], typing.List[float], typing.List[str]] = ([-1], [-1], [-1], ['unset'])
-        commit_bwd: typing.Tuple[typing.List[int], typing.List[int], typing.List[float], typing.List[str]] = ([-1], [-1], [-1], ['unset'])
+        # Required only for find_ts, aimless shooting, and committor analysis
+        commit_fwd: typing.Union[typing.Tuple[typing.List[int], typing.List[int], typing.List[float], typing.List[str]], typing.List[str]] = ([-1], [-1], [-1], ['unset'])
+        commit_bwd: typing.Union[typing.Tuple[typing.List[int], typing.List[int], typing.List[float], typing.List[str]], typing.List[str]] = ([-1], [-1], [-1], ['unset'])
+        aux_commit_fwd: typing.Tuple[typing.List[int], typing.List[int], typing.List[float], typing.List[str]] = ([-1], [-1], [-1], ['unset'])
+        aux_commit_bwd: typing.Tuple[typing.List[int], typing.List[int], typing.List[float], typing.List[str]] = ([-1], [-1], [-1], ['unset'])
 
         # Required only for committor analysis, umbrella sampling, and equilibrium path sampling
         rc_definition: str = ''
@@ -138,6 +140,7 @@ def configure(input_file, user_working_directory=''):
         # Required only for find_ts
         find_ts_strategy: str = 'middle'   # 'end' or 'middle'
         find_ts_test_threads: int = 0
+        find_ts_length: int = 1000
 
         # Resampling
         resample: bool = False

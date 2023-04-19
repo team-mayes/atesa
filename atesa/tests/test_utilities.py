@@ -26,20 +26,40 @@ class Tests(object):
         except FileNotFoundError:
             pass
     
-    def test_check_commit_fwd(self):
-        """Tests check_commit using a dummy coordinate file and commitments defined to get result 'fwd'"""
+    def test_check_commit_fwd_legacy(self):
+        """Tests check_commit legacy formalism using a dummy coordinate file and commitments defined to get result 'fwd'"""
         settings = configure('../../data/atesa.config')
         settings.topology = '../test_data/test.prmtop'
         settings.commit_fwd = [[1, 2], [3, 4], [1.0, 1.7], ['gt', 'lt']]
         settings.commit_bwd = [[1, 2], [3, 4], [0.5, 2.0], ['lt', 'gt']]
         assert utilities.check_commit('../test_data/test.rst7', settings) == 'fwd'
 
-    def test_check_commit_bwd(self):
-        """Tests check_commit using a dummy coordinate file and commitments defined to get result 'bwd'"""
+    def test_check_commit_fwd_new(self):
+        """Tests check_commit new formalism using a dummy coordinate file and commitments defined to get result 'fwd'"""
+        settings = configure('../../data/atesa.config')
+        settings.topology = '../test_data/test.prmtop'
+        settings.commit_fwd = ['mdtraj.compute_distances(mtraj, numpy.array([[0, 2]]))[0][0] * 10 > 1.0',
+                               'mdtraj.compute_distances(mtraj, numpy.array([[1, 3]]))[0][0] * 10 < 1.7']
+        settings.commit_bwd = ['mdtraj.compute_distances(mtraj, numpy.array([[0, 2]]))[0][0] * 10 < 0.5',
+                               'mdtraj.compute_distances(mtraj, numpy.array([[1, 3]]))[0][0] * 10 > 2.0']
+        assert utilities.check_commit('../test_data/test.rst7', settings) == 'fwd'
+
+    def test_check_commit_bwd_legacy(self):
+        """Tests check_commit legacy formalism using a dummy coordinate file and commitments defined to get result 'bwd'"""
         settings = configure('../../data/atesa.config')
         settings.topology = '../test_data/test.prmtop'
         settings.commit_bwd = [[1, 2], [3, 4], [1.0, 1.7], ['gt', 'lt']]
         settings.commit_fwd = [[1, 2], [3, 4], [0.5, 2.0], ['lt', 'gt']]
+        assert utilities.check_commit('../test_data/test.rst7', settings) == 'bwd'
+
+    def test_check_commit_bwd_new(self):
+        """Tests check_commit new formalism using a dummy coordinate file and commitments defined to get result 'bwd'"""
+        settings = configure('../../data/atesa.config')
+        settings.topology = '../test_data/test.prmtop'
+        settings.commit_bwd = ['mdtraj.compute_distances(mtraj, numpy.array([[0, 2]]))[0][0] * 10 > 1.0',
+                               'mdtraj.compute_distances(mtraj, numpy.array([[1, 3]]))[0][0] * 10 < 1.7']
+        settings.commit_fwd = ['mdtraj.compute_distances(mtraj, numpy.array([[0, 2]]))[0][0] * 10 < 0.5',
+                               'mdtraj.compute_distances(mtraj, numpy.array([[1, 3]]))[0][0] * 10 > 2.0']
         assert utilities.check_commit('../test_data/test.rst7', settings) == 'bwd'
 
     def test_check_commit_none(self):
