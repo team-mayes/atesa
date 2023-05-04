@@ -130,7 +130,7 @@ def init_threads(settings):
                 info_err_lines = open(settings.working_directory + '/info_err.out', 'r').readlines()
 
                 # Resample completely if there's been a change in the number of definitions of CVs, or in the settings
-                # for, information_error_max_dims or information_error_lmax_string
+                # for information_error_max_dims or information_error_lmax_string
                 wrong_length = False
                 for data_length in [str(line.split()[0]) for line in info_err_lines]:
                     first_line = open(settings.working_directory + '/as_decorr_' + data_length + '.out', 'r').readlines()[0]

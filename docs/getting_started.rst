@@ -189,7 +189,7 @@ Only a "prod" umbrella sampling input file is required for jobs with job_type "u
           SEED {{ seed }}
         &END GLOBAL
         [...]
-        &METADYN    ! within the &MOTION section
+        &METADYN    ! within the &MOTION > &FREE_ENERGY section
           USE_PLUMED .TRUE.
           PLUMED_INPUT_FILE {{ plumedfile }}
         &END METADYN

@@ -7,17 +7,11 @@
   <component name="ChangeListManager">
     <list default="true" id="55679143-7654-431c-aee1-71d5375f0f66" name="Default" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atesa/auto_cvs.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/auto_cvs.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/atesa/batchsystem.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/batchsystem.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atesa/configure.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/configure.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atesa/data/input_files/find_ts_prod_cp2k.in" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/data/input_files/find_ts_prod_cp2k.in" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atesa/jobtype.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/jobtype.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atesa/mdengine.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/mdengine.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atesa/tests/test_data/test_velocities.rst7.pdb" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/tests/test_data/test_velocities.rst7.pdb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atesa/tests/test_utilities.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/tests/test_utilities.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atesa/utilities.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/utilities.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/data/input_files/umbrella_sampling_prod_cp2k.in" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/data/input_files/umbrella_sampling_prod_cp2k.in" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/example_study.rst" beforeDir="false" afterPath="$PROJECT_DIR$/docs/example_study.rst" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/docs/getting_started.rst" beforeDir="false" afterPath="$PROJECT_DIR$/docs/getting_started.rst" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/the_config_file.rst" beforeDir="false" afterPath="$PROJECT_DIR$/docs/the_config_file.rst" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
