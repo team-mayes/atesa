@@ -8,10 +8,12 @@ on:
     branches:
       - "master"
       - "main"
+      - "cp2k_support"
   pull_request:
     branches:
       - "master"
       - "main"
+      - "cp2k_support"
   schedule:
     # Nightly tests run on master by default:
     #   Scheduled workflows run on the latest commit on the default or base branch.
