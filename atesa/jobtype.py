@@ -1743,8 +1743,8 @@ class FindTS(JobType):
                             else:
                                 continue
                             if not previous_result == '' and not current_index == '' and not previous_result == current_result:   # found the threads between which to focus
-                                previous_index = float(pattern.findall(as_allthreads[this_index - 1].history.prod_trajs[0][0])[0].replace('frame_', ''))
-                                current_index = float(pattern.findall(as_allthreads[this_index].history.prod_trajs[0][0])[0].replace('frame_', ''))
+                                previous_index = int(pattern.findall(as_allthreads[this_index - 1].history.prod_trajs[0][0])[0].replace('frame_', ''))
+                                current_index = int(pattern.findall(as_allthreads[this_index].history.prod_trajs[0][0])[0].replace('frame_', ''))
                                 break
                         if previous_index == -1:
                             raise RuntimeError('failed to find frames between which commitment changes during find_ts; '
