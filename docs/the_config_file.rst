@@ -49,7 +49,7 @@ Certain settings should be given for every job. The following settings should be
 	
 ``restart``
 
-	Indicates whether this is a new job (False) or a continuation of an old one *in the same working directory* (True).
+	Indicates whether this is a new job (False) or a continuation of an old one *in the same working directory* (True). Restarting is not supported for job_type = 'find_ts'.
 	
 ``overwrite``
 

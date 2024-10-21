@@ -12,11 +12,13 @@ ATESA automates a particular Transition Path Sampling (TPS) workflow that uses t
 
 ATESA implements automation for obtaining a suitable initial transition state, flexible-length aimless shooting, inertial likelihood maximization, committor analysis, umbrella sampling (and analysis with the Multistate Bennett Acceptance Ratio), and equilibrium path sampling. These components constitute a near-complete automation of the workflow between identifying the reaction of interest, and obtaining, validating, and analyzing the energy profile along an unbiased and *bona fide* reaction coordinate that describes it.
 
+ATESA has been published in the Journal of Chemical Theory and Computation, `here <http://doi.org/10.1021/acs.jctc.2c00543>`_. Please cite this paper in any work making use of any part of ATESA.
+
 The batch systems and molecular simulations packages currently supported by ATESA (please raise an issue with the "enhancement" label on `our GitHub page <https://github.com/team-mayes/atesa>`_ if you'd like to see something added to this list!):
 
 **Simulations Packages**
 	* Amber
-	* CP2K (experimental)
+	* CP2K (experimental, but should be mostly working)
 
 **Batch Systems**
 	* Slurm
