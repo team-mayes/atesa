@@ -63,7 +63,7 @@
   &FREE_ENERGY
     &METADYN
       USE_PLUMED .TRUE.
-      PLUMED_INPUT_FILE plumed.dat
+      PLUMED_INPUT_FILE {{ plumedfile }}
     &END METADYN
   &END FREE_ENERGY
 &END MOTION
