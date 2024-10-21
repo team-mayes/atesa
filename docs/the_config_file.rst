@@ -3,9 +3,18 @@
 The Configuration File
 ======================
 
-The configuration file is the primary means of controlling the behavior of ATESA. In order to support the wide array of functionality that any given user may need, the configuration file supports many options and can be quite long; however, in most cases a relatively short configuration file will be sufficient. This page provides some recommendations for building the configuration file for a handful of common use cases, and provides detailed documentation for each setting. **The easiest way to get started is to modify the relevant example config files described on the :ref:`ExampleStudy` page!**
+The configuration file is the primary means of controlling the behavior of ATESA. In order to support the wide array of functionality that any given user may need, the configuration file supports many options and can be quite long; however, in most cases a relatively short configuration file will be sufficient. This page provides some recommendations for building the configuration file for a handful of common use cases, and provides detailed documentation for each setting. **The easiest way to get started is to modify the relevant example config files described on the** :ref:`ExampleStudy` **page!**
 
 The contents of the configuration file are read line-by-line into ATESA as literal python code, which enables invocation of python built-in functions as well as methods of pytraj and numpy (and anything else you may wish to import). This means comments can be included in-line or on their own lines preceded by a '#' character, and blank lines are simply ignored. **Warning**: This input is not sanitized in any way. For this reason among others, "shutil.rmtree('/')" makes for a poor working directory!!
+
+Note that ATESA can also handle user-defined functions in the configuration file. These can be useful for, for example, defining custom CV terms. One limitation is that all function definitions need to take place on a single line (although newline characters ("``\n``") can be included and will be treated as a line break). In order to invoke a function defined in the configuration file elsewhere in the configuration file, simply prepend "``settings.``" before the function handle. As a trivial example:
+
+.. code-block:: python
+
+    def myfunc(x):\n return x + 1
+    cvs = ['settings.myfunc(2)']
+
+(See :ref:`CVDefinitions` below for more information on how the `cvs` option is defined.)
 
 .. toctree::
    :maxdepth: 3
@@ -18,16 +27,17 @@ The contents of the configuration file are read line-by-line into ATESA as liter
 Core Settings
 -------------
 
-Certain settings should be given for every job. The following settings do not have valid default values and should be set in every configuration file:
+Certain settings should be given for every job. The following settings should be set in every configuration file:
 
 .. code-block:: python
 
-	job_type		# Valid options: 'find_ts', 'aimless_shooting', 'committor_analysis', 'equilibrium_path_sampling'
+	job_type		# Valid options: 'find_ts', 'aimless_shooting', 'committor_analysis', 'umbrella_sampling', 'equilibrium_path_sampling'
 	batch_system		# Valid options: 'slurm', 'pbs'
 	restart			# Valid options: True, False
 	overwrite		# Valid options: True, False
 	topology		# Valid options: Absolute or relative path as a string
 	working_directory	# Valid options: Absolute or relative path as a string
+	md_engine               # Valid options: 'amber', 'cp2k' (default = 'amber')
 	
 ``job_type``
 
@@ -53,6 +63,10 @@ Certain settings should be given for every job. The following settings do not ha
 
 	An absolute or relative path given as a string and pointing to the desired working directory (this can be omitted if the working directory is set in the command line). This is the directory in which all of the simulations will be performed. It will be created if it does not exist.
 
+``md_engine``
+
+	The MD engine to use for running simulations. This also controls which template and input files ATESA looks for (see :ref:`SettingUpSimulationFiles` Supported options are 'amber' or 'cp2k'. Note that support for CP2K is experimental. Default = 'amber'
+
 Find Transition State
 ~~~~~~~~~~~~~~~~~~~~~
 
@@ -68,7 +82,9 @@ If you want to perform aimless shooting but don't have a candidate transition st
 	
 In this case, <coord_file> should represent a structure in either the "fwd" or "bwd" commitment basin. See :ref:`CommitmentBasinDefinitions` for details on the `commit_fwd` and `commit_bwd` options.
 
-The *find_ts* job type works by applying a modest and steadily increasing restraint to the atoms that make up the target commitment basin definition in order to force the desired rare event to take place, and then automatically performing a small amount of aimless shooting from structures near the middle to identify suitable transition states. Working transition state structures are identified in the file "status.txt" in the subdirectory "as_test" created in the find_ts working directory. The aimless shooting portion can be safely interrupted if a suitable transition state (*i.e.*, one with a non-zero acceptance ratio) has been identified. This works better for some systems than others, and depending on the basin definitions may result in a transition state that technically falls along the separatrix, but is in fact far from the minimum energy transition path. The user should carefully sanity-check the resulting structure(s).
+The *find_ts* job type works a little differently depending on the choice of `md_engine`. In Amber, it works by applying a modest and steadily increasing harmonic restraint to the atoms that make up the target commitment basin definition in order to force the desired rare event to take place. In CP2K, it instead applies constraints to the same distances, which are set to change linearly over 100 fs from the initial configuration to one just past the opposite basin definition.
+
+In either case, the job will then automatically performing a small amount of aimless shooting from structures near the middle of the biased trajectory to identify suitable transition states. Working transition state structures are identified in the file "status.txt" in the subdirectory "as_test" created in the find_ts working directory. The aimless shooting portion can be safely interrupted if a suitable transition state (*i.e.*, one with a non-zero acceptance ratio) has been identified. This works better for some systems than others, and depending on the basin definitions may result in a transition state that technically falls along the separatrix, but is in fact far from the minimum energy transition path. The user should carefully sanity-check the resulting structure(s).
 
 If find_ts gives you trouble, one alternative option for obtaining a good initial transition state structure is to run unbiased simulations at a high temperature to accelerate the transition, though this runs the risk of pushing the system into otherwise inaccessible configurations, and is beyond the scope of this documentation.
 
@@ -246,7 +262,7 @@ These settings define the paths where ATESA will search for user-defined input f
 CV Settings
 ~~~~~~~~~~~
 
-These settings define the combined variables (CVs) for the job. In aimless shooting, these are the values that are written to the output file for interpretation by likelihood maximization in building the reaction coordinate (RC). In umbrella sampling, equilibrium path sampling, and committor analysis, they are used to evaluate the RC (see :ref:`ReactionCoordinateDefinition`). They are not used in ``find_transition_state`` jobs.
+These settings define the collective variables (CVs) for the job. In aimless shooting, these are the values that are written to the output file for interpretation by likelihood maximization in building the reaction coordinate (RC). In umbrella sampling, equilibrium path sampling, and committor analysis, they are used to evaluate the RC (see :ref:`ReactionCoordinateDefinition`). They are not used in ``find_transition_state`` jobs.
 
 ``cvs`` **‡**
 
@@ -336,22 +352,38 @@ Initial Coordinates
 Commitment Basin Definitions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-These options define the geometric boundaries past which simulations are considered to have committed to the specified energetic basin (usually either "products" or "reactants"). In general, the basin definitions should be chosen so as to be mutually exclusive and deep enough into the state that they represent to ensure that simulations are not terminated before they have truly "committed" that a given basin. When in doubt, choose a more conservative basin definition.
+These options define the boundaries past which simulations are considered to have committed to the specified energetic basin (usually either "products" or "reactants"). In general, the basin definitions should be chosen so as to be mutually exclusive and deep enough into the state that they represent to ensure that simulations are not terminated before they have truly "committed" that a given basin. When in doubt, choose a more conservative basin definition.
 
 Commitment basin definitions are required in aimless shooting, committor analysis, and find transition state, but are not used for equilibrium path sampling.
 
 ``commit_fwd``	**‡**
 
-	The definition of the "forward" basin (usually products). The syntax for this option is as follows::
+	The definition of the "forward" basin (*e.g.*, the products in a chemical reaction). The syntax for this option is as follows::
 			
 		commit_fwd = ([index_1a, index_1b, ... index_1n], [index_2a, index_2b, ... index_2n],
 		[dist_1, dist_2, ... dist_n], ['gt'/'lt', 'gt'/'lt', ... 'gt'/'lt']
 
-	This is interpreted as: the distance between the atoms with indices *index_1a* and *index_2a* must be either greater than (*'gt'*) or less than (*'lt'*) the distance dist_1 (in Å), and so on. Atom indices are strictly 1-indexed; if the model itself is 0-indexed, you need to increment each index by one when including it in commitment basin definitions. Each item in each list sharing the same subindex (*e.g.*, index_1a, index_2a, dist_1, and the first 'gt'/'lt') is treated as a single criterion for commitment to the basin, and only once ALL the criteria are met simultaneously is the simulation considered committed. No default value.
+	This is interpreted as: the distance between the atoms with indices *index_1a* and *index_2a* must be either greater than (*'gt'*) or less than (*'lt'*) the distance dist_1 (in Å), and so on. Atom indices are strictly 1-indexed; if the model itself is 0-indexed, you need to increment each index by one when including it in commitment basin definitions. Each item in each list sharing the same subindex (*e.g.*, index_1a, index_2a, dist_1, and the first 'gt'/'lt') is treated as a single criterion for commitment to the basin, and only once ALL the criteria are met simultaneously is the simulation considered committed. 
+	
+	Alternatively, a more flexible format can be used where *commit_fwd* is simply a list of strings that evaluate to booleans. As with CV definitions (see :ref:`CVDefinitions`), the variable names traj (a pytraj trajectory object), mtraj (an mdtraj trajectory object) and traj_name (a string matching the file name) are recognized. As before, commitment is defined as occurring only when ALL of the conditions in the definition are met. For example::
+	
+		commit_fwd = ['abs((mdtraj.compute_distances(mtraj, numpy.array([[1, 2]]))[0][0] * 10) - (mdtraj.compute_distances(mtraj, numpy.array([[1, 3]]))[0][0] * 10)) >= 2', 'mdtraj.compute_distances(mtraj, numpy.array([[1, 3]]))[0][0] * 10 < 1.9']
+		
+	This definition is committed when the difference in the distances between atoms 2 and 3 and between 2 and 4 is greater than 2 Å, and also the distance between atoms 2 and 4 is less than 1.9 Å. Note the off-by-one in the atom indices in this case is due to ATESA's convention of indexing atoms from 1 while mdtraj indexes from 0. Note also that commitment definitions of this format are incompatible with *job_type = find_ts*; if you want to use this format for the automated aimless shooting tests following the biased *find_ts* trajectory, then you must also set *aux_commit_fwd* (see below).
+	
+	No default value.
 	
 ``commit_bwd`` **‡**
 
-	This options behaves just like *commit_fwd*, but for the "backward" basin (usually reactants). No default value.
+	This options behaves just like *commit_fwd*, but for the "backward" basin (*e.g.*, the reactants in a chemical reaction). No default value.
+	
+``aux_commit_fwd``
+
+	If and only if the *commit_fwd* is defined as a list of strings (see above), *find_ts* jobs will fall back on this option for building the restraints for the biased trajectory and any job using *auto_cvs* will fall back on this option for building CVs. The syntax for this option is identical to that for *commit_fwd*, but a list of strings is not supported. No default value.
+	
+``aux_commit_bwd``
+
+	As *find_ts_commit_fwd*, but for the "backward" basin. No default value.
 
 .. _ReactionCoordinateDefinition:
 
@@ -375,6 +407,23 @@ The options define the reaction coordinate (RC) in terms of the CVs in the *cvs*
 ``as_out_file`` **‡**
 
 	Path to an aimless shooting output file. The minimum and maximum values of each CV contained herein are used to reduce the CV values in the RC if *rc_reduced_cvs = True* (otherwise this option is unused). The CVs must be given in the same order in this file as they are in the *cvs* option (as is the case if the same *cvs* option was used in the aimless shooting run that produced this file). This option must be set explicitly if the aimless shooting output file is not present in the working directory, as is usually the case by default in committor analysis and equilibrium path sampling. Default = 'as_raw.out'
+
+Find Transition State Settings
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This option is specific to find transition state (find_ts) runs only.
+
+``find_ts_strategy``
+
+    Strategy for selecting frames to use as initial shooting points to test for suitability as a transition state model. Valid selections are 'middle' and 'end'. 'middle' tries to select frames from the middle of the trajectory with the most average interatomic distances compared to the starting and ending coordinates. 'end' selects frames at the end, with the rationale that because the find_ts trajectory is terminated as soon as it commits to the opposite basin, the appropriate transition state ought to be near the end of the trajectory. In general, 'middle' is better, but 'end' can be preferable in cases where conditions other than atomic distances (such as electronic polarization effects from nearby atoms) are expected to contribute significantly. Default = 'middle'
+
+``find_ts_test_threads``
+
+    The number of threads used for aimless shooting testing of candidate transition states. If this is set to 0, then the number of threads is equal to 10% of the number of frames in the biased find_ts trajectory. Default = 0
+    
+``find_ts_length``
+
+	For *md_engine = cp2k* only. Controls the number of femtoseconds over which biased find_ts trajectories push coordinates from one stable state to the other. The maximum number of steps that the simulation will run for is set to 1000 times this value to safely accomodate very small step sizes, but it will be interrupted once it commits to the desired state. Ignored when *md_engine = amber*; Amber settings can be controlled by directly changing the appropriate values in the input file. Default = 1000
 
 .. _AimlessShootingSettings:
 

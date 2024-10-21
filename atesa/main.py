@@ -11,7 +11,7 @@ to execute various interfaced/abstracted commands.
 import sys
 import os
 import shutil
-import pickle
+import dill as pickle   # pretty sure this is kosher
 import pytraj
 import copy
 import time
@@ -113,7 +113,12 @@ def init_threads(settings):
     """
 
     if settings.restart:
-        allthreads = pickle.load(open(settings.working_directory + '/restart.pkl', 'rb'))
+        try:
+            allthreads = pickle.load(open(settings.working_directory + '/restart.pkl', 'rb'))
+        except FileNotFoundError:
+            raise RuntimeError('restart = True, but the selected working directory does not contain a restart.pkl file.'
+                               ' Are you sure you meant this to be a restart? If yes, double-check your working '
+                               'directory.')
         for thread in allthreads:
             if not thread.current_type == []:
                 thread.skip_update = True
@@ -125,7 +130,7 @@ def init_threads(settings):
                 info_err_lines = open(settings.working_directory + '/info_err.out', 'r').readlines()
 
                 # Resample completely if there's been a change in the number of definitions of CVs, or in the settings
-                # for, information_error_max_dims or information_error_lmax_string
+                # for information_error_max_dims or information_error_lmax_string
                 wrong_length = False
                 for data_length in [str(line.split()[0]) for line in info_err_lines]:
                     first_line = open(settings.working_directory + '/as_decorr_' + data_length + '.out', 'r').readlines()[0]
@@ -371,6 +376,17 @@ def main(settings, rescue_running=[]):
 
     try:
         if settings.job_type == 'aimless_shooting' and len(os.sched_getaffinity(0)) > 1:
+            # For unknown reasons, when len(os.sched_getaffinity(0)) < len(allthreads), some threads get stuck sometimes
+            warnings.warn('len(os.sched_getaffinity(0)) < len(allthreads); ATESA will continue, but some threads may '
+                          'get stuck. When using more than one core with aimless shooting, it is recommended that the '
+                          'number of cores match the number of aimless shooting threads (in this case, there are ' +
+                          str(len(allthreads)) + ' threads)')
+            print('len(os.sched_getaffinity(0)) < len(allthreads); ATESA will continue, but some threads may '
+                          'get stuck. When using more than one core with aimless shooting, it is recommended that the '
+                          'number of cores match the number of aimless shooting threads (in this case, there are ' +
+                          str(len(allthreads)) + ' threads)')
+            sys.stdout.flush()
+
             # Initialize Manager for shared data across processes; this is necessary because multiprocessing is being
             # retrofitted to code designed for serial processing, but it works!
             manager = Manager()
@@ -458,13 +474,13 @@ def main_loop(settings, allthreads, running):
 
 def run_main():
     # Obtain settings namespace, initialize threads, and move promptly into main.
-    try:
+    if len(sys.argv) >= 3:
         working_directory = sys.argv[2]
-    except IndexError:
+    else:
         working_directory = ''
-    try:
+    if len(sys.argv) >= 2:
         settings = configure.configure(sys.argv[1], working_directory)
-    except IndexError:
+    else:
         raise RuntimeError('No configuration file specified. See documentation at atesa.readthedocs.io for details.')
     exit_message = main(settings)
     print(exit_message)

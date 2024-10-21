@@ -48,7 +48,7 @@ class Tests(object):
 
         assert len(result) == len(compare)
         assert all([item in [line.split('; ')[1].strip('\n') for line in compare] for item in result])
-        assert pytest.approx(eval(compare[0].split('; ')[1]), 1.09, 1E-2)
+        assert eval(compare[0].split('; ')[1]) == pytest.approx(1.495, 1E-2)
 
     def test_main_pytraj(self):
         """Tests auto_cvs with pytraj"""
@@ -71,7 +71,7 @@ class Tests(object):
 
         assert len(result) == len(compare)
         assert all([item in [line.split('; ')[1].strip('\n') for line in compare] for item in result])
-        assert pytest.approx(eval(compare[0].split('; ')[1]), 1.09, 1E-2)
+        assert eval(compare[0].split('; ')[1]) == pytest.approx(1.09, 1E-2)
 
     @classmethod
     def teardown_method(self, method):

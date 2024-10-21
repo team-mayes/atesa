@@ -90,10 +90,10 @@ class AdaptSlurm(BatchSystem):
         count = 1
         max_tries = 5
         output = 'first_attempt'
-        errors = ['first_attempt', 'slurm_load_jobs', 'slurm_receive_msg', 'send/recv']   # error messages to retry on
+        errors = ['first_attempt', 'slurm_load_jobs', 'slurm_receive_msg', 'slurm_msg_sendto', 'send/recv', 'connect failure']   # error messages to retry on
 
         command = 'squeue -o %t --job ' + str(jobid)
-        while True in [error in output for error in errors] and count <= max_tries:
+        while True in [error in output for error in errors] and count <= max_tries and not 'Invalid job id specified' in output:
             if not output == 'first_attempt':
                 time.sleep(30)      # wait 30 seconds before trying again
                 count += 1

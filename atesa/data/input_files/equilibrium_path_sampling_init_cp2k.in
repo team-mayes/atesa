@@ -1,0 +1,59 @@
+&GLOBAL
+  PROJECT EPS_INIT
+  PRINT_LEVEL LOW
+  RUN_TYPE MD
+  SEED {{ seed }}
+&END GLOBAL
+
+&FORCE_EVAL
+  METHOD QS
+  &SUBSYS
+    &CELL
+      ABC [angstrom] {{ box_xyz }}
+      ALPHA_BETA_GAMMA {{ box_abc }}
+    &END CELL
+    &TOPOLOGY
+      COORD_FILE_FORMAT pdb
+      COORD_FILE_NAME {{ inpcrd }}
+      CONNECTIVITY OFF
+    &END TOPOLOGY
+  &END SUBSYS
+  &DFT
+    CHARGE -1
+    &QS
+      METHOD XTB
+      &SE
+         &COULOMB
+           CUTOFF [angstrom] 8.0
+         &END
+         &EXCHANGE
+           CUTOFF [angstrom] 8.0
+         &END
+       &END
+    &END QS
+  &END DFT
+&END FORCE_EVAL
+
+&MOTION
+  &MD
+      ENSEMBLE NVT
+      STEPS 1
+      TIMESTEP 0.001
+      TEMPERATURE 298.15
+      &THERMOSTAT
+         TYPE NOSE
+      &END THERMOSTAT
+  &END MD
+  &PRINT
+    &TRAJECTORY                                 ! Controls the output of the trajectory
+      FILENAME {{ nc }}
+      FORMAT DCD                                ! Format of the output trajectory is DCD
+    &END TRAJECTORY
+    &RESTART                                    ! This section controls the printing of restart files
+      FILENAME {{ rst }}
+      &EACH                                     ! A restart file will be printed every 100 md steps
+        MD 1
+      &END
+    &END RESTART
+  &END PRINT
+&END MOTION

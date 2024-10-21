@@ -12,7 +12,7 @@ lmax.py: Likelihood Maximization
 
 In addition to the core job types performed through calls directly to ``atesa``, ATESA comes packaged with a separate likelihood maximization (LMax) script for obtaining reaction coordinates (RC's) from aimless shooting output.
 
-The product of aimless shooting is a (large) set of combined variable (CV) values paired with corresponding commitment basins (products or reactants). In order to convert this information into a usable form, likelihood maximization selects a model that describes the reaction progress in terms of relatively few parameters. ATESA supports the intertial likelihood maximization procedure first published in `Peters 2012 <https://doi.org/10.1016/j.cplett.2012.10.051>`_, in addition to the original non-inertial procedure.
+The product of aimless shooting is a (large) set of collective variable (CV) values paired with corresponding commitment basins (products or reactants). In order to convert this information into a usable form, likelihood maximization selects a model that describes the reaction progress in terms of relatively few parameters. ATESA supports the intertial likelihood maximization procedure first published in `Peters 2012 <https://doi.org/10.1016/j.cplett.2012.10.051>`_, in addition to the original non-inertial procedure.
 
 Likelihood maximization is invoked from the command line as:
 
