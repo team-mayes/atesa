@@ -344,8 +344,9 @@ class AimlessShooting(JobType):
     Adapter class for aimless shooting
     """
 
-    def get_input_file(self, thread, job_index, settings):
-        return settings.path_to_input_files + '/' + settings.job_type + '_' + thread.current_type[job_index] + '_' + settings.md_engine + '.in'
+    def get_input_file(self, thread, job_index, settings, **kwargs):
+        mdengine = factory.mdengine_factory(settings.md_engine)
+        return mdengine.get_input_file_aimless_shooting(settings, thread, job_index, **kwargs)
 
     def get_initial_coordinates(self, settings):
         list_to_return = []
@@ -354,8 +355,9 @@ class AimlessShooting(JobType):
                 og_item = item
                 if '/' in item:
                     item = item[item.rindex('/') + 1:]
-                list_to_return += [item + '_' + str(this_index) for this_index in range(settings.degeneracy)]
-                for file_to_make in [item + '_' + str(this_index) for this_index in range(settings.degeneracy)]:
+                files_to_make = [item + '_' + str(this_index) for this_index in range(settings.degeneracy)]
+                list_to_return += files_to_make
+                for file_to_make in files_to_make:
                     shutil.copy(og_item, settings.working_directory + '/' + file_to_make)
             else:
                 og_item = item
@@ -436,13 +438,22 @@ class AimlessShooting(JobType):
             for job_index in range(len(thread.jobids)):
                 if thread.get_status(job_index, settings) == 'R':     # if the job in question is running
                     try:
-                        if utilities.check_commit(thread.history.prod_trajs[-1][job_index], settings):  # if committed
+                        commit = utilities.check_commit(thread.history.prod_trajs[-1][job_index], settings, all_frames=True)
+                        if 'fwd' in commit and 'bwd' in commit:
+                            raise RuntimeError('Trajectory ' + str(thread.history.prod_trajs[-1][job_index]) + ' has '
+                                               'frames identified as commited to both basins. This indicates that your '
+                                               'commitment definitions are inappropriate (they do not actually indicate'
+                                               ' commitment to a basin).')
+                        if 'fwd' in commit or 'bwd' in commit:  # if committed
                             thread.cancel_job(job_index, settings)        # cancel it
                     except (RuntimeError, OSError):    # occurs if trajectory doesn't have any frames or hasn't been created yet
                         pass
 
         # if every job in this thread has status 'C'ompleted/'C'anceled...
         if all(item == 'C' for item in [thread.get_status(job_index, settings) for job_index in range(len(thread.jobids))]):
+            if thread.current_type == ['prod', 'prod']:
+                mdengine = factory.mdengine_factory(settings.md_engine)
+                mdengine.simulation_cleanup(thread.history, settings)
             return True
         else:
             return False
@@ -551,7 +562,13 @@ class AimlessShooting(JobType):
             local_thread.history.prod_results.append([])
             for job_index in range(len(local_thread.current_type)):
                 try:
-                    local_thread.history.prod_results[-1].append(utilities.check_commit(local_thread.history.prod_trajs[-1][job_index], settings))
+                    commit = utilities.check_commit(local_thread.history.prod_trajs[-1][job_index], settings, all_frames=True)
+                    this_commit = ''
+                    for ii in range(len(commit)):   # scan from right for most recent commit flag
+                        if commit[-ii - 1] in ['fwd', 'bwd']:
+                            this_commit = commit[-ii - 1]
+                            break
+                    local_thread.history.prod_results[-1].append(this_commit)
                 except RuntimeError:
                     local_thread.history.prod_results[-1].append('')    # trajectory doesn't exist for some reason, so automatically fail
             local_thread.total_moves += 1
@@ -636,10 +653,53 @@ class AimlessShooting(JobType):
             thread.suffix += 1
             thread.name = thread.history.init_inpcrd[0] + '_' + str(thread.suffix)
             if thread.history.prod_results[-1] in [['fwd', 'bwd'], ['bwd', 'fwd']]:    # accepted move
-                job_index = int(numpy.round(random.random()))    # randomly select a trajectory (there are only ever two in aimless shooting)
-                frame = random.randint(settings.min_dt, settings.max_dt)
-                new_point = thread.get_frame(thread.history.prod_trajs[-1][job_index], frame, settings)
-                if not os.path.exists(new_point):
+                job_index = int(numpy.round(random.random()))  # randomly select a trajectory (there are only ever two in aimless shooting)
+                traj = mdtraj.load(thread.history.prod_trajs[-1][job_index], top=settings.topology)
+                clear = False       # for checking that the selected frame is not in a basin
+                switched = False    # for checking that both halves of the trajectory have not been tried
+                upper_bound = min(settings.max_dt, traj.n_frames - 1)
+                if upper_bound < settings.min_dt:  # error handling for too-short trajectories
+                    if job_index == 0:
+                        job_index = 1
+                    else:
+                        job_index = 0
+                    traj = mdtraj.load(thread.history.prod_trajs[-1][job_index], top=settings.topology)
+                    upper_bound = min(settings.max_dt, traj.n_frames - 1)
+                    switched = True
+                    if upper_bound <= settings.min_dt:
+                        raise RuntimeError('Both halves of an accepted trajectory (' +
+                                           str(thread.history.prod_trajs[-1]) + ') have no frames'
+                                           ' between min_dt and the end of the trajectory. This means'
+                                           ' that your fwd_ and bwd_commit definitions are too '
+                                           'close together or don\'t actually identify commitment, min_dt is too '
+                                           'large, or else you aren\'t saving frames nearly often enough. Aimless '
+                                           'shooting is impossible under these conditions.')
+                while not clear:
+                    frame = random.randint(settings.min_dt, upper_bound)
+                    new_point = thread.get_frame(thread.history.prod_trajs[-1][job_index], frame, settings)
+                    if utilities.check_commit(new_point, settings) == '':
+                        clear = True
+                    else:
+                        upper_bound = frame - 1  # new maximum frame
+                        if upper_bound <= settings.min_dt:
+                            if switched:  # if we have already tried both halves of the trajectory
+                                raise RuntimeError('Both halves of an accepted trajectory (' +
+                                                   str(thread.history.prod_trajs[-1]) + ') have no frames'
+                                                   ' between min_dt and commitment to a basin. This means'
+                                                   ' that your fwd_ and bwd_commit definitions are too '
+                                                   'close together, min_dt is too large, or else you '
+                                                   'aren\'t saving frames nearly often enough. Aimless '
+                                                   'shooting is impossible under these conditions.')
+                            else:
+                                # Switch to the other half of the trajectory and try again
+                                if job_index == 0:
+                                    job_index = 1
+                                else:
+                                    job_index = 0
+                                traj = mdtraj.load(thread.history.prod_trajs[-1][job_index], top=settings.topology)
+                                upper_bound = min(settings.max_dt, traj.n_frames - 1)
+                                switched = True
+                if not os.path.exists(new_point):   # unnecessary sanity checking
                     try:
                         traj = mdtraj.load(thread.history.prod_trajs[-1][job_index], top=settings.topology)
                         raise RuntimeError(
@@ -673,9 +733,53 @@ class AimlessShooting(JobType):
                 thread.history.init_inpcrd.append(new_point)
             else:   # not an accepted move
                 if settings.always_new and thread.history.last_accepted >= 0:  # choose a new shooting move from last accepted trajectory
-                    job_index = int(numpy.round(random.random()))  # randomly select a trajectory (there are only ever two in aimless shooting)
-                    frame = random.randint(settings.min_dt, settings.max_dt)
-                    new_point = thread.get_frame(thread.history.prod_trajs[thread.history.last_accepted][job_index], frame, settings)
+                    job_index = int(numpy.round(
+                        random.random()))  # randomly select a trajectory (there are only ever two in aimless shooting)
+                    traj = mdtraj.load(thread.history.prod_trajs[thread.history.last_accepted][job_index], top=settings.topology)
+                    clear = False  # for checking that the selected frame is not in a basin
+                    switched = False  # for checking that both halves of the trajectory have not been tried
+                    upper_bound = min(settings.max_dt, traj.n_frames - 1)
+                    if upper_bound < settings.min_dt:  # error handling for too-short trajectories
+                        if job_index == 0:
+                            job_index = 1
+                        else:
+                            job_index = 0
+                        traj = mdtraj.load(thread.history.prod_trajs[thread.history.last_accepted][job_index], top=settings.topology)
+                        upper_bound = min(settings.max_dt, traj.n_frames - 1)
+                        switched = True
+                        if upper_bound <= settings.min_dt:
+                            raise RuntimeError('Both halves of an accepted trajectory (' +
+                                               str(thread.history.prod_trajs[thread.history.last_accepted]) + ') have '
+                                               'no frames between min_dt and the end of the trajectory. This means'
+                                               ' that your fwd_ and bwd_commit definitions are too '
+                                               'close together or don\'t actually identify commitment, min_dt is too '
+                                               'large, or else you aren\'t saving frames nearly often enough. Aimless '
+                                               'shooting is impossible under these conditions.')
+                    while not clear:
+                        frame = random.randint(settings.min_dt, upper_bound)
+                        new_point = thread.get_frame(thread.history.prod_trajs[thread.history.last_accepted][job_index], frame, settings)
+                        if utilities.check_commit(new_point, settings) == '':
+                            clear = True
+                        else:
+                            upper_bound = frame - 1  # new maximum frame
+                            if upper_bound <= settings.min_dt:
+                                if switched:  # if we have already tried both halves of the trajectory
+                                    raise RuntimeError('Both halves of an accepted trajectory (' +
+                                                       str(thread.history.prod_trajs[thread.history.last_accepted]) + ') have no frames'
+                                                       ' between min_dt and commitment to a basin. This means'
+                                                       ' that your fwd_ and bwd_commit definitions are too '
+                                                      'close together, min_dt is too large, or else you '
+                                                      'aren\'t saving frames nearly often enough. Aimless '
+                                                      'shooting is impossible under these conditions.')
+                                else:
+                                    # Switch to the other half of the trajectory and try again
+                                    if job_index == 0:
+                                        job_index = 1
+                                    else:
+                                        job_index = 0
+                                    traj = mdtraj.load(thread.history.prod_trajs[thread.history.last_accepted][job_index], top=settings.topology)
+                                    upper_bound = min(settings.max_dt, traj.n_frames - 1)
+                                    switched = True
                     if not os.path.exists(new_point):
                         try:
                             traj = mdtraj.load(thread.history.prod_trajs[thread.history.last_accepted][job_index], top=settings.topology)
@@ -723,7 +827,11 @@ class AimlessShooting(JobType):
             if not os.path.exists(thread.history.init_coords[-1][0]):  # init step failed, so retry it
                 thread.current_type = []  # reset current_type so it will be pushed back to ['init'] by thread.process
             else:   # init step produced the desired file, so update coordinates
-                thread.history.init_coords[-1].append(utilities.rev_vels(thread.history.init_coords[-1][0]))
+                mdengine = factory.mdengine_factory(settings.md_engine)
+                mdengine.control_rst_format(thread.history.init_coords[-1][0])
+                # Add reversed trajectory in a way that enforces proper shape/length of this init_coords entry
+                thread.history.init_coords[-1] = [thread.history.init_coords[-1][-1],
+                                                  utilities.rev_vels(thread.history.init_coords[-1][0])]
 
         return running
 
@@ -768,8 +876,9 @@ class CommittorAnalysis(JobType):
     Adapter class for committor analysis
     """
 
-    def get_input_file(self, thread, job_index, settings):
-        return settings.path_to_input_files + '/' + settings.job_type + '_' + thread.current_type[job_index] + '_' + settings.md_engine + '.in'
+    def get_input_file(self, thread, job_index, settings, **kwargs):
+        mdengine = factory.mdengine_factory(settings.md_engine)
+        return mdengine.get_input_file_committor_analysis(settings, thread, job_index, **kwargs)
 
     def get_initial_coordinates(self, settings):
         if settings.committor_analysis_use_rc_out:
@@ -914,27 +1023,9 @@ class EquilibriumPathSampling(JobType):
     Adapter class for equilibrium path sampling
     """
 
-    def get_input_file(self, thread, job_index, settings):
-        if not settings.eps_n_steps % settings.eps_out_freq == 0:
-            raise RuntimeError('eps_n_steps must be evenly divisible by eps_out_freq')
-
-        if thread.current_type == ['init']:
-            return settings.path_to_input_files + '/' + settings.job_type + '_' + thread.current_type[job_index] + '_' + settings.md_engine + '.in'
-        else:
-            if job_index == 0:  # have to roll to determine the number of fwd and bwd steps
-                roll = random.randint(1, int(settings.eps_n_steps/settings.eps_out_freq)) * settings.eps_out_freq
-                thread.history.prod_lens.append([roll, settings.eps_n_steps - roll])
-
-            input_file_name = 'eps_' + str(thread.history.prod_lens[-1][job_index]) + '.in'
-
-            if not os.path.exists(input_file_name):
-                template = settings.env.get_template(settings.md_engine + '_eps_in.tpl')
-                filled = template.render(django.template.Context({'nstlim': str(thread.history.prod_lens[-1][job_index]), 'ntwx': str(settings.eps_out_freq)}))
-                with open(input_file_name, 'w') as newfile:
-                    newfile.write(filled)
-                    newfile.close()
-
-            return input_file_name
+    def get_input_file(self, thread, job_index, settings, **kwargs):
+        mdengine = factory.mdengine_factory(settings.md_engine)
+        return mdengine.get_input_file_equilibrium_path_sampling(settings, thread, job_index, **kwargs)
 
     def get_initial_coordinates(self, settings):
         if settings.as_out_file and settings.rc_reduced_cvs:
@@ -1083,6 +1174,8 @@ class EquilibriumPathSampling(JobType):
             # Update current_results, total and accepted move counts, and status.txt
             thread.history.prod_results.append([])
             # First, add results from init frame
+            mdengine = factory.mdengine_factory(settings.md_engine)
+            mdengine.control_rst_format(thread.history.init_coords[-1][0])
             cvs = utilities.get_cvs(thread.history.init_coords[-1][0], settings, reduce=settings.rc_reduced_cvs).split(' ')
             thread.history.prod_results[-1].append(utilities.evaluate_rc(settings.rc_definition, cvs))
             # Then, add results from fwd and then bwd trajectories, frame-by-frame
@@ -1201,6 +1294,8 @@ class EquilibriumPathSampling(JobType):
                         if settings.eps_empty_windows[window_index] > 0:    # time to make a new Thread here
                             # First have to get or make the file for the initial coordinates
                             if frame_index == 0:        # init coordinates
+                                mdengine = factory.mdengine_factory(settings.md_engine)
+                                mdengine.control_rst_format(thread.history.init_coords[-1][0])
                                 coord_file = thread.history.init_coords[-1][0]
                             elif frame_index <= n_fwd:  # in fwd trajectory
                                 coord_file = thread.get_frame(thread.history.prod_trajs[-1][0], frame_index, settings)
@@ -1267,6 +1362,8 @@ class EquilibriumPathSampling(JobType):
             if not os.path.exists(thread.history.init_coords[-1][0]):  # init step failed, so retry it
                 thread.current_type = []  # reset current_type so it will be pushed back to ['init'] by thread.process
             else:   # init step produced the desired file, so update coordinates
+                mdengine = factory.mdengine_factory(settings.md_engine)
+                mdengine.control_rst_format(thread.history.init_coords[-1][0])
                 thread.history.init_coords[-1].append(utilities.rev_vels(thread.history.init_coords[-1][0]))
 
         return running
@@ -1283,30 +1380,9 @@ class FindTS(JobType):
     Adapter class for finding transition state (find TS)
     """
 
-    def get_input_file(self, thread, job_index, settings):
-        # In find TS, not only do we want to get the input filename, we also want to store the initial basin and write
-        # the restraint file to push it into the other basin. First, get the basin...
-        commit = utilities.check_commit(thread.history.prod_inpcrd[0], settings)
-        if commit == '':
-            raise RuntimeError('the coordinates provided during a find_ts run must represent a structure in either the '
-                               'fwd or bwd basin, but the coordinate file ' + thread.history.prod_inpcrd[0] + ' is '
-                               'in neither.\nIf it is a transition state guess, you should set jobtype = '
-                               '\'aimless_shooting\' instead to begin aimless shooting.')
-        elif commit in ['fwd', 'bwd']:
-            thread.history.init_basin = commit
-        else:
-            raise RuntimeError('internal error in utilities.check_commit(); did not return valid output with coordinate'
-                               ' file: ' + thread.history.prod_inpcrd[0])
-
-        # Then, write the restraint file
-        if thread.history.init_basin == 'fwd':
-            other_basin = settings.commit_bwd
-        else:  # == 'bwd', the only other valid option
-            other_basin = settings.commit_fwd
+    def get_input_file(self, thread, job_index, settings, **kwargs):
         mdengine = factory.mdengine_factory(settings.md_engine)
-        input_file = mdengine.write_find_ts_restraint(other_basin, settings.path_to_input_files + '/find_ts_prod_' + settings.md_engine + '.in')
-
-        return input_file
+        return mdengine.get_input_file_find_ts(settings, thread, job_index, **kwargs)
 
     def get_initial_coordinates(self, settings):
         if not len(settings.initial_coordinates) == 1:
@@ -1360,6 +1436,8 @@ class FindTS(JobType):
         # if every job in this thread has status 'C'ompleted/'C'anceled...
         if all(item == 'C' for item in
                [thread.get_status(job_index, settings) for job_index in range(len(thread.jobids))]):
+            mdengine = factory.mdengine_factory(settings.md_engine)
+            mdengine.simulation_cleanup(thread.history, settings)
             return True
         else:
             return False
@@ -1390,10 +1468,22 @@ class FindTS(JobType):
 
         if thread.history.init_basin == 'fwd':
             dir_to_check = 'bwd'
-            other_basin_define = settings.commit_bwd
-        else:  # thread.history.init_basin = 'bwd'; get_inpcrd only allows for these two values
+            if type(settings.commit_bwd[0]) == list:
+                other_basin_define = settings.commit_bwd
+            else:
+                other_basin_define = settings.aux_commit_bwd
+                if other_basin_define[3] == ['unset']:
+                    raise RuntimeError('commit_bwd was set using booleans, but aux_commit_bwd was not defined and is'
+                                       'needed for find_ts. See ATESA documentation for aux_commit_bwd setting.')
+        else:  # == 'bwd', the only other valid option
             dir_to_check = 'fwd'
-            other_basin_define = settings.commit_fwd
+            if type(settings.commit_fwd[0]) == list:
+                other_basin_define = settings.commit_fwd
+            else:
+                other_basin_define = settings.aux_commit_fwd
+                if other_basin_define[3] == ['unset']:
+                    raise RuntimeError('commit_fwd was set using booleans, but aux_commit_fwd was not defined and is'
+                                       'needed for find_ts. See ATESA documentation for aux_commit_fwd setting.')
 
         if not thread.history.prod_result == dir_to_check:
             raise RuntimeError('find TS failed to commit to the opposite basin from its given initial coordinates. The '
@@ -1404,98 +1494,113 @@ class FindTS(JobType):
                                'modify the basin definition(s) or the input file (' + settings.path_to_input_files +
                                '/find_ts_prod_' + settings.md_engine + '.in) accordingly.')
 
-        # Now harvest TSs by inspecting values of target-basin-defining bond lengths vs. frame number
+        traj = mdtraj.load(thread.history.prod_trajs[0], top=settings.topology)
+        if settings.find_ts_test_threads == 0:
+            test_frames = int(traj.n_frames * 0.1)  # number of test frames is equal to 10% of length of trajectory
+        else:
+            test_frames = settings.find_ts_test_threads
+        mdengine = factory.mdengine_factory(settings.md_engine)     # need this for later
 
-        # We need two helper functions to optimize for the portion of the trajectory most likely to contain the TS
-        # There is no need for these functions to be performance-optimized; they will only be used sparingly
+        if settings.find_ts_strategy.lower() == 'middle':
+            # Now harvest TSs by inspecting values of target-basin-defining bond lengths vs. frame number
 
-        # First just a numerical integrator
-        def my_integral(params, my_list):
-            # Evaluate a numerical integral of the data in list my_list on the range (params[0],params[1]), where the
-            # values in params should be integers referring to indices of my_list.
-            partial_list = my_list[int(params[0]):int(params[1])]
-            return numpy.trapz(partial_list)
+            # We need two helper functions to optimize for the portion of the trajectory most likely to contain the TS
+            # There is no need for these functions to be performance-optimized; they will only be used sparingly
 
-        # And then an optimizer to find the bounds (params) of my_integral that maximize its output
-        def my_bounds_opt(objective, data):
-            list_of_bounds = []
-            for left_bound in range(len(data) - 1):
-                for right_bound in range(left_bound + 1, len(data) + 1):
-                    if right_bound - left_bound > 1:
-                        list_of_bounds.append([left_bound, right_bound])
-            output = argparse.Namespace()
-            output.best_max = objective(list_of_bounds[0], data)
-            output.best_bounds = list_of_bounds[0]
-            for bounds in list_of_bounds:
-                this_result = objective(bounds, data)
-                if this_result > output.best_max:
-                    output.best_max = this_result
-                    output.best_bounds = bounds
-            return output
+            # First just a numerical integrator
+            def my_integral(params, my_list):
+                # Evaluate a numerical integral of the data in list my_list on the range (params[0],params[1]), where the
+                # values in params should be integers referring to indices of my_list.
+                partial_list = my_list[int(params[0]):int(params[1])]
+                return numpy.trapz(partial_list)
 
-        # We'll also want a helper function for writing the potential transition state frames to individual files
-        def write_ts_guess_frames(traj, frame_indices):
-            ts_guesses = []  # initialize list of transition state guesses to test
-            for frame_index in frame_indices:
-                pytraj.write_traj(thread.name + '_ts_guess_' + str(frame_index) + '.rst7', traj,
-                                  frame_indices=[frame_index - 1], options='multi', overwrite=True, velocity=True)
-                try:
-                    os.rename(thread.name + '_ts_guess_' + str(frame_index) + '.rst7.1',
-                              thread.name + '_ts_guess_' + str(frame_index) + '.rst7')
-                except FileNotFoundError:
-                    if not os.path.exists(thread.name + '_ts_guess_' + str(frame_index) + '.rst7'):
-                        raise RuntimeError(
-                            'Error: attempted to write file ' + thread.name + '_ts_guess_' + str(frame_index)
-                            + '.rst7, but was unable to. Please ensure that you have '
-                              'permission to write to the working directory: ' + settings.working_directory)
-                ts_guesses.append(thread.name + '_ts_guess_' + str(frame_index) + '.rst7')
+            # And then an optimizer to find the bounds (params) of my_integral that maximize its output
+            def my_bounds_opt(objective, data):
+                list_of_bounds = []
+                for left_bound in range(len(data) - 1):
+                    for right_bound in range(left_bound + 1, len(data) + 1):
+                        if right_bound - left_bound > 1:
+                            list_of_bounds.append([left_bound, right_bound])
+                output = argparse.Namespace()
+                output.best_max = objective(list_of_bounds[0], data)
+                output.best_bounds = list_of_bounds[0]
+                for bounds in list_of_bounds:
+                    this_result = objective(bounds, data)
+                    if this_result > output.best_max:
+                        output.best_max = this_result
+                        output.best_bounds = bounds
+                return output
 
-            return ts_guesses
+            ### Deprecated
+            # # We'll also want a helper function for writing the potential transition state frames to individual files
+            # def write_ts_guess_frames(traj, frame_indices):
+            #     ts_guesses = []  # initialize list of transition state guesses to test
+            #     for frame_index in frame_indices:
+            #         pytraj.write_traj(thread.name + '_ts_guess_' + str(frame_index) + '.rst7', traj,
+            #                           frame_indices=[frame_index - 1], options='multi', overwrite=True, velocity=True)
+            #         try:
+            #             os.rename(thread.name + '_ts_guess_' + str(frame_index) + '.rst7.1',
+            #                       thread.name + '_ts_guess_' + str(frame_index) + '.rst7')
+            #         except FileNotFoundError:
+            #             if not os.path.exists(thread.name + '_ts_guess_' + str(frame_index) + '.rst7'):
+            #                 raise RuntimeError(
+            #                     'Error: attempted to write file ' + thread.name + '_ts_guess_' + str(frame_index)
+            #                     + '.rst7, but was unable to. Please ensure that you have '
+            #                       'permission to write to the working directory: ' + settings.working_directory)
+            #         ts_guesses.append(thread.name + '_ts_guess_' + str(frame_index) + '.rst7')
+            #
+            #     return ts_guesses
 
-        # Now we measure the relevant bond lengths for each frame in the trajectory
-        traj = pytraj.iterload(thread.history.prod_trajs[0], settings.topology)
-        this_lengths = []
-        for def_index in range(len(other_basin_define[0])):
-            # Each iteration appends a list of the appropriate distances to this_lengths
-            this_lengths.append(pytraj.distance(traj, mask='@' + str(other_basin_define[0][def_index]) +
-                                                           ' @' + str(other_basin_define[1][def_index])))
+            # Now we measure the relevant bond lengths for each frame in the trajectory
+            this_lengths = []
+            for def_index in range(len(other_basin_define[0])):
+                # Each iteration appends a list of the appropriate distances to this_lengths
+                this_lengths.append(
+                    numpy.squeeze(mdtraj.compute_distances(traj, numpy.array([[other_basin_define[0][def_index] - 1,
+                                                                               other_basin_define[1][def_index] - 1]]))))
 
-        # Now look for the TS by identifying the region in the trajectory with all of the bond lengths at intermediate
-        # values (which we'll define as 0.25 < X < 0.75 on a scale of 0 to 1), preferably for several frames in a row.
-        norm_lengths = []       # initialize list of normalized (between 0 and 1) lengths
-        scored_lengths = []     # initialize list of scores based on lengths
-        for lengths in this_lengths:
-            normd = [(this_len - min(lengths)) / (max(lengths) - min(lengths)) for this_len in lengths]
-            norm_lengths.append(normd)
-            scored_lengths.append([(-(this_len - 0.5) ** 2 + 0.0625) for this_len in normd])  # scored on parabola
-        sum_of_scores = []
-        for frame_index in range(len(scored_lengths[0])):  # sum together scores from each distance at each frame
-            sum_of_scores.append(sum([[x[i] for x in scored_lengths] for i in range(len(scored_lengths[0]))][frame_index]))
+            # Now look for the TS by identifying the region in the trajectory with all of the bond lengths at intermediate
+            # values (which we'll define as 0.25 < X < 0.75 on a scale of 0 to 1), preferably for several frames in a row.
+            norm_lengths = []       # initialize list of normalized (between 0 and 1) lengths
+            scored_lengths = []     # initialize list of scores based on lengths
+            for lengths in this_lengths:
+                normd = [(this_len - min(lengths)) / (max(lengths) - min(lengths)) for this_len in lengths]
+                norm_lengths.append(normd)
+                scored_lengths.append([(-(this_len - 0.5) ** 2 + 0.0625) for this_len in normd])  # scored on parabola
+            sum_of_scores = []
+            for frame_index in range(len(scored_lengths[0])):  # sum together scores from each distance at each frame
+                sum_of_scores.append(sum([[x[i] for x in scored_lengths] for i in range(len(scored_lengths[0]))][frame_index]))
 
-        # Now I want to find the boundaries between which the TS is most likely to reside. To do this I'll perform a 2D
-        # optimization on the integral to find the continuous region that is most positively scored
-        opt_result = my_bounds_opt(my_integral, sum_of_scores)
-
-        # If all of sum_of_scores is negative we still want to find a workable max. Also, if there are fewer than five
-        # candidate frames we want to test more than that. Either way, shift scores up by 0.1 and try again:
-        while opt_result.best_max <= 0 or int(opt_result.best_bounds[1] - opt_result.best_bounds[0]) < 5:
-            sum_of_scores = [(item + 0.1) for item in sum_of_scores]
+            # Now I want to find the boundaries between which the TS is most likely to reside. To do this I'll perform a 2D
+            # optimization on the integral to find the continuous region that is most positively scored
             opt_result = my_bounds_opt(my_integral, sum_of_scores)
 
-        # opt_result.best_bounds now contains the frame indices bounding the region of interest. I want to use pytraj to
-        # extract each of these frames as a .rst7 coordinate file and return their names. I'll put a cap on the number
-        # of frames that this is done for at, say, 50, so as to avoid somehow ending up with a huge number of candidate
-        # TS structures to test.
+            # If all of sum_of_scores is negative we still want to find a workable max. Also, if there are fewer than five
+            # candidate frames we want to test more than that. Either way, shift scores up by 0.1 and try again:
+            while opt_result.best_max <= 0 or int(opt_result.best_bounds[1] - opt_result.best_bounds[0]) < 5:
+                sum_of_scores = [(item + 0.1) for item in sum_of_scores]
+                opt_result = my_bounds_opt(my_integral, sum_of_scores)
 
-        if int(opt_result.best_bounds[1] - opt_result.best_bounds[0] + 1) > 50:
-            # The best-fit for evenly spacing 50 frames from the bounded region
-            frame_indices = [int(ii) for ii in numpy.linspace(opt_result.best_bounds[0], opt_result.best_bounds[1], 50)]
-        else:   # number of frames in bounds <= 50, so we'll take all of them
-            frame_indices = [int(ii) for ii in range(opt_result.best_bounds[0], opt_result.best_bounds[1]+1)]
+            # opt_result.best_bounds now contains the frame indices bounding the region of interest. Now extract the
+            # best test_frames frames for testing
 
-        print('First attempt. Testing the following frames from the forced trajectory ' + thread.history.prod_trajs[0] +
-              ': ' + ', '.join([str(item) for item in frame_indices]))
-        ts_guesses = write_ts_guess_frames(traj, frame_indices)
+            if int(opt_result.best_bounds[1] - opt_result.best_bounds[0] + 1) > test_frames:
+                # The best-fit for evenly spacing test_frames frames from the bounded region
+                frame_indices = [int(ii) for ii in numpy.linspace(opt_result.best_bounds[0], opt_result.best_bounds[1], test_frames)]
+            else:   # number of frames in bounds <= test_frames, so we'll take all of them
+                frame_indices = [int(ii) for ii in range(opt_result.best_bounds[0], opt_result.best_bounds[1]+1)]
+
+            print('First attempt. Testing the following frames from the forced trajectory ' + thread.history.prod_trajs[0] +
+                  ': ' + ', '.join([str(item) for item in frame_indices]))
+            # ts_guesses = write_ts_guess_frames(traj, frame_indices)
+            ts_guesses = [mdengine.get_frame(thread.history.prod_trajs[0], frame, settings) for frame in frame_indices]
+        elif settings.find_ts_strategy.lower() == 'end':
+            # Take the last test_frames frames
+            frame_indices = numpy.arange(traj.n_frames - (3 * test_frames) + 3, traj.n_frames + 3, 3)
+            ts_guesses = [mdengine.get_frame(thread.history.prod_trajs[0], frame, settings) for frame in frame_indices]
+        else:
+            raise RuntimeError('invalid option for find_ts_strategy: ' + str(settings.find_ts_strategy) + '\nValid'
+                               ' options are \'middle\' and \'end\'')
 
         ### Here, we do something pretty weird. We want to test the transition state guesses in the ts_guesses list
         ### using aimless shooting, but this isn't an aimless shooting job. So we'll write a new settings object using
@@ -1565,9 +1670,11 @@ class FindTS(JobType):
                     if 'fwd' in reformatted_results and 'bwd' in reformatted_results:
                         final_names.append(this_thread.history.init_inpcrd[0])   # to match format in status.txt and be maximally useful
                 if final_names:
-                    print('Found working transition state guess(es):\n' + '\n'.join(final_names) + '\nSee ' +
-                          as_settings.working_directory + '/status.txt for more information (acceptance probabilities '
-                          'may be very low; consider trying again with revised basin definitions for better results)')
+                    print('Found probable working transition state guess(es):\n' + '\n'.join(final_names) + '\nSee ' +
+                          as_settings.working_directory + '/status.txt for more information (NOTE: no individual '
+                          'trajectory was accepted, but each of these sets of initial coordinates produced separate '
+                          'commitments to both basins. The acceptance probabilit(y/ies) may be very low; consider '
+                          'trying again with revised basin definitions for better results)')
                     sys.stdout.flush()
                     not_finished = False
                     continue
@@ -1589,7 +1696,7 @@ class FindTS(JobType):
                           ' frames from the forced trajectory ' + thread.history.prod_trajs[0] + ': ' +
                           ', '.join([str(item) for item in frame_indices]))
                     sys.stdout.flush()
-                    ts_guesses = write_ts_guess_frames(traj, frame_indices)
+                    ts_guesses = [mdengine.get_frame(thread.history.prod_trajs[0], frame, settings) for frame in frame_indices]
 
                 elif 'bwd' in reformatted_results and not 'fwd' in reformatted_results:     # went to 'bwd' only
                     ts_guesses = []  # re-initialize list of transition state guesses to test
@@ -1602,23 +1709,24 @@ class FindTS(JobType):
                           ' frames from the forced trajectory ' + thread.history.prod_trajs[0] + ': ' +
                           ', '.join([str(int(item)) for item in frame_indices]))
                     sys.stdout.flush()
-                    ts_guesses = write_ts_guess_frames(traj, frame_indices)
+                    ts_guesses = [mdengine.get_frame(thread.history.prod_trajs[0], frame, settings) for frame in frame_indices]
 
                 # Final option: two possibilities remain here...
                 else:
                     if not 'fwd' in reformatted_results and not 'bwd' in reformatted_results:   # no commitment at all
                         raise RuntimeError('No commitments to either basin were observed during aimless shooting.\n'
-                                           'The restraint in the barrier crossing simulation appears to have broken the'
-                                           ' system in some way, so either try changing your target commitment basin '
-                                           'definition and restarting, or you’ll have to use another method to obtain '
-                                           'an initial transition state.')
+                                           'Either your aimless shooting simulation input file is inappropriate or the '
+                                           'restraint in the barrier crossing simulation appears to have broken the'
+                                           ' system in some way. In the latter case try changing your target commitment'
+                                           ' basin definition and restarting, or you’ll have to use another method to '
+                                           'obtain an initial transition state.')
                     else:   # 'fwd' and 'bwd' were both found, but not within a single thread
                         # Two sub-possibilities here: either there was a 'fwd' and a 'bwd' starting from adjacent
                         # frames, in which case we can't continue and raise an error; or the frames were non-adjacent,
                         # in which case we want to focus in on the space between them. First case first:
                         as_allthreads = pickle.load(open(as_settings.working_directory + '/restart.pkl', 'rb'))
-                        pattern = re.compile(r"ts_guess_[0-9]+(?!.*ts_guess_[0-9]+)")   # for identifying frame
-                        sorted_allthreads = sorted(as_allthreads, key=lambda thread: float(pattern.findall(thread.history.prod_trajs[0][0])[0].replace('ts_guess_', '')))
+                        pattern = re.compile(r"frame_[0-9]+(?!.*frame_[0-9]+)")   # for identifying frame
+                        sorted_allthreads = sorted(as_allthreads, key=lambda thread: float(pattern.findall(thread.history.prod_trajs[0][0])[0].replace('frame_', '')))
                         current_result = ''
                         previous_index = -1
                         current_index = -1
@@ -1635,21 +1743,25 @@ class FindTS(JobType):
                             else:
                                 continue
                             if not previous_result == '' and not current_index == '' and not previous_result == current_result:   # found the threads between which to focus
-                                previous_index = float(pattern.findall(as_allthreads[this_index - 1].history.prod_trajs[0][0])[0].replace('ts_guess_', ''))
-                                current_index = float(pattern.findall(as_allthreads[this_index].history.prod_trajs[0][0])[0].replace('ts_guess_', ''))
+                                previous_index = int(pattern.findall(as_allthreads[this_index - 1].history.prod_trajs[0][0])[0].replace('frame_', ''))
+                                current_index = int(pattern.findall(as_allthreads[this_index].history.prod_trajs[0][0])[0].replace('frame_', ''))
                                 break
                         if previous_index == -1:
                             raise RuntimeError('failed to find frames between which commitment changes during find_ts; '
                                                'this message should not be accessible.')
                         if not previous_index == -1 and not current_index == -1 and not abs(previous_index - current_index) == 1:    # if these aren't adjacent frames
-                            frame_indices = numpy.arange(previous_index, current_index)
+                            if int(current_index - (previous_index + 1)) > test_frames:
+                                # The best-fit for evenly spacing test_frames frames from the bounded region
+                                frame_indices = [int(ii) for ii in numpy.linspace(previous_index + 1, current_index - 1, test_frames)]  # frame indices in between previous and current
+                            else:  # number of frames in bounds <= test_frames, so we'll take all of them
+                                frame_indices = [int(ii) for ii in range(previous_index + 1, current_index)]
                             print('Previous attempt failed: trajectories starting from non-consecutive frames ' +
                                   str(int(previous_index)) + ' and ' + str(int(current_index)) + ' from the forced trajectory '
                                   'went to only \'' + previous_result + '\' and only \'' + current_result + '\' basins,'
-                                  ' respectively. Now testing the following frames from the forced trajectory' +
+                                  ' respectively. Now testing the following frames from the forced trajectory ' +
                                   thread.history.prod_trajs[0] + ': ' + ', '.join([str(int(item)) for item in frame_indices]))
                             sys.stdout.flush()
-                            ts_guesses = write_ts_guess_frames(traj, frame_indices)
+                            ts_guesses = [mdengine.get_frame(thread.history.prod_trajs[0], frame, settings) for frame in frame_indices]
                         else:
                             raise RuntimeError('Commitments to both the forward and backward basins were observed, but not '
                                            'from any single transition state candidate.\nThe most likely explanation is'
@@ -1688,348 +1800,11 @@ class UmbrellaSampling(JobType):
     Adapter class for umbrella sampling
     """
 
-    def add_pathway_restraints(self, thread, settings):
-        """
-        Build appropriate pathway restraints DISANG file for the window in the specified thread
-
-        Parameters
-        ----------
-        settings : argparse.Namespace
-            Settings namespace object
-
-        Returns
-        -------
-        None
-
-        """
-        if not True in ['nmropt=1' in line for line in
-                        open(settings.path_to_input_files + '/umbrella_sampling_prod_' + settings.md_engine + '.in',
-                             'r').readlines()]:
-            raise RuntimeError('did not find \'nmropt=1\' in input file: ' + settings.path_to_input_files +
-                               '/umbrella_sampling_prod_' + settings.md_engine + '.in, which is required when a'
-                               ' us_pathway_restraints_file is specified in the config file. Make sure that '
-                               'exactly that string is present.')
-        if not os.path.exists(settings.working_directory + '/us_pathway_restraints_' + str(thread.history.window) +
-                              '.DISANG'):
-            if not os.path.exists(settings.us_pathway_restraints_file):
-                raise FileNotFoundError('Attempted to implement us_pathway_restraints for umbrella sampling, but '
-                                        'could not find the indicated file: ' +
-                                        settings.us_pathway_restraints_file)
-
-            # Define a helper function
-            def closest(lst, K):
-                # Return index of closest value to K in list lst
-                return min(range(len(lst)), key=lambda i: abs(lst[i] - float(K)))
-
-            # Define function to clean up some floating point precision issues;
-            # e.g.,  numpy.arange(-6,12,0.1)[-1] = 11.899999999999935,
-            # whereas safe_arange(-6,12,0.1)[-1] = 11.9
-            def safe_arange(start, stop, step):
-                return step * numpy.arange(start / step, stop / step)
-
-            window_centers = safe_arange(settings.us_rc_min, settings.us_rc_max, settings.us_rc_step)
-
-            # Build min_max.pkl file if it doesn't already exist
-            if not os.path.exists('min_max.pkl'):
-                # Partition each line in as_full_cvs.out into the nearest US window
-                as_full_cvs = open(settings.us_pathway_restraints_file, 'r')    # load file as an iterator
-                as_full_cvs_line = next(as_full_cvs)    # get first line
-
-                # Initialize results list; first index is window, second index is CV, third index is 0 for min and 1 for max
-                # E.g., min_max[12][5][1] is the max value of CV6 in the 13th window
-                min_max = [[[None, None] for null in range(len(as_full_cvs_line.split()))] for null in
-                           range(len(window_centers))]
-
-                rc_minmax = [[], []]  # this minmax is for passing to utilities.get_cvs.reduce_cv
-                if settings.rc_reduced_cvs:
-                    # Prepare cv_minmax list
-                    asout_lines = [[float(item) for item in
-                                    line.replace('A <- ', '').replace('B <- ', '').replace(' \n', '').replace('\n',
-                                    '').split(' ')] for line in open(settings.as_out_file, 'r').readlines()]
-                    open(settings.as_out_file, 'r').close()
-                    mapped = list(map(list, zip(*asout_lines)))
-                    rc_minmax = [[numpy.min(item) for item in mapped], [numpy.max(item) for item in mapped]]
-
-                    def reduce_cv(unreduced_value, local_index, rc_minmax):
-                        # Returns a reduced value for a CV given an unreduced value and the index within as.out corresponding to that CV
-                        this_min = rc_minmax[0][local_index]
-                        this_max = rc_minmax[1][local_index]
-                        return (float(unreduced_value) - this_min) / (this_max - this_min)
-
-                while True:     # loop can only end via 'break'
-                    try:
-                        # Split line into cvs
-                        this_line = as_full_cvs_line.split()
-
-                        # Evaluate the reaction coordinate value for this line
-                        if settings.rc_reduced_cvs:
-                            this_line_temp = []
-                            for cv_index in range(len(this_line)):
-                                if 'cv' + str(int(cv_index + 1)) in settings.rc_definition.lower():     # this catches some errant CVs (e.g., CV22 gets 2 and 22) but it's okay
-                                    this_line_temp.append(reduce_cv(this_line[cv_index], cv_index, rc_minmax))
-                                else:
-                                    this_line_temp.append(None)
-                            rc = utilities.evaluate_rc(settings.rc_definition, this_line_temp)
-                        else:
-                            rc = utilities.evaluate_rc(settings.rc_definition, this_line)
-                        window_index = closest(window_centers, rc)
-
-                        # Add to min and max as appropriate
-                        for cv_index in range(len(this_line)):
-                            if (min_max[window_index][cv_index][0] is None or float(min_max[window_index][cv_index][0]) > float(this_line[cv_index])) and not math.isnan(float(this_line[cv_index])):
-                                min_max[window_index][cv_index][0] = this_line[cv_index]  # set new min
-                            if (min_max[window_index][cv_index][1] is None or float(min_max[window_index][cv_index][1]) < float(this_line[cv_index])) and not math.isnan(float(this_line[cv_index])):
-                                min_max[window_index][cv_index][1] = this_line[cv_index]  # set new max
-
-                        as_full_cvs_line = next(as_full_cvs)    # get next line for next iteration
-                    except StopIteration:   # raised by next(as_full_cvs) when trying to read past the end
-                        break
-
-                # Dump as a .pkl file so we don't have to do this againZ
-                pickle.dump(min_max, open('min_max.pkl', 'wb'), protocol=2)
-
-            # Now build the actual DISANG file.
-            min_max = pickle.load(open('min_max.pkl', 'rb'))  # load the min_max pickle file
-            window_index = closest(window_centers, thread.history.window)  # identify the appropriate window_index
-            open(settings.working_directory + '/us_pathway_restraints_' + str(thread.history.window) + '.DISANG',
-                 'w').close()
-            with open(settings.working_directory + '/us_pathway_restraints_' + str(thread.history.window) + '.DISANG',
-                      'a') as f:
-                f.write('ATESA automatically generated restraint file implementing us_pathway_restraints_file option\n')
-                for cv_index in range(len(min_max[window_index])):
-                    atoms, optype, nat = utilities.interpret_cv(cv_index + 1, settings)  # get atom indices and type for this CV
-                    try:
-                        this_min = float(min_max[window_index][cv_index][0])
-                        this_max = float(min_max[window_index][cv_index][1])
-                    except TypeError:  # no min and/or max for this window_index, so skip it
-                        continue
-                    f.write(' &rst iat=' + ', '.join([str(atom) for atom in atoms]) + ', r1=' +
-                            str(this_min - (this_max - this_min)) + ', r2=' + str(this_min) + ', r3=' +
-                            str(this_max) + ', r4=' + str(this_max + (this_max - this_min)) + ', rk2=100, rk3=100, /\n')
-
-    def get_input_file(self, thread, job_index, settings):
-        input_file_name = 'umbrella_sampling_' + str(thread.history.window) + '_' + str(thread.history.index) + '.in'
-
-        # If the appropriate file already exists, simply return it
-        if os.path.exists(settings.working_directory + '/' + input_file_name):
-            return input_file_name
-
-        # Build restraint file that implements us_pathway_restraints_file, if applicable
-        if settings.us_pathway_restraints_file:
-            if settings.md_engine.lower() == 'amber':
-                self.add_pathway_restraints(thread, settings)
-            else:
-                raise RuntimeError(
-                    'The us_pathway_restraints_file option is only compatible with md_engine = amber')
-
-        # Break down settings.rc_definition into component terms
-        # rc_definition must be a linear combination of terms for US anyway, so our strategy here is to condense it
-        # into just numbers, CV terms, and +/-/* characters, and then split into a list to iterate over.
-        condensed_rc = settings.rc_definition.replace(' ', '').replace('--', '+').replace('+-', '-').replace('-', '+-')
-        condensed_rc = [item for item in condensed_rc.split('+') if not item in ['', ' ']]
-        alp0 = sum([float(item) for item in condensed_rc if not 'CV' in item])  # extract constant terms
-        condensed_rc = [item for item in condensed_rc if 'CV' in item]  # remove constant terms
-        if len(condensed_rc) == 0:
-            raise RuntimeError(
-                'it appears that the provided reaction coordinate contains no CVs or it otherwise '
-                'improperly formatted. Only linear combinations of constant terms and CVs (with '
-                'coefficients) are permitted. The offending RC definition is: ' + settings.rc_definition)
-
-        # Prepare cv_minmax list for evaluating min and max terms later, if appropriate
-        if settings.rc_reduced_cvs:
-            asout_lines = [[float(item) for item in
-                            line.replace('A <- ', '').replace('B <- ', '').replace(' \n', '').replace('\n', '').split(
-                                ' ')] for line in open(settings.as_out_file, 'r').readlines()]
-            open(settings.as_out_file, 'r').close()
-            mapped = list(map(list, zip(*asout_lines)))
-            rc_minmax = [[numpy.min(item) for item in mapped], [numpy.max(item) for item in mapped]]
-
-        if settings.us_implementation.lower() == 'amber_rxncor':
-            # Make sure template input file includes 'irxncor=1'
-            if not True in ['irxncor=1' in line for line in open(settings.path_to_input_files + '/umbrella_sampling_prod_' + settings.md_engine + '.in', 'r').readlines()]:
-                raise RuntimeError('did not find \'irxncor=1\' in input file: ' + settings.path_to_input_files +
-                                   '/umbrella_sampling_prod_' + settings.md_engine + '.in, but it is required for '
-                                   'umbrella sampling with us_implementation = \'amber_rxncor\'. Make sure that exactly'
-                                   ' that string is present.')
-            shutil.copy(settings.path_to_input_files + '/umbrella_sampling_prod_' + settings.md_engine + '.in',
-                        settings.working_directory + '/' + input_file_name)
-
-            # Here, we'll write the &rxncor and &rxncor_order_parameters namelists manually
-            with open(settings.working_directory + '/' + input_file_name, 'a') as file:
-                # if not open(settings.working_directory + '/' + input_file_name, 'r').readlines()[-1] == '':    # if not last line of template empty
-                #     file.write('\n')
-                file.write(' &rxncor\n')
-                file.write('  rxn_dimension=' + str(settings.rc_definition.count('CV')) + ',\n')
-                file.write('  rxn_kconst=' + str(settings.us_restraint) + ',\n')
-                file.write('  rxn_c0=' + str(thread.history.window) + ',\n')
-                file.write('  rxn_out_fname=\'rcwin_' + str(thread.history.window) + '_' + str(thread.history.index) + '_us.dat\',\n')
-                file.write('  rxn_out_frq=1,\n')
-                file.write(' &end\n')
-                file.write(' &rxncor_order_parameters\n')
-                file.write('  alp0=' + str(alp0) + ',\n')
-                ordinal = 1
-                for term in condensed_rc:
-                    # First, obtain the type of CV (optype) and the number of atoms involved (nat)
-                    cv_index = int(re.findall('CV[0-9]+', term)[0].replace('CV', ''))
-                    atoms, optype, nat = utilities.interpret_cv(cv_index, settings)  # get atom indices and type for this CV
-
-                    # Next, obtain the value of "alp" for this CV (coefficient / (max - min))
-                    coeff = term.replace('CV' + str(cv_index), '').replace('*','')
-                    try:
-                        null = float(coeff)
-                    except ValueError:
-                        raise RuntimeError('unable to cast coefficient of CV' + str(cv_index) + ' to float. It must be '
-                                           'specified in a non-standard way. Offending term is: ' + term)
-                    if settings.rc_reduced_cvs:
-                        this_min = rc_minmax[0][cv_index - 1]
-                        this_max = rc_minmax[1][cv_index - 1]
-
-                        if optype in ['angle', 'dihedral']:     # convert from angles to radians for irxncor
-                            this_min = this_min * numpy.pi / 180
-                            this_max = this_max * numpy.pi / 180
-                    else:   # to effectively turn off reduction of variables, we set...
-                        this_min = 0
-                        this_max = 1
-
-                    alp = float(coeff)/(this_max - this_min)
-
-                    # Finally, write it out and increment ordinal
-                    file.write('\n  optype(' + str(ordinal) + ')=\'' + optype + '\',\n')
-                    file.write('  alp(' + str(ordinal) + ')=' + str(alp) + ',\n')
-                    file.write('  factnorm(' + str(ordinal) + ')=1.0,\n')
-                    file.write('  offnorm(' + str(ordinal) + ')=' + str(this_min) + ',\n')
-                    file.write('  nat(' + str(ordinal) + ')=' + str(nat) + ',\n')
-                    if not optype == 'diffdistance':
-                        file.write('  nat1(' + str(ordinal) + ')=' + str(nat) + ',\n')
-                        for nat_index in range(nat):
-                            at = str(atoms[nat_index])
-                            file.write('  at(' + str(nat_index + 1) + ',' + str(ordinal) + ')=' + str(at) + ',\n')
-                    else:
-                        file.write('  nat1(' + str(ordinal) + ')=2,\n')
-                        for nat_index in [0, 1]:
-                            at = str(atoms[nat_index])
-                            file.write('  at(' + str(nat_index + 1) + ',' + str(ordinal) + ')=' + str(at) + ',\n')
-                        file.write('  nat2(' + str(ordinal) + ')=2,\n')
-                        for nat_index in [2, 3]:
-                            at = str(atoms[nat_index])
-                            file.write('  at(' + str(nat_index + 1) + ',' + str(ordinal) + ')=' + str(at) + ',\n')
-
-                    ordinal += 1
-
-                file.write(' &end\n')
-
-        elif settings.us_implementation.lower() == 'plumed':
-            # We want to add specify a plumedfile in the Amber input file, and then make that file
-            # First, deal with the Amber input file.
-            # Check to ensure that the string 'plumed=1' appears in the input file
-            if not True in ['plumed=1' in line.lower().replace(' ','') for line in open(settings.path_to_input_files + '/umbrella_sampling_prod_' + settings.md_engine + '.in', 'r').readlines()]:
-                raise RuntimeError('Required option plumed=1 not found in the Amber input file: ' +
-                                   settings.path_to_input_files + '/umbrella_sampling_prod_' + settings.md_engine + '.in')
-
-            # Then replace the template slot we asked the user to prepare with the appropriate plumedfile name
-            plumedfile = 'plumed_' + str(thread.history.window) + '_' + str(thread.history.index) + '.in'
-            lines = open(settings.path_to_input_files + '/umbrella_sampling_prod_' + settings.md_engine + '.in', 'r').readlines()
-            with open(settings.working_directory + '/' + input_file_name, 'w') as f:
-                for line in lines:
-                    if '{{ plumedfile }}' in line:
-                        line = line.replace('{{ plumedfile }}', '\'' + plumedfile + '\'')
-                    f.write(line)
-
-            # Next, build the plumedfile
-            if not os.path.exists(plumedfile):
-                with open(plumedfile, 'w') as f:
-                    f.write('# PLUMED file to define restraints for umbrella sampling centered at: ' + str(thread.history.window) + '\n')
-                    f.write('UNITS LENGTH=A ENERGY=kcal/mol\n')
-                    # Iterate through each term in the RC to add definitions for them to the plumed file
-                    labels = []
-                    RCfunc = str(alp0)
-                    for term in condensed_rc:
-                        # First, obtain the type of CV (optype) and the number of atoms involved (nat)
-                        cv_index = int(re.findall('CV[0-9]+', term)[0].replace('CV', ''))
-                        atoms, optype, nat = utilities.interpret_cv(cv_index, settings)  # get atom indices and type for this CV
-
-                        coeff = term.replace('CV' + str(cv_index), '').replace('*', '')
-                        try:
-                            null = float(coeff)
-                        except ValueError:
-                            raise RuntimeError('unable to cast coefficient of CV' + str(cv_index) + ' to float. It must be '
-                                               'specified in a non-standard way. Offending term is: ' + term)
-
-                        if settings.rc_reduced_cvs:
-                            this_min = rc_minmax[0][cv_index - 1]
-                            this_max = rc_minmax[1][cv_index - 1]
-
-                        else:  # to effectively turn off reduction of variables, we set...
-                            this_min = 0
-                            this_max = 1
-
-                        alp = float(coeff) / (this_max - this_min)
-
-                        # 'distance', 'angle', 'dihedral', or 'diffdistance'
-                        if optype == 'distance':
-                            f.write('DISTANCE LABEL=CV' + str(cv_index) + ' ATOMS=' + str(atoms[0]) + ',' + str(atoms[1]) + '\n')
-                            labels.append('CV' + str(cv_index))
-                            cv_str = '(cv' + str(cv_index) + '-' + str(this_min) + ')'
-                        elif optype == 'angle':
-                            f.write('ANGLE LABEL=CV' + str(cv_index) + ' ATOMS=' + str(atoms[0]) + ',' + str(atoms[1]) + ',' + str(atoms[2]) + '\n')
-                            labels.append('CV' + str(cv_index))
-                            cv_str = '((cv' + str(cv_index) + '*180/(pi))' + '-' + str(this_min) + ')'
-                        elif optype == 'dihedral':
-                            f.write('TORSION LABEL=CV' + str(cv_index) + ' ATOMS=' + str(atoms[0]) + ',' + str(
-                                atoms[1]) + ',' + str(atoms[2]) + ',' + str(atoms[3]) + '\n')
-                            labels.append('CV' + str(cv_index))
-                            cv_str = '((cv' + str(cv_index) + '*180/(pi))' + '-' + str(this_min) + ')'
-                        elif optype == 'diffdistance':
-                            f.write('DISTANCE LABEL=CV' + str(cv_index) + 'A ATOMS=' + str(atoms[0]) + ',' + str(atoms[1]) + '\n')
-                            f.write('DISTANCE LABEL=CV' + str(cv_index) + 'B ATOMS=' + str(atoms[2]) + ',' + str(atoms[3]) + '\n')
-                            labels.append('CV' + str(cv_index) + 'A')
-                            labels.append('CV' + str(cv_index) + 'B')
-                            cv_str = '((cv' + str(cv_index) + 'a-cv' + str(cv_index) + 'b)' + '-' + str(this_min) + ')'
-                        else:
-                            raise RuntimeError('unrecognized CV type: ' + optype)
-
-                        # Construct RC function
-                        RCfunc += '+' + str(alp) + '*' + cv_str
-
-                    f.write('CUSTOM ...\n')
-                    f.write('  LABEL=RC\n')
-                    f.write('  ARG=' + ','.join(labels) + '\n')
-                    f.write('  VAR=' + ','.join([item.lower() for item in labels]) + '\n')
-                    f.write('  FUNC=' + RCfunc + '\n')
-                    f.write('  PERIODIC=NO\n')
-                    f.write('... CUSTOM\n')
-                    f.write('restraint-rc: RESTRAINT ARG=RC KAPPA=' + str(2 * float(settings.us_restraint)) + ' AT=' + str(thread.history.window) + '\n')
-                    f.write('PRINT ARG=RC FILE=rcwin_' + str(thread.history.window) + '_' + str(thread.history.index) + '_us.dat')
-
-        else:
-            raise RuntimeError('unrecognized us_implementation option: ' + settings.us_implementation)
-
-        with open(settings.working_directory + '/' + input_file_name, 'a') as file:
-            if settings.us_pathway_restraints_file:
-                if True in ['type="end"' in line.lower() for line in open(settings.path_to_input_files + '/umbrella_sampling_prod_' + settings.md_engine + '.in', 'r').readlines()]:
-                    raise RuntimeError('The umbrella sampling input file ' + settings.path_to_input_files +
-                                       '/umbrella_sampling_prod_' + settings.md_engine + '.in appears to contain an'
-                                       ' &wt namelist with \'type="END"\', which must be added by ATESA when using '
-                                       'the us_pathway_restraints_file option. Please remove it and try again.')
-                file.write(' &wt\n  type="END",\n &end\n')
-                file.write('DISANG=us_pathway_restraints_' + str(thread.history.window) + '.DISANG')
-            else:
-                if not True in ['type="end"' in line.lower() for line in open(settings.path_to_input_files + '/umbrella_sampling_prod_' + settings.md_engine + '.in', 'r').readlines()]:
-                    file.write(' &wt\n  type="END",\n &end\n')
-                    if not settings.suppress_us_warning:
-                        print('Did not find an &wt namelist with \'type="END"\' in the umbrella sampling input file' +
-                              settings.path_to_input_files + '/umbrella_sampling_prod_' + settings.md_engine + '.in, so'
-                              ' ATESA added it automatically.')
-                        settings.suppress_us_warning = True     # so that this is only printed once
-
-        return input_file_name
+    def get_input_file(self, thread, job_index, settings, **kwargs):
+        mdengine = factory.mdengine_factory(settings.md_engine)
+        return mdengine.get_input_file_umbrella_sampling(settings, thread, job_index, **kwargs)
 
     def get_initial_coordinates(self, settings):
-        if not settings.md_engine == 'amber':
-            raise RuntimeError('the job_type setting "umbrella_sampling" is only compatible with the md_engine setting '
-                               '"amber". If you need to use a different md_engine for evaluating an energy profile, use'
-                               ' the job_type "equilibrum_path_sampling".')
-
         # First, implement settings.us_auto_coords_directory
         if settings.us_auto_coords_directory:
             if not os.path.isdir(settings.us_auto_coords_directory):

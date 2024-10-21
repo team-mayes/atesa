@@ -50,12 +50,28 @@ def main(settings):
         raise RuntimeError('it appears that you forgot to provide an initial coordinate file for use with auto_cvs.')
     mtraj = mdtraj.load(settings.initial_coordinates[0], top=settings.topology)
 
+    # Determine whether to use commit_fwd and commit_bwd or to fall back on aux definitions
+    if type(settings.commit_bwd[0]) == list:
+        commit_bwd = settings.commit_bwd
+    else:
+        commit_bwd = settings.aux_commit_bwd
+        if commit_bwd[3] == ['unset']:
+            raise RuntimeError('commit_bwd was set using booleans, but aux_commit_bwd was not defined and is needed for'
+                               'auto_cvs. See ATESA documentation for aux_commit_bwd setting.')
+    if type(settings.commit_fwd[0]) == list:
+        commit_fwd = settings.commit_fwd
+    else:
+        commit_fwd = settings.aux_commit_fwd
+        if commit_fwd[3] == ['unset']:
+            raise RuntimeError('commit_fwd was set using booleans, but aux_commit_fwd was not defined and is needed for'
+                               'auto_cvs. See ATESA documentation for aux_commit_fwd setting.')
+
     # Identify atoms within settings.auto_cvs_radius of each atom in either commitment basin definition
     commit_atoms = []   # atom indices involved in commitment basin definitions, as integers
-    commit_atoms += settings.commit_fwd[0]
-    commit_atoms += settings.commit_fwd[1]
-    commit_atoms += settings.commit_bwd[0]
-    commit_atoms += settings.commit_bwd[1]
+    commit_atoms += commit_fwd[0]
+    commit_atoms += commit_fwd[1]
+    commit_atoms += commit_bwd[0]
+    commit_atoms += commit_bwd[1]
     commit_atoms = list(set(commit_atoms))    # remove duplicates
     commit_atoms = [item - 1 for item in commit_atoms]      # fix off-by-one error
 
@@ -155,18 +171,18 @@ def main(settings):
     partners = []
     for atom_index in commit_atoms:
         this_partners = []
-        for local_index in range(len(settings.commit_fwd[0])):
-            if settings.commit_fwd[0][local_index] - 1 == atom_index and not settings.commit_fwd[1][local_index] - 1 in this_partners:
-                this_partners += [settings.commit_fwd[1][local_index] - 1]
-        for local_index in range(len(settings.commit_fwd[1])):
-            if settings.commit_fwd[1][local_index] - 1 == atom_index and not settings.commit_fwd[0][local_index] - 1 in this_partners:
-                this_partners += [settings.commit_fwd[0][local_index] - 1]
-        for local_index in range(len(settings.commit_bwd[0])):
-            if settings.commit_bwd[0][local_index] - 1 == atom_index and not settings.commit_bwd[1][local_index] - 1 in this_partners:
-                this_partners += [settings.commit_bwd[1][local_index] - 1]
-        for local_index in range(len(settings.commit_bwd[1])):
-            if settings.commit_bwd[1][local_index] - 1 == atom_index and not settings.commit_bwd[0][local_index] - 1 in this_partners:
-                this_partners += [settings.commit_bwd[0][local_index] - 1]
+        for local_index in range(len(commit_fwd[0])):
+            if commit_fwd[0][local_index] - 1 == atom_index and not commit_fwd[1][local_index] - 1 in this_partners:
+                this_partners += [commit_fwd[1][local_index] - 1]
+        for local_index in range(len(commit_fwd[1])):
+            if commit_fwd[1][local_index] - 1 == atom_index and not commit_fwd[0][local_index] - 1 in this_partners:
+                this_partners += [commit_fwd[0][local_index] - 1]
+        for local_index in range(len(commit_bwd[0])):
+            if commit_bwd[0][local_index] - 1 == atom_index and not commit_bwd[1][local_index] - 1 in this_partners:
+                this_partners += [commit_bwd[1][local_index] - 1]
+        for local_index in range(len(commit_bwd[1])):
+            if commit_bwd[1][local_index] - 1 == atom_index and not commit_bwd[0][local_index] - 1 in this_partners:
+                this_partners += [commit_bwd[0][local_index] - 1]
         partners.append(this_partners)
     for partners_index in range(len(partners)):
         if len(partners[partners_index]) < 1:   # just a quick fail-safe

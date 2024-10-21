@@ -96,7 +96,7 @@ class Tests(object):
         shutil.copy('../test_data/init_-0.20000000000000018_0.rst7_0_us.nc', '../test_temp')
         allthreads = [main.init_threads(settings)[0]]
         allthreads[0].history.prod_trajs = [['init_-0.20000000000000018_0.rst7_0_us.nc', 'init_-0.20000000000000018_0.rst7_0_us.nc']]
-        allthreads[0].history.init_coords = ['test_velocities_init.rst7']
+        allthreads[0].history.init_coords = [['test_velocities_init.rst7']]
         allthreads[0].history.last_accepted = 0
         pickle.dump(allthreads, open('restart.pkl', 'wb'))
 
@@ -106,7 +106,7 @@ class Tests(object):
         # shutil.move('settings.pkl', '../test_data/settings.pkl')
         extrema = rc_eval.main('../test_temp/', '3*CV1 - 0.3*CV2', '../test_data/as.out', extrema=True)
 
-        assert extrema == [71.4222, 71.4222]
+        assert extrema == [71.43, 71.43]
 
     def test_extrema_mdtraj(self):
         """Tests rc_eval.main with extrema=True using sham shooting points in test_data and pytraj cvs"""
@@ -120,7 +120,7 @@ class Tests(object):
         shutil.copy('../test_data/init_-0.20000000000000018_0.rst7_0_us.nc', '../test_temp')
         allthreads = [main.init_threads(settings)[0]]
         allthreads[0].history.prod_trajs = [['init_-0.20000000000000018_0.rst7_0_us.nc', 'init_-0.20000000000000018_0.rst7_0_us.nc']]
-        allthreads[0].history.init_coords = ['test_velocities_init.rst7']
+        allthreads[0].history.init_coords = [['test_velocities_init.rst7']]
         allthreads[0].history.last_accepted = 0
         pickle.dump(allthreads, open('restart.pkl', 'wb'))
 
@@ -130,7 +130,7 @@ class Tests(object):
         # shutil.move('settings.pkl', '../test_data/settings.pkl')
         extrema = rc_eval.main('../test_temp/', '3*CV1 - 0.3*CV2', '../test_data/as.out', extrema=True)
 
-        assert extrema == [71.4222, 71.4222]
+        assert extrema == [71.43, 71.43]
 
     @classmethod
     def teardown_method(self, method):

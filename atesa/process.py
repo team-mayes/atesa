@@ -47,29 +47,37 @@ def process(thread, running, settings):
                 running = []       # to keep running as a list, even if empty
         return running
 
+    # Set file extention for trajectory # todo: figure out a way to do this properly
+    traj_format = '.nc'
+    if settings.md_engine == 'cp2k':
+        traj_format = '.dcd'
+
     batchfiles = []         # initialize list of batch files to fill out
     jobtype = factory.jobtype_factory(settings.job_type)    # get jobtype for calling jobtype.update_history
     this_inpcrd = jobtype.get_inpcrd(thread)
     for job_index in range(len(thread.current_type)):
         type = thread.current_type[job_index]
         name = thread.current_name[job_index]
-        inp = jobtype.get_input_file(thread, job_index, settings)
-        template = settings.env.get_template(thread.get_batch_template(type, settings))
 
-        these_kwargs = { 'name': thread.name + '_' + name,
-                         'nodes': eval('settings.' + type + '_nodes'),
-                         'taskspernode': eval('settings.' + type + '_ppn'),
-                         'walltime': eval('settings.' + type + '_walltime'),
-                         'mem': eval('settings.' + type + '_mem'),
-                         'solver': eval('settings.' + type + '_solver'),
-                         'inp': inp,
+        these_kwargs = {'name': thread.name + '_' + name,
+                         'nodes': str(eval('settings.' + type + '_nodes')),
+                         'taskspernode': str(eval('settings.' + type + '_ppn')),
+                         'walltime': str(eval('settings.' + type + '_walltime')),
+                         'mem': str(eval('settings.' + type + '_mem')),
+                         'solver': str(eval('settings.' + type + '_solver')),
                          'out': thread.name + '_' + name + '.out',
                          'prmtop': thread.topology,
                          'inpcrd': this_inpcrd[job_index],
                          'rst': thread.name + '_' + name + '.rst7',
-                         'nc': thread.name + '_' + name + '.nc',
+                         'nc': thread.name + '_' + name + traj_format,
                          'working_directory': settings.working_directory,
-                         'extra': eval('settings.' + type + '_extra') }
+                         'thread_name': thread.name,
+                         'extra': str(eval('settings.' + type + '_extra'))}
+
+        inp = jobtype.get_input_file(thread, job_index, settings, **these_kwargs)
+
+        template = settings.env.get_template(thread.get_batch_template(type, settings))
+        these_kwargs.update({'inp': inp})
 
         filled = template.render(django.template.Context(these_kwargs))
         newfilename = thread.name + '_' + name + '.' + settings.batch_system

@@ -49,7 +49,12 @@ def resample_committor_analysis(settings):
     trajs = glob.glob('*.nc')  # assume all .nc trajectories in the working directory are targets
 
     if settings.transmission_coefficient in [1, 2]:
-        if len(os.sched_getaffinity(0)) > 1:
+        try:    # check if this platform has os.sched_getaffinity
+            null = os.sched_getaffinity(0)
+            avail = True
+        except AttributeError:
+            avail = False
+        if avail and len(os.sched_getaffinity(0)) > 1:
             print('DEBUG (timestamp: ' + str(time.time()) + '): evaluating transmission coefficient with ' +
                   str(len(os.sched_getaffinity(0))) + ' parallel processes')
             sys.stdout.flush()

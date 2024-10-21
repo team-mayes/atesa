@@ -1,0 +1,59 @@
+&GLOBAL
+  PROJECT AS_INIT
+  PRINT_LEVEL LOW
+  RUN_TYPE MD
+  SEED 2733 9846 3265 4860 9226 7892
+&END GLOBAL
+
+&FORCE_EVAL
+  METHOD QS
+  &SUBSYS
+    &CELL
+      ABC [angstrom] 78.62816333770752 83.28964233398438 81.87724113464355
+      ALPHA_BETA_GAMMA 90.0 90.0 90.0
+    &END CELL
+    &TOPOLOGY
+      COORD_FILE_FORMAT pdb
+      COORD_FILE_NAME ../test_data/test_velocities.rst7.pdb
+      CONNECTIVITY OFF
+    &END TOPOLOGY
+  &END SUBSYS
+  &DFT
+    CHARGE -1
+    &QS
+      METHOD XTB
+      &SE
+         &COULOMB
+           CUTOFF [angstrom] 8.0
+         &END
+         &EXCHANGE
+           CUTOFF [angstrom] 8.0
+         &END
+       &END
+    &END QS
+  &END DFT
+&END FORCE_EVAL
+
+&MOTION
+  &MD
+      ENSEMBLE NVT
+      STEPS 1
+      TIMESTEP 0.001
+      TEMPERATURE 298.15
+      &THERMOSTAT
+         TYPE NOSE
+      &END THERMOSTAT
+  &END MD
+  &PRINT
+    &TRAJECTORY                                 ! Controls the output of the trajectory
+      FILENAME test_velocities.rst7_0_init.nc
+      FORMAT DCD                                ! Format of the output trajectory is DCD
+    &END TRAJECTORY
+    &RESTART                                    ! This section controls the printing of restart files
+      FILENAME test_velocities.rst7_0_init.rst7
+      &EACH                                     ! A restart file will be printed every 100 md steps
+        MD 1
+      &END
+    &END RESTART
+  &END PRINT
+&END MOTION

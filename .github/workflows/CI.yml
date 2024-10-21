@@ -48,6 +48,7 @@ jobs:
 
         channels: conda-forge,defaults,ambermd
 
+        miniconda-version: "latest"
         activate-environment: test
         auto-update-conda: false
         auto-activate-base: false

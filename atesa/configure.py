@@ -80,9 +80,11 @@ def configure(input_file, user_working_directory=''):
         # Required only for aimless shooting and equilibrium path sampling
         initial_coordinates: typing.List[str] = ['']
 
-        # Required only for aimless shooting and committor analysis
-        commit_fwd: typing.Tuple[typing.List[int], typing.List[int], typing.List[float], typing.List[str]] = ([-1], [-1], [-1], ['unset'])
-        commit_bwd: typing.Tuple[typing.List[int], typing.List[int], typing.List[float], typing.List[str]] = ([-1], [-1], [-1], ['unset'])
+        # Required only for find_ts, aimless shooting, and committor analysis
+        commit_fwd: typing.Union[typing.Tuple[typing.List[int], typing.List[int], typing.List[float], typing.List[str]], typing.List[str]] = ([-1], [-1], [-1], ['unset'])
+        commit_bwd: typing.Union[typing.Tuple[typing.List[int], typing.List[int], typing.List[float], typing.List[str]], typing.List[str]] = ([-1], [-1], [-1], ['unset'])
+        aux_commit_fwd: typing.Tuple[typing.List[int], typing.List[int], typing.List[float], typing.List[str]] = ([-1], [-1], [-1], ['unset'])
+        aux_commit_bwd: typing.Tuple[typing.List[int], typing.List[int], typing.List[float], typing.List[str]] = ([-1], [-1], [-1], ['unset'])
 
         # Required only for committor analysis, umbrella sampling, and equilibrium path sampling
         rc_definition: str = ''
@@ -103,7 +105,7 @@ def configure(input_file, user_working_directory=''):
         information_error_freq: int = 250
         information_error_override: bool = False
         information_error_max_dims: int = 6
-        information_error_lmax_string = '--two_line_test'
+        information_error_lmax_string: str = '--two_line_test'
         max_moves: int = -1     # also used by find_ts
         max_consecutive_fails: int = 10
         sigfigs: int = 3
@@ -135,6 +137,11 @@ def configure(input_file, user_working_directory=''):
         us_auto_coords_directory: str = ''
         us_pathway_restraints_file: str = ''
 
+        # Required only for find_ts
+        find_ts_strategy: str = 'middle'   # 'end' or 'middle'
+        find_ts_test_threads: int = 0
+        find_ts_length: int = 1000
+
         # Resampling
         resample: bool = False
 
@@ -146,10 +153,10 @@ def configure(input_file, user_working_directory=''):
         pid: int = -1           # process ID of information_error call used in aimless shooting
         information_error_overdue: bool = False    # used for handling information_error calls cleanly
         dont_dump: bool = False     # when True, prevents dumping settings to settings.pkl
-        suppress_us_warning = False     # used to prevent repeatedly issuing the same warning during some US runs
-        previous_cvs = ''       # for checking whether a full resample is required when restarting based on a change in cvs
-        previous_information_error_max_dims = -1    # for checking whether a full resample is required when restarting based on a change in information_error_max_dims
-        previous_information_error_lmax_string = '--two_line_test'  # for checking whether a full resample is required when restarting based on a change in information_error_lmax_string
+        suppress_us_warning: bool = False     # used to prevent repeatedly issuing the same warning during some US runs
+        previous_cvs: str = ''       # for checking whether a full resample is required when restarting based on a change in cvs
+        previous_information_error_max_dims: int = -1    # for checking whether a full resample is required when restarting based on a change in information_error_max_dims
+        previous_information_error_lmax_string: str = '--two_line_test'  # for checking whether a full resample is required when restarting based on a change in information_error_lmax_string
 
     # Import config file line-by-line using exec()
     try:
@@ -162,6 +169,7 @@ def configure(input_file, user_working_directory=''):
     line_index = 0
     for line in lines:      # each line in the input file is just python code setting a variable;
         line_index += 1
+        line = line.replace('\\n', '\n')   # so as to support the explicit use of newline characters in the config file
         try:
             exec(line)      # this means that comments are supported using '#' and whitespace is ignored.
         except Exception as e:
@@ -173,6 +181,13 @@ def configure(input_file, user_working_directory=''):
     config_dict.update(locals())
     settings = argparse.Namespace()
     settings.__dict__.update(Settings(**config_dict))
+
+    # Also add user-defined functions in config file without requiring them to be included in the Settings base model
+    functions = [name for (name, object) in locals().items() if callable(object)]
+    for item in functions:
+        if not item in ['__loader__', 'Settings']:
+            this_dict = eval('{"' + item + '": locals().get("' + item + '")}')
+            settings.__dict__.update(this_dict)
 
     # Override working directory if provided with user_working_directory
     if user_working_directory:
@@ -199,9 +214,9 @@ def configure(input_file, user_working_directory=''):
 
     # Set Django template environment
     if os.path.exists(settings.path_to_templates):
-        settings.env = template.Engine(dirs=[settings.path_to_templates])
+        settings.env = template.Engine(dirs=[settings.path_to_templates, settings.path_to_input_files], autoescape=False)
         if not django_settings.configured:  # need to configure just once
-            django_settings.configure()
+            django_settings.configure(AUTOESCAPE=False)
     else:
         sys.exit('Error: could not locate templates folder: ' + settings.path_to_templates)
 
