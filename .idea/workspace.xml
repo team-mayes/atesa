@@ -4,14 +4,222 @@
     <option name="SCOPE_TYPE" value="8" />
     <option name="CUSTOM_SCOPE_NAME" value="Selection" />
   </component>
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
   <component name="ChangeListManager">
     <list default="true" id="55679143-7654-431c-aee1-71d5375f0f66" name="Default" comment="">
+      <change beforePath="$PROJECT_DIR$/.codecov.yml" beforeDir="false" afterPath="$PROJECT_DIR$/.codecov.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gitattributes" beforeDir="false" afterPath="$PROJECT_DIR$/.gitattributes" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.github/CONTRIBUTING.md" beforeDir="false" afterPath="$PROJECT_DIR$/.github/CONTRIBUTING.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.github/PULL_REQUEST_TEMPLATE.md" beforeDir="false" afterPath="$PROJECT_DIR$/.github/PULL_REQUEST_TEMPLATE.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.github/workflows/CI.yml" beforeDir="false" afterPath="$PROJECT_DIR$/.github/workflows/CI.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/atesa.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/atesa.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/modules.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.lgtm.yml" beforeDir="false" afterPath="$PROJECT_DIR$/.lgtm.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.travis.yml" beforeDir="false" afterPath="$PROJECT_DIR$/.travis.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CODE_OF_CONDUCT.md" beforeDir="false" afterPath="$PROJECT_DIR$/CODE_OF_CONDUCT.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/LICENSE" beforeDir="false" afterPath="$PROJECT_DIR$/LICENSE" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/MANIFEST.in" beforeDir="false" afterPath="$PROJECT_DIR$/MANIFEST.in" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/_version.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/_version.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/auto_cvs.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/auto_cvs.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/atesa/batchsystem.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/batchsystem.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/boltzmann_weight.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/boltzmann_weight.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/configure.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/configure.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/data/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/data/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/data/atesa.config" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/data/atesa.config" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/data/input_files/aimless_shooting_init_amber.in" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/data/input_files/aimless_shooting_init_amber.in" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/data/input_files/aimless_shooting_init_cp2k.in" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/data/input_files/aimless_shooting_init_cp2k.in" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/data/input_files/aimless_shooting_prod_amber.in" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/data/input_files/aimless_shooting_prod_amber.in" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/data/input_files/aimless_shooting_prod_cp2k.in" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/data/input_files/aimless_shooting_prod_cp2k.in" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/data/input_files/committor_analysis_prod_amber.in" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/data/input_files/committor_analysis_prod_amber.in" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/data/input_files/committor_analysis_prod_cp2k.in" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/data/input_files/committor_analysis_prod_cp2k.in" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/data/input_files/equilibrium_path_sampling_init_amber.in" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/data/input_files/equilibrium_path_sampling_init_amber.in" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/data/input_files/equilibrium_path_sampling_init_cp2k.in" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/data/input_files/equilibrium_path_sampling_init_cp2k.in" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/data/input_files/equilibrium_path_sampling_prod_amber.in" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/data/input_files/equilibrium_path_sampling_prod_amber.in" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/data/input_files/equilibrium_path_sampling_prod_cp2k.in" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/data/input_files/equilibrium_path_sampling_prod_cp2k.in" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/data/input_files/find_ts_prod_amber.in" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/data/input_files/find_ts_prod_amber.in" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/data/input_files/find_ts_prod_cp2k.in" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/data/input_files/find_ts_prod_cp2k.in" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/data/input_files/umbrella_sampling_prod_amber.in" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/data/input_files/umbrella_sampling_prod_amber.in" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/atesa/data/input_files/umbrella_sampling_prod_cp2k.in" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/data/input_files/umbrella_sampling_prod_cp2k.in" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/data/templates/amber_pbs.tpl" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/data/templates/amber_pbs.tpl" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/data/templates/amber_slurm.tpl" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/data/templates/amber_slurm.tpl" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/data/templates/cp2k_slurm.tpl" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/data/templates/cp2k_slurm.tpl" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/factory.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/factory.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/information_error.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/information_error.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/interpret.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/interpret.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/jobtype.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/jobtype.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/lmax.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/lmax.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/atesa/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/mbar.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/mbar.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/mdengine.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/mdengine.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/process.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/process.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/rc_eval.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/rc_eval.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/resample_and_inferr.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/resample_and_inferr.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/resampling.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/resampling.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/taskmanager.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/taskmanager.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/tests/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/tests/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/tests/temp.config" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/tests/temp.config" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/tests/test_auto_cvs.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/tests/test_auto_cvs.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/tests/test_boltzmann_weight.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/tests/test_boltzmann_weight.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/tests/test_data/1.1_1.2_2.2_2.6.rst7_2_10_init_fwd.rst_2_1_2.rst7_5_init_fwd.rst" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/tests/test_data/1.1_1.2_2.2_2.6.rst7_2_10_init_fwd.rst_2_1_2.rst7_5_init_fwd.rst" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/tests/test_data/1.1_1.2_2.2_2.6.rst7_2_10_init_fwd.rst_4_58_3.rst7_4_init_fwd.rst" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/tests/test_data/1.1_1.2_2.2_2.6.rst7_2_10_init_fwd.rst_4_58_3.rst7_4_init_fwd.rst" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/tests/test_data/as.out" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/tests/test_data/as.out" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/tests/test_data/as_big.out" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/tests/test_data/as_big.out" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/tests/test_data/as_big_123.out" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/tests/test_data/as_big_123.out" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/tests/test_data/as_full_cvs.out" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/tests/test_data/as_full_cvs.out" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/tests/test_data/cp2k_as_test_velocities.rst7_0_fwd.inp" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/tests/test_data/cp2k_as_test_velocities.rst7_0_fwd.inp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/tests/test_data/cp2k_as_test_velocities.rst7_0_init.inp" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/tests/test_data/cp2k_as_test_velocities.rst7_0_init.inp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/tests/test_data/cp2k_comana_test_velocities.rst7_0_prod.inp" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/tests/test_data/cp2k_comana_test_velocities.rst7_0_prod.inp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/tests/test_data/cp2k_umbrella_sampling_2.5_1.in" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/tests/test_data/cp2k_umbrella_sampling_2.5_1.in" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/tests/test_data/cvs_mdtraj.txt" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/tests/test_data/cvs_mdtraj.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/tests/test_data/cvs_pytraj.txt" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/tests/test_data/cvs_pytraj.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/tests/test_data/eps_example.out" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/tests/test_data/eps_example.out" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/tests/test_data/ethyl_chlorosulfite.prmtop" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/tests/test_data/ethyl_chlorosulfite.prmtop" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/tests/test_data/fep_example.out" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/tests/test_data/fep_example.out" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/tests/test_data/init_-0.20000000000000018_0.rst7_0_us.nc" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/tests/test_data/init_-0.20000000000000018_0.rst7_0_us.nc" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/tests/test_data/mbar.out" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/tests/test_data/mbar.out" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/tests/test_data/plumed_2.5_1.in" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/tests/test_data/plumed_2.5_1.in" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/tests/test_data/rc_eval.out" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/tests/test_data/rc_eval.out" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/tests/test_data/rcwin_-0.25_0_us.dat" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/tests/test_data/rcwin_-0.25_0_us.dat" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/tests/test_data/rcwin_-0.5_0_us.dat" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/tests/test_data/rcwin_-0.5_0_us.dat" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/tests/test_data/rcwin_-0.75_0_us.dat" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/tests/test_data/rcwin_-0.75_0_us.dat" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/tests/test_data/rcwin_-1.0_0_us.dat" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/tests/test_data/rcwin_-1.0_0_us.dat" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/tests/test_data/rcwin_0.0_0_us.dat" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/tests/test_data/rcwin_0.0_0_us.dat" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/tests/test_data/rcwin_0.25_0_us.dat" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/tests/test_data/rcwin_0.25_0_us.dat" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/tests/test_data/rcwin_0.5_0_us.dat" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/tests/test_data/rcwin_0.5_0_us.dat" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/tests/test_data/rcwin_0.75_0_us.dat" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/tests/test_data/rcwin_0.75_0_us.dat" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/tests/test_data/rcwin_1.0_0_us.dat" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/tests/test_data/rcwin_1.0_0_us.dat" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/tests/test_data/restart.pkl" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/tests/test_data/restart.pkl" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/tests/test_data/settings.pkl" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/tests/test_data/settings.pkl" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/tests/test_data/test.nc" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/tests/test_data/test.nc" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/tests/test_data/test.nc_frame_-1.rst7" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/tests/test_data/test.nc_frame_-1.rst7" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/tests/test_data/test.nc_no_frames.rst7" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/tests/test_data/test.nc_no_frames.rst7" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/tests/test_data/test.prmtop" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/tests/test_data/test.prmtop" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/tests/test_data/test.rst7" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/tests/test_data/test.rst7" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/tests/test_data/test.rst7_0" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/tests/test_data/test.rst7_0" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/tests/test_data/test.rst7_1" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/tests/test_data/test.rst7_1" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/tests/test_data/test_two_init.rst7" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/tests/test_data/test_two_init.rst7" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/tests/test_data/test_two_init.rst7_0" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/tests/test_data/test_two_init.rst7_0" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/tests/test_data/test_two_init.rst7_1" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/tests/test_data/test_two_init.rst7_1" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/tests/test_data/test_velocities.rst7" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/tests/test_data/test_velocities.rst7" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/tests/test_data/test_velocities.rst7.pdb" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/tests/test_data/test_velocities.rst7.pdb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/tests/test_data/test_velocities.rst7_0" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/tests/test_data/test_velocities.rst7_0" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/tests/test_data/test_velocities.rst7_1" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/tests/test_data/test_velocities.rst7_1" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/tests/test_data/test_velocities.rst7_2" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/tests/test_data/test_velocities.rst7_2" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/tests/test_data/test_velocities.rst7_3" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/tests/test_data/test_velocities.rst7_3" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/tests/test_data/test_velocities.rst7_4" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/tests/test_data/test_velocities.rst7_4" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/tests/test_data/test_velocities.rst7_5" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/tests/test_data/test_velocities.rst7_5" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/tests/test_data/test_velocities.rst7_6" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/tests/test_data/test_velocities.rst7_6" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/tests/test_data/test_velocities.rst7_7" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/tests/test_data/test_velocities.rst7_7" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/tests/test_data/test_velocities.rst7_8" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/tests/test_data/test_velocities.rst7_8" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/tests/test_data/test_velocities.rst7_9" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/tests/test_data/test_velocities.rst7_9" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/tests/test_data/test_velocities_init.rst7" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/tests/test_data/test_velocities_init.rst7" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/tests/test_data/test_velocities_reversed.rst7" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/tests/test_data/test_velocities_reversed.rst7" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/tests/test_data/umbrella_sampling_2.5_1.in" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/tests/test_data/umbrella_sampling_2.5_1.in" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/tests/test_information_error.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/tests/test_information_error.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/tests/test_jobtype.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/tests/test_jobtype.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/tests/test_lmax.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/tests/test_lmax.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/tests/test_main.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/tests/test_main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/tests/test_mbar.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/tests/test_mbar.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/tests/test_mdengine.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/tests/test_mdengine.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/tests/test_process.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/tests/test_process.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/tests/test_rc_eval.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/tests/test_rc_eval.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/tests/test_resampling.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/tests/test_resampling.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/tests/test_utilities.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/tests/test_utilities.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/utilities.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/utilities.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/devtools/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/devtools/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/devtools/conda-envs/test_env.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/devtools/conda-envs/test_env.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/devtools/scripts/create_conda_env.py" beforeDir="false" afterPath="$PROJECT_DIR$/devtools/scripts/create_conda_env.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/Makefile" beforeDir="false" afterPath="$PROJECT_DIR$/docs/Makefile" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/_images/ATESA_workflow.png" beforeDir="false" afterPath="$PROJECT_DIR$/docs/_images/ATESA_workflow.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/_images/Joswiak2018_comana.png" beforeDir="false" afterPath="$PROJECT_DIR$/docs/_images/Joswiak2018_comana.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/_images/Mayes2016_comana.png" beforeDir="false" afterPath="$PROJECT_DIR$/docs/_images/Mayes2016_comana.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/_images/Silveira2021_comana.png" beforeDir="false" afterPath="$PROJECT_DIR$/docs/_images/Silveira2021_comana.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/_images/aimless_shooting.png" beforeDir="false" afterPath="$PROJECT_DIR$/docs/_images/aimless_shooting.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/_images/atesa_logo.png" beforeDir="false" afterPath="$PROJECT_DIR$/docs/_images/atesa_logo.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/_images/comana_bimodal.png" beforeDir="false" afterPath="$PROJECT_DIR$/docs/_images/comana_bimodal.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/_images/comana_edge_only.png" beforeDir="false" afterPath="$PROJECT_DIR$/docs/_images/comana_edge_only.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/_images/comana_flat.png" beforeDir="false" afterPath="$PROJECT_DIR$/docs/_images/comana_flat.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/_images/comana_good.png" beforeDir="false" afterPath="$PROJECT_DIR$/docs/_images/comana_good.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/_images/comana_offcenter.png" beforeDir="false" afterPath="$PROJECT_DIR$/docs/_images/comana_offcenter.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/_images/committor_analysis.png" beforeDir="false" afterPath="$PROJECT_DIR$/docs/_images/committor_analysis.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/_images/ethyl_chlorosulfite_comana.png" beforeDir="false" afterPath="$PROJECT_DIR$/docs/_images/ethyl_chlorosulfite_comana.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/_images/ethyl_chlorosulfite_restrained_free_energy.png" beforeDir="false" afterPath="$PROJECT_DIR$/docs/_images/ethyl_chlorosulfite_restrained_free_energy.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/_images/ethyl_chlorosulfite_restrained_histograms.png" beforeDir="false" afterPath="$PROJECT_DIR$/docs/_images/ethyl_chlorosulfite_restrained_histograms.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/_images/ethyl_chlorosulfite_restrained_mean_value.png" beforeDir="false" afterPath="$PROJECT_DIR$/docs/_images/ethyl_chlorosulfite_restrained_mean_value.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/_images/ethyl_chlorosulfite_unrestrained_mean_value.png" beforeDir="false" afterPath="$PROJECT_DIR$/docs/_images/ethyl_chlorosulfite_unrestrained_mean_value.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/_images/find_ts.png" beforeDir="false" afterPath="$PROJECT_DIR$/docs/_images/find_ts.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/_images/lmax.png" beforeDir="false" afterPath="$PROJECT_DIR$/docs/_images/lmax.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/_images/lmax_sigmoid.png" beforeDir="false" afterPath="$PROJECT_DIR$/docs/_images/lmax_sigmoid.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/_images/pathway_restrained.png" beforeDir="false" afterPath="$PROJECT_DIR$/docs/_images/pathway_restrained.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/_images/pathway_restrained_umbrella_sampling.png" beforeDir="false" afterPath="$PROJECT_DIR$/docs/_images/pathway_restrained_umbrella_sampling.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/_images/reaction_pathway.png" beforeDir="false" afterPath="$PROJECT_DIR$/docs/_images/reaction_pathway.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/_images/ts_atom_indices.png" beforeDir="false" afterPath="$PROJECT_DIR$/docs/_images/ts_atom_indices.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/_images/two-line_test.png" beforeDir="false" afterPath="$PROJECT_DIR$/docs/_images/two-line_test.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/_images/umbrella_sampling.png" beforeDir="false" afterPath="$PROJECT_DIR$/docs/_images/umbrella_sampling.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/_images/umbrella_sampling_histogram.png" beforeDir="false" afterPath="$PROJECT_DIR$/docs/_images/umbrella_sampling_histogram.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/_static/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/_static/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/_templates/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/_templates/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/api.rst" beforeDir="false" afterPath="$PROJECT_DIR$/docs/api.rst" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/apidoc/atesa.rst" beforeDir="false" afterPath="$PROJECT_DIR$/docs/apidoc/atesa.rst" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/apidoc/atesa.tests.rst" beforeDir="false" afterPath="$PROJECT_DIR$/docs/apidoc/atesa.tests.rst" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/apidoc/modules.rst" beforeDir="false" afterPath="$PROJECT_DIR$/docs/apidoc/modules.rst" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/auxiliary_scripts.rst" beforeDir="false" afterPath="$PROJECT_DIR$/docs/auxiliary_scripts.rst" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/conf.py" beforeDir="false" afterPath="$PROJECT_DIR$/docs/conf.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/docs/example_study.rst" beforeDir="false" afterPath="$PROJECT_DIR$/docs/example_study.rst" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/docs/getting_started.rst" beforeDir="false" afterPath="$PROJECT_DIR$/docs/getting_started.rst" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/index.rst" beforeDir="false" afterPath="$PROJECT_DIR$/docs/index.rst" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/make.bat" beforeDir="false" afterPath="$PROJECT_DIR$/docs/make.bat" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/on_termination_criteria.rst" beforeDir="false" afterPath="$PROJECT_DIR$/docs/on_termination_criteria.rst" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/the_config_file.rst" beforeDir="false" afterPath="$PROJECT_DIR$/docs/the_config_file.rst" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/theory_of_operation.rst" beforeDir="false" afterPath="$PROJECT_DIR$/docs/theory_of_operation.rst" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/troubleshooting.rst" beforeDir="false" afterPath="$PROJECT_DIR$/docs/troubleshooting.rst" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/two-line_test.png" beforeDir="false" afterPath="$PROJECT_DIR$/docs/two-line_test.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/aimless_shooting/aimless_shooting.config" beforeDir="false" afterPath="$PROJECT_DIR$/examples/aimless_shooting/aimless_shooting.config" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/aimless_shooting/aimless_shooting_init_amber.in" beforeDir="false" afterPath="$PROJECT_DIR$/examples/aimless_shooting/aimless_shooting_init_amber.in" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/aimless_shooting/aimless_shooting_prod_amber.in" beforeDir="false" afterPath="$PROJECT_DIR$/examples/aimless_shooting/aimless_shooting_prod_amber.in" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/aimless_shooting/as_decorr_15000.out.gz" beforeDir="false" afterPath="$PROJECT_DIR$/examples/aimless_shooting/as_decorr_15000.out.gz" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/aimless_shooting/as_raw.out.gz" beforeDir="false" afterPath="$PROJECT_DIR$/examples/aimless_shooting/as_raw.out.gz" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/committor_analysis/committor_analysis.config" beforeDir="false" afterPath="$PROJECT_DIR$/examples/committor_analysis/committor_analysis.config" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/committor_analysis/committor_analysis.out" beforeDir="false" afterPath="$PROJECT_DIR$/examples/committor_analysis/committor_analysis.out" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/committor_analysis/committor_analysis_prod_amber.in" beforeDir="false" afterPath="$PROJECT_DIR$/examples/committor_analysis/committor_analysis_prod_amber.in" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/find_ts/ethyl_chlorosulfite.inpcrd" beforeDir="false" afterPath="$PROJECT_DIR$/examples/find_ts/ethyl_chlorosulfite.inpcrd" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/find_ts/ethyl_chlorosulfite.inpcrd_0_ts_guess_134.rst7" beforeDir="false" afterPath="$PROJECT_DIR$/examples/find_ts/ethyl_chlorosulfite.inpcrd_0_ts_guess_134.rst7" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/find_ts/ethyl_chlorosulfite.inpcrd_0_ts_guess_136.rst7" beforeDir="false" afterPath="$PROJECT_DIR$/examples/find_ts/ethyl_chlorosulfite.inpcrd_0_ts_guess_136.rst7" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/find_ts/find_ts.config" beforeDir="false" afterPath="$PROJECT_DIR$/examples/find_ts/find_ts.config" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/find_ts/find_ts_prod_amber.in" beforeDir="false" afterPath="$PROJECT_DIR$/examples/find_ts/find_ts_prod_amber.in" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/input_files/aimless_shooting_init_amber.in" beforeDir="false" afterPath="$PROJECT_DIR$/examples/input_files/aimless_shooting_init_amber.in" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/input_files/aimless_shooting_prod_amber.in" beforeDir="false" afterPath="$PROJECT_DIR$/examples/input_files/aimless_shooting_prod_amber.in" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/input_files/committor_analysis_prod_amber.in" beforeDir="false" afterPath="$PROJECT_DIR$/examples/input_files/committor_analysis_prod_amber.in" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/input_files/find_ts_prod_amber.in" beforeDir="false" afterPath="$PROJECT_DIR$/examples/input_files/find_ts_prod_amber.in" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/input_files/umbrella_sampling_prod_amber.in" beforeDir="false" afterPath="$PROJECT_DIR$/examples/input_files/umbrella_sampling_prod_amber.in" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/lmax/15000_lmax.out" beforeDir="false" afterPath="$PROJECT_DIR$/examples/lmax/15000_lmax.out" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/lmax/cvs.txt" beforeDir="false" afterPath="$PROJECT_DIR$/examples/lmax/cvs.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/lmax/rc.out" beforeDir="false" afterPath="$PROJECT_DIR$/examples/lmax/rc.out" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/model_setup/equilibrate.in" beforeDir="false" afterPath="$PROJECT_DIR$/examples/model_setup/equilibrate.in" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/model_setup/ethyl_chlorosulfite.prmtop" beforeDir="false" afterPath="$PROJECT_DIR$/examples/model_setup/ethyl_chlorosulfite.prmtop" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/model_setup/ethyl_chlorosulfite.rst7" beforeDir="false" afterPath="$PROJECT_DIR$/examples/model_setup/ethyl_chlorosulfite.rst7" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/templates/amber_slurm.tpl" beforeDir="false" afterPath="$PROJECT_DIR$/examples/templates/amber_slurm.tpl" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/umbrella_sampling/as_full_cvs.out.gz" beforeDir="false" afterPath="$PROJECT_DIR$/examples/umbrella_sampling/as_full_cvs.out.gz" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/umbrella_sampling/resample.config" beforeDir="false" afterPath="$PROJECT_DIR$/examples/umbrella_sampling/resample.config" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/umbrella_sampling/restrained_mbar.out" beforeDir="false" afterPath="$PROJECT_DIR$/examples/umbrella_sampling/restrained_mbar.out" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/umbrella_sampling/restrained_umbrella_sampling.config" beforeDir="false" afterPath="$PROJECT_DIR$/examples/umbrella_sampling/restrained_umbrella_sampling.config" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/umbrella_sampling/umbrella_sampling_prod_amber.in" beforeDir="false" afterPath="$PROJECT_DIR$/examples/umbrella_sampling/umbrella_sampling_prod_amber.in" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/umbrella_sampling/unrestrained_mbar.out" beforeDir="false" afterPath="$PROJECT_DIR$/examples/umbrella_sampling/unrestrained_mbar.out" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/umbrella_sampling/unrestrained_umbrella_sampling.config" beforeDir="false" afterPath="$PROJECT_DIR$/examples/umbrella_sampling/unrestrained_umbrella_sampling.config" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/setup.cfg" beforeDir="false" afterPath="$PROJECT_DIR$/setup.cfg" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/setup.py" beforeDir="false" afterPath="$PROJECT_DIR$/setup.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/versioneer.py" beforeDir="false" afterPath="$PROJECT_DIR$/versioneer.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -257,6 +465,13 @@
     <detection-done>true</detection-done>
     <sorting>DEFINITION_ORDER</sorting>
   </component>
+  <component name="MarkdownSettingsMigration">
+    <option name="stateVersion" value="1" />
+  </component>
+  <component name="ProjectColorInfo"><![CDATA[{
+  "customColor": "",
+  "associatedIndex": 5
+}]]></component>
   <component name="ProjectFrameBounds">
     <option name="x" value="38" />
     <option name="y" value="23" />
@@ -401,14 +616,13 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">
-    <property name="SearchEverywhereHistoryKey" value="&#9;FILE&#9;file:///Users/tburgin/Documents/PycharmProjects/atesa_v2/atesa_v2/atesa_v2.py" />
-    <property name="WebServerToolWindowFactoryState" value="false" />
-    <property name="full.screen.before.presentation.mode" value="false" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/atesa" />
-    <property name="run.code.analysis.last.selected.profile" value="pProject Default" />
-    <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
-  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "git-widget-placeholder": "cp2k__support",
+    "last_opened_file_path": "/Volumes/burginlab/tucker/atesa",
+    "settings.editor.selected.configurable": "com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"
+  }
+}]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$/atesa" />
@@ -796,7 +1010,6 @@
         </entry>
       </map>
     </option>
-    <option name="oldMeFiltersMigrated" value="true" />
   </component>
   <component name="editorHistoryManager">
     <entry file="file://$PROJECT_DIR$/setup.cfg">

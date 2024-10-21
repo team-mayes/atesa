@@ -105,7 +105,7 @@ def configure(input_file, user_working_directory=''):
         information_error_freq: int = 250
         information_error_override: bool = False
         information_error_max_dims: int = 6
-        information_error_lmax_string = '--two_line_test'
+        information_error_lmax_string: str = '--two_line_test'
         max_moves: int = -1     # also used by find_ts
         max_consecutive_fails: int = 10
         sigfigs: int = 3
@@ -153,10 +153,10 @@ def configure(input_file, user_working_directory=''):
         pid: int = -1           # process ID of information_error call used in aimless shooting
         information_error_overdue: bool = False    # used for handling information_error calls cleanly
         dont_dump: bool = False     # when True, prevents dumping settings to settings.pkl
-        suppress_us_warning = False     # used to prevent repeatedly issuing the same warning during some US runs
-        previous_cvs = ''       # for checking whether a full resample is required when restarting based on a change in cvs
-        previous_information_error_max_dims = -1    # for checking whether a full resample is required when restarting based on a change in information_error_max_dims
-        previous_information_error_lmax_string = '--two_line_test'  # for checking whether a full resample is required when restarting based on a change in information_error_lmax_string
+        suppress_us_warning: bool = False     # used to prevent repeatedly issuing the same warning during some US runs
+        previous_cvs: str = ''       # for checking whether a full resample is required when restarting based on a change in cvs
+        previous_information_error_max_dims: int = -1    # for checking whether a full resample is required when restarting based on a change in information_error_max_dims
+        previous_information_error_lmax_string: str = '--two_line_test'  # for checking whether a full resample is required when restarting based on a change in information_error_lmax_string
 
     # Import config file line-by-line using exec()
     try:

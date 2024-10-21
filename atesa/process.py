@@ -60,11 +60,11 @@ def process(thread, running, settings):
         name = thread.current_name[job_index]
 
         these_kwargs = {'name': thread.name + '_' + name,
-                         'nodes': eval('settings.' + type + '_nodes'),
-                         'taskspernode': eval('settings.' + type + '_ppn'),
-                         'walltime': eval('settings.' + type + '_walltime'),
-                         'mem': eval('settings.' + type + '_mem'),
-                         'solver': eval('settings.' + type + '_solver'),
+                         'nodes': str(eval('settings.' + type + '_nodes')),
+                         'taskspernode': str(eval('settings.' + type + '_ppn')),
+                         'walltime': str(eval('settings.' + type + '_walltime')),
+                         'mem': str(eval('settings.' + type + '_mem')),
+                         'solver': str(eval('settings.' + type + '_solver')),
                          'out': thread.name + '_' + name + '.out',
                          'prmtop': thread.topology,
                          'inpcrd': this_inpcrd[job_index],
@@ -72,7 +72,7 @@ def process(thread, running, settings):
                          'nc': thread.name + '_' + name + traj_format,
                          'working_directory': settings.working_directory,
                          'thread_name': thread.name,
-                         'extra': eval('settings.' + type + '_extra')}
+                         'extra': str(eval('settings.' + type + '_extra'))}
 
         inp = jobtype.get_input_file(thread, job_index, settings, **these_kwargs)
 
