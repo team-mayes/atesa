@@ -53,7 +53,7 @@ setup(
     # Additional entries you may want simply uncomment the lines you want and fill in the data
     url='https://atesa.readthedocs.io/en/latest/',  # Website
     install_requires=[
-    'pytraj',
+    'pytraj>=2.0',
     'numpy',
     'mdtraj',
     'django',
@@ -71,7 +71,7 @@ setup(
     #            'Mac OS-X',
     #            'Unix',
     #            'Windows'],            # Valid platforms your code works on, adjust to your flavor
-    python_requires=">=3.5, <3.8",          # Python version restrictions
+    python_requires=">=3.5, <=3.11",          # Python version restrictions
 
     # Manual control if final package is compressible or not, set False to prevent the .egg from being made
     # zip_safe=False,
