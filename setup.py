@@ -63,10 +63,9 @@ setup(
     'pydantic',
     'gnuplotlib',
     'numdifftools',
-    'matplotlib',
+    'matplotlib<3.8',
     'psutil',
-    'backports.zoneinfo',
-    'pymbar'],              # Required packages, pulls from pip if needed; do not use for Conda deployment
+    'pymbar<4.0'],              # Required packages, pulls from pip if needed; do not use for Conda deployment
     # platforms=['Linux',
     #            'Mac OS-X',
     #            'Unix',

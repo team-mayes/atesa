@@ -10,7 +10,6 @@ pydantic
 gnuplotlib
 numdifftools
 psutil
-matplotlib
+matplotlib<3.8
 pytest
-backports.zoneinfo
 pymbar<4.0
