@@ -1,6 +1,8 @@
 """
 Interface for TaskManager objects. New TaskManagers can be implemented by constructing a new class that inherits from
 TaskManager and implements its abstract methods.
+
+This file is currently deprecated.
 """
 
 import abc

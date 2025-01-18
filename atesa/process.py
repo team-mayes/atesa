@@ -55,6 +55,9 @@ def process(thread, running, settings):
     batchfiles = []         # initialize list of batch files to fill out
     jobtype = factory.jobtype_factory(settings.job_type)    # get jobtype for calling jobtype.update_history
     this_inpcrd = jobtype.get_inpcrd(thread)
+
+    batchsystem = factory.batchsystem_factory(settings.batch_system)
+
     for job_index in range(len(thread.current_type)):
         type = thread.current_type[job_index]
         name = thread.current_name[job_index]
@@ -80,7 +83,7 @@ def process(thread, running, settings):
         these_kwargs.update({'inp': inp})
 
         filled = template.render(django.template.Context(these_kwargs))
-        newfilename = thread.name + '_' + name + '.' + settings.batch_system
+        newfilename = thread.name + '_' + name + '.' + batchsystem.get_file_suffix()
         try:
             with open(newfilename, 'w') as newfile:
                 newfile.write(filled)
@@ -98,10 +101,9 @@ def process(thread, running, settings):
         jobtype.update_history(thread, settings, **these_kwargs)
 
     ### Submit batch files to task manager ###
-    taskmanager = factory.taskmanager_factory(settings.task_manager)
     thread.jobids = []      # to clear out previous jobids if any exist
     for file in batchfiles:
-        thread.jobids.append(taskmanager.submit_batch(file, settings))
+        thread.jobids.append(batchsystem.submit_batch(file, settings))
 
     if thread not in running:
         running.append(thread)

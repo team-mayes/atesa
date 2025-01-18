@@ -8,11 +8,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="55679143-7654-431c-aee1-71d5375f0f66" name="Default" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/setup.py" beforeDir="false" afterPath="$PROJECT_DIR$/setup.py" afterDir="false" />
-    </list>
+    <list default="true" id="55679143-7654-431c-aee1-71d5375f0f66" name="Default" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -418,11 +414,11 @@
 }]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/atesa/data/templates" />
       <recent name="$PROJECT_DIR$/atesa" />
       <recent name="$PROJECT_DIR$/atesa/tests/test_data" />
       <recent name="$PROJECT_DIR$/atesa/tests" />
       <recent name="$PROJECT_DIR$/atesa/data/input_files" />
-      <recent name="$PROJECT_DIR$/atesa/data/templates" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$/atesa/data/input_files" />

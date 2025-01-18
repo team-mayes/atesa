@@ -5,6 +5,7 @@ BatchSystem and implements its abstract methods.
 
 import abc
 import subprocess
+import psutil
 import time
 
 class BatchSystem(abc.ABC):
@@ -37,6 +38,27 @@ class BatchSystem(abc.ABC):
         pass
 
     @abc.abstractmethod
+    def submit_batch(self, filename, settings):
+        """
+        Submit a batch file to the task manager.
+
+        Parameters
+        ----------
+        filename : str
+            Name of batch file to submit
+        settings : argparse.Namespace
+            Settings namespace object
+
+        Returns
+        -------
+        jobid : str
+            Identification number for this task, such that it can be cancelled by referring to this string
+
+        """
+
+        pass
+
+    @abc.abstractmethod
     def cancel_job(self, jobid, settings):  # todo: this should DEFINITELY be moved to a method of TaskManager
         """
         Cancel the job given by jobid
@@ -56,25 +78,25 @@ class BatchSystem(abc.ABC):
         """
 
         pass
-    
-    @abc.abstractmethod
-    def get_submit_command(self):
-        """
-        Return the appropriate terminal command for submitting a batch job, with '{file}' where the file to submit 
-        should be indicated.
 
-        Parameters
-        ----------
-        None
 
-        Returns
-        -------
-        output : str
-            Appropriate command including '{file}' substring
+@abc.abstractmethod
+def get_file_suffix(self):
+    """
+    Return the appropriate suffix for batch files (not including ".")
 
-        """
-        
-        pass
+    Parameters
+    ----------
+    None
+
+    Returns
+    -------
+    output : str
+        Appropriate suffix
+
+    """
+
+    pass
 
 
 class AdaptSlurm(BatchSystem):
@@ -120,15 +142,41 @@ class AdaptSlurm(BatchSystem):
 
         return output
 
+    def submit_batch(self, filename, settings):
+        command = 'sbatch {file}'.replace('{file}', filename)
+
+        if settings.DEBUG:
+            command = ('echo "this is a nonsense string for testing purposes: 123456, '
+                       'now here are some garbage symbols: ?!@#$/\';:[]+=_-.<,>"')
+
+        count = 1
+        max_tries = 5
+        output = 'first_attempt'
+        errors = ['first_attempt', 'slurm_load_jobs', 'slurm_receive_msg', 'send/recv']  # error messages to retry on
+        while True in [error in output for error in errors] and count <= max_tries:
+            if not output == 'first_attempt':
+                time.sleep(30)      # wait 30 seconds before trying again
+                count += 1
+            process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                                       close_fds=True, shell=True)
+            output = process.stdout.read().decode()
+
+        # Use a regular expression to extract the jobid from this string
+        pattern = re.compile('[0-9]+')  # todo: it's not inconceivable that this should fail in some cases. Consider moving building this pattern to a method of BatchSystem.
+        try:
+            return re.findall(pattern, output)[0]
+        except IndexError:  # no number in the output
+            raise RuntimeError('unable to submit batch job: ' + filename + '\nMessage from batch system: ' + output)
+
     def cancel_job(self, jobid, settings):
         command = 'scancel ' + str(jobid)
         process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                                    close_fds=True, shell=True)
         output = process.stdout.read().decode()     # decode converts from bytes-like to string
         return output
-    
-    def get_submit_command(self):
-        return 'sbatch {file}'
+
+    def get_file_suffix(self):
+        return 'slurm'
 
 
 class AdaptPBS(BatchSystem):
@@ -174,6 +222,32 @@ class AdaptPBS(BatchSystem):
         output = process.stdout.read().decode()  # decode converts from bytes-like to string
         raise RuntimeError('unexpected PBS status for jobid: ' + str(jobid) + '\nFull status string: ' + output)
 
+    def submit_batch(self, filename, settings):
+        command = 'qsub {file}'.replace('{file}', filename)
+
+        if settings.DEBUG:
+            command = ('echo "this is a nonsense string for testing purposes: 123456, '
+                       'now here are some garbage symbols: ?!@#$/\';:[]+=_-.<,>"')
+
+        count = 1
+        max_tries = 5
+        output = 'first_attempt'
+        errors = ['first_attempt', 'send/recv']  # error messages to retry on
+        while True in [error in output for error in errors] and count <= max_tries:
+            if not output == 'first_attempt':
+                time.sleep(30)      # wait 30 seconds before trying again
+                count += 1
+            process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                                       close_fds=True, shell=True)
+            output = process.stdout.read().decode()
+
+        # Use a regular expression to extract the jobid from this string
+        pattern = re.compile('[0-9]+')  # todo: it's not inconceivable that this should fail in some cases. Consider moving building this pattern to a method of BatchSystem.
+        try:
+            return re.findall(pattern, output)[0]
+        except IndexError:  # no number in the output
+            raise RuntimeError('unable to submit batch job: ' + filename + '\nMessage from batch system: ' + output)
+
     def cancel_job(self, jobid, settings):
         command = 'qdel ' + str(jobid)
         process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
@@ -185,5 +259,48 @@ class AdaptPBS(BatchSystem):
             output = process.stdout.read()
         return output
 
-    def get_submit_command(self):
-        return 'qsub {file}'
+    def get_file_suffix(self):
+        return 'pbs'
+
+
+class AdaptNone(BatchSystem):
+    """
+    No batch system; jobs run on Unix directly.
+
+    """
+
+    def get_status(self, jobid, settings):
+        # 'Q'ueued is impossible; either it's running or it's not
+        try:
+            proc = psutil.Process(jobid).status()
+            if proc in [psutil.STATUS_RUNNING, psutil.STATUS_SLEEPING, psutil.STATUS_DISK_SLEEP]:
+                return 'R'
+            elif proc in [psutil.STATUS_ZOMBIE, psutil.STATUS_DEAD]:
+                return 'C'
+            else:
+                raise RuntimeError('unexpected process state for job ' + str(jobid) + ': ' + proc)
+        except (psutil.NoSuchProcess, ProcessLookupError):
+            return 'C'
+
+    def submit_batch(self, filename, settings):
+        command = 'bash {file} &'.replace('{file}', filename)
+
+        if settings.DEBUG:
+            command = ('echo "this is a nonsense string for testing purposes: 123456, '
+                       'now here are some garbage symbols: ?!@#$/\';:[]+=_-.<,>"')
+
+        process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                                       close_fds=True, shell=True)
+        pid = process.pid   # use pid in place of batch system jobid
+
+        return pid
+
+    def cancel_job(self, jobid, settings):
+        try:
+            p = psutil.Process(jobid)   # jobid is actually a pid
+            p.kill()
+        except psutil.NoSuchProcess:
+            pass
+
+    def get_file_suffix(self):
+        return 'sh'
