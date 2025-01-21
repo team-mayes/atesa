@@ -3,6 +3,7 @@ Interface for BatchSystem objects. New BatchSystems can be implemented by constr
 BatchSystem and implements its abstract methods.
 """
 
+import re
 import abc
 import subprocess
 import psutil
