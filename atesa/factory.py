@@ -51,6 +51,7 @@ def batchsystem_factory(batchsystem_toolkit):
     batchsystem_toolkits = {'slurm': batchsystem.AdaptSlurm(),
                             'pbs': batchsystem.AdaptPBS(),
                             'torque': batchsystem.AdaptPBS(),
+                            'sge': batchsystem.AdaptSGE(),
                             'none': batchsystem.AdaptNone()}   # torque and pbs are synonyms
 
     if batchsystem_toolkit not in batchsystem_toolkits.keys():

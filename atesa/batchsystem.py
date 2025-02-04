@@ -264,6 +264,78 @@ class AdaptPBS(BatchSystem):
         return 'pbs'
 
 
+class AdaptSGE(BatchSystem):
+    """
+    Adapter class for Sun Grid Engine BatchSystem.
+
+    """
+
+    def get_status(self, jobid, settings):
+        if settings.DEBUG:
+            return 'C'
+
+        command = 'qstat -xml -j ' + jobid + ' | grep "job_list state"'
+        process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                                   close_fds=True, shell=True)
+        output = process.stdout.read().decode()     # decode converts from bytes-like to string
+        parsed = output.replace('<job_list state=', '').replace('>', '').replace(' ', '')
+
+        # Parse output
+        if 'running' in parsed or 'transferring' in parsed:
+            return 'R'
+        elif 'pending' in parsed:
+            return 'Q'
+        elif not parsed:    # have to assume job is complete if it doesn't show up; SGE has no "complete" state
+            return 'C'
+
+        # If this code is reached, it means none of the above states were found
+        process = subprocess.Popen('qstat -u $USER', stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                                   close_fds=True, shell=True)
+        output = process.stdout.read().decode()  # decode converts from bytes-like to string
+        raise RuntimeError('unexpected SGE state for jobid: ' + str(jobid) + '\nFull state string: ' + output)
+
+    def submit_batch(self, filename, settings):
+        command = 'qsub {file}'.replace('{file}', filename)
+
+        if settings.DEBUG:
+            command = ('echo "this is a nonsense string for testing purposes: 123456, '
+                       'now here are some garbage symbols: ?!@#$/\';:[]+=_-.<,>"')
+
+        count = 1
+        max_tries = 5
+        output = 'first_attempt'
+        errors = ['first_attempt', 'send/recv']  # error messages to retry on
+        while True in [error in output for error in errors] and count <= max_tries:
+            if not output == 'first_attempt':
+                time.sleep(30)      # wait 30 seconds before trying again
+                count += 1
+            process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                                       close_fds=True, shell=True)
+            output = process.stdout.read().decode()
+
+        # Use a regular expression to extract the jobid from this string
+        pattern = re.compile('[0-9]+')  # todo: it's not inconceivable that this should fail in some cases. Consider moving building this pattern to a method of BatchSystem.
+        try:
+            return re.findall(pattern, output)[0]
+        except IndexError:  # no number in the output
+            raise RuntimeError('unable to submit batch job: ' + filename + '\nMessage from batch system: ' + output)
+
+    def cancel_job(self, jobid, settings):
+        command = 'qdel ' + str(jobid)
+        process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                                   close_fds=True, shell=True)
+        output = process.stdout.read().decode()     # decode converts from bytes-like to string
+        while 'Please retry this request.' in str(output):  # no idea if SGE ever actually returns this
+            time.sleep(30)
+            process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                                       close_fds=True, shell=True)
+            output = process.stdout.read()
+        return output
+
+    def get_file_suffix(self):
+        return 'pbs'
+
+
 class AdaptNone(BatchSystem):
     """
     No batch system; jobs run on Unix directly.
