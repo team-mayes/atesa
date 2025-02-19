@@ -33,7 +33,7 @@ Of course, aimless shooting is not always to best tool for the job. Efficiency a
 
 - Aimless shooting is designed to focus sampling around transition states, rather than at the stable states that they connect. If you are more interested in comparing properties of stable states than in understanding how one transitions to another, aimless shooting is not the right tool.
 
-- Aimless shooting is best used to discover or describe a mechanism when one is unknown. If you have a reaction coordinate or collective variable that describes the transformation already in mind and just want to characterize it, you may look to a pathway free energy method like umbrella sampling or equilibrium path sampling (the latter of which is implemented in ATESA), or a path sampling method that makes use of a known collective variable like transition interface sampling.
+- Aimless shooting is best used to discover or describe a mechanism when one is unknown. If you have a reaction coordinate or collective variable that describes the transformation already in mind and just want to characterize it, you may look to a pathway free energy method like umbrella sampling or equilibrium path sampling (both of which are implemented in ATESA), or a path sampling method that makes use of a known collective variable like transition interface sampling.
 
 - Like all transition path sampling methods, aimless shooting is at its best where the energy barrier is high (and therefore transitions are rare). If your transition occurs quickly enough to reasonably observe many times over the course of an unbiased molecular dynamics or quantum mechanics simulation, aimless shooting may be overkill.
 
