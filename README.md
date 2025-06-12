@@ -18,7 +18,7 @@ At present, ATESA only supports simulations with Amber and CP2K, and TORQUE/PBS 
 
 ### Copyright
 
-Copyright © 2022, Tucker Burgin
+Copyright © 2022, Tucker Emme Burgin
 
 
 #### Acknowledgements
