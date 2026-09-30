@@ -1879,81 +1879,139 @@ class UmbrellaSampling(JobType):
         # initial coordinates of each thread.
         # This line loads more than one trajectory file together if len(settings.initial_coordinates) > 1
         # traj = pytraj.load(settings.initial_coordinates, settings.working_directory + '/' + settings.topology)
-        traj = mdtraj.load(settings.initial_coordinates, top=settings.working_directory + '/' + settings.topology)
+        elif not settings.us_independent_initial_coordinates:
+            traj = mdtraj.load(settings.initial_coordinates, top=settings.working_directory + '/' + settings.topology)
 
-        try:
-            assert traj.n_frames > 0
-        except AssertionError:
-            raise AssertionError('Somehow umbrella sampling attempted to build initial coordinates from a pair of '
-                                 'trajectories containing zero frames between them. The trajectories in question were: '
-                                 + str(settings.initial_coordinates) + '\nThis should not be possible. The trajectory '
-                                 'must have been modified after aimless shooting completed. If you\'re sure this is not'
-                                 ' the case, please raise this as an issue on the ATESA github page.')
+            try:
+                assert traj.n_frames > 0
+            except AssertionError:
+                raise AssertionError('Somehow umbrella sampling attempted to build initial coordinates from a pair of '
+                                     'trajectories containing zero frames between them. The trajectories in question were: '
+                                     + str(settings.initial_coordinates) + '\nThis should not be possible. The trajectory '
+                                     'must have been modified after aimless shooting completed. If you\'re sure this is not'
+                                     ' the case, please raise this as an issue on the ATESA github page.')
 
-        temp_settings = copy.deepcopy(settings)  # always exclude qdot here (not supported by US anyway)
-        temp_settings.include_qdot = False
-        frame_rcs = []
-        for frame in range(traj.n_frames):
-            new_restart_name = settings.working_directory + '/input_trajectory_frame_' + str(frame) + '.rst7'
-            traj[frame].save_amberrst7(new_restart_name, force_overwrite=True)
-            # pytraj.write_traj(new_restart_name, traj, format='rst7', frame_indices=[frame], options='multi',
-            #                   overwrite=True, velocity=True)
-            # os.rename(new_restart_name + '.1', new_restart_name)
-            cvs = utilities.get_cvs(new_restart_name, temp_settings, reduce=settings.rc_reduced_cvs)
-            rc = utilities.evaluate_rc(temp_settings.rc_definition, cvs.split(' '))
-            frame_rcs.append([new_restart_name, rc])
+            temp_settings = copy.deepcopy(settings)  # always exclude qdot here (not supported by US anyway)
+            temp_settings.include_qdot = False
+            frame_rcs = []
+            for frame in range(traj.n_frames):
+                new_restart_name = settings.working_directory + '/input_trajectory_frame_' + str(frame) + '.rst7'
+                traj[frame].save_amberrst7(new_restart_name, force_overwrite=True)
+                # pytraj.write_traj(new_restart_name, traj, format='rst7', frame_indices=[frame], options='multi',
+                #                   overwrite=True, velocity=True)
+                # os.rename(new_restart_name + '.1', new_restart_name)
+                cvs = utilities.get_cvs(new_restart_name, temp_settings, reduce=settings.rc_reduced_cvs)
+                rc = utilities.evaluate_rc(temp_settings.rc_definition, cvs.split(' '))
+                frame_rcs.append([new_restart_name, rc])
 
-        # Define function to clean up some floating point precision issues;
-        # e.g.,  numpy.arange(-6,12,0.1)[-1] = 11.899999999999935,
-        # whereas safe_arange(-6,12,0.1)[-1] = 11.9
-        def safe_arange(start, stop, step):
-            return step * numpy.arange(start / step, stop / step)
+            # Define function to clean up some floating point precision issues;
+            # e.g.,  numpy.arange(-6,12,0.1)[-2] = 11.899999999999935,
+            # whereas safe_arange(-6,12,0.1)[-2] = 11.9
+            def safe_arange(start, stop, step):
+                return step * numpy.arange(start / step, (stop + step) / step)
 
-        try:
-            assert settings.us_rc_min < settings.us_rc_max
-        except AssertionError:
-            raise AssertionError('us_rc_min >= us_rc_max; this is not permitted. If you\'re trying to specify a single '
-                                 'window value, set us_rc_min to that value and us_rc_max to a value greater than that '
-                                 'but less than (us_rc_min + us_rc_step).')
+            try:
+                assert settings.us_rc_min < settings.us_rc_max
+            except AssertionError:
+                raise AssertionError('us_rc_min >= us_rc_max; this is not permitted. If you\'re trying to specify a single '
+                                     'window value, set us_rc_min to that value and us_rc_max to a value greater than that '
+                                     'but less than (us_rc_min + us_rc_step).')
 
-        window_centers = safe_arange(settings.us_rc_min, settings.us_rc_max, settings.us_rc_step)
+            window_centers = safe_arange(settings.us_rc_min, settings.us_rc_max, settings.us_rc_step)
 
-        def closest(lst, K):
-            # Return index of closest value to K in list lst
-            return min(range(len(lst)), key=lambda i: abs(lst[i] - K))
+            def closest(lst, K):
+                # Return index of closest value to K in list lst
+                return min(range(len(lst)), key=lambda i: abs(lst[i] - K))
 
-        coord_files = []
-        print('Finished producing initial coordinates from input trajector(y/ies). Window centers and the initial RC '
-              'values of the corresponding initial coordinate file:')
-        for window_center in window_centers:
-            closest_index = closest([item[1] for item in frame_rcs], window_center)
-            coord_files.append([frame_rcs[closest_index][0], window_center])
-            print(str(window_center) + ': ' + str(frame_rcs[closest_index][1]))
+            coord_files = []
+            print('Finished producing initial coordinates from input trajector(y/ies). Window centers and the initial RC '
+                  'values of the corresponding initial coordinate file:')
+            for window_center in window_centers:
+                closest_index = closest([item[1] for item in frame_rcs], window_center)
+                coord_files.append([frame_rcs[closest_index][0], window_center])
+                print(str(window_center) + ': ' + str(frame_rcs[closest_index][1]))
 
-        # Assemble list of file names to return
-        list_to_return = []
-        for item in coord_files:
-            shutil.copy(item[0], settings.working_directory + '/init_' + str(item[1]) + '_0.rst7')
-            list_to_return.append(settings.working_directory + '/init_' + str(item[1]) + '_0.rst7')
-        if settings.us_degeneracy > 1:  # implement us_degeneracy
-            temp = []
-            for item in list_to_return:
-                for this_index in range(settings.us_degeneracy):
-                    new_file_name = item.replace('_0.rst7', '_' + str(this_index) + '.rst7')
-                    temp.append(new_file_name)
-                    try:
-                        shutil.copy(item, new_file_name)
-                    except shutil.SameFileError:
-                        pass
-                if not item in temp:
-                    os.remove(item)
-            list_to_return = copy.copy(temp)
+            # Assemble list of file names to return
+            list_to_return = []
+            for item in coord_files:
+                shutil.copy(item[0], settings.working_directory + '/init_' + str(item[1]) + '_0.rst7')
+                list_to_return.append(settings.working_directory + '/init_' + str(item[1]) + '_0.rst7')
+            if settings.us_degeneracy > 1:  # implement us_degeneracy
+                temp = []
+                for item in list_to_return:
+                    for this_index in range(settings.us_degeneracy):
+                        new_file_name = item.replace('_0.rst7', '_' + str(this_index) + '.rst7')
+                        temp.append(new_file_name)
+                        try:
+                            shutil.copy(item, new_file_name)
+                        except shutil.SameFileError:
+                            pass
+                    if not item in temp:
+                        os.remove(item)
+                list_to_return = copy.copy(temp)
 
-        # Clean up temporary files
-        for item in [item[0] for item in frame_rcs]:
-            os.remove(item)
+            # Clean up temporary files
+            for item in [item[0] for item in frame_rcs]:
+                os.remove(item)
 
-        return list_to_return
+            return list_to_return
+        else:
+            try:
+                assert settings.us_degeneracy == 1
+            except AssertionError:
+                raise RuntimeError('us_independent_initial_coordinates is incompatible with us_degeneracy > 1')
+
+            # Define function to clean up some floating point precision issues;
+            # e.g.,  numpy.arange(-6,12,0.1)[-2] = 11.899999999999935,
+            # whereas safe_arange(-6,12,0.1)[-2] = 11.9
+            def safe_arange(start, stop, step):
+                return step * numpy.arange(start / step, (stop + step) / step)
+
+            try:
+                assert settings.us_rc_min < settings.us_rc_max
+            except AssertionError:
+                raise AssertionError(
+                    'us_rc_min >= us_rc_max; this is not permitted. If you\'re trying to specify a single '
+                    'window value, set us_rc_min to that value and us_rc_max to a value greater than that '
+                    'but less than (us_rc_min + us_rc_step).')
+
+            window_centers = safe_arange(settings.us_rc_min, settings.us_rc_max, settings.us_rc_step)
+
+            def closest(lst, K):
+                # Return index of closest value to K in list lst
+                return min(range(len(lst)), key=lambda i: abs(lst[i] - K))
+
+            list_to_return = []
+            temp_settings = copy.deepcopy(settings)  # always exclude qdot here (not supported by US anyway)
+            temp_settings.include_qdot = False
+            for ii in range(len(settings.initial_coordinates)):
+                traj = mdtraj.load(settings.initial_coordinates[ii], top=settings.working_directory + '/' + settings.topology)
+
+                frame_rcs = []
+                for frame in range(traj.n_frames):
+                    new_restart_name = settings.working_directory + '/input_trajectory_frame_' + str(frame) + '.ncrst'
+                    traj[frame].save(new_restart_name, force_overwrite=True)
+                    # pytraj.write_traj(new_restart_name, traj, format='rst7', frame_indices=[frame], options='multi',
+                    #                   overwrite=True, velocity=True)
+                    # os.rename(new_restart_name + '.1', new_restart_name)
+                    cvs = utilities.get_cvs(new_restart_name, temp_settings, reduce=settings.rc_reduced_cvs)
+                    rc = utilities.evaluate_rc(temp_settings.rc_definition, cvs.split(' '))
+                    frame_rcs.append([new_restart_name, rc])
+
+                coord_files = []
+                print('Finished producing initial coordinates from input trajectory: ' +settings.initial_coordinates[ii] + '. '
+                      'Window centers and the initial RC values of the corresponding initial coordinate file:')
+                for window_center in window_centers:
+                    closest_index = closest([item[1] for item in frame_rcs], window_center)
+                    coord_files.append([frame_rcs[closest_index][0], window_center])
+                    print(str(window_center) + ': ' + str(frame_rcs[closest_index][1]))
+
+                # Assemble list of file names to return
+                for item in coord_files:
+                    shutil.copy(item[0], settings.working_directory + '/init_' + str(item[1]) + '_' + str(ii) + '.ncrst')
+                    list_to_return.append(settings.working_directory + '/init_' + str(item[1]) + '_' + str(ii) + '.ncrst')
+
+            return list_to_return
 
     def check_for_successful_step(self, thread, settings):
         return True     # nothing to check for in umbrella sampling
@@ -1967,7 +2025,7 @@ class UmbrellaSampling(JobType):
                 thread.history.prod_results = []   # list of sampled RC values as floats; updated by update_results
             if 'inpcrd' in kwargs.keys():
                 thread.history.prod_inpcrd.append(kwargs['inpcrd'])
-                window_index = kwargs['inpcrd'].replace('.rst7', '').replace(settings.working_directory + '/init_', '').replace('init_', '')     # string with format [window]_[index]
+                window_index = kwargs['inpcrd'].replace('.rst7', '').replace('.ncrst', '').replace(settings.working_directory + '/init_', '').replace('init_', '')     # string with format [window]_[index]
                 try:
                     thread.history.window = window_index[:window_index.index('_')]
                 except ValueError:

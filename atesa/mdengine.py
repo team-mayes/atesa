@@ -461,12 +461,12 @@ class AdaptAmber(MDEngine):
                     file.write('  factnorm(' + str(ordinal) + ')=1.0,\n')
                     file.write('  offnorm(' + str(ordinal) + ')=' + str(this_min) + ',\n')
                     file.write('  nat(' + str(ordinal) + ')=' + str(nat) + ',\n')
-                    if not optype == 'diffdistance':
+                    if not optype == 'diffdistance' and not optype == 'comdistance':
                         file.write('  nat1(' + str(ordinal) + ')=' + str(nat) + ',\n')
                         for nat_index in range(nat):
                             at = str(atoms[nat_index])
                             file.write('  at(' + str(nat_index + 1) + ',' + str(ordinal) + ')=' + str(at) + ',\n')
-                    else:
+                    elif optype == 'diffdistance':
                         file.write('  nat1(' + str(ordinal) + ')=2,\n')
                         for nat_index in [0, 1]:
                             at = str(atoms[nat_index])
@@ -475,6 +475,8 @@ class AdaptAmber(MDEngine):
                         for nat_index in [2, 3]:
                             at = str(atoms[nat_index])
                             file.write('  at(' + str(nat_index + 1) + ',' + str(ordinal) + ')=' + str(at) + ',\n')
+                    else:   # comdistance
+                        raise RuntimeError('Center of mass distance restraints are not compatible with amber_rxncor.')
 
                     ordinal += 1
 
@@ -510,6 +512,8 @@ class AdaptAmber(MDEngine):
                         atoms, optype, nat = utilities.interpret_cv(cv_index, settings)  # get atom indices and type for this CV
 
                         coeff = term.replace('CV' + str(cv_index), '').replace('*', '')
+                        if not coeff:   # implicit coefficient value of 1
+                            coeff = '1'
                         try:
                             null = float(coeff)
                         except ValueError:
@@ -526,7 +530,7 @@ class AdaptAmber(MDEngine):
 
                         alp = float(coeff) / (this_max - this_min)
 
-                        # 'distance', 'angle', 'dihedral', or 'diffdistance'
+                        # 'distance', 'angle', 'dihedral', 'diffdistance', or 'comdistance'
                         if optype == 'distance':
                             f.write('DISTANCE LABEL=CV' + str(cv_index) + ' ATOMS=' + str(atoms[0]) + ',' + str(atoms[1]) + '\n')
                             labels.append('CV' + str(cv_index))
@@ -546,6 +550,12 @@ class AdaptAmber(MDEngine):
                             labels.append('CV' + str(cv_index) + 'A')
                             labels.append('CV' + str(cv_index) + 'B')
                             cv_str = '((cv' + str(cv_index) + 'a-cv' + str(cv_index) + 'b)' + '-' + str(this_min) + ')'
+                        elif optype == 'comdistance':
+                            f.write('com' + str(cv_index) + 'a: COM ATOMS=' + str(atoms[0]) + '\n')
+                            f.write('com' + str(cv_index) + 'b: COM ATOMS=' + str(atoms[1]) + '\n')
+                            f.write('DISTANCE LABEL=CV' + str(cv_index) + ' ATOMS=com' + str(cv_index) + 'a,com' + str(cv_index) + 'b\n')
+                            labels.append('CV' + str(cv_index))
+                            cv_str = '(cv' + str(cv_index) + '-' + str(this_min) + ')'
                         else:
                             raise RuntimeError('unrecognized CV type: ' + optype)
 
@@ -560,7 +570,7 @@ class AdaptAmber(MDEngine):
                     f.write('  PERIODIC=NO\n')
                     f.write('... CUSTOM\n')
                     f.write('restraint-rc: RESTRAINT ARG=RC KAPPA=' + str(2 * float(settings.us_restraint)) + ' AT=' + str(thread.history.window) + '\n')
-                    f.write('PRINT ARG=RC FILE=rcwin_' + str(thread.history.window) + '_' + str(thread.history.index) + '_us.dat')
+                    f.write('PRINT ARG=RC STRIDE=' + str(settings.us_plumed_stride) + ' FILE=rcwin_' + str(thread.history.window) + '_' + str(thread.history.index) + '_us.dat')
         else:
             raise RuntimeError('unrecognized us_implementation option: ' + settings.us_implementation)
 
@@ -578,8 +588,8 @@ class AdaptAmber(MDEngine):
                     file.write(' &wt\n  type="END",\n &end\n')
                     if not settings.suppress_us_warning:
                         print('Did not find an &wt namelist with \'type="END"\' in the umbrella sampling input file' +
-                              settings.path_to_input_files + '/umbrella_sampling_prod_' + settings.md_engine.lower() + '.in, so'
-                              ' ATESA added it automatically.')
+                              settings.path_to_input_files + '/umbrella_sampling_prod_' + settings.md_engine.lower() +
+                              '.in, so ATESA added it automatically.')
                         settings.suppress_us_warning = True     # so that this is only printed once
 
         return input_file_name

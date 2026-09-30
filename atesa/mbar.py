@@ -130,7 +130,7 @@ def main(**kwargs):
         center = str(pattern.findall(data_file)[0])
         if not os.path.exists('mbar_temp_' + center + '_0.dat'):
             open('mbar_temp_' + center + '_0.dat', 'w').close()
-        lines = open(data_file, 'r').readlines()[kwargs['ignore'][0] + 1:]
+        lines = open(data_file, 'r').readlines()[kwargs['ignore'][0] + 1:-1:kwargs['stride'][0]]
         # lines = lines[0:len(lines):20]  # for debugging, not for production
         data = []
         for line in lines:
@@ -383,6 +383,9 @@ if __name__ == '__main__':
     parser.add_argument('--ignore', metavar='ignore', type=int, nargs=1, default=[1],
                         help='Number of samples from beginning of each data file to ignore in the analysis, as time to '
                              'decorrelate from initial coordinates or allow for equilibration. Default=1')
+    parser.add_argument('--stride', metavar='stride', type=int, nargs=1, default=[1],
+                        help='Width of stride when reading data files. Setting this to 2 skips every other line, 3 '
+                             'skips two lines, etc. Default=1')
     parser.add_argument('--decorr', action='store_true', default=False,
                         help='use pymbar.timeseries.detectEquilibration and pymbar.timeseries.subsampleCorrelatedData '
                              'to attempt to automatically use only equilibrated and decorrelated data in the analysis.')    # todo: make decorr the default, change this to --no-decorr?

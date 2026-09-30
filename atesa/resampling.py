@@ -85,6 +85,27 @@ def resample_committor_analysis(settings):
             qdot0_hb_of_t += list(partial_qdot0_hb_of_t)
             trajs += list(partial_trajs)
 
+        # Implement control over minimum length of trajectories to consider (since this controls the number of steps for
+        # which the transmission coefficient will be computed, which needs to be long enough for it to even out)
+        cutoff = np.percentile([len(lst) for lst in qdot0_hb_of_t], 10)
+        to_keep = []
+        for ii in range(len(qdot0_hb_of_t)):
+            if len(qdot0_hb_of_t[ii]) > cutoff:
+                to_keep.append(ii)
+
+        temp = np.empty(len(qdot0), dtype=object)
+        temp[:] = qdot0
+        qdot0 = list(temp[to_keep])
+
+        temp = np.empty(len(qdot0_hb_of_t), dtype=object)
+        temp[:] = qdot0_hb_of_t
+        qdot0_hb_of_t = list(temp[to_keep])
+
+        temp = np.empty(len(trajs), dtype=object)
+        temp[:] = trajs
+        trajs = list(temp[to_keep])
+
+
         print('DEBUG (timestamp: ' + str(time.time()) + '): qdot0: ' + str(qdot0))
         print('DEBUG (timestamp: ' + str(time.time()) + '): qdot0_hb_of_t: ' + str(qdot0_hb_of_t))
         sys.stdout.flush()
@@ -99,7 +120,7 @@ def resample_committor_analysis(settings):
             f.write('Transmission coefficient computed as: kappa(n) = <qdot0 * heaviside(rc(n))> / (0.5 * <abs(qdot0)>)'
                     ', where < > indicates the average over each committor analysis trajectory.\nSee Peters\' Reaction '
                     'Rate Theory and Rare Events, Elsevier, 1st ed., Ch. 13, pp. 343\n')
-            f.write('Transmission coefficient vs. step number (kappa(n)): ' + str(kappa) + '\n')
+            f.write('Transmission coefficient vs. step number (kappa(n)): ' + str(kappa) + '\n\n')
             f.write('Initial rates of change of reaction coordinate for each trajectory (qdot0): ' + str(qdot0) + '\n')
             f.write(
                 'Rates of change mulitplied by heaviside of reaction coordinate for each step (qdot0 * heaviside(rc(n))): ' + str(
@@ -164,11 +185,9 @@ def resample_committor_analysis(settings):
 
 def compute_transmission_coefficient(trajs, settings, partial_index=0):
     """
-    Resample committor analysis results with new settings without using restart.pkl.
+    Compute transmission coefficients from individual committor analysis trajectories based on recrossing.
 
-    Go to working directory, find every trajectory file, check its commitment (based on current settings), and based on
-    its name, combine those results with other trajectories from the same initial coordinates to produce a new
-    committor_analysis.out file.
+    This function produces a separate "partial" result for every trajectory, to be stitched together elsewhere.
 
     Parameters
     ----------

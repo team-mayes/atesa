@@ -136,6 +136,8 @@ def configure(input_file, user_working_directory=''):
         us_degeneracy: int = 5
         us_auto_coords_directory: str = ''
         us_pathway_restraints_file: str = ''
+        us_plumed_stride: int = 1
+        us_independent_initial_coordinates: bool = False
 
         # Required only for find_ts
         find_ts_strategy: str = 'middle'   # 'end' or 'middle'

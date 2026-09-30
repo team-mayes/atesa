@@ -286,6 +286,7 @@ def main(**kwargs):
     skip = kwargs['s']    # this one also a list
     hist_bins = kwargs['hist_bins'][0]
     prefilter = kwargs['p'][0]
+    unreduced = kwargs['unreduced']
 
     if not fixed == [None] and running == 0 and not two_line_test and len(fixed) > dims:
         raise RuntimeError('value of k must be less than or equal to number of fixed (-f) dimensions.')
@@ -344,8 +345,12 @@ def main(**kwargs):
     NA = len(A_data)            # number of observations that committed to A...
     NB = len(B_data)            # ... and to B
     num_cvs = len(minmax[0])    # number of CVs recorded in each observation
-    reduced_A = [[(A_data[jj][ii] - minmax[0][ii]) / (minmax[1][ii] - minmax[0][ii]) for ii in range(num_cvs)] for jj in range(NA)]
-    reduced_B = [[(B_data[jj][ii] - minmax[0][ii]) / (minmax[1][ii] - minmax[0][ii]) for ii in range(num_cvs)] for jj in range(NB)]
+    if not unreduced:
+        reduced_A = [[(A_data[jj][ii] - minmax[0][ii]) / (minmax[1][ii] - minmax[0][ii]) for ii in range(num_cvs)] for jj in range(NA)]
+        reduced_B = [[(B_data[jj][ii] - minmax[0][ii]) / (minmax[1][ii] - minmax[0][ii]) for ii in range(num_cvs)] for jj in range(NB)]
+    else:
+        reduced_A = A_data
+        reduced_B = B_data
 
     if qdot == 'present' or qdot == 'ignore':
         if not num_cvs % 2 == 0:
@@ -624,6 +629,9 @@ if __name__ == "__main__":
                              'the sigmoid committor histogram. Production of the histogram will fail if any of the '
                              'bins have zero samples in them, which is more likely for larger values of hist_bins. '
                              'Default = 10')
+    parser.add_argument('--unreduced', action='store_true', default=False,
+                        help='If this option is given, data from the input file are NOT reduced to between 0 and 1. '
+                             'Use with caution; other components of ATESA may assume that an RC is reduced by default.')
 
     arguments = vars(parser.parse_args())  # Retrieves arguments as a dictionary object
 

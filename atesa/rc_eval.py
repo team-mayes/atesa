@@ -12,6 +12,7 @@ import argparse
 import pickle
 import time
 import math
+import warnings
 from atesa import utilities
 
 def update_progress(progress, message='Progress', eta=0, quiet=False):
@@ -119,7 +120,13 @@ def main(working_directory, rc_definition, as_out_file, extrema=False):
                            settings.job_type)
 
     settings.as_out_file = as_out_file      # for reducing CVs properly
-    settings.include_qdot = False           # unnecessary for our purposes
+    try:
+        assert os.path.exists(settings.as_out_file)
+    except AssertionError:
+        raise FileNotFoundError('Unable to find user-provided aimless shooting output file: ' + settings.as_out_file
+                                + '\nIf this isn\'t a file path but a chunk of your reaction coordinate, remove any '
+                                  'whitespace from the RC (e.g., 1.23 + -0.53*RC2 --> 1.23-0.53*RC2)')
+    settings.include_qdot = False           # qdot is unnecessary for our purposes here
 
     if extrema:
         from atesa.main import Thread
@@ -155,7 +162,7 @@ def main(working_directory, rc_definition, as_out_file, extrema=False):
         try:
             cv_list = utilities.get_cvs(file, settings, reduce=True).split(' ')
             results.append([file + ': ', utilities.evaluate_rc(rc_definition, cv_list)])
-        except RuntimeError as e:   # happens when a CP2K restart file has not been reformatted to rst7 yet
+        except RuntimeError as e:   # happens (for example) when a CP2K restart file has not been reformatted to rst7 yet
             warnings.warn('RuntimeError on a coordinate file. Skipping and continuing. Full error message: '
                           + str(e))
         this_speed = time.time() - t

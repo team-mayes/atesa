@@ -10,8 +10,14 @@
   <component name="ChangeListManager">
     <list default="true" id="55679143-7654-431c-aee1-71d5375f0f66" name="Default" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atesa/batchsystem.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/batchsystem.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/atesa/factory.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/factory.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/auto_cvs.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/auto_cvs.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/configure.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/configure.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/jobtype.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/jobtype.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/lmax.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/lmax.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/mbar.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/mbar.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/mdengine.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/mdengine.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/resampling.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/resampling.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/atesa/utilities.py" beforeDir="false" afterPath="$PROJECT_DIR$/atesa/utilities.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -413,7 +419,7 @@
     &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
     &quot;git-widget-placeholder&quot;: &quot;nobatch&quot;,
-    &quot;last_opened_file_path&quot;: &quot;/Volumes/burginlab/tucker/atesa&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/Volumes/jumbo/burginlab/emme/atesa&quot;,
     &quot;settings.editor.selected.configurable&quot;: &quot;com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable&quot;
   }
 }</component>
@@ -804,17 +810,6 @@
         </entry>
       </map>
     </option>
-  </component>
-  <component name="XDebuggerManager">
-    <breakpoint-manager>
-      <breakpoints>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/atesa/utilities.py</url>
-          <line>5</line>
-          <option name="timeStamp" value="1" />
-        </line-breakpoint>
-      </breakpoints>
-    </breakpoint-manager>
   </component>
   <component name="editorHistoryManager">
     <entry file="file://$PROJECT_DIR$/setup.cfg">

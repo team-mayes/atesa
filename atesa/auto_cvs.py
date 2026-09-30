@@ -75,6 +75,10 @@ def main(settings):
     commit_atoms = list(set(commit_atoms))    # remove duplicates
     commit_atoms = [item - 1 for item in commit_atoms]      # fix off-by-one error
 
+    if not commit_atoms:
+        raise RuntimeError('Attempted to use auto_cvs but no commitment atoms were defined. Either add settings for '
+                           'commit_fwd and/or commit_bwd or set auto_cvs_radius = 0 to turn auto_cvs off.')
+
     # Compute neighbors with handy mdtraj function; divide radius by 10 to convert nm to Å
     neighbors = list(mdtraj.compute_neighbors(mtraj, settings.auto_cvs_radius / 10, query_indices=commit_atoms)[0])
     neighbors += commit_atoms   # include commit_atoms in neighbors for our purposes
